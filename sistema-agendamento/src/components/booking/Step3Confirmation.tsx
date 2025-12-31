@@ -91,20 +91,49 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
         const element = document.getElementById('term-preview-content');
         if (!element) return;
 
+        // Clean filename: remove accents and special characters
+        const safeTotvs = (data.totvs_number || '0000').replace(/[^a-zA-Z0-9]/g, '');
+        const fileName = `TERMO_${safeTotvs}_${new Date().toISOString().split('T')[0]}.pdf`;
+
         const opt = {
-            margin: 0,
-            filename: `termo_${data.totvs_number}_${new Date().toISOString().split('T')[0]}.pdf`,
-            image: { type: 'jpeg' as const, quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
+            margin: 10,
+            filename: fileName,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                letterRendering: true
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
         try {
-            const html2pdf = (await import('html2pdf.js')).default;
-            html2pdf().set(opt).from(element).save();
+            const module = await import('html2pdf.js');
+            const html2pdf = (module.default || module) as any;
+
+            // RECONSTRUÇÃO: Gerar como DataURL para máxima estabilidade de nome
+            const pdfDataUri = await html2pdf().set(opt).from(element).output('datauristring');
+
+            if (!pdfDataUri || pdfDataUri.length < 100) {
+                throw new Error('Falha ao gerar string do PDF');
+            }
+
+            // Disparo manual via link <a>
+            const link = document.createElement('a');
+            link.href = pdfDataUri;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+
+            console.log('PDF download (Professor) iniciado via Base64:', fileName);
+
+            // Cleanup
+            setTimeout(() => {
+                document.body.removeChild(link);
+            }, 3000);
         } catch (e) {
             console.error('PDF Error:', e);
-            alert('Erro ao gerar PDF. Tente novamente ou contate o suporte.');
+            alert('Erro ao gerar PDF. Tente novamente em alguns segundos.');
         }
     };
 
@@ -189,7 +218,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                     </div>
 
                     <div className="bg-gray-100 px-4 py-8 overflow-y-auto h-[70vh] flex justify-center">
-                        <div className="bg-white shadow-2xl rounded-sm" style={{ width: '210mm', minHeight: '297mm' }}>
+                        <div className="bg-white shadow-2xl rounded-sm max-w-[210mm] w-full">
                             <TermDocument data={data} id="term-preview-content" />
                         </div>
                     </div>

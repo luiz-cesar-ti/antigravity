@@ -2,11 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import type { Equipment, Admin } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
-import { Plus, Edit2, Trash2, Search, X } from 'lucide-react';
+import {
+    Plus,
+    Edit2,
+    Trash2,
+    Search,
+    X,
+    Monitor,
+    Package,
+    Hash,
+    AlertTriangle,
+    CheckCircle2,
+    Info,
+    ArrowRight
+} from 'lucide-react';
+import { clsx } from 'clsx';
 
 export function AdminEquipment() {
     const { user } = useAuth();
-    const adminUser = user as Admin; // Safe cast inside protected route
+    const adminUser = user as Admin;
 
     const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
     const [loading, setLoading] = useState(true);
@@ -15,6 +29,11 @@ export function AdminEquipment() {
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; item: Equipment | null }>({
+        isOpen: false,
+        item: null
+    });
+
     const [formData, setFormData] = useState({
         name: '',
         brand: '',
@@ -36,9 +55,6 @@ export function AdminEquipment() {
             .select('*')
             .order('name');
 
-        // If admin is restricted to a unit, filter by it. 
-        // Assuming admins manage their own unit or all if superadmin?
-        // Prompt implies "Admin da Unidade". So we filter.
         if (adminUser?.unit) {
             query = query.eq('unit', adminUser.unit);
         }
@@ -84,11 +100,8 @@ export function AdminEquipment() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const payload = { ...formData };
 
-        // Validation
-        if (!payload.name || payload.total_quantity < 0) {
-            alert('Preencha os campos obrigatórios corretamente.');
+        if (!formData.name || formData.total_quantity < 0) {
             return;
         }
 
@@ -96,13 +109,13 @@ export function AdminEquipment() {
         if (editingId) {
             const { error: err } = await supabase
                 .from('equipment')
-                .update(payload)
+                .update(formData)
                 .eq('id', editingId);
             error = err;
         } else {
             const { error: err } = await supabase
                 .from('equipment')
-                .insert([payload]);
+                .insert([formData]);
             error = err;
         }
 
@@ -110,173 +123,297 @@ export function AdminEquipment() {
             handleCloseModal();
             fetchEquipment();
         } else {
-            console.error('Erro ao salvar equipamento:', error);
-            alert(`Erro ao salvar equipamento: ${error.message || JSON.stringify(error)}`);
+            alert(`Erro ao salvar: ${error.message}`);
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir este equipamento?')) return;
+    const confirmDelete = (item: Equipment) => {
+        setDeleteModal({ isOpen: true, item });
+    };
+
+    const handleDelete = async () => {
+        if (!deleteModal.item) return;
 
         const { error } = await supabase
             .from('equipment')
             .delete()
-            .eq('id', id);
+            .eq('id', deleteModal.item.id);
 
         if (!error) {
+            setDeleteModal({ isOpen: false, item: null });
             fetchEquipment();
         } else {
-            alert('Erro ao excluir (verifique se não há agendamentos vinculados).');
+            alert('Não é possível excluir este equipamento pois existem agendamentos vinculados a ele. Recomenda-se apenas zerar a quantidade se o item não estiver mais disponível.');
+            setDeleteModal({ isOpen: false, item: null });
         }
     };
 
     const filteredList = equipmentList.filter(item =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.brand?.toLowerCase().includes(searchTerm.toLowerCase())
+        item.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.model?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">Gerenciar Equipamentos</h1>
+        <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                <div className="space-y-2">
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">Inventário</h1>
+                    <div className="inline-flex items-center px-3 py-1 bg-primary-50 border border-primary-100 rounded-xl">
+                        <Package className="h-4 w-4 text-primary-600 mr-2" />
+                        <span className="text-xs font-bold text-primary-700 uppercase tracking-wider">
+                            {adminUser?.unit || 'Objetivo Geral'}
+                        </span>
+                    </div>
+                </div>
+
                 <button
                     onClick={() => handleOpenModal()}
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
+                    className="group bg-primary-600 hover:bg-primary-700 text-white px-6 py-4 rounded-2xl font-black text-sm shadow-xl shadow-primary-200 transition-all active:scale-95 flex items-center"
                 >
-                    <Plus className="-ml-1 mr-2 h-5 w-5" />
-                    Novo Equipamento
+                    <Plus className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform duration-300" />
+                    Cadastrar Item
                 </button>
             </div>
 
-            <div className="flex items-center bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
-                <Search className="h-5 w-5 text-gray-400 mr-3" />
-                <input
-                    type="text"
-                    placeholder="Buscar equipamentos..."
-                    className="flex-1 border-none focus:ring-0 text-sm p-0"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+            {/* Search/Filters */}
+            <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
+                <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                        <Search className="h-5 w-5 text-gray-400 group-focus-within:text-primary-600 transition-colors" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Pesquisar por nome, marca ou modelo..."
+                        className="block w-full pl-14 pr-5 py-4 bg-gray-50 border-2 border-transparent focus:border-primary-100 focus:bg-white rounded-2xl text-sm font-bold placeholder:text-gray-400 transition-all outline-none"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
             </div>
 
+            {/* Equipment Grid/Table */}
             {loading ? (
-                <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600 mb-4"></div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sincronizando inventário...</span>
+                </div>
+            ) : filteredList.length === 0 ? (
+                <div className="text-center py-24 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+                    <Monitor className="mx-auto h-16 w-16 text-gray-100 mb-4" />
+                    <h3 className="text-xl font-black text-gray-900">Nenhum item encontrado</h3>
+                    <p className="text-gray-400 text-sm mt-1">Tente ajustar sua busca ou cadastrar um novo equipamento.</p>
                 </div>
             ) : (
-                <div className="bg-white shadow overflow-hidden sm:rounded-md border border-gray-100 overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marca/Modelo</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qtd. Total</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredList.map((item) => (
-                                <tr key={item.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.brand} {item.model}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.total_quantity}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button onClick={() => handleOpenModal(item)} className="text-primary-600 hover:text-primary-900 mr-4">
-                                            <Edit2 className="h-4 w-4" />
-                                        </button>
-                                        <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:text-red-900">
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
-                                    </td>
+                <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-100">
+                            <thead>
+                                <tr className="bg-gray-50/50">
+                                    <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Equipamento</th>
+                                    <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Marca & Modelo</th>
+                                    <th className="px-8 py-5 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Quantidade</th>
+                                    <th className="px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Ações</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {filteredList.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">Nenhum equipamento encontrado.</div>
-                    )}
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {filteredList.map((item) => (
+                                    <tr key={item.id} className="hover:bg-primary-50/30 transition-colors group/row">
+                                        <td className="px-8 py-6 whitespace-nowrap">
+                                            <div className="flex items-center">
+                                                <div className="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center group-hover/row:bg-primary-600 transition-colors">
+                                                    <Monitor className="h-5 w-5 text-primary-600 group-hover/row:text-white" />
+                                                </div>
+                                                <div className="ml-4">
+                                                    <div className="text-sm font-black text-gray-900">{item.name}</div>
+                                                    <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Patrimônio Objetivo</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6 whitespace-nowrap">
+                                            <div className="text-sm font-bold text-gray-600">{item.brand || '—'}</div>
+                                            <div className="text-xs text-gray-400">{item.model || '—'}</div>
+                                        </td>
+                                        <td className="px-8 py-6 whitespace-nowrap text-center">
+                                            <span className={clsx(
+                                                "inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black ring-1 ring-inset",
+                                                item.total_quantity > 0
+                                                    ? "bg-green-50 text-green-700 ring-green-600/20"
+                                                    : "bg-red-50 text-red-700 ring-red-600/20"
+                                            )}>
+                                                {item.total_quantity} unid.
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-6 whitespace-nowrap text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleOpenModal(item)}
+                                                    className="p-3 text-primary-600 hover:bg-primary-600 hover:text-white rounded-xl transition-all"
+                                                    title="Editar"
+                                                >
+                                                    <Edit2 className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => confirmDelete(item)}
+                                                    className="p-3 text-red-600 hover:bg-red-600 hover:text-white rounded-xl transition-all"
+                                                    title="Excluir"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
-            {/* Modal */}
+            {/* Modal: Cadastro/Edição */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 overflow-y-auto">
-                    <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                        <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-                            <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={handleCloseModal}></div>
-                        </div>
-                        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                        <div className="relative z-50 inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-lg leading-6 font-medium text-gray-900">
-                                        {editingId ? 'Editar Equipamento' : 'Novo Equipamento'}
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" onClick={handleCloseModal}></div>
+
+                    <div className="relative bg-white rounded-[2.5rem] shadow-2xl max-w-lg w-full overflow-hidden transform transition-all animate-in zoom-in-95 duration-300">
+                        <div className="p-8 sm:p-10">
+                            <div className="flex justify-between items-center mb-10">
+                                <div>
+                                    <h3 className="text-2xl font-black text-gray-900 tracking-tight">
+                                        {editingId ? 'Editar Detalhes' : 'Novo Registro'}
                                     </h3>
-                                    <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-500">
-                                        <X className="h-6 w-6" />
-                                    </button>
+                                    <p className="text-sm text-gray-400 font-medium">Preencha as informações do equipamento.</p>
                                 </div>
-                                <form id="equipment-form" onSubmit={handleSubmit} className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Nome *</label>
+                                <button onClick={handleCloseModal} className="p-3 bg-gray-50 rounded-2xl text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all">
+                                    <X className="h-6 w-6" />
+                                </button>
+                            </div>
+
+                            <form id="equipment-form" onSubmit={handleSubmit} className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nome do Item *</label>
+                                    <div className="relative group">
+                                        <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                            <Monitor className="h-5 w-5 text-gray-300 group-focus-within:text-primary-600 transition-colors" />
+                                        </div>
                                         <input
                                             type="text"
                                             required
-                                            className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md p-2 border"
+                                            placeholder="Ex: Notebook, iPad, Projetor..."
+                                            className="block w-full pl-14 pr-5 py-4 bg-gray-50 border-2 border-transparent focus:border-primary-100 focus:bg-white rounded-2xl text-sm font-bold placeholder:text-gray-300 transition-all outline-none"
                                             value={formData.name}
                                             onChange={e => setFormData({ ...formData, name: e.target.value })}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700">Marca</label>
-                                            <input
-                                                type="text"
-                                                className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md p-2 border"
-                                                value={formData.brand}
-                                                onChange={e => setFormData({ ...formData, brand: e.target.value })}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700">Modelo</label>
-                                            <input
-                                                type="text"
-                                                className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md p-2 border"
-                                                value={formData.model}
-                                                onChange={e => setFormData({ ...formData, model: e.target.value })}
-                                            />
-                                        </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Marca</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Ex: Apple, Dell..."
+                                            className="block w-full px-5 py-4 bg-gray-50 border-2 border-transparent focus:border-primary-100 focus:bg-white rounded-2xl text-sm font-bold placeholder:text-gray-300 transition-all outline-none"
+                                            value={formData.brand}
+                                            onChange={e => setFormData({ ...formData, brand: e.target.value })}
+                                        />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Quantidade Total *</label>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Modelo</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Ex: MacBook Air..."
+                                            className="block w-full px-5 py-4 bg-gray-50 border-2 border-transparent focus:border-primary-100 focus:bg-white rounded-2xl text-sm font-bold placeholder:text-gray-300 transition-all outline-none"
+                                            value={formData.model}
+                                            onChange={e => setFormData({ ...formData, model: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Quantidade em Estoque *</label>
+                                    <div className="relative group">
+                                        <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                            <Hash className="h-5 w-5 text-gray-300 group-focus-within:text-primary-600 transition-colors" />
+                                        </div>
                                         <input
                                             type="number"
                                             required
                                             min="0"
-                                            className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md p-2 border"
+                                            className="block w-full pl-14 pr-5 py-4 bg-gray-50 border-2 border-transparent focus:border-primary-100 focus:bg-white rounded-2xl text-sm font-bold placeholder:text-gray-300 transition-all outline-none"
                                             value={formData.total_quantity}
                                             onChange={e => setFormData({ ...formData, total_quantity: parseInt(e.target.value) || 0 })}
                                         />
                                     </div>
-                                    <input type="hidden" value={formData.unit} />
-                                </form>
-                            </div>
-                            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                    <div className="flex items-start gap-2 p-4 bg-amber-50 rounded-2xl border border-amber-100 mt-2">
+                                        <Info className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                                        <p className="text-[10px] text-amber-800 font-bold leading-relaxed">
+                                            A quantidade total deve refletir o número de itens disponíveis fisicamente para agendamento nesta unidade.
+                                        </p>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <div className="mt-10 flex gap-4">
                                 <button
-                                    type="submit"
-                                    form="equipment-form"
-                                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
-                                >
-                                    Salvar
-                                </button>
-                                <button
-                                    type="button"
                                     onClick={handleCloseModal}
-                                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                                    className="grow py-4 px-6 bg-gray-50 hover:bg-gray-100 text-gray-500 font-black text-xs rounded-2xl transition-all"
                                 >
-                                    Cancelar
+                                    Descartar
+                                </button>
+                                <button
+                                    form="equipment-form"
+                                    type="submit"
+                                    className="grow flex items-center justify-center py-4 px-6 bg-primary-600 hover:bg-primary-700 text-white font-black text-xs rounded-2xl shadow-xl shadow-primary-200 transition-all active:scale-95 group/save"
+                                >
+                                    {editingId ? 'Atualizar Inventário' : 'Confirmar Cadastro'}
+                                    <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal (Professional replacement for confirm()) */}
+            {deleteModal.isOpen && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity"></div>
+
+                    <div className="relative bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full overflow-hidden transform transition-all animate-in zoom-in-95 duration-200">
+                        <div className="p-10">
+                            <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-50 mb-8">
+                                <AlertTriangle className="h-10 w-10 text-red-600" />
+                            </div>
+
+                            <h3 className="text-2xl font-black text-gray-900 text-center mb-3 tracking-tight">
+                                Excluir Item?
+                            </h3>
+
+                            <p className="text-gray-500 text-center text-sm leading-relaxed mb-10 px-2 font-medium">
+                                Você está prestes a remover <span className="text-gray-900 font-bold">{deleteModal.item?.name}</span> do inventário. Esta ação removerá o item permanentemente.
+                            </p>
+
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={handleDelete}
+                                    className="w-full px-6 py-4 bg-red-600 hover:bg-red-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-red-200 transition-all active:scale-95"
+                                >
+                                    Sim, Excluir Item
+                                </button>
+                                <button
+                                    onClick={() => setDeleteModal({ isOpen: false, item: null })}
+                                    className="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 text-gray-500 font-bold text-sm rounded-2xl transition-all"
+                                >
+                                    Manter no Inventário
+                                </button>
+                            </div>
+                        </div>
+                        <div className="bg-red-50 py-3 border-t border-red-100">
+                            <p className="text-[9px] text-red-400 text-center font-bold uppercase tracking-widest px-4">
+                                Atenção: Se houverem agendamentos ativos, a exclusão será bloqueada.
+                            </p>
                         </div>
                     </div>
                 </div>

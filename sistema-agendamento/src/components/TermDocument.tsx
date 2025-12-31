@@ -68,32 +68,35 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
 
     return (
         <div id={id} style={{
-            width: '210mm',
-            padding: '20mm',
+            width: '100%',
+            padding: '15mm',
             margin: '0 auto',
             backgroundColor: '#ffffff',
             color: '#000000',
             fontFamily: 'Arial, sans-serif',
-            fontSize: '12pt',
-            lineHeight: '1.5',
+            fontSize: '11pt',
+            lineHeight: '1.4',
             position: 'relative',
             boxSizing: 'border-box'
         }}>
             {/* Header / Logo */}
-            <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem', marginTop: '5mm' }}>
                 <img
                     src="/logo-objetivo.jpg"
                     alt="Logo Colégio Objetivo"
-                    style={{ maxHeight: '100px', margin: '0 auto', display: 'block' }}
+                    crossOrigin="anonymous"
+                    style={{ maxHeight: '80px', margin: '0 auto', display: 'block' }}
                 />
             </div>
 
             <h1 style={{
                 textAlign: 'center',
                 fontWeight: 'bold',
-                fontSize: '16pt',
-                marginBottom: '2rem',
-                textTransform: 'uppercase'
+                fontSize: '14pt',
+                marginBottom: '1.5rem',
+                textTransform: 'uppercase',
+                maxWidth: '90%',
+                margin: '0 auto 1.5rem'
             }}>
                 Declaração de Responsabilidade e Termo de Uso
             </h1>

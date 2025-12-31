@@ -3,7 +3,10 @@ import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Booking, Admin } from '../../types';
 import { format, parseISO } from 'date-fns';
-import { Search, Calendar, Users, MapPin, FileText, Trash2, AlertTriangle, Monitor, Clock, Filter } from 'lucide-react';
+import {
+    Search, Calendar, Users, MapPin, FileText, Trash2, AlertTriangle,
+    Monitor, Clock, Filter, Hash, Laptop, Projector, Speaker, Camera, Mic, Smartphone
+} from 'lucide-react';
 import { clsx } from 'clsx';
 import { TermDocument } from '../../components/TermDocument';
 
@@ -49,10 +52,6 @@ export function AdminBookings() {
             query = query.lte('booking_date', endDate);
         }
 
-        // We'll fetch more than strictly needed and filter time-based status on client 
-        // because Supabase doesn't easily compare date+time strings against "now" in one go 
-        // without complex RPC or specialized functions.
-
         query = query.order('booking_date', { ascending: false });
         query = query.order('start_time', { ascending: false });
 
@@ -66,7 +65,7 @@ export function AdminBookings() {
 
     useEffect(() => {
         fetchBookings();
-    }, [user, startDate, endDate]); // Refetch when dates change
+    }, [user, startDate, endDate]);
 
     const handleDeleteBooking = async () => {
         if (!deleteModal.bookingId) return;
@@ -91,30 +90,68 @@ export function AdminBookings() {
             return;
         }
 
+        console.log('Iniciando geração de PDF para:', booking.id);
         setPdfData(booking.term_document);
 
         setTimeout(async () => {
             const element = document.getElementById('admin-term-doc');
-            if (!element) return;
+            if (!element) {
+                console.error('ERRO: Elemento admin-term-doc não encontrado no DOM');
+                setPdfData(null);
+                return;
+            }
 
-            const opt = {
-                margin: 0,
-                filename: `termo_${booking.users?.full_name || 'user'}_${booking.booking_date}.pdf`,
-                image: { type: 'jpeg' as const, quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: true },
-                jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
-            };
+            const rawName = booking.users?.full_name || booking.term_document?.userName || 'usuario';
+            const cleanName = rawName
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-zA-Z0-9]/g, '_')
+                .toUpperCase();
+
+            const fileName = `TERMO_${cleanName}_${booking.booking_date}.pdf`;
 
             try {
                 const module = await import('html2pdf.js');
-                const html2pdf = module.default || module;
-                await html2pdf().set(opt).from(element).save();
+                const html2pdf = (module.default || module) as any;
+
+                const opt = {
+                    margin: 10,
+                    filename: fileName,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                        letterRendering: true
+                    },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                const pdfDataUri = await html2pdf().set(opt).from(element).output('datauristring');
+
+                if (!pdfDataUri || pdfDataUri.length < 100) {
+                    throw new Error('Falha ao gerar string do PDF');
+                }
+
+                const link = document.createElement('a');
+                link.href = pdfDataUri;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+
+                console.log('PDF gerado e disparo Base64 concluído:', fileName);
+
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    setPdfData(null);
+                }, 3000);
+
             } catch (e: any) {
-                console.error('PDF Error:', e);
-            } finally {
+                console.error('ERRO CRÍTICO NA GERAÇÃO:', e);
+                alert('Erro ao gerar o arquivo. Por favor, tente novamente em alguns segundos.');
                 setPdfData(null);
             }
-        }, 500);
+        }, 1500);
     };
 
     const isBookingExpired = (booking: Booking) => {
@@ -158,11 +195,7 @@ export function AdminBookings() {
     };
 
     const filteredBookings = bookings.filter(b => {
-        // 1. Status Filter
         if (filter === 'active') {
-            // Show only those that are 'active' AND not expired, OR 'cancelled_by_user' (as requested per previous step)
-            // Wait, user just said "O botão encerrados irá buscar apenas os agendamentos encerrados."
-            // And "Quando o agendamento estiver dentro do prazo o status ficará ativo e quando terminar o prazo do agendamento o status ficará como encerrado."
             const expired = isBookingExpired(b);
             if (filter === 'active' && (expired || b.status === 'encerrado')) return false;
             if (filter === 'active' && b.status === 'cancelled') return false;
@@ -171,7 +204,6 @@ export function AdminBookings() {
             if (!expired && b.status !== 'encerrado') return false;
         }
 
-        // 2. Search Term Filter
         const searchLower = searchTerm.toLowerCase();
         const equipmentName = b.equipment?.name?.toLowerCase() || '';
         const userName = (b as any).users?.full_name?.toLowerCase() || '';
@@ -181,6 +213,17 @@ export function AdminBookings() {
             userName.includes(searchLower) ||
             local.includes(searchLower);
     });
+
+    const getEquipmentIcon = (name: string = '') => {
+        const n = name.toLowerCase();
+        if (n.includes('notebook') || n.includes('laptop')) return <Laptop className="h-6 w-6 text-primary-600" />;
+        if (n.includes('projetor') || n.includes('datashow')) return <Projector className="h-6 w-6 text-primary-600" />;
+        if (n.includes('caixa') || n.includes('som') || n.includes('audio')) return <Speaker className="h-6 w-6 text-primary-600" />;
+        if (n.includes('camera') || n.includes('camara') || n.includes('foto')) return <Camera className="h-6 w-6 text-primary-600" />;
+        if (n.includes('microfone')) return <Mic className="h-6 w-6 text-primary-600" />;
+        if (n.includes('tablet') || n.includes('ipad')) return <Smartphone className="h-6 w-6 text-primary-600" />;
+        return <Monitor className="h-6 w-6 text-primary-600" />;
+    };
 
     return (
         <div className="space-y-6">
@@ -214,7 +257,6 @@ export function AdminBookings() {
                 </div>
             </div>
 
-            {/* Advanced Filters */}
             <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="relative">
@@ -236,7 +278,6 @@ export function AdminBookings() {
                                 className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-xl text-xs font-medium focus:ring-2 focus:ring-primary-500 transition-all"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
-                                placeholder="Data Inicial"
                             />
                         </div>
                         <span className="text-gray-400 font-bold">~</span>
@@ -247,7 +288,6 @@ export function AdminBookings() {
                                 className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-xl text-xs font-medium focus:ring-2 focus:ring-primary-500 transition-all"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
-                                placeholder="Data Final"
                             />
                         </div>
                     </div>
@@ -269,8 +309,8 @@ export function AdminBookings() {
                     <p className="mt-4 text-gray-500 font-bold uppercase tracking-widest text-[10px]">Sincronizando agendamentos...</p>
                 </div>
             ) : (
-                <div className="bg-white shadow-sm overflow-hidden rounded-2xl border border-gray-100">
-                    <ul className="divide-y divide-gray-50">
+                <div className="bg-transparent space-y-4">
+                    <ul className="space-y-4">
                         {filteredBookings.length === 0 ? (
                             <li className="px-6 py-24 text-center">
                                 <Filter className="h-16 w-16 text-gray-100 mx-auto mb-4" />
@@ -279,24 +319,24 @@ export function AdminBookings() {
                             </li>
                         ) : (
                             filteredBookings.map((booking) => (
-                                <li key={booking.id} className="group hover:bg-gray-50 transition-colors">
-                                    <div className="px-6 py-5">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                <div className="p-3 bg-primary-50 rounded-2xl group-hover:bg-primary-100 transition-colors">
-                                                    <Calendar className="h-6 w-6 text-primary-600" />
+                                <li key={booking.id} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-md hover:border-primary-100 transition-all overflow-hidden group">
+                                    <div className="px-8 py-6">
+                                        <div className="flex items-center justify-between flex-wrap gap-4">
+                                            <div className="flex items-center gap-5">
+                                                <div className="p-4 bg-primary-50 rounded-3xl group-hover:bg-primary-100 transition-all duration-300">
+                                                    {getEquipmentIcon(booking.equipment?.name)}
                                                 </div>
                                                 <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="text-base font-black text-gray-900">
-                                                            {booking.equipment?.name}
-                                                        </p>
-                                                        <span className='bg-gray-100 text-gray-500 px-2 py-0.5 rounded-lg text-[10px] font-black'>
-                                                            ×{booking.quantity}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center gap-3 mt-1.5">
-                                                        {getStatusBadge(booking)}
+                                                    <p className="text-xl font-black text-gray-900 tracking-tight leading-none">
+                                                        {booking.equipment?.name}
+                                                    </p>
+                                                    <div className="flex items-center gap-3 mt-2">
+                                                        <div className="flex items-center text-primary-600 bg-primary-50 px-2.5 py-1 rounded-lg border border-primary-100 shadow-sm">
+                                                            <Hash className="h-3 w-3 mr-1" />
+                                                            <span className="text-[10px] font-black uppercase tracking-wider">
+                                                                {booking.quantity} {booking.quantity === 1 ? 'Unidade' : 'Unidades'}
+                                                            </span>
+                                                        </div>
                                                         <span className="flex items-center gap-1 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
                                                             <MapPin className="h-3 w-3" />
                                                             {booking.unit}
@@ -305,27 +345,32 @@ export function AdminBookings() {
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-2">
-                                                {booking.term_document && (
-                                                    <button
-                                                        onClick={() => handleDownloadTerm(booking)}
-                                                        className="h-10 px-4 bg-white border border-gray-200 text-gray-700 hover:border-primary-200 hover:text-primary-600 font-bold text-xs rounded-xl flex items-center shadow-sm transition-all active:scale-95"
-                                                    >
-                                                        <FileText className="h-4 w-4 mr-2" />
-                                                        Documento
-                                                    </button>
-                                                )}
+                                            <div className="flex items-center gap-6 ml-auto">
+                                                <div className="hidden md:block">
+                                                    {getStatusBadge(booking)}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    {booking.term_document && (
+                                                        <button
+                                                            onClick={() => handleDownloadTerm(booking)}
+                                                            className="h-10 px-4 bg-white border border-gray-200 text-gray-700 hover:border-primary-200 hover:text-primary-600 font-bold text-xs rounded-xl flex items-center shadow-sm transition-all active:scale-95"
+                                                        >
+                                                            <FileText className="h-4 w-4 mr-2" />
+                                                            Documento
+                                                        </button>
+                                                    )}
 
-                                                <button
-                                                    onClick={() => setDeleteModal({ isOpen: true, bookingId: booking.id })}
-                                                    className="h-10 px-4 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-bold text-xs rounded-xl flex items-center transition-all active:scale-95 border border-red-50"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
+                                                    <button
+                                                        onClick={() => setDeleteModal({ isOpen: true, bookingId: booking.id })}
+                                                        className="h-10 px-4 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-bold text-xs rounded-xl flex items-center transition-all active:scale-95 border border-red-50"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div className="mt-6 grid grid-cols-1 sm:grid-cols-4 gap-6">
+                                        <div className="mt-8 pt-6 border-t border-gray-50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                             <div className="flex flex-col">
                                                 <span className="text-[10px] uppercase font-black text-gray-400 tracking-[0.2em]">Professor</span>
                                                 <div className="flex items-center text-sm text-gray-700 mt-2 font-bold">
@@ -365,7 +410,6 @@ export function AdminBookings() {
                 </div>
             )}
 
-            {/* Custom Delete Confirmation Modal */}
             {deleteModal.isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div
@@ -406,10 +450,13 @@ export function AdminBookings() {
                 </div>
             )}
 
-            {/* Hidden render area for PDF Generation */}
-            <div style={{ position: 'fixed', top: 0, left: 0, opacity: 0, pointerEvents: 'none', zIndex: -50 }}>
-                {pdfData && <TermDocument data={pdfData} id="admin-term-doc" />}
-            </div>
+            {pdfData && (
+                <div style={{ position: 'absolute', left: '-9999px', top: 0, width: '210mm' }}>
+                    <div id="admin-term-doc" style={{ width: '190mm', margin: '0 auto', background: 'white' }}>
+                        <TermDocument data={pdfData} />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

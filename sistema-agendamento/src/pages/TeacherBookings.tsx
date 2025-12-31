@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, Monitor, Trash2, AlertTriangle, History } from 'lucide-react';
+import {
+    Calendar, Clock, MapPin, Monitor, Trash2, AlertTriangle, History,
+    Hash, Laptop, Projector, Speaker, Camera, Mic, Smartphone
+} from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Booking } from '../types';
@@ -14,6 +17,17 @@ export function TeacherBookings() {
         isOpen: false,
         bookingId: null
     });
+
+    const getEquipmentIcon = (name: string = '') => {
+        const n = name.toLowerCase();
+        if (n.includes('notebook') || n.includes('laptop')) return <Laptop className="h-6 w-6 text-primary-600 group-hover:text-white" />;
+        if (n.includes('projetor') || n.includes('datashow')) return <Projector className="h-6 w-6 text-primary-600 group-hover:text-white" />;
+        if (n.includes('caixa') || n.includes('som') || n.includes('audio')) return <Speaker className="h-6 w-6 text-primary-600 group-hover:text-white" />;
+        if (n.includes('camera') || n.includes('camara') || n.includes('foto')) return <Camera className="h-6 w-6 text-primary-600 group-hover:text-white" />;
+        if (n.includes('microfone')) return <Mic className="h-6 w-6 text-primary-600 group-hover:text-white" />;
+        if (n.includes('tablet') || n.includes('ipad')) return <Smartphone className="h-6 w-6 text-primary-600 group-hover:text-white" />;
+        return <Monitor className="h-6 w-6 text-primary-600 group-hover:text-white" />;
+    };
 
     const fetchBookings = async () => {
         if (!user) return;
@@ -68,13 +82,13 @@ export function TeacherBookings() {
 
         if (isActive) {
             return (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-green-100 text-green-700 border border-green-200 uppercase tracking-widest">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-black bg-green-100 text-green-700 border border-green-200 uppercase tracking-widest leading-none">
                     Ativo
                 </span>
             );
         } else {
             return (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-red-100 text-red-700 border border-red-200 uppercase tracking-widest">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-black bg-red-100 text-red-700 border border-red-200 uppercase tracking-widest leading-none">
                     Encerrado
                 </span>
             );
@@ -115,26 +129,33 @@ export function TeacherBookings() {
                         const isExpired = now > bookingEnd;
 
                         return (
-                            <div key={booking.id} className="group relative bg-white shadow-sm rounded-3xl p-8 border border-gray-100 hover:shadow-2xl hover:shadow-primary-100/30 transition-all duration-300 flex flex-col justify-between">
+                            <div key={booking.id} className="group relative bg-white shadow-sm rounded-[2.5rem] p-8 border border-gray-100 hover:shadow-2xl hover:shadow-primary-100/30 transition-all duration-300 flex flex-col justify-between">
                                 <div>
-                                    <div className="flex justify-between items-start mb-6">
+                                    <div className="flex justify-between items-start mb-8">
                                         <div className="flex items-center">
-                                            <div className="bg-primary-50 p-3 rounded-2xl group-hover:bg-primary-600 group-hover:text-white transition-all duration-300">
-                                                <Monitor className="h-6 w-6 text-primary-600 group-hover:text-white" />
+                                            <div className="bg-primary-50 p-4 rounded-3xl group-hover:bg-primary-600 group-hover:text-white transition-all duration-300">
+                                                {getEquipmentIcon(booking.equipment?.name)}
                                             </div>
                                             <div className="ml-4">
-                                                <h3 className="text-lg font-black text-gray-900 leading-tight group-hover:text-primary-600 transition-colors">
+                                                <h3 className="text-xl font-black text-gray-900 leading-tight tracking-tight group-hover:text-primary-600 transition-colors">
                                                     {booking.equipment?.name || 'Equipamento'}
                                                 </h3>
-                                                <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest mt-1">
-                                                    {booking.equipment?.brand} {booking.equipment?.model}
-                                                </p>
+                                                <div className="flex flex-col gap-2 mt-1.5">
+                                                    <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest leading-none">
+                                                        {booking.equipment?.brand} {booking.equipment?.model}
+                                                    </p>
+                                                    <div className="flex items-center text-primary-600 bg-primary-50 px-2.5 py-1 rounded-lg border border-primary-100 w-fit">
+                                                        <Hash className="h-3 w-3 mr-1" />
+                                                        <span className="text-[10px] font-black uppercase tracking-wider">
+                                                            {booking.quantity} {booking.quantity === 1 ? 'Unidade' : 'Unidades'}
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div className="inline-block mb-6">
-                                        {getStatusBadge(booking)}
+                                        <div className="ml-2">
+                                            {getStatusBadge(booking)}
+                                        </div>
                                     </div>
 
                                     <div className="space-y-4 text-sm text-gray-600">
