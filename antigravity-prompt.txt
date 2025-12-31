@@ -1,0 +1,724 @@
+# PROMPT TÉCNICO - SISTEMA DE AGENDAMENTO DE EQUIPAMENTOS ESCOLARES COLÉGIO OBJETIVO
+
+Crie um sistema web completo de agendamento de equipamentos escolares com as seguintes especificações:
+
+---
+
+## TECNOLOGIAS OBRIGATÓRIAS
+- React com TypeScript
+- Tailwind CSS para estilização
+- Supabase para backend e autenticação (já configurado via MCP)
+- Recharts para gráficos do dashboard
+- Lucide React para ícones
+- Design profissional e moderno com cores: azul escuro (#2D3561) como cor principal
+
+---
+
+## ESTRUTURA DO BANCO DE DADOS
+
+### Tabela `users` (Professores)
+Campos necessários:
+- ID único
+- Número TOTVS (único, obrigatório)
+- Nome completo
+- Email institucional (único, obrigatório)
+- Senha (hash)
+- Unidades (array, pode trabalhar em múltiplas unidades)
+- Role: 'teacher'
+- Data de criação
+
+### Tabela `admins` (Administradores)
+Campos necessários:
+- ID único
+- Username (único)
+- Senha (hash)
+- Unidade específica que gerencia
+- Role: 'admin'
+
+**Admins pré-configurados:**
+| Username | Senha | Unidade |
+|----------|-------|---------|
+| saovicente | Sup0rt3T1 | Objetivo São Vicente |
+| praiagrande | Sup0rt3T1 | Objetivo Praia Grande |
+| embare | Sup0rt3T1 | Objetivo Embaré |
+| conselheironebias | Sup0rt3T1 | Objetivo Conselheiro Nébias |
+| pontadapraia | Sup0rt3T1 | Objetivo Ponta da Praia |
+| guaruja | Sup0rt3T1 | Objetivo Guarujá |
+| saojosedoscampos | Sup0rt3T1 | Objetivo São José dos Campos |
+
+### Tabela `equipment` (Equipamentos)
+Campos necessários:
+- ID único
+- Unidade (qual unidade possui o equipamento)
+- Nome do equipamento (ex: Notebook, Tablet, Microfone, Caixa de Som)
+- Marca
+- Modelo
+- Quantidade total disponível
+- Datas de criação e atualização
+
+### Tabela `bookings` (Agendamentos)
+Campos necessários:
+- ID único
+- ID do usuário (professor)
+- Unidade
+- Local (sala/ambiente)
+- Data do agendamento
+- Hora de início
+- Hora de término
+- ID do equipamento
+- Quantidade reservada
+- Observações (opcional)
+- Status ('active' ou 'encerrado')
+- Termo assinado (boolean)
+- Documento do termo (JSON com todos os dados)
+- Datas de criação e atualização
+
+### Tabela `settings` (Configurações por Unidade)
+Campos necessários:
+- ID único
+- Unidade
+- Agendamento antecipado habilitado (boolean)
+- Horas de antecedência mínima (número)
+- Data de atualização
+
+---
+
+## LISTA DE UNIDADES DO COLÉGIO OBJETIVO
+1. Objetivo São Vicente
+2. Objetivo Praia Grande
+3. Objetivo Embaré
+4. Objetivo Conselheiro Nébias
+5. Objetivo Ponta da Praia
+6. Objetivo Guarujá
+7. Objetivo São José dos Campos
+
+---
+
+## FUNCIONALIDADES DO SISTEMA
+
+### 1. AUTENTICAÇÃO E CADASTRO
+
+#### Página de Login
+- Mesma página para professores e admins
+- Campos: usuário/número TOTVS e senha
+- Link "Esqueci minha senha" (recuperação via email)
+- Link "Criar conta" (apenas para professores)
+- Sistema deve identificar automaticamente se é admin ou professor após login
+
+#### Cadastro de Professor
+Campos obrigatórios:
+- **Unidades do Objetivo**: Dropdown com múltipla seleção (professor pode trabalhar em várias unidades)
+  - Informar ao professor: "Selecione TODAS as unidades onde você trabalha"
+  - Armazenar como array no banco
+- **Número de Usuário TOTVS**: Campo de texto
+- **Nome Completo**: Campo de texto
+- **Email Institucional**: Campo de email (usado para recuperação de senha)
+- **Senha**: Campo password
+- **Confirmar Senha**: Campo password
+
+Validações:
+- Email institucional deve ser único
+- Número TOTVS deve ser único
+- Senha mínima de 8 caracteres
+
+---
+
+### 2. ÁREA DO PROFESSOR
+
+#### Menu de Navegação (Header)
+- Logo Colégio Objetivo (lado esquerdo)
+- Links: Início | Agendamentos | Horário de Aulas | Ajuda | Admin (se for admin)
+- Botão de Logout
+
+#### 2.1 Página "Início" - Novo Agendamento
+
+**Formulário em 3 Etapas (design com steps visuais no topo)**
+
+**ETAPA 1: Dados Básicos**
+Interface:
+- Título: "Novo Agendamento"
+- Subtítulo: "Preencha as informações abaixo para reservar seus equipamentos"
+- Progress indicator mostrando 3 etapas com ícones
+
+Campos:
+1. **Unidade Objetivo** (ícone de prédio)
+   - Dropdown mostrando APENAS as unidades onde o professor trabalha (do cadastro dele)
+   - Label: "Unidade Objetivo *"
+   - Obrigatório
+
+2. **Número de Usuário TOTVS** (ícone de chave)
+   - Campo de texto
+   - Label: "Número de Usuário TOTVS *"
+   - Helper text: "O número de usuário TOTVS está no seu crachá"
+   - Obrigatório
+
+3. **Nome Completo** (ícone de usuário)
+   - Campo de texto
+   - **Preenchimento automático**: Quando o professor digitar o número TOTVS, o sistema busca e preenche automaticamente o nome completo do banco de dados
+   - Somente leitura após preenchido
+   - Label: "Nome Completo"
+
+4. **Local** (ícone de localização)
+   - Campo de texto
+   - Label: "Local *"
+   - Placeholder: "Ex: sala 10, laboratório, auditório"
+   - Obrigatório
+
+5. **Data** (ícone de calendário)
+   - Date picker
+   - Label: "Data *"
+   - Não permitir datas passadas
+   - Obrigatório
+
+6. **Hora Início** (ícone de relógio)
+   - Time picker
+   - Label: "Hora Início *"
+   - Formato: HH:mm
+   - Obrigatório
+
+7. **Hora Término** (ícone de relógio)
+   - Time picker
+   - Label: "Hora Término *"
+   - Formato: HH:mm
+   - Validação: deve ser posterior à hora de início
+   - Obrigatório
+
+**Validação especial - Antecedência mínima:**
+- Verificar se a configuração de antecedência está ativada para aquela unidade
+- Se ativada, verificar se o horário escolhido respeita as horas mínimas de antecedência
+- Se não respeitar, mostrar erro destacado: "❌ É necessário agendar com no mínimo [X] horas de antecedência. Por favor, escolha outro horário."
+- Não permitir avançar para próxima etapa
+
+Botão: "Próximo" (azul, lado direito)
+
+---
+
+**ETAPA 2: Equipamentos**
+
+Interface:
+- Título: "Equipamentos Disponíveis"
+- Subtítulo: "Selecione os equipamentos e defina a quantidade desejada"
+- Banner verde de sucesso: "✅ Quantidades atualizadas para [data] das [hora início] às [hora término]"
+
+**Lógica de disponibilidade:**
+1. Sistema busca todos os equipamentos cadastrados para aquela unidade
+2. Para cada equipamento, calcula quantos já estão reservados para aquele horário específico
+3. Mostra apenas a quantidade disponível
+
+**Cards de Equipamentos** (grid 2 colunas)
+Para cada equipamento mostrar:
+- Ícone do equipamento
+- Nome do equipamento (ex: "Notebook")
+- Status de disponibilidade:
+  - Se disponível: "[X] disponível" (texto verde)
+  - Se TODOS reservados: "TODOS OS [EQUIPAMENTOS] JÁ ESTÃO RESERVADOS" (texto vermelho, negrito, destacado)
+- Campo de quantidade:
+  - Input numérico
+  - Min: 0
+  - Max: quantidade disponível
+  - Se não houver disponível, input desabilitado com valor 0
+
+Validação:
+- Professor DEVE selecionar pelo menos 1 equipamento com quantidade > 0
+- Não permitir avançar sem seleção
+- Mostrar erro se tentar avançar sem selecionar: "Por favor, selecione pelo menos um equipamento"
+
+Botões: 
+- "← Anterior" (cinza, lado esquerdo)
+- "Próximo" (azul, lado direito)
+
+---
+
+**ETAPA 3: Confirmação**
+
+Interface:
+- Título: "Confirme seu Agendamento"
+- Subtítulo: "Revise as informações antes de finalizar"
+
+**Resumo do Agendamento (2 colunas)**
+
+Coluna esquerda:
+- **NOME COMPLETO**: [Nome do professor]
+- **DATA**: [Data formatada]
+- **EQUIPAMENTOS SELECIONADOS**: Lista com cada equipamento e quantidade
+
+Coluna direita:
+- **LOCAL**: [Local]
+- **HORÁRIO**: [HH:mm - HH:mm]
+
+**Observações** (opcional)
+- Textarea
+- Label: "📝 Observações (opcional)"
+- Placeholder: "Adicione observações sobre o agendamento..."
+- Max 500 caracteres
+
+**Termo de Responsabilidade** (destaque visual)
+
+Box com borda:
+- Checkbox obrigatório
+- Texto: "Li e aceito os termos de responsabilidade e uso dos equipamentos"
+- Link ao lado: "📄 Visualizar Termo" (abre modal)
+
+**Modal do Termo:**
+- Título: "Termo de Responsabilidade e Uso"
+- Conteúdo: Termo completo com TODAS as informações preenchidas automaticamente:
+  - [Nome Completo] → Nome do professor
+  - [Número de Usuário TOTVS] → Número TOTVS
+  - [Unidade Objetivo] → Unidade selecionada
+  - [Local] → Local informado
+  - [Data] → Data do agendamento
+  - [Hora Início] → Hora inicial
+  - [Hora Término] → Hora final
+  - [Nome do Equipamento] → Nome de cada equipamento selecionado
+  - [Marca] → Marca do equipamento (do cadastro)
+  - [Modelo] → Modelo do equipamento (do cadastro)
+  - [Quantidade] → Quantidade reservada
+  - [Data e Hora do Sistema] → Timestamp atual
+
+**CONTEÚDO DO TERMO:**
+```
+[LOGO COLÉGIO OBJETIVO]
+
+DECLARAÇÃO DE RESPONSABILIDADE E TERMO DE USO
+
+Declaro que eu, [Nome Completo], portador(a) do número de usuário TOTVS [Número de Usuário TOTVS], estou ciente e de acordo com as condições de uso do(s) equipamento(s) abaixo descrito(s), responsabilizando-me integralmente por sua utilização durante o período de agendamento.
+
+DADOS DO AGENDAMENTO
+Unidade: [Unidade Objetivo]
+Local: [Local]
+Data: [Data]
+Horário: [Hora Início] às [Hora Término]
+
+EQUIPAMENTO(S) RESERVADO(S)
+Equipamento: [Nome do Equipamento]
+Marca: [Marca]
+Modelo: [Modelo]
+Quantidade: [Quantidade] unidade(s)
+
+COMPROMISSOS E RESPONSABILIDADES
+Ao aceitar este termo, comprometo-me a:
+
+1. Utilizar o equipamento exclusivamente durante o período agendado e no local especificado acima.
+
+2. Orientar adequadamente o uso do equipamento, quando utilizado por alunos, zelando por sua conservação e bom funcionamento.
+
+3. Responsabilizar-me por qualquer dano decorrente de mau uso ocorrido durante o período em que o equipamento estiver sob minha responsabilidade, incluindo o uso realizado pelos alunos.
+
+4. Informar imediatamente ao responsável pela Educação Digital sobre qualquer dano, defeito ou problema identificado no equipamento.
+
+5. Devolver o equipamento ao responsável pela Educação Digital ao término do agendamento, nas mesmas condições em que foi recebido.
+
+6. Utilizar o equipamento exclusivamente para fins educacionais e pedagógicos, em conformidade com as diretrizes do Colégio Objetivo.
+
+TERMO DE CIÊNCIA
+Declaro estar ciente de que:
+- A utilização inadequada do equipamento pode resultar em medidas administrativas cabíveis.
+- Sou responsável pela segurança e integridade do equipamento durante todo o período de uso.
+- Qualquer dano causado por negligência, imperícia ou imprudência será de minha responsabilidade.
+- O não cumprimento deste termo pode resultar na suspensão de futuros agendamentos.
+
+ASSINATURA DIGITAL
+Por estar de acordo com todos os termos acima descritos, firmo digitalmente o presente termo.
+
+Nome Completo: [Nome Completo]
+Número TOTVS: [Número de Usuário TOTVS]
+Unidade: [Unidade Objetivo]
+Assinatura Digital: [Nome Completo]
+Data e Hora da Aceitação: [Data e Hora do Sistema]
+```
+
+- Botão: "Baixar Termo (PDF)" no modal
+- Fechar modal
+
+Validação:
+- Checkbox do termo DEVE estar marcado para confirmar
+- Se não marcado, mostrar erro ao tentar confirmar
+
+Botões:
+- "← Anterior" (cinza, lado esquerdo)
+- "Confirmar Agendamento" (verde, lado direito)
+
+**Após confirmação:**
+- Salvar agendamento no banco com status 'active'
+- Salvar o termo completo gerado em formato JSON no campo term_document
+- Marcar term_signed como true
+- Mostrar mensagem de sucesso: "✅ Agendamento realizado com sucesso!"
+- Redirecionar para página "Agendamentos" após 2 segundos
+
+---
+
+#### 2.2 Página "Agendamentos"
+
+**Modal de Seleção Inicial** (ao entrar na página)
+- Overlay bloqueando a tela
+- Modal centralizado
+- Título: "Selecione a Unidade"
+- Subtítulo: "Selecione a unidade do Objetivo que deseja visualizar os agendamentos"
+- Dropdown com as unidades (mostrar TODAS as unidades, não apenas as do professor)
+- Botão: "Visualizar Agendamentos"
+
+**Após seleção:**
+- Fechar modal
+- Exibir página de agendamentos
+
+**Layout da Página:**
+- Título: "Agendamentos"
+- Subtítulo: "Visualize todos os agendamentos realizados no sistema"
+- Barra de busca: "🔍 Pesquisar por nome..."
+- Grid de cards (3 colunas)
+
+**Card de Agendamento:**
+Informações exibidas:
+- Ícone de usuário + Nome do professor
+- Ícone de equipamento + Nome do equipamento
+- Quantidade: "X unidades"
+- Ícone de localização + Local
+- Ícone de calendário + Data formatada
+- Ícone de relógio + Horário (HH:mm - HH:mm)
+- **Badge de Status**:
+  - Se status = 'active' E horário atual < hora término: Badge verde "Ativo"
+  - Se horário atual >= hora término: Badge vermelho "Encerrado" (atualizar automaticamente o status no banco)
+- Se houver observações: Ícone "📝 OBSERVAÇÕES:" + texto
+
+**Regras:**
+- Professores podem ver agendamentos de TODOS os professores da unidade selecionada
+- Professores NÃO podem editar ou cancelar agendamentos
+- Professores NÃO podem visualizar termos de outros professores
+- Atualização automática de status: Sistema verifica constantemente se o horário de término já passou e atualiza para "Encerrado"
+
+---
+
+### 3. ÁREA DO ADMINISTRADOR
+
+Acesso: Admin faz login com username e senha → Sistema redireciona automaticamente para painel admin
+
+#### Menu Lateral (Sidebar)
+- Logo Colégio Objetivo
+- Nome da unidade do admin
+- Itens do menu:
+  - 📊 Dashboard
+  - 📅 Agendamentos
+  - 💻 Equipamentos
+  - 👥 Usuários
+  - ⚙️ Configurações
+  - 🚪 Sair
+
+---
+
+#### 3.1 Dashboard (página inicial do admin)
+
+**Estatísticas em Cards (4 cards no topo)**
+1. Total de Agendamentos (mês atual)
+2. Total de Equipamentos Cadastrados
+3. Total de Professores Cadastrados
+4. Agendamentos Ativos (neste momento)
+
+**Gráficos Interativos** (usar Recharts)
+
+**Gráfico 1: Agendamentos por Período**
+- Tipo: Gráfico de linhas
+- Filtros: "Última Semana" | "Último Mês" | "Último Ano"
+- Eixo X: Dias/Semanas/Meses
+- Eixo Y: Quantidade de agendamentos
+- Animado e colorido
+
+**Gráfico 2: Professores que Mais Agendaram**
+- Tipo: Gráfico de barras horizontais
+- Mostrar top 10 professores
+- Filtros: "Esta Semana" | "Este Mês"
+- Cores gradientes
+
+**Gráfico 3: Equipamentos Mais Agendados**
+- Tipo: Gráfico de pizza/rosca
+- Mostrar % de cada equipamento
+- Legenda com cores
+- Animação ao hover
+
+**Gráfico 4: Horários de Pico**
+- Tipo: Heatmap ou gráfico de barras
+- Mostrar quais horários têm mais agendamentos
+- Agrupado por: Manhã (7h-12h), Tarde (12h-18h), Noite (18h-23h)
+
+**Gráfico 5: Taxa de Utilização de Equipamentos**
+- Tipo: Gráfico de barras empilhadas
+- Para cada equipamento mostrar: quantidade total vs quantidade média reservada
+- Percentual de utilização
+
+**Design:**
+- Cores vibrantes e profissionais
+- Animações suaves
+- Tooltips informativos
+- Responsivo
+
+---
+
+#### 3.2 Agendamentos (Admin)
+
+**Layout:**
+- Título: "Gerenciar Agendamentos"
+- Barra de busca: "🔍 Pesquisar por professor, equipamento ou local..."
+- Filtros: Status (Todos | Ativos | Encerrados), Data
+- Grid de cards
+
+**Card de Agendamento (versão admin):**
+Todas as informações do card do professor +
+- Botão: "👁️ Ver Termo" (abre modal com termo)
+- Botão: "✏️ Editar" (abre modal de edição)
+- Botão: "🗑️ Excluir" (confirmação antes de deletar)
+
+**Modal "Ver Termo":**
+- Exibir o termo completo formatado
+- Botão: "📥 Baixar PDF"
+- Fechar modal
+
+**Modal "Editar Agendamento":**
+- Permitir editar: Local, Data, Horário, Quantidade de equipamentos, Observações
+- Botão: "Salvar Alterações"
+- Validar disponibilidade se mudar horário/quantidade
+
+**Exclusão:**
+- Confirmar com modal: "Tem certeza que deseja excluir este agendamento?"
+- Botões: "Cancelar" | "Sim, Excluir"
+
+**Atualização automática de status:**
+- Sistema verifica periodicamente e muda status de 'active' para 'encerrado' quando horário passar
+
+---
+
+#### 3.3 Equipamentos (Admin)
+
+**Layout:**
+- Título: "Gerenciar Equipamentos"
+- Botão: "+ Cadastrar Equipamento" (destacado, canto superior direito)
+- Tabela com colunas:
+  - Equipamento (nome)
+  - Marca
+  - Modelo
+  - Quantidade Total
+  - Ações (Editar | Excluir)
+
+**Modal "Cadastrar Equipamento":**
+Campos:
+- **Nome do Equipamento**: Campo de texto livre (admin pode cadastrar qualquer equipamento)
+  - Placeholder: "Ex: Notebook, Projetor, Câmera, etc."
+- **Marca**: Campo de texto
+- **Modelo**: Campo de texto
+- **Quantidade Total**: Campo numérico (mínimo 1)
+
+Botões: "Cancelar" | "Cadastrar"
+
+**Editar Equipamento:**
+- Mesmo formulário do cadastro
+- Pré-preenchido com dados atuais
+- Botão: "Salvar Alterações"
+
+**Excluir Equipamento:**
+- Verificar se há agendamentos ativos usando este equipamento
+- Se houver: "❌ Não é possível excluir. Existem agendamentos ativos com este equipamento."
+- Se não houver: Confirmar exclusão
+
+**Regras:**
+- Equipamentos são específicos por unidade (cada admin vê e gerencia apenas os da sua unidade)
+- Ao cadastrar, associar automaticamente à unidade do admin logado
+
+---
+
+#### 3.4 Usuários (Admin)
+
+**Layout:**
+- Título: "Professores Cadastrados"
+- Subtítulo: "Visualize todos os professores que trabalham na sua unidade"
+- Barra de busca: "🔍 Pesquisar por nome ou número TOTVS..."
+- Tabela com colunas:
+  - Nome Completo
+  - Número TOTVS
+  - Email Institucional
+  - Unidades (mostrar todas as unidades do professor)
+  - Ações (Editar | Excluir)
+
+**Filtro:**
+- Mostrar apenas professores que têm a unidade do admin no array de unidades deles
+
+**Modal "Editar Professor":**
+Campos editáveis:
+- Nome Completo
+- Email Institucional
+- Unidades (múltipla seleção)
+- Senha (opcional, só preencher se quiser alterar)
+
+Botões: "Cancelar" | "Salvar Alterações"
+
+**Excluir Professor:**
+- Confirmar: "Tem certeza que deseja excluir este professor?"
+- Verificar se há agendamentos futuros
+- Se houver: avisar e perguntar se deseja continuar
+
+---
+
+#### 3.5 Configurações (Admin)
+
+**Layout:**
+- Título: "Configurações da Unidade"
+- Cards de configuração
+
+**Card: Antecedência Mínima para Agendamentos**
+
+Conteúdo:
+- Título: "⏰ Antecedência Mínima"
+- Descrição: "Defina se os professores precisam agendar com antecedência mínima"
+
+- **Toggle Switch** (estilo iOS)
+  - Label: "Ativar antecedência mínima"
+  - Cor: Azul quando ativo
+  
+- **Campo numérico** (aparece apenas se toggle ativo)
+  - Label: "Horas de antecedência mínima"
+  - Input numérico
+  - Min: 1, Max: 72
+  - Helper text: "Professores só poderão agendar com pelo menos X horas de antecedência"
+
+- Botão: "Salvar Configurações" (verde)
+
+**Lógica:**
+- Salvar na tabela settings associado à unidade do admin
+- Ao salvar, mostrar mensagem de sucesso
+- Essa configuração afeta apenas a unidade do admin logado
+
+---
+
+## REGRAS DE NEGÓCIO CRÍTICAS
+
+### Disponibilidade de Equipamentos
+1. Quantidade disponível = Quantidade total cadastrada - Soma de quantidades reservadas no mesmo horário
+2. Verificar sobreposição de horários:
+   - Agendamento 1: 10:00 - 12:00
+   - Agendamento 2: 11:00 - 13:00
+   - Esses dois agendamentos TÊM conflito de horário
+3. Se quantidade disponível = 0, mostrar "TODOS JÁ ESTÃO RESERVADOS"
+4. Não permitir agendar quantidade maior que disponível
+
+### Status Automático
+- Sistema deve ter um processo que verifica constantemente (pode ser ao carregar página ou a cada X minutos)
+- Se hora_termino < hora_atual: mudar status para 'encerrado'
+- Se hora_termino >= hora_atual: status permanece 'active'
+
+### Antecedência Mínima
+- Verificar configuração da unidade
+- Se ativo: calcular diferença entre data/hora do agendamento e data/hora atual
+- Se diferença < horas configuradas: bloquear e mostrar erro
+
+### Isolamento de Dados por Unidade
+- Admin só vê e gerencia: equipamentos, agendamentos e configurações da SUA unidade
+- Professor ao fazer agendamento: vê equipamentos da unidade selecionada
+- Professor ao visualizar agendamentos: vê agendamentos da unidade selecionada
+
+---
+
+## DESIGN E UX
+
+### Paleta de Cores
+- **Cor Principal**: Azul escuro #2D3561 (como no header dos prints)
+- **Cor Secundária**: Verde #10B981 (botões de ação positiva)
+- **Cor de Alerta**: Vermelho #EF4444
+- **Cor de Fundo**: Cinza claro #F3F4F6
+- **Texto**: Cinza escuro #1F2937
+
+### Tipografia
+- Fonte: Inter ou similar (moderna e clean)
+- Títulos: Bold, tamanho maior
+- Corpo: Regular, legível
+
+### Componentes
+- **Inputs**: Borda sutil, foco com borda azul, ícones à esquerda
+- **Botões**: Arredondados, sombra sutil, hover com transição suave
+- **Cards**: Fundo branco, borda sutil, sombra leve, hover com elevação
+- **Modals**: Overlay escuro semitransparente, modal centralizado, animação suave
+- **Progress Steps**: Círculos com números, linha conectando, estado ativo em azul
+
+### Responsividade
+- Desktop: Layout completo
+- Tablet: Grid responsivo (2 colunas)
+- Mobile: Single column, menu hamburger
+
+### Animações
+- Transições suaves (300ms)
+- Gráficos com animação ao carregar
+- Feedback visual em todas as ações
+- Loading states apropriados
+
+---
+
+## VALIDAÇÕES E MENSAGENS
+
+### Mensagens de Erro
+- ❌ Erro ao fazer login: "Credenciais inválidas"
+- ❌ Campos obrigatórios vazios: "Por favor, preencha todos os campos obrigatórios"
+- ❌ Email já cadastrado: "Este email já está em uso"
+- ❌ Número TOTVS já cadastrado: "Este número TOTVS já está registrado"
+- ❌ Horário inválido: "Hora de término deve ser posterior à hora de início"
+- ❌ Antecedência não respeitada: "É necessário agendar com no mínimo [X] horas de antecedência"
+- ❌ Sem equipamentos disponíveis: "TODOS OS [EQUIPAMENTOS] JÁ ESTÃO RESERVADOS"
+- ❌ Não selecionou equipamentos: "Por favor, selecione pelo menos um equipamento"
+- ❌ Termo não aceito: "Você precisa aceitar os termos para confirmar o agendamento"
+
+### Mensagens de Sucesso
+- ✅ Cadastro realizado: "Cadastro realizado com sucesso! Faça login para continuar."
+- ✅ Agendamento confirmado: "Agendamento realizado com sucesso!"
+- ✅ Equipamento cadastrado: "Equipamento cadastrado com sucesso!"
+- ✅ Configurações salvas: "Configurações atualizadas com sucesso!"
+- ✅ Dados atualizados: "Informações atualizadas com sucesso!"
+
+### Mensagens de Confirmação
+- ⚠️ Excluir agendamento: "Tem certeza que deseja excluir este agendamento?"
+- ⚠️ Excluir equipamento: "Tem certeza que deseja excluir este equipamento?"
+- ⚠️ Excluir professor: "Tem certeza que deseja excluir este professor? Esta ação não pode ser desfeita."
+
+---
+
+## SEGURANÇA
+
+### Autenticação
+- Usar Supabase Auth para hash de senhas
+- Sessões seguras
+- Tokens JWT
+
+### Autorização
+- Professor não pode acessar rotas de admin
+- Admin não pode acessar dados de outras unidades
+- Validações no backend (Supabase RLS)
+
+### Validações
+- Sanitizar todos os inputs
+- Validação de dados no frontend e backend
+- Prevenir SQL injection (Supabase já protege)
+
+---
+
+## FLUXOS PRINCIPAIS
+
+### Fluxo 1: Professor Fazendo Agendamento
+1. Login
+2. Clica em "Início"
+3. Seleciona unidade (onde vai usar)
+4. Preenche dados básicos (sistema autocompleta nome ao digitar TOTVS)
+5. Valida antecedência mínima
+6. Clica "Próximo"
+7. Vê equipamentos disponíveis para aquele horário
+8. Seleciona equipamentos e quantidades
+9. Clica "Próximo"
+10. Revisa informações
+11. Adiciona observações (opcional)
+12. Clica "Visualizar Termo"
+13. Lê termo completo preenchido
+14. Fecha modal
+15. Marca checkbox "Aceito os termos"
+16. Clica "Confirmar Agendamento"
+17. Recebe confirmação de sucesso
+18. É redirecionado para página Agendamentos
+
+### Fluxo 2: Admin Cadastrando Equipamento
+1. Login como admin
+2. Menu lateral > Equipamentos
+3. Clica "+ Cadastrar Equipamento"
+4. Preenche: nome, marca, modelo, quantidade
+5. Clica "Cadastrar"

@@ -1,0 +1,67 @@
+export interface User {
+    id: string;
+    totvs_number: string;
+    full_name: string;
+    email: string;
+    units: string[];
+    role: 'teacher';
+    active: boolean;
+    created_at: string;
+}
+
+export interface Admin {
+    id: string;
+    username: string;
+    unit: string;
+    role: 'admin';
+}
+
+export interface Equipment {
+    id: string;
+    unit: string;
+    name: string;
+    brand?: string;
+    model?: string;
+    total_quantity: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Booking {
+    id: string;
+    user_id: string;
+    unit: string;
+    local: string;
+    booking_date: string;
+    start_time: string;
+    end_time: string;
+    equipment_id: string;
+    quantity: number;
+    observations?: string;
+    status: 'active' | 'encerrado' | 'cancelled' | 'cancelled_by_user';
+    term_signed: boolean;
+    term_document?: any;
+    created_at: string;
+    updated_at: string;
+
+    // Joins
+    equipment?: Equipment;
+    users?: User;
+}
+
+export interface Settings {
+    id: string;
+    unit: string;
+    min_advance_time_enabled: boolean;
+    min_advance_time_hours: number;
+    updated_at: string;
+}
+
+export type UserRole = 'teacher' | 'admin';
+
+export interface AuthState {
+    user: User | Admin | null;
+    role: UserRole | null;
+    isAuthenticated: boolean;
+    isLoading: boolean;
+}
