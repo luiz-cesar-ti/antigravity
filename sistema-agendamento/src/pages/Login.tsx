@@ -45,7 +45,10 @@ export function Login() {
                     </div>
 
                     <h1 className="text-5xl font-black text-white leading-tight tracking-tight mb-6">
-                        Excelência no <span className="text-primary-300">Agendamento</span>
+                        Sistema de agendamentos <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 animate-pulse drop-shadow-sm">
+                            Objetivo
+                        </span>
                     </h1>
 
                     <p className="text-primary-100 text-lg font-medium leading-relaxed mb-12">
@@ -77,7 +80,7 @@ export function Login() {
             </div>
 
             {/* Right Side: Login Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50/50">
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 bg-gray-50/50">
                 <div className="max-w-md w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {/* Mobile Logo */}
                     <div className="lg:hidden flex flex-col items-center mb-12">

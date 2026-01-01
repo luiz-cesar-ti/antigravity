@@ -7,7 +7,6 @@ import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Booking } from '../types';
 import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 export function TeacherBookings() {
     const { user } = useAuth();
@@ -196,7 +195,7 @@ export function TeacherBookings() {
                                     )}
                                 </div>
 
-                                <div className="mt-8 flex gap-3">
+                                <div className="mt-8 flex flex-col sm:flex-row gap-3">
                                     {!isExpired && booking.status === 'active' && (
                                         <button
                                             onClick={() => setDeleteModal({ isOpen: true, bookingId: booking.id })}

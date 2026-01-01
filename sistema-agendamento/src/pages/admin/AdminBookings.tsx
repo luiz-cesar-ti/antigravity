@@ -355,7 +355,7 @@ export function AdminBookings() {
                                             </div>
 
                                             <div className="flex items-center gap-6 ml-auto">
-                                                <div className="hidden md:block">
+                                                <div className="block">
                                                     {getStatusBadge(booking)}
                                                 </div>
                                                 <div className="flex items-center gap-2">
