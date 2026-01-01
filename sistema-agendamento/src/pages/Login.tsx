@@ -45,10 +45,7 @@ export function Login() {
                     </div>
 
                     <h1 className="text-5xl font-black text-white leading-tight tracking-tight mb-6">
-                        Sistema de agendamentos <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 animate-pulse drop-shadow-sm">
-                            Objetivo
-                        </span>
+                        Sistema de agendamentos <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 drop-shadow-sm">Objetivo</span>
                     </h1>
 
                     <p className="text-primary-100 text-lg font-medium leading-relaxed mb-12">
