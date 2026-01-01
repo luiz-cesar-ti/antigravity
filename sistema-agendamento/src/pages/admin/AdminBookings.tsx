@@ -124,7 +124,7 @@ export function AdminBookings() {
                 const html2pdf = (module.default || module) as any;
 
                 const opt = {
-                    margin: 10,
+                    margin: 0,
                     filename: fileName,
                     image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: {

@@ -22,9 +22,8 @@ interface TermData {
     endTime?: string;
     end_time?: string; // Admin view
     equipments?: TermEquipment[];
-    term_document?: {
-        equipments: TermEquipment[];
-    };
+    term_document?: any; // Allow loose access
+    users?: any; // Allow loose access
     created_at?: string;
     timestamp?: string;
 }
@@ -35,23 +34,22 @@ interface TermDocumentProps {
 }
 
 export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
-    // Helper to extract data regardless of source (Wizard or DB)
-    const getName = () => data.full_name || data.userName || '';
-    const getTotvs = () => data.totvs_number || data.userTotvs || '';
-    const getUnit = () => data.unit || '';
-    const getLocal = () => data.local || '';
+    // Helper to extract data regardless of source (Wizard, DB Booking, or Term JSON)
+    const getName = () => data.full_name || data.userName || data.term_document?.userName || data.users?.full_name || '';
+    const getTotvs = () => data.totvs_number || data.userTotvs || data.term_document?.userTotvs || data.users?.totvs_number || '';
+    const getUnit = () => data.unit || data.term_document?.unit || '';
+    const getLocal = () => data.local || data.term_document?.local || '';
 
     const getDate = () => {
-        const d = data.date || data.booking_date;
+        const d = data.date || data.booking_date || data.term_document?.date || data.term_document?.booking_date;
         if (!d) return '';
-        // If it's ISO, try standard format, otherwise split
         if (d.includes('T')) return new Date(d).toLocaleDateString('pt-BR');
         return d.split('-').reverse().join('/');
     };
 
     const getTime = () => {
-        const s = data.startTime || data.start_time;
-        const e = data.endTime || data.end_time;
+        const s = data.startTime || data.start_time || data.term_document?.startTime || data.term_document?.start_time;
+        const e = data.endTime || data.end_time || data.term_document?.endTime || data.term_document?.end_time;
         return `${s} às ${e}`;
     };
 
@@ -178,11 +176,25 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
 
             <div style={{ marginTop: '5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div style={{ width: '50%' }}>
-                    <div style={{ borderBottom: '1px solid #000', marginBottom: '0.5rem', width: '100%' }}>
-                        {/* Signature Line */}
+                    <div style={{
+                        borderBottom: '1px solid #000',
+                        marginBottom: '0.5rem',
+                        width: '100%',
+                        textAlign: 'center',
+                        position: 'relative',
+                        height: '1.5em', // Space for name
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        justifyContent: 'center'
+                    }}>
+                        <span style={{
+                            fontWeight: 'bold',
+                            fontSize: '11pt',
+                            textTransform: 'uppercase',
+                            paddingBottom: '2px' // Visual tweak
+                        }}>{getName()}</span>
                     </div>
-                    <p style={{ fontSize: '10pt', fontWeight: 'bold', textTransform: 'uppercase' }}>{getName()}</p>
-                    <p style={{ fontSize: '9pt', color: '#4b5563' }}>Professor(a) Responsável</p>
+                    <p style={{ fontSize: '9pt', color: '#4b5563', marginTop: '4px' }}>Professor(a) Responsável</p>
                     <p style={{ fontSize: '9pt', color: '#4b5563' }}>TOTVS: {getTotvs()}</p>
                 </div>
 
