@@ -121,15 +121,15 @@ export function AdminLayout() {
             {/* Main Content */}
             <main className="flex-1 overflow-auto flex flex-col w-full">
                 {/* Mobile Header */}
-                <div className="md:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between sticky top-0 z-30">
+                <div className="md:hidden bg-primary-700 border-b border-primary-600 p-4 flex items-center justify-between sticky top-0 z-30">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setIsSidebarOpen(true)}
-                            className="p-2 -ml-2 text-gray-600 rounded-md hover:bg-gray-100"
+                            className="p-2 -ml-2 text-white rounded-md hover:bg-primary-600"
                         >
-                            <Menu className="h-6 w-6 text-primary-600" />
+                            <Menu className="h-6 w-6 text-white" />
                         </button>
-                        <span className="font-bold text-gray-900">Menu</span>
+                        <span className="font-bold text-white">Menu</span>
                     </div>
                 </div>
 
