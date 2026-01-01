@@ -88,9 +88,21 @@ export function Login() {
                     </div>
 
                     <div className="mb-10 text-center">
-                        <h2 className="text-4xl font-black text-gray-900 leading-tight tracking-tight mb-3">
+                        {/* Desktop View */}
+                        <h2 className="hidden lg:block text-4xl font-black text-gray-900 leading-tight tracking-tight mb-3">
                             Bem-Vindo
                         </h2>
+
+                        {/* Mobile View */}
+                        <div className="lg:hidden text-center">
+                            <h2 className="text-2xl font-black text-gray-900 leading-tight tracking-tight mb-2 uppercase">
+                                Sistema de<br />
+                                Agendamentos
+                            </h2>
+                            <span className="inline-block px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 font-black text-xs uppercase tracking-widest">
+                                Objetivo
+                            </span>
+                        </div>
                     </div>
 
                     <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-gray-100">
