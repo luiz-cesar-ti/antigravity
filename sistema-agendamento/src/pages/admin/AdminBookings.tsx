@@ -330,23 +330,23 @@ export function AdminBookings() {
                             filteredBookings.map((booking) => (
                                 <li key={booking.id} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-md hover:border-primary-100 transition-all overflow-hidden group">
                                     <div className="px-8 py-6">
-                                        <div className="flex items-center justify-between flex-wrap gap-4">
-                                            <div className="flex items-center gap-5">
-                                                <div className="p-4 bg-primary-50 rounded-3xl group-hover:bg-primary-100 transition-all duration-300">
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <div className="flex items-start gap-4">
+                                                <div className="p-3 bg-primary-50 rounded-2xl shrink-0 group-hover:bg-primary-100 transition-all duration-300">
                                                     {getEquipmentIcon(booking.equipment?.name)}
                                                 </div>
-                                                <div>
+                                                <div className="min-w-0">
                                                     <p className="text-xl font-black text-gray-900 tracking-tight leading-none">
                                                         {booking.equipment?.name}
                                                     </p>
-                                                    <div className="flex items-center gap-3 mt-2">
+                                                    <div className="flex flex-wrap items-center gap-2 mt-2">
                                                         <div className="flex items-center text-primary-600 bg-primary-50 px-2.5 py-1 rounded-lg border border-primary-100 shadow-sm">
                                                             <Hash className="h-3 w-3 mr-1" />
                                                             <span className="text-[10px] font-black uppercase tracking-wider">
                                                                 {booking.quantity} {booking.quantity === 1 ? 'Unidade' : 'Unidades'}
                                                             </span>
                                                         </div>
-                                                        <span className="flex items-center gap-1 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                                        <span className="flex items-center gap-1 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100 text-[10px] text-gray-500 font-bold uppercase tracking-wider">
                                                             <MapPin className="h-3 w-3" />
                                                             {booking.unit}
                                                         </span>
@@ -354,7 +354,7 @@ export function AdminBookings() {
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-6 ml-auto">
+                                            <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto border-t md:border-t-0 border-gray-50 pt-3 md:pt-0">
                                                 <div className="block">
                                                     {getStatusBadge(booking)}
                                                 </div>
@@ -365,7 +365,8 @@ export function AdminBookings() {
                                                             className="h-10 px-4 bg-white border border-gray-200 text-gray-700 hover:border-primary-200 hover:text-primary-600 font-bold text-xs rounded-xl flex items-center shadow-sm transition-all active:scale-95"
                                                         >
                                                             <FileText className="h-4 w-4 mr-2" />
-                                                            Documento
+                                                            <span className="hidden sm:inline">Documento</span>
+                                                            <span className="sm:hidden">Termo</span>
                                                         </button>
                                                     )}
 

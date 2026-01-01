@@ -127,7 +127,7 @@ export function AdminLayout() {
                             onClick={() => setIsSidebarOpen(true)}
                             className="p-2 -ml-2 text-gray-600 rounded-md hover:bg-gray-100"
                         >
-                            <Menu className="h-6 w-6" />
+                            <Menu className="h-6 w-6 text-primary-600" />
                         </button>
                         <span className="font-bold text-gray-900">Menu</span>
                     </div>
