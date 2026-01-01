@@ -55,31 +55,58 @@ export function AdminDashboard() {
                     startDate = subDays(today, 365); // Last year for "total"
                 }
 
+                // Prepare base queries
+                let activeBookingsQuery = supabase
+                    .from('bookings')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'active')
+                    .gte('booking_date', today.toISOString().split('T')[0]);
+
+                let totalEquipmentQuery = supabase
+                    .from('equipment')
+                    .select('*', { count: 'exact', head: true });
+
+                let totalTeachersQuery = supabase
+                    .from('users')
+                    .select('*', { count: 'exact', head: true });
+
+                let chartsQuery = supabase
+                    .from('bookings')
+                    .select(`
+                        booking_date, 
+                        equipment(name),
+                        users(full_name)
+                    `)
+                    .gte('booking_date', startDate.toISOString().split('T')[0]);
+
+                // Apply Strict Filtering Logic
+                const unit = adminUser.unit;
+                const isMatriz = unit === 'Matriz';
+
+                if (!isMatriz) {
+                    if (unit) {
+                        // Nomal Unit Admin: Filter by their unit
+                        activeBookingsQuery = activeBookingsQuery.eq('unit', unit);
+                        totalEquipmentQuery = totalEquipmentQuery.eq('unit', unit);
+                        totalTeachersQuery = totalTeachersQuery.contains('units', [unit]);
+                        chartsQuery = chartsQuery.eq('unit', unit);
+                    } else {
+                        // Safety fallback: Admin without unit sees nothing (prevents leak)
+                        console.warn('Security Warning: Admin user detected without assigned unit. Access blocked.');
+                        activeBookingsQuery = activeBookingsQuery.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
+                        totalEquipmentQuery = totalEquipmentQuery.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
+                        totalTeachersQuery = totalTeachersQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+                        chartsQuery = chartsQuery.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
+                    }
+                }
+
                 const [bookingsRes, equipmentRes, usersRes, allBookings] = await Promise.all([
-                    supabase
-                        .from('bookings')
-                        .select('*', { count: 'exact', head: true })
-                        .eq('status', 'active')
-                        .gte('booking_date', today.toISOString().split('T')[0]),
-
-                    supabase
-                        .from('equipment')
-                        .select('*', { count: 'exact', head: true }),
-
-                    supabase
-                        .from('users')
-                        .select('*', { count: 'exact', head: true }),
-
-                    supabase
-                        .from('bookings')
-                        .select(`
-                            booking_date, 
-                            equipment(name),
-                            users(full_name)
-                        `)
-                        .gte('booking_date', startDate.toISOString().split('T')[0])
-                        .eq('unit', adminUser.unit)
+                    activeBookingsQuery,
+                    totalEquipmentQuery,
+                    totalTeachersQuery,
+                    chartsQuery
                 ]);
+
 
                 const bookings = allBookings.data || [];
 
@@ -336,7 +363,7 @@ export function AdminDashboard() {
                                     stroke="none"
                                 >
                                     {chartData.popularEquipment.map((_, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        <Cell key={`cell - ${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
                                 <Tooltip

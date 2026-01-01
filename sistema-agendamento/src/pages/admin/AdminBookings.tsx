@@ -40,8 +40,17 @@ export function AdminBookings() {
                 users (full_name, email) 
             `);
 
-        if (role === 'admin' && (user as Admin).unit) {
-            query = query.eq('unit', (user as Admin).unit);
+        if (role === 'admin') {
+            const unit = (user as Admin).unit;
+            if (unit === 'Matriz') {
+                // Matriz admin sees all bookings from all units
+            } else if (unit) {
+                // Unit admin sees ONLY their unit's bookings
+                query = query.eq('unit', unit);
+            } else {
+                // Safety fallback: Admin without unit sees nothing
+                query = query.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
+            }
         }
 
         // Apply date range filter at query level if provided
