@@ -176,8 +176,36 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 </p>
             </div>
 
-            <div style={{ marginTop: '4rem', textAlign: 'left', fontSize: '12pt' }}>
-                Assinatura: {getName()}
+            <div style={{ marginTop: '5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                <div style={{ width: '50%' }}>
+                    <div style={{ borderBottom: '1px solid #000', marginBottom: '0.5rem', width: '100%' }}>
+                        {/* Signature Line */}
+                    </div>
+                    <p style={{ fontSize: '10pt', fontWeight: 'bold', textTransform: 'uppercase' }}>{getName()}</p>
+                    <p style={{ fontSize: '9pt', color: '#4b5563' }}>Professor(a) Responsável</p>
+                    <p style={{ fontSize: '9pt', color: '#4b5563' }}>TOTVS: {getTotvs()}</p>
+                </div>
+
+                <div style={{ textAlign: 'right', fontSize: '9pt', color: '#6b7280' }}>
+                    <p style={{ fontWeight: 'bold', color: '#000', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Assinado Digitalmente</p>
+                    <p>Data: {data.created_at ? new Date(data.created_at).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}</p>
+                    <p>Hora: {data.created_at ? new Date(data.created_at).toLocaleTimeString('pt-BR') : new Date().toLocaleTimeString('pt-BR')}</p>
+                    <div style={{ fontSize: '8pt', marginTop: '0.5rem', fontFamily: 'monospace' }}>
+                        ID: {id || 'PENDING'}
+                    </div>
+                </div>
+            </div>
+
+            <div style={{
+                marginTop: '3rem',
+                borderTop: '1px dashed #e5e7eb',
+                paddingTop: '1rem',
+                textAlign: 'center',
+                fontSize: '8pt',
+                color: '#9ca3af'
+            }}>
+                <p>Este documento foi gerado eletronicamente pelo Sistema de Agendamentos Objetivo.</p>
+                <p>A autenticidade deste documento pode ser verificada junto à coordenação da unidade.</p>
             </div>
         </div>
     );
