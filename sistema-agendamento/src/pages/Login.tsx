@@ -87,7 +87,7 @@ export function Login() {
                         <h1 className="text-2xl font-black text-gray-900 tracking-tight">Colégio Objetivo</h1>
                     </div>
 
-                    <div className="mb-10 text-center">
+                    <div className="mb-6 lg:mb-10 text-center">
                         {/* Desktop View */}
                         <h2 className="hidden lg:block text-4xl font-black text-gray-900 leading-tight tracking-tight mb-3">
                             Bem-Vindo
@@ -95,13 +95,10 @@ export function Login() {
 
                         {/* Mobile View */}
                         <div className="lg:hidden text-center">
-                            <h2 className="text-2xl font-black text-gray-900 leading-tight tracking-tight mb-2 uppercase">
+                            <h2 className="text-2xl font-black text-gray-800 leading-tight tracking-tight uppercase">
                                 Sistema de<br />
-                                Agendamentos
+                                <span className="text-primary-600 text-3xl">Agendamentos</span>
                             </h2>
-                            <span className="inline-block px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 font-black text-xs uppercase tracking-widest">
-                                Objetivo
-                            </span>
                         </div>
                     </div>
 
