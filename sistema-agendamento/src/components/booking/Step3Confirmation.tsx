@@ -12,13 +12,17 @@ import {
     Clock,
     Users,
     X,
-    AlertTriangle
+    AlertTriangle,
+    Share2,
+    Download
 } from 'lucide-react';
 import type { BookingData } from '../../pages/BookingWizard';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
 import { TermDocument } from '../TermDocument';
 import { clsx } from 'clsx';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 
 interface Step3Props {
     data: BookingData;
@@ -33,6 +37,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
     const handleConfirm = async () => {
         if (!data.termAccepted) {
@@ -87,53 +92,55 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
         }
     };
 
-    const handleDownloadPDF = async () => {
+    const handlePdfAction = async (action: 'download' | 'share') => {
         const element = document.getElementById('term-preview-content');
         if (!element) return;
 
-        // Clean filename: remove accents and special characters
+        setIsGeneratingPdf(true);
+
         const safeTotvs = (data.totvs_number || '0000').replace(/[^a-zA-Z0-9]/g, '');
         const fileName = `TERMO_${safeTotvs}_${new Date().toISOString().split('T')[0]}.pdf`;
 
         const opt = {
-            margin: 10,
+            margin: 0,
             filename: fileName,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: {
-                scale: 2,
-                useCORS: true,
-                letterRendering: true
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            image: { type: 'jpeg' as const, quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
         };
 
         try {
-            const module = await import('html2pdf.js');
-            const html2pdf = (module.default || module) as any;
+            const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
 
-            // RECONSTRUÇÃO: Gerar como DataURL para máxima estabilidade de nome
-            const pdfDataUri = await html2pdf().set(opt).from(element).output('datauristring');
-
-            if (!pdfDataUri || pdfDataUri.length < 100) {
-                throw new Error('Falha ao gerar string do PDF');
+            if (action === 'share' && navigator.share) {
+                const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Termo de Responsabilidade',
+                        text: 'Segue em anexo o Termo de Responsabilidade e Uso de Equipamento.'
+                    });
+                } catch (err) {
+                    console.log('User cancelled share or share failed, falling back to download');
+                    // Optional: fallback to download? for now just log
+                }
+            } else {
+                // Download behavior (or fallback)
+                const url = URL.createObjectURL(pdfBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
             }
 
-            // Disparo manual via link <a>
-            const link = document.createElement('a');
-            link.href = pdfDataUri;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-
-            console.log('PDF download (Professor) iniciado via Base64:', fileName);
-
-            // Cleanup
-            setTimeout(() => {
-                document.body.removeChild(link);
-            }, 3000);
         } catch (e) {
             console.error('PDF Error:', e);
-            alert('Erro ao gerar PDF. Tente novamente em alguns segundos.');
+            alert('Erro ao gerar PDF. Tente novamente.');
+        } finally {
+            setIsGeneratingPdf(false);
         }
     };
 
@@ -202,15 +209,26 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                         <div className="flex items-center gap-2">
                             <button
                                 type="button"
-                                onClick={handleDownloadPDF}
-                                className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all"
+                                onClick={() => handlePdfAction('share')}
+                                disabled={isGeneratingPdf}
+                                className="inline-flex items-center px-3 py-2 border border-gray-200 text-xs font-bold rounded-xl text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-all disabled:opacity-50"
                             >
-                                Baixar PDF
+                                <Share2 className="h-4 w-4 mr-2 text-green-600" />
+                                {isGeneratingPdf ? '...' : 'WhatsApp'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handlePdfAction('download')}
+                                disabled={isGeneratingPdf}
+                                className="inline-flex items-center px-3 py-2 border border-transparent text-xs font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all disabled:opacity-50"
+                            >
+                                <Download className="h-4 w-4 mr-2" />
+                                {isGeneratingPdf ? 'Gerando...' : 'Baixar PDF'}
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setModalOpen(false)}
-                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors ml-1"
                             >
                                 <X className="h-6 w-6" />
                             </button>
