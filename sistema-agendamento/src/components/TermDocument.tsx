@@ -187,12 +187,9 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 </div>
 
                 <div style={{ textAlign: 'right', fontSize: '9pt', color: '#6b7280' }}>
-                    <p style={{ fontWeight: 'bold', color: '#000', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Assinado Digitalmente</p>
+                    <p style={{ fontWeight: 'bold', color: '#000', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Assinatura Digital</p>
                     <p>Data: {data.created_at ? new Date(data.created_at).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}</p>
                     <p>Hora: {data.created_at ? new Date(data.created_at).toLocaleTimeString('pt-BR') : new Date().toLocaleTimeString('pt-BR')}</p>
-                    <div style={{ fontSize: '8pt', marginTop: '0.5rem', fontFamily: 'monospace' }}>
-                        ID: {id || 'PENDING'}
-                    </div>
                 </div>
             </div>
 
@@ -205,7 +202,6 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 color: '#9ca3af'
             }}>
                 <p>Este documento foi gerado eletronicamente pelo Sistema de Agendamentos Objetivo.</p>
-                <p>A autenticidade deste documento pode ser verificada junto à coordenação da unidade.</p>
             </div>
         </div>
     );
