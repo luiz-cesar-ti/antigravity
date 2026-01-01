@@ -1,21 +1,74 @@
 import { useState, useEffect } from 'react';
 import {
     Calendar, Clock, MapPin, Monitor, Trash2, AlertTriangle, History,
-    Hash, Laptop, Projector, Speaker, Camera, Mic, Smartphone
+    Hash, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Share2
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Booking } from '../types';
 import { format, parseISO } from 'date-fns';
+import { TermDocument } from '../components/TermDocument';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 
 export function TeacherBookings() {
     const { user } = useAuth();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
+    const [pdfData, setPdfData] = useState<Booking | null>(null);
     const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bookingId: string | null }>({
         isOpen: false,
         bookingId: null
     });
+
+    const handleShareTerm = async (booking: Booking) => {
+        setPdfData(booking);
+
+        // Slight delay to ensure DOM is ready
+        setTimeout(async () => {
+            const element = document.getElementById('term-document');
+            if (!element) return;
+
+            const opt = {
+                margin: 0,
+                filename: `termo_${booking.id}.pdf`,
+                image: { type: 'jpeg' as const, quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+            };
+
+            try {
+                const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
+
+                if (navigator.share) {
+                    const file = new File([pdfBlob], `Termo_Responsabilidade_${booking.equipment?.name}.pdf`, { type: 'application/pdf' });
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Termo de Responsabilidade',
+                            text: `Termo de uso do equipamento ${booking.equipment?.name}`
+                        });
+                    } catch (shareError) {
+                        // Fallback to download if share is cancelled or fails
+                        const url = URL.createObjectURL(pdfBlob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `Termo_${booking.equipment?.name}.pdf`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    }
+                } else {
+                    // Fallback for desktop or non-supported browsers
+                    html2pdf().set(opt).from(element).save();
+                }
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Erro ao gerar documento. Tente novamente.');
+            } finally {
+                setPdfData(null);
+            }
+        }, 100);
+    };
 
     const getEquipmentIcon = (name: string = '') => {
         const n = name.toLowerCase();
@@ -195,25 +248,42 @@ export function TeacherBookings() {
                                     )}
                                 </div>
 
-                                <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                                <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <button
+                                        onClick={() => handleShareTerm(booking)}
+                                        className="flex items-center justify-center py-4 px-6 bg-white border border-gray-200 text-gray-700 hover:border-primary-200 hover:text-primary-600 font-bold text-xs rounded-2xl transition-all active:scale-95 shadow-sm"
+                                    >
+                                        <Share2 className="h-4 w-4 mr-2" />
+                                        Termo
+                                    </button>
+
                                     {!isExpired && booking.status === 'active' && (
                                         <button
                                             onClick={() => setDeleteModal({ isOpen: true, bookingId: booking.id })}
-                                            className="grow flex items-center justify-center py-4 px-6 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-black text-xs rounded-2xl transition-all active:scale-95 group/btn"
+                                            className="flex items-center justify-center py-4 px-6 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-black text-xs rounded-2xl transition-all active:scale-95 group/btn"
                                         >
                                             <Trash2 className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
-                                            Excluir Reserva
+                                            Excluir
                                         </button>
                                     )}
                                     {isExpired && (
-                                        <div className="grow py-4 px-6 bg-gray-50 text-gray-400 font-bold text-xs rounded-2xl text-center border border-dashed border-gray-200">
-                                            Período Finalizado
+                                        <div className="py-4 px-6 bg-gray-50 text-gray-400 font-bold text-xs rounded-2xl text-center border border-dashed border-gray-200">
+                                            Finalizado
                                         </div>
                                     )}
                                 </div>
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* Hidden Term Template for PDF Generation */}
+            {pdfData && (
+                <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
+                    <div id="term-document">
+                        <TermDocument data={pdfData} />
+                    </div>
                 </div>
             )}
 

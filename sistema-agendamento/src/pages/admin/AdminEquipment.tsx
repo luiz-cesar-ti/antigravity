@@ -13,7 +13,13 @@ import {
     Hash,
     AlertTriangle,
     Info,
-    ArrowRight
+    ArrowRight,
+    Laptop,
+    Projector,
+    Speaker,
+    Camera,
+    Mic,
+    Smartphone
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -24,6 +30,18 @@ export function AdminEquipment() {
     const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Helper for dynamic icons
+    const getEquipmentIcon = (name: string = '') => {
+        const n = name.toLowerCase();
+        if (n.includes('notebook') || n.includes('laptop')) return <Laptop className="h-5 w-5 text-primary-600 group-hover/row:text-white" />;
+        if (n.includes('projetor') || n.includes('datashow')) return <Projector className="h-5 w-5 text-primary-600 group-hover/row:text-white" />;
+        if (n.includes('caixa') || n.includes('som') || n.includes('audio')) return <Speaker className="h-5 w-5 text-primary-600 group-hover/row:text-white" />;
+        if (n.includes('camera') || n.includes('camara') || n.includes('foto')) return <Camera className="h-5 w-5 text-primary-600 group-hover/row:text-white" />;
+        if (n.includes('microfone')) return <Mic className="h-5 w-5 text-primary-600 group-hover/row:text-white" />;
+        if (n.includes('tablet') || n.includes('ipad')) return <Smartphone className="h-5 w-5 text-primary-600 group-hover/row:text-white" />;
+        return <Monitor className="h-5 w-5 text-primary-600 group-hover/row:text-white" />;
+    };
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -222,7 +240,7 @@ export function AdminEquipment() {
                                         <td className="px-8 py-6 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 <div className="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center group-hover/row:bg-primary-600 transition-colors">
-                                                    <Monitor className="h-5 w-5 text-primary-600 group-hover/row:text-white" />
+                                                    {getEquipmentIcon(item.name)}
                                                 </div>
                                                 <div className="ml-4">
                                                     <div className="text-sm font-black text-gray-900">{item.name}</div>
