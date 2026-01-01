@@ -61,10 +61,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
         return [];
     };
 
-    const getTimestamp = () => {
-        const d = data.timestamp || data.created_at || new Date().toISOString();
-        return new Date(d).toLocaleString('pt-BR');
-    };
+
 
     return (
         <div id={id} style={{

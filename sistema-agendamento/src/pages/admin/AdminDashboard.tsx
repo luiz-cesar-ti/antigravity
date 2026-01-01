@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Monitor, Users, Settings, TrendingUp, Trophy, Filter } from 'lucide-react';
-import { format, parseISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, subDays } from 'date-fns';
+import { format, parseISO, startOfWeek, startOfMonth, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,8 +9,6 @@ import { clsx } from 'clsx';
 
 import type { Admin } from '../../types';
 import {
-    BarChart,
-    Bar,
     XAxis,
     YAxis,
     CartesianGrid,

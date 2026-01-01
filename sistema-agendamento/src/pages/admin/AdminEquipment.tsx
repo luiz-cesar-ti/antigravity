@@ -12,7 +12,6 @@ import {
     Package,
     Hash,
     AlertTriangle,
-    CheckCircle2,
     Info,
     ArrowRight
 } from 'lucide-react';
