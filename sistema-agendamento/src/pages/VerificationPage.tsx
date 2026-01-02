@@ -126,10 +126,20 @@ export function VerificationPage() {
                     </p>
                     <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex items-start text-left text-sm text-red-700">
                         <AlertTriangle className="h-5 w-5 mr-3 shrink-0" />
-                        <p>Se você acredita que isso é um erro, entre em contato com a administração da unidade.</p>
+                        <div>
+                            <p className="font-bold mb-1">Informações de Diagnóstico:</p>
+                            <p className="opacity-70 break-all mb-2">Token: {token || 'N/A'}</p>
+                            <p>Se você acredita que isso é um erro, tente realizar um novo agendamento e testar o novo código QR.</p>
+                        </div>
                     </div>
                 </div>
-                <p className="mt-8 text-xs text-gray-400 font-bold uppercase tracking-widest">Sistema de Agendamento</p>
+                <p className="mt-8 text-xs text-gray-400 font-bold uppercase tracking-widest text-center">Sistema de Agendamento</p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="mt-4 text-xs text-primary-600 font-bold hover:underline"
+                >
+                    Tentar Novamente
+                </button>
             </div>
         );
     }
