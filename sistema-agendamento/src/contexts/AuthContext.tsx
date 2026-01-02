@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabase';
 import type { AuthState, User, Admin } from '../types';
 
@@ -17,6 +17,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isAuthenticated: false,
         isLoading: true,
     });
+
+    // Refs to track current state for the persistent onAuthStateChange listener
+    // avoiding stale closures without re-triggering the effect.
+    const userRef = useRef<User | Admin | null>(null);
+    const roleRef = useRef<string | null>(null);
+
+    // Sync refs with state
+    useEffect(() => {
+        userRef.current = state.user;
+        roleRef.current = state.role;
+    }, [state.user, state.role]);
 
     // Helper to fetch and set profile
     const fetchUserProfile = async (userId: string) => {
@@ -121,33 +132,56 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !session)) {
                 setState(prev => {
                     if (prev.role === 'admin') return { ...prev, isLoading: false };
+                    if (prev.user === null && prev.isLoading === false) return prev;
                     return { user: null, role: null, isAuthenticated: false, isLoading: false };
                 });
             } else if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
-                // If we are already authenticated as the same user, just clear loading
-                if (state.user?.id === session.user.id) {
-                    setState(prev => ({ ...prev, isAuthenticated: true, isLoading: false }));
+                // BAILOUT: If we are already authenticated as the same teacher, do nothing
+                if (roleRef.current === 'teacher' && userRef.current?.id === session.user.id) {
+                    setState(prev => {
+                        if (prev.isAuthenticated === true && prev.isLoading === false) return prev;
+                        return { ...prev, isAuthenticated: true, isLoading: false };
+                    });
+                    return;
+                }
+
+                // If it's an admin, we don't fetch teacher profile
+                if (roleRef.current === 'admin') {
+                    setState(prev => {
+                        if (prev.isLoading === false) return prev;
+                        return { ...prev, isLoading: false };
+                    });
                     return;
                 }
 
                 const profileData = await fetchUserProfile(session.user.id);
                 if (mounted) {
                     if (profileData === 'disabled') {
-                        // Signed out inside fetchUserProfile
                         setState(prev => ({ ...prev, isLoading: false }));
                     } else if (profileData) {
-                        setState({
-                            user: profileData,
-                            role: 'teacher',
-                            isAuthenticated: true,
-                            isLoading: false,
+                        setState(prev => {
+                            // Identity check before update
+                            if (prev.user?.id === profileData.id && JSON.stringify(prev.user) === JSON.stringify(profileData) && prev.isLoading === false) {
+                                return prev;
+                            }
+                            return {
+                                user: profileData,
+                                role: 'teacher',
+                                isAuthenticated: true,
+                                isLoading: false,
+                            };
                         });
                     } else {
                         setState(prev => ({ ...prev, isLoading: false }));
                     }
                 }
             } else {
-                if (mounted) setState(prev => ({ ...prev, isLoading: false }));
+                if (mounted) {
+                    setState(prev => {
+                        if (prev.isLoading === false) return prev;
+                        return { ...prev, isLoading: false };
+                    });
+                }
             }
         });
 
