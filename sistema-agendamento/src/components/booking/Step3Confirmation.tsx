@@ -183,8 +183,9 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
             setShowSuccessModal(true);
 
         } catch (err: any) {
-            console.error('Error creating booking:', err);
-            setError('Erro ao salvar agendamento. Tente novamente.');
+            console.error('CRITICAL: Error creating booking:', err);
+            const errorMessage = err.message || 'Erro ao salvar agendamento. Tente novamente.';
+            setError(errorMessage);
             setIsSubmitting(false);
         }
     };
@@ -399,9 +400,14 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data da Reserva</h3>
                             <div className="flex items-center gap-3">
                                 <div className="h-10 w-10 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
-                                    <Calendar className="h-5 w-5 text-primary-600" />
+                                    {data.isRecurring ? <Repeat className="h-5 w-5 text-primary-600" /> : <Calendar className="h-5 w-5 text-primary-600" />}
                                 </div>
-                                <p className="font-bold text-gray-900">{data.date.split('-').reverse().join('/')}</p>
+                                <p className="font-bold text-gray-900">
+                                    {data.isRecurring
+                                        ? `Toda ${['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}`
+                                        : (data.date ? data.date.split('-').reverse().join('/') : 'Data não informada')
+                                    }
+                                </p>
                             </div>
                         </div>
                     </div>
