@@ -5,7 +5,7 @@ import type { Booking, Admin } from '../../types';
 import { format, parseISO } from 'date-fns';
 import {
     Search, Calendar, Users, MapPin, FileText, Trash2, AlertTriangle,
-    Monitor, Clock, Filter, Hash, Laptop, Projector, Speaker, Camera, Mic, Smartphone
+    Monitor, Clock, Filter, Hash, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { TermDocument } from '../../components/TermDocument';
@@ -236,12 +236,14 @@ export function AdminBookings() {
 
     const getEquipmentIcon = (name: string = '') => {
         const n = name.toLowerCase();
-        if (n.includes('notebook') || n.includes('laptop')) return <Laptop className="h-6 w-6 text-primary-600" />;
+        if (n.includes('notebook') || n.includes('laptop') || n.includes('pc') || n.includes('computador')) return <Laptop className="h-6 w-6 text-primary-600" />;
         if (n.includes('projetor') || n.includes('datashow')) return <Projector className="h-6 w-6 text-primary-600" />;
         if (n.includes('caixa') || n.includes('som') || n.includes('audio')) return <Speaker className="h-6 w-6 text-primary-600" />;
         if (n.includes('camera') || n.includes('camara') || n.includes('foto')) return <Camera className="h-6 w-6 text-primary-600" />;
-        if (n.includes('microfone')) return <Mic className="h-6 w-6 text-primary-600" />;
-        if (n.includes('tablet') || n.includes('ipad')) return <Smartphone className="h-6 w-6 text-primary-600" />;
+        if (n.includes('microfone') || n.includes('mic')) return <Mic className="h-6 w-6 text-primary-600" />;
+        if (n.includes('tablet') || n.includes('ipad') || n.includes('celular')) return <Smartphone className="h-6 w-6 text-primary-600" />;
+        if (n.includes('tv') || n.includes('televisao') || n.includes('monitor') || n.includes('tela')) return <Tv className="h-6 w-6 text-primary-600" />;
+        if (n.includes('cabo') || n.includes('extensao') || n.includes('fio') || n.includes('adaptador')) return <Plug className="h-6 w-6 text-primary-600" />;
         return <Monitor className="h-6 w-6 text-primary-600" />;
     };
 
