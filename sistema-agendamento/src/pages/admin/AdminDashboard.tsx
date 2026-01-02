@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Calendar, Monitor, Users, Settings, TrendingUp, Trophy, Filter } from 'lucide-react';
+import { Calendar, Monitor, Users, TrendingUp, Trophy, Filter, X } from 'lucide-react';
 import { format, parseISO, startOfWeek, startOfMonth, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '../../services/supabase';
@@ -19,13 +18,19 @@ import {
     Cell,
     Legend,
     AreaChart,
-    Area
+    Area,
+    BarChart,
+    Bar
 } from 'recharts';
 
 export function AdminDashboard() {
     const { user } = useAuth();
     const adminUser = user as Admin;
     const [period, setPeriod] = useState<'week' | 'month' | 'total'>('month');
+    const [selectedTeacher, setSelectedTeacher] = useState<any | null>(null);
+    const [teacherBookings, setTeacherBookings] = useState<any[]>([]);
+    const [teacherStats, setTeacherStats] = useState<any>({ equipmentUsage: [], weeklyTrend: [] });
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [stats, setStats] = useState({
         activeBookings: 0,
         totalEquipment: 0,
@@ -134,13 +139,18 @@ export function AdminDashboard() {
                     .slice(0, 5);
 
                 // 3. Top Teachers (New Ranking)
-                const teacherMap: Record<string, number> = {};
+                const teacherMap: Record<string, { id: string, name: string, count: number }> = {};
                 bookings.forEach((b: any) => {
+                    const userId = (b as any).users?.id;
                     const name = (b as any).users?.full_name || 'Desconhecido';
-                    teacherMap[name] = (teacherMap[name] || 0) + 1;
+                    if (userId) {
+                        if (!teacherMap[userId]) {
+                            teacherMap[userId] = { id: userId, name, count: 0 };
+                        }
+                        teacherMap[userId].count += 1;
+                    }
                 });
-                const topTeachers = Object.keys(teacherMap)
-                    .map(key => ({ name: key, count: teacherMap[key] }))
+                const topTeachers = Object.values(teacherMap)
                     .sort((a, b) => b.count - a.count)
                     .slice(0, 5);
 
@@ -310,7 +320,41 @@ export function AdminDashboard() {
                             <p className="text-center text-gray-400 py-10 text-sm">Sem dados no período</p>
                         ) : (
                             chartData.topTeachers.map((teacher, index) => (
-                                <div key={teacher.name} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-primary-100 hover:bg-white transition-all group">
+                                <button
+                                    key={teacher.name}
+                                    onClick={async () => {
+                                        setSelectedTeacher(teacher);
+                                        const { data } = await supabase
+                                            .from('bookings')
+                                            .select('*, equipment(name)')
+                                            .eq('user_id', teacher.id)
+                                            .order('booking_date', { ascending: false });
+
+                                        if (data) {
+                                            const eqMap: Record<string, number> = {};
+                                            const weekTrend: Record<string, number> = { 'Seg': 0, 'Ter': 0, 'Qua': 0, 'Qui': 0, 'Sex': 0 };
+                                            const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+                                            data.forEach((b: any) => {
+                                                const ename = b.equipment?.name || 'Vários';
+                                                eqMap[ename] = (eqMap[ename] || 0) + 1;
+
+                                                const dayName = days[new Date(b.booking_date).getDay()];
+                                                if (weekTrend[dayName] !== undefined) {
+                                                    weekTrend[dayName]++;
+                                                }
+                                            });
+
+                                            setTeacherBookings(data);
+                                            setTeacherStats({
+                                                equipmentUsage: Object.entries(eqMap).map(([name, value]) => ({ name, value })),
+                                                weeklyTrend: Object.entries(weekTrend).map(([day, count]) => ({ day, count }))
+                                            });
+                                            setIsModalOpen(true);
+                                        }
+                                    }}
+                                    className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-primary-100 hover:bg-white transition-all group active:scale-[0.98]"
+                                >
                                     <div className="flex items-center gap-3">
                                         <div className={clsx(
                                             "h-8 w-8 rounded-full flex items-center justify-center text-xs font-black",
@@ -320,16 +364,16 @@ export function AdminDashboard() {
                                         )}>
                                             {index + 1}º
                                         </div>
-                                        <div>
+                                        <div className="text-left">
                                             <p className="text-sm font-bold text-gray-700 leading-none">{teacher.name}</p>
-                                            <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">Colégio Objetivo</p>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">Ver Detalhes</p>
                                         </div>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-sm font-black text-primary-600">{teacher.count}</p>
                                         <p className="text-[9px] text-gray-400 font-bold uppercase">Uso</p>
                                     </div>
-                                </div>
+                                </button>
                             ))
                         )}
                     </div>
@@ -378,33 +422,92 @@ export function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Quick Actions - Enhanced */}
-            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
-                <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
-                    <div>
-                        <h3 className="text-xl font-black text-gray-900">Gestão Operacional</h3>
-                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Ações recomendadas</p>
+            {/* Teacher Analytics Modal */}
+            {isModalOpen && selectedTeacher && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+                        {/* Modal Header */}
+                        <div className="px-8 py-6 bg-primary-600 text-white flex items-center justify-between">
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-200">Analytics por Professor</p>
+                                <h2 className="text-2xl font-black">{selectedTeacher.name}</h2>
+                            </div>
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                            >
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="flex-1 overflow-y-auto p-8 bg-gray-50">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total de Reservas</p>
+                                    <p className="text-3xl font-black text-primary-600">{teacherBookings.length}</p>
+                                </div>
+                                <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Mix de Equipamentos usados</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {teacherStats.equipmentUsage.map((eq: any, idx: number) => (
+                                            <span key={idx} className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-[10px] font-bold uppercase tracking-tight">
+                                                {eq.name} ({eq.value})
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Frequência Semanal</h4>
+                                    <div className="h-48">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={teacherStats.weeklyTrend}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                                                <XAxis dataKey="day" fontSize={10} axisLine={false} tickLine={false} />
+                                                <YAxis fontSize={10} axisLine={false} tickLine={false} />
+                                                <Bar dataKey="count" fill="#4F46E5" radius={[4, 4, 0, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Histórico Recente</h4>
+                                    <div className="space-y-3 overflow-y-auto max-h-48 pr-2">
+                                        {teacherBookings.map((booking, idx) => (
+                                            <div key={idx} className="p-3 bg-gray-50 rounded-xl flex items-center justify-between border border-transparent hover:border-primary-100 transition-colors">
+                                                <div>
+                                                    <p className="text-xs font-bold text-gray-700">{booking.equipment?.name}</p>
+                                                    <p className="text-[9px] text-gray-400 font-bold uppercase">{format(parseISO(booking.booking_date), 'dd/MM/yyyy')} • {booking.start_time}</p>
+                                                </div>
+                                                <span className={clsx(
+                                                    "text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter",
+                                                    booking.status === 'completed' ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                                                )}>
+                                                    {booking.status}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-8 py-5 border-t border-gray-100 bg-white flex justify-end">
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 font-black text-xs uppercase tracking-widest rounded-xl transition-all"
+                            >
+                                Fechar Relatório
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Link to="/admin/bookings" className="flex flex-col items-center justify-center p-6 bg-gray-50 rounded-2xl hover:bg-primary-600 hover:text-white transition-all group shadow-sm border border-transparent">
-                        <Calendar className="h-8 w-8 text-primary-600 mb-3 group-hover:text-white group-hover:scale-110 transition-all" />
-                        <span className="font-bold text-sm tracking-tight text-center">Gestão de Reservas</span>
-                    </Link>
-                    <Link to="/admin/equipment" className="flex flex-col items-center justify-center p-6 bg-gray-50 rounded-2xl hover:bg-primary-600 hover:text-white transition-all group shadow-sm border border-transparent">
-                        <Monitor className="h-8 w-8 text-primary-600 mb-3 group-hover:text-white group-hover:scale-110 transition-all" />
-                        <span className="font-bold text-sm tracking-tight text-center">Mestre de Inventário</span>
-                    </Link>
-                    <Link to="/admin/users" className="flex flex-col items-center justify-center p-6 bg-gray-50 rounded-2xl hover:bg-primary-600 hover:text-white transition-all group shadow-sm border border-transparent">
-                        <Users className="h-8 w-8 text-primary-600 mb-3 group-hover:text-white group-hover:scale-110 transition-all" />
-                        <span className="font-bold text-sm tracking-tight text-center">Docentes Cadastrados</span>
-                    </Link>
-                    <Link to="/admin/settings" className="flex flex-col items-center justify-center p-6 bg-gray-50 rounded-2xl hover:bg-primary-600 hover:text-white transition-all group shadow-sm border border-transparent">
-                        <Settings className="h-8 w-8 text-primary-600 mb-3 group-hover:text-white group-hover:scale-110 transition-all" />
-                        <span className="font-bold text-sm tracking-tight text-center">Configurações Base</span>
-                    </Link>
-                </div>
-            </div>
+            )}
         </div>
     );
 }
