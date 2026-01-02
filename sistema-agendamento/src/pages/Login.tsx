@@ -86,10 +86,6 @@ export function Login() {
                     </div>
                 </div>
 
-                {/* Decorative Elements */}
-                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 text-primary-400 font-black text-[8rem] opacity-5 select-none pointer-events-none whitespace-nowrap">
-                    OBJETIVO
-                </div>
             </div>
 
             {/* Right Side: Login Form */}
