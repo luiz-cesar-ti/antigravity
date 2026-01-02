@@ -2,34 +2,48 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Calendar, User, Clock, Package } from 'lucide-react';
+import { clsx } from 'clsx';
 
 export function VerificationPage() {
     const { token } = useParams<{ token: string }>();
     const [status, setStatus] = useState<'loading' | 'valid' | 'invalid' | 'error'>('loading');
     const [bookingData, setBookingData] = useState<any>(null);
     const [errorDetail, setErrorDetail] = useState<string>('');
+    const [debugInfo] = useState<any>({
+        url_present: !!import.meta.env.VITE_SUPABASE_URL,
+        key_present: !!import.meta.env.VITE_SUPABASE_ANON_KEY
+    });
 
     useEffect(() => {
-        console.log('Verification started for token:', token);
-        if (!token) {
+        const currentToken = token?.toLowerCase();
+        console.log('Verification started for token:', currentToken);
+
+        if (!currentToken) {
             console.error('No token found in URL params');
             setStatus('invalid');
+            setErrorDetail('Token ausente na URL.');
             return;
         }
 
+        let isMounted = true;
         const verifyToken = async () => {
             // Safety timeout: if it takes more than 10 seconds, show error
             const timeoutId = setTimeout(() => {
-                if (status === 'loading') {
-                    console.error('Verification timeout reached');
-                    setStatus('error');
-                    setErrorDetail('Tempo de resposta excedido ao conectar com o banco de dados.');
+                if (isMounted) {
+                    setStatus(prev => {
+                        if (prev === 'loading') {
+                            console.error('Verification timeout reached');
+                            setErrorDetail('Tempo de resposta excedido ao conectar com o banco de dados. Verifique sua conexão ou se o serviço está instável.');
+                            return 'error';
+                        }
+                        return prev;
+                    });
                 }
             }, 10000);
 
             try {
-                console.log('Attempting primary fetch (with joins)...');
-                // Fetch booking by token
+                console.log('Attempting primary fetch (with joins) for token:', currentToken);
+                // Fetch booking by token (explicitly lowercase since crypto.randomUUID is lowercase)
                 const { data: list, error: pError } = await supabase
                     .from('bookings')
                     .select(`
@@ -46,56 +60,58 @@ export function VerificationPage() {
                             totvs_number
                         )
                     `)
-                    .eq('verification_token', token)
+                    .eq('verification_token', currentToken)
                     .limit(1);
 
                 const data = list && list.length > 0 ? list[0] : null;
 
-                let simpleData = null;
                 if (pError || !data) {
                     console.warn('Primary fetch failed or returned no data. Error:', pError);
-                    if (pError) setErrorDetail(pError.message);
 
                     console.log('Attempting fallback fetch (simple select)...');
                     // Try to fetch with a simpler query if joins fail due to RLS
                     const { data: sList, error: sError } = await supabase
                         .from('bookings')
                         .select('*')
-                        .eq('verification_token', token)
+                        .eq('verification_token', currentToken)
                         .limit(1);
 
                     const sData = sList && sList.length > 0 ? sList[0] : null;
 
                     if (sError || !sData) {
                         console.error('Fallback fetch also failed. Error:', sError);
-                        if (sError) setErrorDetail(sError.message);
-                        else if (!sData) setErrorDetail('Nenhum registro encontrado para este token.');
+                        if (isMounted) {
+                            if (sError) setErrorDetail(sError.message);
+                            else if (pError) setErrorDetail(pError.message);
+                            else setErrorDetail('Nenhum registro encontrado para este token.');
 
-                        clearTimeout(timeoutId);
-                        setStatus('invalid');
+                            clearTimeout(timeoutId);
+                            setStatus('invalid');
+                        }
                         return;
                     }
                     console.log('Fallback fetch successful!');
-                    simpleData = sData;
-                    setBookingData(sData);
+                    if (isMounted) setBookingData(sData);
                 } else {
                     console.log('Primary fetch successful!');
-                    setBookingData(data);
+                    if (isMounted) setBookingData(data);
                 }
 
-                clearTimeout(timeoutId);
-                setStatus('valid');
+                if (isMounted) {
+                    clearTimeout(timeoutId);
+                    setStatus('valid');
+                }
 
-                const finalData = data || simpleData;
-                if (!finalData) return;
+                const finalData = data || (list && list[0]) || null; // list[0] as safety
+                if (!finalData || !isMounted) return;
 
                 // Log the verification action (Non-blocking)
                 console.log('Logging verification action...');
                 supabase.from('audit_logs').insert({
-                    booking_id: finalData.id,
+                    booking_id: (finalData as any).id,
                     action: 'VERIFIED_QR',
                     performed_by: 'ANONYMOUS', // Public page
-                    details: { user_agent: navigator.userAgent }
+                    details: { user_agent: navigator.userAgent, token_used: currentToken }
                 }).then(({ error }) => {
                     if (error) console.error('Audit log error:', error);
                     else console.log('Audit log entry created successfully.');
@@ -103,16 +119,18 @@ export function VerificationPage() {
 
             } catch (err: any) {
                 console.error('Verification exception:', err);
-                setErrorDetail(err.message || 'Erro interno inesperado.');
-                clearTimeout(timeoutId);
-                setStatus('error');
+                if (isMounted) {
+                    setErrorDetail(err.message || 'Erro interno inesperado.');
+                    clearTimeout(timeoutId);
+                    setStatus('error');
+                }
             }
         };
 
         verifyToken();
 
         return () => {
-            // No cleanup needed
+            isMounted = false;
         };
     }, [token]);
 
@@ -146,6 +164,14 @@ export function VerificationPage() {
                                     ERRO: {errorDetail}
                                 </p>
                             )}
+                            <div className="mt-3 pt-2 border-t border-red-100 flex gap-2">
+                                <span className={clsx("text-[9px] px-1.5 py-0.5 rounded font-bold uppercase", debugInfo.url_present ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
+                                    URL: {debugInfo.url_present ? 'OK' : 'MISSING'}
+                                </span>
+                                <span className={clsx("text-[9px] px-1.5 py-0.5 rounded font-bold uppercase", debugInfo.key_present ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
+                                    KEY: {debugInfo.key_present ? 'OK' : 'MISSING'}
+                                </span>
+                            </div>
                             <p className="mt-2 opacity-80">Se você acredita que isso é um erro, tente realizar um novo agendamento e testar o novo código QR.</p>
                         </div>
                     </div>
