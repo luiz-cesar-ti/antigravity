@@ -86,11 +86,11 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
                 <h2 className="text-xl font-semibold text-gray-800">Informações Básicas</h2>
 
                 {hasRecurringAuth && (
-                    <div className="grid grid-cols-2 bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-sm w-full">
+                    <div className="grid grid-cols-2 bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-sm w-full sm:w-auto">
                         <button
                             onClick={() => updateData({ isRecurring: false })}
                             className={clsx(
