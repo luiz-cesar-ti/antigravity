@@ -74,7 +74,8 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                 timestamp: new Date().toISOString(),
                 userAgent: navigator.userAgent,
                 displayId,
-                isRecurring: data.isRecurring
+                isRecurring: data.isRecurring,
+                dayOfWeek: data.dayOfWeek
             };
 
             if (data.isRecurring) {

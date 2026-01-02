@@ -40,8 +40,8 @@ interface TermDocumentProps {
 
 export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
     // Helper to extract data regardless of source (Wizard, DB Booking, or Term JSON)
-    const getName = () => data.full_name || data.userName || data.term_document?.userName || data.users?.full_name || '';
-    const getTotvs = () => data.totvs_number || data.userTotvs || data.term_document?.userTotvs || data.users?.totvs_number || '';
+    const getName = () => data.full_name || data.userName || data.term_document?.userName || data.term_document?.full_name || data.users?.full_name || '';
+    const getTotvs = () => data.totvs_number || data.userTotvs || data.term_document?.userTotvs || data.term_document?.totvs_number || data.users?.totvs_number || '';
     const getUnit = () => data.unit || data.term_document?.unit || '';
     const getLocal = () => data.local || data.term_document?.local || '';
 
@@ -56,6 +56,13 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
         if (isRecOrFixo) {
             const dayNum = data.dayOfWeek ?? data.day_of_week ?? data.term_document?.dayOfWeek ?? data.term_document?.day_of_week;
             const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+
+            // If dayNum is missing, maybe we have the pre-formatted string in 'date'
+            if (dayNum === undefined) {
+                const storedDate = data.date || data.booking_date || data.term_document?.date || data.term_document?.booking_date;
+                if (storedDate?.startsWith('Toda')) return storedDate;
+            }
+
             return `Toda ${days[dayNum ?? 0]}`;
         }
 
