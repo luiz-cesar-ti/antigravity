@@ -136,28 +136,39 @@ export function AdminBookings() {
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
 
-                const pdfDataUri = await html2pdf().set(opt).from(element).output('datauristring');
+                // Create the PDF worker
+                const worker = html2pdf().set(opt).from(element);
 
-                if (!pdfDataUri || pdfDataUri.length < 100) {
-                    throw new Error('Falha ao gerar string do PDF');
+                // Try to share first (Mobile experience)
+                if (navigator.share && navigator.canShare) {
+                    try {
+                        const pdfBlob = await worker.output('blob');
+                        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+                        if (navigator.canShare({ files: [file] })) {
+                            await navigator.share({
+                                files: [file],
+                                title: 'Termo de Responsabilidade',
+                                text: `Segue anexo o termo de responsabilidade de ${rawName}.`
+                            });
+                            console.log('Shared successfully');
+                            setPdfData(null);
+                            return; // Stop here if shared
+                        }
+                    } catch (shareError) {
+                        console.warn('Share API failed or closed, falling back to download:', shareError);
+                        // Fallthrough to download
+                    }
                 }
 
-                const link = document.createElement('a');
-                link.href = pdfDataUri;
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-
-                console.log('PDF gerado e disparo Base64 concluído:', fileName);
-
-                setTimeout(() => {
-                    document.body.removeChild(link);
-                    setPdfData(null);
-                }, 3000);
+                // Fallback: Standard Desktop Download
+                await worker.save();
+                console.log('Download triggered fallback');
+                setPdfData(null);
 
             } catch (e: any) {
                 console.error('ERRO CRÍTICO NA GERAÇÃO:', e);
-                alert('Erro ao gerar o arquivo. Por favor, tente novamente em alguns segundos.');
+                alert('Erro ao gerar o arquivo. Por favor, tente novamente.');
                 setPdfData(null);
             }
         }, 1500);
