@@ -20,6 +20,7 @@ import {
 import type { BookingData } from '../../pages/BookingWizard';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
+import { v4 as uuidv4 } from 'uuid';
 import { TermDocument } from '../TermDocument';
 import { clsx } from 'clsx';
 // @ts-ignore
@@ -40,12 +41,14 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
     const [error, setError] = useState('');
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
+    // ...
+
     // Pre-generate ID and Token for the preview
     useEffect(() => {
         if (!data.displayId || !data.verificationToken) {
             updateData({
                 displayId: Math.floor(100000 + Math.random() * 900000).toString(),
-                verificationToken: crypto.randomUUID()
+                verificationToken: uuidv4()
             });
         }
     }, []);
@@ -61,7 +64,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
 
         try {
             const displayId = data.displayId || Math.floor(100000 + Math.random() * 900000).toString();
-            const verificationToken = data.verificationToken || crypto.randomUUID();
+            const verificationToken = data.verificationToken || uuidv4();
 
             const termDocument = {
                 userName: data.full_name,
