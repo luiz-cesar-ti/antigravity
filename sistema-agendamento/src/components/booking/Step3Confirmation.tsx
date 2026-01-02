@@ -67,7 +67,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                 userTotvs: data.totvs_number,
                 unit: data.unit,
                 local: data.local,
-                date: data.isRecurring ? `AGENDAMENTO FIXO (Dia ${data.dayOfWeek})` : data.date,
+                date: data.isRecurring ? `Toda ${['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}` : data.date,
                 startTime: data.startTime,
                 endTime: data.endTime,
                 equipments: data.equipments,

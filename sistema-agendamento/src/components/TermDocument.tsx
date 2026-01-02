@@ -30,6 +30,7 @@ interface TermData {
     displayId?: string; // Wizard format
     isRecurring?: boolean;
     day_of_week?: number;
+    dayOfWeek?: number;
 }
 
 interface TermDocumentProps {
@@ -53,9 +54,9 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
     const getDate = () => {
         const isRecOrFixo = data.isRecurring || data.term_document?.isRecurring;
         if (isRecOrFixo) {
-            const dayNum = data.day_of_week ?? data.term_document?.day_of_week;
+            const dayNum = data.dayOfWeek ?? data.day_of_week ?? data.term_document?.dayOfWeek ?? data.term_document?.day_of_week;
             const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-            return `FIXO: Toda ${days[dayNum ?? 0]}`;
+            return `Toda ${days[dayNum ?? 0]}`;
         }
 
         const d = data.date || data.booking_date || data.term_document?.date || data.term_document?.booking_date;
@@ -74,6 +75,27 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
         if (data.equipments && Array.isArray(data.equipments)) return data.equipments;
         if (data.term_document && data.term_document.equipments) return data.term_document.equipments;
         return [];
+    };
+
+    const getRecurringDates = () => {
+        const isRecOrFixo = data.isRecurring || data.term_document?.isRecurring;
+        const dayNum = data.dayOfWeek ?? data.day_of_week ?? data.term_document?.dayOfWeek ?? data.term_document?.day_of_week;
+
+        if (!isRecOrFixo || dayNum === undefined) return null;
+
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth();
+        const lastDay = new Date(year, month + 1, 0).getDate();
+        const dates: string[] = [];
+
+        for (let day = 1; day <= lastDay; day++) {
+            const date = new Date(year, month, day);
+            if (date.getDay() === dayNum) {
+                dates.push(date.toLocaleDateString('pt-BR'));
+            }
+        }
+        return dates;
     };
 
 
@@ -139,9 +161,25 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem', fontSize: '9pt' }}>
                     <p><strong>Unidade:</strong> {getUnit()}</p>
                     <p><strong>Local:</strong> {getLocal()}</p>
-                    <p><strong>Data de Uso:</strong> {getDate()}</p>
+                    <p><strong>Dia de Uso:</strong> {getDate()}</p>
                     <p><strong>Horário:</strong> {getTime()}</p>
                 </div>
+                {getRecurringDates() && (
+                    <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed #d1d5db' }}>
+                        <p style={{ fontSize: '8pt', color: '#4b5563', marginBottom: '4px' }}><strong>Datas agendadas para o mês atual:</strong></p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            {getRecurringDates()?.map(date => (
+                                <span key={date} style={{
+                                    backgroundColor: '#fff',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    border: '1px solid #e5e7eb',
+                                    fontSize: '8pt'
+                                }}>{date}</span>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
