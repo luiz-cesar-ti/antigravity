@@ -28,7 +28,7 @@ export function VerificationPage() {
             try {
                 console.log('Attempting primary fetch (with joins)...');
                 // Fetch booking by token
-                const { data, error } = await supabase
+                const { data: list, error } = await supabase
                     .from('bookings')
                     .select(`
                         id,
@@ -45,18 +45,22 @@ export function VerificationPage() {
                         )
                     `)
                     .eq('verification_token', token)
-                    .single();
+                    .limit(1);
+
+                const data = list && list.length > 0 ? list[0] : null;
 
                 let simpleData = null;
                 if (error || !data) {
                     console.warn('Primary fetch failed or returned no data. Error:', error);
                     console.log('Attempting fallback fetch (simple select)...');
                     // Try to fetch with a simpler query if joins fail due to RLS
-                    const { data: sData, error: sError } = await supabase
+                    const { data: sList, error: sError } = await supabase
                         .from('bookings')
                         .select('*')
                         .eq('verification_token', token)
-                        .single();
+                        .limit(1);
+
+                    const sData = sList && sList.length > 0 ? sList[0] : null;
 
                     if (sError || !sData) {
                         console.error('Fallback fetch also failed. Error:', sError);
