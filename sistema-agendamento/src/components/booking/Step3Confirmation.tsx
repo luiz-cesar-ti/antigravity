@@ -5,6 +5,7 @@ import {
     Check,
     CheckCircle2,
     Calendar,
+    Repeat,
     FileCheck,
     ArrowRight,
     Monitor,
@@ -66,54 +67,117 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                 userTotvs: data.totvs_number,
                 unit: data.unit,
                 local: data.local,
-                date: data.date,
+                date: data.isRecurring ? `AGENDAMENTO FIXO (Dia ${data.dayOfWeek})` : data.date,
                 startTime: data.startTime,
                 endTime: data.endTime,
                 equipments: data.equipments,
                 timestamp: new Date().toISOString(),
                 userAgent: navigator.userAgent,
-                displayId
+                displayId,
+                isRecurring: data.isRecurring
             };
 
-            // 1. Insert into main Bookings Table
-            const bookingsToInsert = data.equipments.map(eq => ({
-                user_id: user?.id,
-                unit: data.unit,
-                local: data.local,
-                booking_date: data.date,
-                start_time: data.startTime,
-                end_time: data.endTime,
-                equipment_id: eq.id,
-                quantity: eq.quantity,
-                observations: data.observations,
-                status: 'active',
-                term_signed: true,
-                term_document: termDocument,
-                display_id: displayId
-            }));
-
-            const { data: createdBookings, error: insertError } = await supabase
-                .from('bookings')
-                .insert(bookingsToInsert)
-                .select();
-
-            if (insertError) throw insertError;
-
-            // Create Audit Log
-            if (createdBookings && createdBookings.length > 0) {
-                const logsPromises = createdBookings.map(b =>
-                    supabase.from('audit_logs').insert({
-                        booking_id: b.id,
-                        action: 'CREATED',
-                        performed_by: user?.id,
-                        details: {
-                            display_id: displayId,
-                            unit: data.unit,
-                            equipments: data.equipments.map(e => ({ name: e.name, qty: e.quantity }))
-                        }
+            if (data.isRecurring) {
+                // 1. Insert into Recurring Bookings Table
+                const { data: recurring, error: recError } = await supabase
+                    .from('recurring_bookings')
+                    .insert({
+                        user_id: user?.id,
+                        unit: data.unit,
+                        local: data.local,
+                        day_of_week: data.dayOfWeek,
+                        start_time: data.startTime,
+                        end_time: data.endTime,
+                        equipments: data.equipments,
+                        is_active: true,
+                        last_generated_month: new Date().toISOString().substring(0, 7) + '-01'
                     })
-                );
-                await Promise.all(logsPromises);
+                    .select()
+                    .single();
+
+                if (recError) throw recError;
+
+                // 2. Generate bookings for the rest of the current month
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = today.getMonth();
+                const lastDay = new Date(year, month + 1, 0).getDate();
+                const bookingsToInsert: any[] = [];
+
+                for (let day = today.getDate(); day <= lastDay; day++) {
+                    const date = new Date(year, month, day);
+                    if (date.getDay() === data.dayOfWeek) {
+                        const dateStr = date.toISOString().split('T')[0];
+
+                        data.equipments.forEach(eq => {
+                            bookingsToInsert.push({
+                                user_id: user?.id,
+                                unit: data.unit,
+                                local: data.local,
+                                booking_date: dateStr,
+                                start_time: data.startTime,
+                                end_time: data.endTime,
+                                equipment_id: eq.id,
+                                quantity: eq.quantity,
+                                observations: data.observations,
+                                status: 'active',
+                                term_signed: true,
+                                term_document: { ...termDocument, date: dateStr },
+                                display_id: displayId,
+                                is_recurring: true,
+                                recurring_id: recurring.id
+                            });
+                        });
+                    }
+                }
+
+                if (bookingsToInsert.length > 0) {
+                    const { error: batchError } = await supabase
+                        .from('bookings')
+                        .insert(bookingsToInsert);
+                    if (batchError) throw batchError;
+                }
+            } else {
+                // 1. Insert into main Bookings Table (Normal Flow)
+                const bookingsToInsert = data.equipments.map(eq => ({
+                    user_id: user?.id,
+                    unit: data.unit,
+                    local: data.local,
+                    booking_date: data.date,
+                    start_time: data.startTime,
+                    end_time: data.endTime,
+                    equipment_id: eq.id,
+                    quantity: eq.quantity,
+                    observations: data.observations,
+                    status: 'active',
+                    term_signed: true,
+                    term_document: termDocument,
+                    display_id: displayId
+                }));
+
+                const { data: createdBookings, error: insertError } = await supabase
+                    .from('bookings')
+                    .insert(bookingsToInsert)
+                    .select();
+
+                if (insertError) throw insertError;
+
+                // Create Audit Log
+                if (createdBookings && createdBookings.length > 0) {
+                    const logsPromises = createdBookings.map(b =>
+                        supabase.from('audit_logs').insert({
+                            booking_id: b.id,
+                            action: 'CREATED',
+                            performed_by: user?.id,
+                            details: {
+                                display_id: displayId,
+                                unit: data.unit,
+                                equipments: data.equipments.map(e => ({ name: e.name, qty: e.quantity }))
+                            }
+                        })
+                    );
+                    await Promise.all(logsPromises);
+                }
             }
 
             setShowSuccessModal(true);
@@ -212,10 +276,21 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
 
                     <div className="space-y-3 mb-8 text-center flex flex-col items-center">
                         <div className="inline-flex items-center gap-2 p-3 bg-gray-50 rounded-2xl border border-gray-100 min-w-[200px] justify-center">
-                            <Calendar className="h-4 w-4 text-primary-600" />
-                            <span className="text-sm font-bold text-gray-700">
-                                {data.date.split('-').reverse().join('/')} • {data.startTime} - {data.endTime}
-                            </span>
+                            {data.isRecurring ? (
+                                <>
+                                    <Repeat className="h-4 w-4 text-primary-600" />
+                                    <span className="text-sm font-bold text-gray-700">
+                                        Fixo: {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}s • {data.startTime} - {data.endTime}
+                                    </span>
+                                </>
+                            ) : (
+                                <>
+                                    <Calendar className="h-4 w-4 text-primary-600" />
+                                    <span className="text-sm font-bold text-gray-700">
+                                        {data.date.split('-').reverse().join('/')} • {data.startTime} - {data.endTime}
+                                    </span>
+                                </>
+                            )}
                         </div>
                     </div>
 

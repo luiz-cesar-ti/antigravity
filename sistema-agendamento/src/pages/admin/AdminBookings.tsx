@@ -5,7 +5,7 @@ import type { Booking, Admin } from '../../types';
 import { format, parseISO } from 'date-fns';
 import {
     Search, Calendar, Users, MapPin, FileText, Trash2, AlertTriangle,
-    Monitor, Clock, Filter, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug
+    Monitor, Clock, Filter, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug, Repeat
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { TermDocument } from '../../components/TermDocument';
@@ -416,6 +416,13 @@ export function AdminBookings() {
 
                                             {/* Right: Primary Actions */}
                                             <div className="flex items-center gap-3 shrink-0">
+                                                {booking.is_recurring && (
+                                                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-tight rounded-lg border border-amber-100 italic shadow-sm">
+                                                        <Repeat className="h-3 w-3" />
+                                                        Agendamento Fixo
+                                                    </div>
+                                                )}
+
                                                 {booking.term_document && (
                                                     <button
                                                         onClick={() => handleOpenTermModal(booking)}

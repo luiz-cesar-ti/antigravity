@@ -16,6 +16,8 @@ export type BookingData = {
     observations?: string;
     termAccepted: boolean;
     displayId?: string;
+    isRecurring?: boolean;
+    dayOfWeek?: number;
 };
 
 export function BookingWizard() {
@@ -31,7 +33,8 @@ export function BookingWizard() {
         startTime: '',
         endTime: '',
         equipments: [],
-        termAccepted: false
+        termAccepted: false,
+        isRecurring: false
     });
 
     const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 3));

@@ -28,6 +28,8 @@ interface TermData {
     timestamp?: string;
     display_id?: string;
     displayId?: string; // Wizard format
+    isRecurring?: boolean;
+    day_of_week?: number;
 }
 
 interface TermDocumentProps {
@@ -49,6 +51,13 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
     const displayId = getDisplayId();
 
     const getDate = () => {
+        const isRecOrFixo = data.isRecurring || data.term_document?.isRecurring;
+        if (isRecOrFixo) {
+            const dayNum = data.day_of_week ?? data.term_document?.day_of_week;
+            const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+            return `FIXO: Toda ${days[dayNum ?? 0]}`;
+        }
+
         const d = data.date || data.booking_date || data.term_document?.date || data.term_document?.booking_date;
         if (!d) return '';
         if (d.includes('T')) return new Date(d).toLocaleDateString('pt-BR');
@@ -163,6 +172,9 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                     <li style={{ marginBottom: '0.1rem' }}>Zelar pela conservação e bom funcionamento do equipamento.</li>
                     <li style={{ marginBottom: '0.1rem' }}>Comunicar imediatamente à equipe responsável qualquer defeito ou irregularidade constatada.</li>
                     <li style={{ marginBottom: '0.1rem' }}>Não emprestar ou transferir o equipamento a terceiros sem autorização prévia.</li>
+                    {(data.isRecurring || data.term_document?.isRecurring) && (
+                        <li style={{ marginBottom: '0.1rem' }}>Declaro ciência que este é um <strong style={{ fontWeight: 'bold' }}>Agendamento Fixo</strong> e concordo em assinar digitalmente todos os termos gerados automaticamente para cada ocorrência desta recorrência.</li>
+                    )}
                 </ol>
             </div>
 

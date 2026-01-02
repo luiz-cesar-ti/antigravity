@@ -6,6 +6,7 @@ export interface User {
     units: string[];
     role: 'teacher';
     active: boolean;
+    recurring_booking_enabled: boolean;
     created_at: string;
 }
 
@@ -42,12 +43,29 @@ export interface Booking {
     term_signed: boolean;
     term_document?: any;
     display_id?: string;
+    is_recurring?: boolean;
+    recurring_id?: string;
     created_at: string;
     updated_at: string;
 
     // Joins
     equipment?: Equipment;
     users?: User;
+}
+
+export interface RecurringBooking {
+    id: string;
+    user_id: string;
+    unit: string;
+    local: string;
+    day_of_week: number;
+    start_time: string;
+    end_time: string;
+    equipments: any[];
+    is_active: boolean;
+    last_generated_month: string | null;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface Settings {

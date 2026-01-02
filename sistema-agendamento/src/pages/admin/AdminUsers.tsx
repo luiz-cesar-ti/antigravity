@@ -6,6 +6,7 @@ import type { User, Admin } from '../../types';
 import { Search, Mail, Building, Pencil, X, ToggleLeft, ToggleRight, AlertCircle, UserMinus, Check, Send } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { SuccessModal } from '../../components/SuccessModal';
+import { clsx } from 'clsx';
 
 export function AdminUsers() {
     const { user, role } = useAuth();
@@ -13,7 +14,7 @@ export function AdminUsers() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [editingUser, setEditingUser] = useState<User | null>(null);
-    const [formData, setFormData] = useState({ full_name: '', email: '', units: [] as string[] });
+    const [formData, setFormData] = useState({ full_name: '', email: '', units: [] as string[], recurring_booking_enabled: false });
     const [saving, setSaving] = useState(false);
     const [resendingEmail, setResendingEmail] = useState(false);
     const [successModal, setSuccessModal] = useState({ isOpen: false, title: '', message: '' });
@@ -50,7 +51,8 @@ export function AdminUsers() {
         setFormData({
             full_name: user.full_name,
             email: user.email,
-            units: user.units || []
+            units: user.units || [],
+            recurring_booking_enabled: user.recurring_booking_enabled || false
         });
     };
 
@@ -74,7 +76,8 @@ export function AdminUsers() {
             .update({
                 full_name: formData.full_name,
                 email: formData.email,
-                units: formData.units
+                units: formData.units,
+                recurring_booking_enabled: formData.recurring_booking_enabled
             })
             .eq('id', editingUser.id);
 
@@ -350,6 +353,27 @@ export function AdminUsers() {
                                         </div>
                                     ))}
                                 </div>
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 bg-primary-50 rounded-2xl border border-primary-100">
+                                <div>
+                                    <p className="text-sm font-bold text-primary-900">Agendamento Fixo</p>
+                                    <p className="text-[10px] text-primary-600 font-bold uppercase tracking-tight">Permitir reservas recorrentes</p>
+                                </div>
+                                <button
+                                    onClick={() => setFormData({ ...formData, recurring_booking_enabled: !formData.recurring_booking_enabled })}
+                                    className={clsx(
+                                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2",
+                                        formData.recurring_booking_enabled ? "bg-primary-600" : "bg-gray-200"
+                                    )}
+                                >
+                                    <span
+                                        className={clsx(
+                                            "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                            formData.recurring_booking_enabled ? "translate-x-6" : "translate-x-1"
+                                        )}
+                                    />
+                                </button>
                             </div>
                         </div>
 

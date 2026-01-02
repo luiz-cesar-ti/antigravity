@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Building, User, MapPin, Calendar, Clock, AlertCircle } from 'lucide-react';
+import { Building, User, MapPin, Calendar, Clock, AlertCircle, Repeat } from 'lucide-react';
+import { clsx } from 'clsx';
 import type { BookingData } from '../../pages/BookingWizard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSettings } from '../../hooks/useSettings';
@@ -17,7 +18,7 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
     const [error, setError] = useState('');
 
     // Auto-fill available units from user profile
-    const availableUnits = (user && user.role === 'teacher' && 'units' in user) ? user.units : [];
+    const availableUnits = (user && 'units' in (user as any)) ? (user as any).units : [];
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -26,9 +27,23 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
     };
 
     const validateStep = () => {
-        if (!data.unit || !data.totvs_number || !data.local || !data.date || !data.startTime || !data.endTime) {
-            setError('Por favor, preencha todos os campos obrigatórios.');
-            return false;
+        if (data.isRecurring) {
+            if (!data.unit || !data.totvs_number || !data.local || data.dayOfWeek === undefined || !data.startTime || !data.endTime) {
+                setError('Por favor, preencha todos os campos obrigatórios para o agendamento fixo.');
+                return false;
+            }
+        } else {
+            if (!data.unit || !data.totvs_number || !data.local || !data.date || !data.startTime || !data.endTime) {
+                setError('Por favor, preencha todos os campos obrigatórios.');
+                return false;
+            }
+
+            // Prevent past dates only for normal bookings
+            const today = new Date().toISOString().split('T')[0];
+            if (data.date < today) {
+                setError('Não é possível agendar para datas passadas.');
+                return false;
+            }
         }
 
         if (data.endTime <= data.startTime) {
@@ -48,12 +63,6 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
             }
         }
 
-        // Prevent past dates
-        const today = new Date().toISOString().split('T')[0];
-        if (data.date < today) {
-            setError('Não é possível agendar para datas passadas.');
-            return false;
-        }
 
         return true;
     };
@@ -66,7 +75,33 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
 
     return (
         <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-800">Informações Básicas</h2>
+            <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xl font-semibold text-gray-800">Informações Básicas</h2>
+
+                {(user as any)?.recurring_booking_enabled && (
+                    <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-sm">
+                        <button
+                            onClick={() => updateData({ isRecurring: false })}
+                            className={clsx(
+                                "px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
+                                !data.isRecurring ? "bg-white text-primary-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                            )}
+                        >
+                            Normal
+                        </button>
+                        <button
+                            onClick={() => updateData({ isRecurring: true })}
+                            className={clsx(
+                                "px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-2",
+                                data.isRecurring ? "bg-primary-600 text-white shadow-lg shadow-primary-100" : "text-gray-500 hover:text-gray-700"
+                            )}
+                        >
+                            <Repeat className="h-3 w-3" />
+                            Agendamento Fixo
+                        </button>
+                    </div>
+                )}
+            </div>
 
             {error && (
                 <div className="rounded-md bg-red-50 p-4 border border-red-200 animate-fadeIn">
@@ -166,22 +201,49 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
                 </div>
 
                 {/* Date */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Data *</label>
-                    <div className="mt-1 relative rounded-md shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Calendar className="h-5 w-5 text-gray-400" />
+                {/* Conditional: Date or Day of Week */}
+                {data.isRecurring ? (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Dia da Semana *</label>
+                        <div className="mt-1 relative rounded-md shadow-sm">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Calendar className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <select
+                                name="dayOfWeek"
+                                value={data.dayOfWeek ?? ''}
+                                onChange={(e) => updateData({ dayOfWeek: parseInt(e.target.value) })}
+                                className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3"
+                            >
+                                <option value="">Escolha o dia...</option>
+                                <option value="1">Segunda-feira</option>
+                                <option value="2">Terça-feira</option>
+                                <option value="3">Quarta-feira</option>
+                                <option value="4">Quinta-feira</option>
+                                <option value="5">Sexta-feira</option>
+                                <option value="6">Sábado</option>
+                                <option value="0">Domingo</option>
+                            </select>
                         </div>
-                        <input
-                            type="date"
-                            name="date"
-                            value={data.date}
-                            onChange={handleInputChange}
-                            min={new Date().toISOString().split('T')[0]}
-                            className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3"
-                        />
                     </div>
-                </div>
+                ) : (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Data *</label>
+                        <div className="mt-1 relative rounded-md shadow-sm">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Calendar className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <input
+                                type="date"
+                                name="date"
+                                value={data.date}
+                                onChange={handleInputChange}
+                                min={new Date().toISOString().split('T')[0]}
+                                className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3"
+                            />
+                        </div>
+                    </div>
+                )}
 
                 {/* Time Range */}
                 <div className="grid grid-cols-2 gap-4">
