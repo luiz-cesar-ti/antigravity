@@ -9,13 +9,24 @@ export function VerificationPage() {
     const [bookingData, setBookingData] = useState<any>(null);
 
     useEffect(() => {
+        console.log('Verification started for token:', token);
         if (!token) {
+            console.error('No token found in URL params');
             setStatus('invalid');
             return;
         }
 
         const verifyToken = async () => {
+            // Safety timeout: if it takes more than 10 seconds, show error
+            const timeoutId = setTimeout(() => {
+                if (status === 'loading') {
+                    console.error('Verification timeout reached');
+                    setStatus('error');
+                }
+            }, 10000);
+
             try {
+                console.log('Attempting primary fetch (with joins)...');
                 // Fetch booking by token
                 const { data, error } = await supabase
                     .from('bookings')
@@ -38,7 +49,8 @@ export function VerificationPage() {
 
                 let simpleData = null;
                 if (error || !data) {
-                    console.warn('Individual booking verification failed, trying fallback...');
+                    console.warn('Primary fetch failed or returned no data. Error:', error);
+                    console.log('Attempting fallback fetch (simple select)...');
                     // Try to fetch with a simpler query if joins fail due to RLS
                     const { data: sData, error: sError } = await supabase
                         .from('bookings')
@@ -47,20 +59,27 @@ export function VerificationPage() {
                         .single();
 
                     if (sError || !sData) {
+                        console.error('Fallback fetch also failed. Error:', sError);
+                        clearTimeout(timeoutId);
                         setStatus('invalid');
                         return;
                     }
+                    console.log('Fallback fetch successful!');
                     simpleData = sData;
                     setBookingData(sData);
                 } else {
+                    console.log('Primary fetch successful!');
                     setBookingData(data);
                 }
+
+                clearTimeout(timeoutId);
                 setStatus('valid');
 
                 const finalData = data || simpleData;
                 if (!finalData) return;
 
                 // Log the verification action (Non-blocking)
+                console.log('Logging verification action...');
                 supabase.from('audit_logs').insert({
                     booking_id: finalData.id,
                     action: 'VERIFIED_QR',
@@ -68,15 +87,21 @@ export function VerificationPage() {
                     details: { user_agent: navigator.userAgent }
                 }).then(({ error }) => {
                     if (error) console.error('Audit log error:', error);
+                    else console.log('Audit log entry created successfully.');
                 });
 
             } catch (err) {
-                console.error('Verification error:', err);
+                console.error('Verification exception:', err);
+                clearTimeout(timeoutId);
                 setStatus('error');
             }
         };
 
         verifyToken();
+
+        return () => {
+            // No cleanup needed for the timeout since it updates status which is tracked
+        };
     }, [token]);
 
     if (status === 'loading') {
