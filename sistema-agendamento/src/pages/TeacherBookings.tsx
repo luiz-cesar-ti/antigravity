@@ -170,7 +170,7 @@ export function TeacherBookings() {
 
         const { error } = await supabase
             .from('bookings')
-            .update({ status: 'cancelled_by_user' })
+            .delete()
             .eq('id', deleteModal.bookingId);
 
         if (!error) {
