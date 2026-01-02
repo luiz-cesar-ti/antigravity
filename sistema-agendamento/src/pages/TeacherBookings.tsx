@@ -170,13 +170,14 @@ export function TeacherBookings() {
 
         const { error } = await supabase
             .from('bookings')
-            .delete()
+            .update({ status: 'cancelled_by_user' })
             .eq('id', deleteModal.bookingId);
 
         if (!error) {
             setDeleteModal({ isOpen: false, bookingId: null });
             fetchBookings();
         } else {
+            console.error('Delete error:', error);
             alert('Erro ao excluir agendamento.');
         }
     };
@@ -340,11 +341,11 @@ export function TeacherBookings() {
                             </div>
 
                             <h3 className="text-2xl font-black text-gray-900 text-center mb-3">
-                                Excluir Reserva?
+                                Cancelar Agendamento?
                             </h3>
 
                             <p className="text-gray-500 text-center text-sm leading-relaxed mb-10 px-2">
-                                Os equipamentos ficarão imediatamente disponíveis para outros professores. Esta ação não pode ser desfeita.
+                                Os equipamentos ficarão imediatamente disponíveis para outros professores. O termo assinado continuará disponível para auditoria da administração.
                             </p>
 
                             <div className="flex flex-col gap-3">
@@ -352,13 +353,13 @@ export function TeacherBookings() {
                                     onClick={handleDelete}
                                     className="w-full px-6 py-4 bg-red-600 hover:bg-red-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-red-200 transition-all active:scale-95"
                                 >
-                                    Confirmar Exclusão
+                                    Confirmar Cancelamento
                                 </button>
                                 <button
                                     onClick={() => setDeleteModal({ isOpen: false, bookingId: null })}
                                     className="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-sm rounded-2xl transition-all"
                                 >
-                                    Manter Reserva
+                                    Manter Agendamento
                                 </button>
                             </div>
                         </div>
