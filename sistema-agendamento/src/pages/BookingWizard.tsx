@@ -16,7 +16,6 @@ export type BookingData = {
     observations?: string;
     termAccepted: boolean;
     displayId?: string;
-    verificationToken?: string;
 };
 
 export function BookingWizard() {

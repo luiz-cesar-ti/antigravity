@@ -1,5 +1,4 @@
 import React from 'react';
-import QRCode from 'react-qr-code';
 
 // Interfaces to handle both fresh Wizard data and stored Admin/DB data
 interface TermEquipment {
@@ -28,9 +27,7 @@ interface TermData {
     created_at?: string;
     timestamp?: string;
     display_id?: string;
-    verification_token?: string;
     displayId?: string; // Wizard format
-    verificationToken?: string; // Wizard format
 }
 
 interface TermDocumentProps {
@@ -48,10 +45,8 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
 
     // Extract Traceability Data
     const getDisplayId = () => data.display_id || data.displayId || data.term_document?.displayId || data.term_document?.display_id;
-    const getVerificationToken = () => data.verification_token || data.verificationToken || data.term_document?.verificationToken || data.term_document?.verification_token;
 
     const displayId = getDisplayId();
-    const verificationToken = getVerificationToken();
 
     const getDate = () => {
         const d = data.date || data.booking_date || data.term_document?.date || data.term_document?.booking_date;
@@ -223,90 +218,22 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 </div>
             </div>
 
-            {/* Traceability Footer (Page 2) */}
-            {(displayId || verificationToken) && (
+            {/* Traceability Footer */}
+            {displayId && (
                 <div style={{
-                    pageBreakBefore: 'always',
-                    paddingTop: '3rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: '100%', // Take full height of new page effectively
+                    marginTop: '3rem',
+                    paddingTop: '1rem',
+                    borderTop: '1px dashed #e5e7eb',
+                    textAlign: 'center'
                 }}>
-                    <div style={{
-                        width: '100%',
-                        textAlign: 'center',
-                        marginBottom: '3rem'
-                    }}>
-                        <h2 style={{
-                            fontSize: '16pt',
-                            fontWeight: 'bold',
-                            textTransform: 'uppercase',
-                            color: '#374151',
-                            marginBottom: '1rem'
-                        }}>Autenticidade do Documento</h2>
-                        <div style={{ width: '100px', height: '4px', background: '#000', margin: '0 auto' }}></div>
-                    </div>
-
-                    <div style={{
-                        border: '4px solid #000',
-                        padding: '2rem',
-                        background: '#fff',
-                        borderRadius: '1rem',
-                        marginBottom: '2rem'
-                    }}>
-                        {verificationToken && (
-                            <QRCode
-                                value={`${window.location.origin}/verify/${verificationToken}`}
-                                size={180}
-                                level="M"
-                            />
-                        )}
-                    </div>
-
-                    <div style={{ textAlign: 'center', maxWidth: '80%' }}>
-                        <p style={{ fontWeight: 'bold', fontSize: '18pt', marginBottom: '0.5rem', color: '#111827' }}>
-                            ID DO TERMO: #{displayId}
-                        </p>
-                        <p style={{ fontSize: '12pt', color: '#4b5563', marginBottom: '1.5rem' }}>
-                            Utilize a câmera do seu celular para escanear o QR Code acima e verificar a validade deste documento.
-                        </p>
-                        <div style={{
-                            background: '#f3f4f6',
-                            padding: '1rem',
-                            borderRadius: '0.5rem',
-                            fontFamily: 'monospace',
-                            fontSize: '10pt',
-                            color: '#6b7280',
-                            wordBreak: 'break-all'
-                        }}>
-                            TOKEN: {verificationToken}
-                        </div>
-                    </div>
-
-                    <div style={{
-                        marginTop: 'auto',
-                        paddingTop: '5rem',
-                        textAlign: 'center',
-                        fontSize: '8pt',
-                        color: '#9ca3af'
-                    }}>
-                        <p>Documento gerado e autenticado eletronicamente.</p>
-                    </div>
+                    <p style={{ fontWeight: 'bold', fontSize: '11pt', color: '#111827' }}>
+                        ID DO TERMO: #{displayId}
+                    </p>
+                    <p style={{ fontSize: '8pt', color: '#9ca3af', marginTop: '4px' }}>
+                        Este documento foi gerado eletronicamente pelo Sistema de Agendamentos Objetivo.
+                    </p>
                 </div>
             )}
-
-            <div style={{
-                marginTop: '3rem',
-                borderTop: '1px dashed #e5e7eb',
-                paddingTop: '1rem',
-                textAlign: 'center',
-                fontSize: '8pt',
-                color: '#9ca3af'
-            }}>
-                <p>Este documento foi gerado eletronicamente pelo Sistema de Agendamentos Objetivo.</p>
-            </div>
         </div >
     );
 };

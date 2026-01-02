@@ -20,7 +20,6 @@ import {
 import type { BookingData } from '../../pages/BookingWizard';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
-import { v4 as uuidv4 } from 'uuid';
 import { TermDocument } from '../TermDocument';
 import { clsx } from 'clsx';
 // @ts-ignore
@@ -41,14 +40,11 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
     const [error, setError] = useState('');
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
-    // ...
-
-    // Pre-generate ID and Token for the preview
+    // Pre-generate ID for the preview
     useEffect(() => {
-        if (!data.displayId || !data.verificationToken) {
+        if (!data.displayId) {
             updateData({
-                displayId: Math.floor(100000 + Math.random() * 900000).toString(),
-                verificationToken: uuidv4()
+                displayId: Math.floor(100000 + Math.random() * 900000).toString()
             });
         }
     }, []);
@@ -64,7 +60,6 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
 
         try {
             const displayId = data.displayId || Math.floor(100000 + Math.random() * 900000).toString();
-            const verificationToken = data.verificationToken || uuidv4();
 
             const termDocument = {
                 userName: data.full_name,
@@ -77,24 +72,10 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                 equipments: data.equipments,
                 timestamp: new Date().toISOString(),
                 userAgent: navigator.userAgent,
-                displayId,
-                verificationToken
+                displayId
             };
 
-            // 1. Insert into dedicated Verification Table (Robustness)
-            const { error: termError } = await supabase.from('booking_terms').insert({
-                display_id: displayId,
-                verification_token: verificationToken,
-                term_data: termDocument,
-                user_id: user?.id
-            });
-
-            if (termError) {
-                console.error('Error creating term snapshot:', termError);
-                throw new Error('Falha ao criar termo de verificação.');
-            }
-
-            // 2. Insert into main Bookings Table
+            // 1. Insert into main Bookings Table
             const bookingsToInsert = data.equipments.map(eq => ({
                 user_id: user?.id,
                 unit: data.unit,
@@ -108,8 +89,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                 status: 'active',
                 term_signed: true,
                 term_document: termDocument,
-                display_id: displayId,
-                verification_token: verificationToken
+                display_id: displayId
             }));
 
             const { data: createdBookings, error: insertError } = await supabase
@@ -175,10 +155,8 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                     });
                 } catch (err) {
                     console.log('User cancelled share or share failed, falling back to download');
-                    // Optional: fallback to download? for now just log
                 }
             } else {
-                // Download behavior (or fallback)
                 const url = URL.createObjectURL(pdfBlob);
                 const a = document.createElement('a');
                 a.href = url;
