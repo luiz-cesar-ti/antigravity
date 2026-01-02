@@ -78,8 +78,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (!mounted) return;
 
             if (event === 'SIGNED_OUT') {
-                setState({ user: null, role: null, isAuthenticated: false, isLoading: false });
-                localStorage.removeItem('admin_session');
+                // VERY IMPORTANT: Only clear state if there was actually a Supabase user or if explicitly triggered.
+                // This prevents the "idle cleanup" of Supabase from clearing an active Admin session.
+                setState(prev => {
+                    if (prev.role === 'admin') return prev; // Keep admin session intact
+                    return { user: null, role: null, isAuthenticated: false, isLoading: false };
+                });
+
+                // Only remove admin session if we are not in an admin role or if explicitly called
+                // (usually signOut function handles this)
             } else if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
                 const { data: profile } = await supabase
                     .from('users')
@@ -92,11 +99,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         await supabase.auth.signOut();
                         return;
                     }
-                    setState({
-                        user: profile as User,
-                        role: 'teacher',
-                        isAuthenticated: true,
-                        isLoading: false,
+
+                    const newUser = profile as User;
+
+                    setState(prev => {
+                        // IDENTITY CHECK: Deep comparison of ID and data to prevent re-render loops
+                        if (prev.user?.id === newUser.id && JSON.stringify(prev.user) === JSON.stringify(newUser)) {
+                            return prev;
+                        }
+
+                        return {
+                            user: newUser,
+                            role: 'teacher',
+                            isAuthenticated: true,
+                            isLoading: false,
+                        };
                     });
                 }
             }

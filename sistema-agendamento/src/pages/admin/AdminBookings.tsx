@@ -94,7 +94,7 @@ export function AdminBookings() {
 
     useEffect(() => {
         fetchBookings();
-    }, [user, startDate, endDate, statusFilter, periodFilter, recurringFilter]);
+    }, [user?.id, (user as Admin)?.unit, startDate, endDate, statusFilter, periodFilter, recurringFilter]);
 
     const handleDeleteBooking = async () => {
         if (!deleteModal.bookingId) return;

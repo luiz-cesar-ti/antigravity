@@ -3,7 +3,7 @@ import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { SCHOOL_UNITS } from '../../utils/constants';
 import type { User, Admin } from '../../types';
-import { Search, Mail, Building, Pencil, X, ToggleLeft, ToggleRight, AlertCircle, UserMinus, Check, Send } from 'lucide-react';
+import { Search, Mail, Building, Pencil, X, ToggleLeft, ToggleRight, AlertCircle, UserMinus, Check, Send, Repeat } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { SuccessModal } from '../../components/SuccessModal';
 import { clsx } from 'clsx';
@@ -49,8 +49,8 @@ export function AdminUsers() {
     };
 
     useEffect(() => {
-        if (user) fetchUsers();
-    }, [user]);
+        if (user?.id) fetchUsers();
+    }, [user?.id]);
 
     const handleEdit = (user: User) => {
         setEditingUser(user);
