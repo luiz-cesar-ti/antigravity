@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { SCHOOL_UNITS } from '../../utils/constants';
 import type { User, Admin } from '../../types';
-import { Search, Mail, Building, Pencil, X, ToggleLeft, ToggleRight, AlertCircle, UserMinus } from 'lucide-react';
+import { Search, Mail, Building, Pencil, X, ToggleLeft, ToggleRight, AlertCircle, UserMinus, Check, Send } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
 export function AdminUsers() {
@@ -11,8 +12,9 @@ export function AdminUsers() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [editingUser, setEditingUser] = useState<User | null>(null);
-    const [formData, setFormData] = useState({ full_name: '', email: '' });
+    const [formData, setFormData] = useState({ full_name: '', email: '', units: [] as string[] });
     const [saving, setSaving] = useState(false);
+    const [resendingEmail, setResendingEmail] = useState(false);
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -26,11 +28,6 @@ export function AdminUsers() {
 
         if (!error && data) {
             let filteredData = data as User[];
-
-            // Filter by Admin Unit (Client-side filtering for arrays often easier if dataset small, 
-            // but Supabase .contains is better. However, RLS might interfere so let's do client side for safety now 
-            // OR use .contains if we trust it).
-            // Let's use strict filtering logic here.
 
             if (role === 'admin' && (user as Admin)?.unit) {
                 const adminUnit = (user as Admin).unit;
@@ -48,7 +45,22 @@ export function AdminUsers() {
 
     const handleEdit = (user: User) => {
         setEditingUser(user);
-        setFormData({ full_name: user.full_name, email: user.email });
+        setFormData({
+            full_name: user.full_name,
+            email: user.email,
+            units: user.units || []
+        });
+    };
+
+    const handleUnitToggle = (unit: string) => {
+        setFormData(prev => {
+            const currentUnits = prev.units;
+            if (currentUnits.includes(unit)) {
+                return { ...prev, units: currentUnits.filter(u => u !== unit) };
+            } else {
+                return { ...prev, units: [...currentUnits, unit] };
+            }
+        });
     };
 
     const handleSaveEdit = async () => {
@@ -60,6 +72,7 @@ export function AdminUsers() {
             .update({
                 full_name: formData.full_name,
                 email: formData.email,
+                units: formData.units
             })
             .eq('id', editingUser.id);
 
@@ -71,6 +84,24 @@ export function AdminUsers() {
         }
         setSaving(false);
     };
+
+    const handleResendConfirmation = async () => {
+        if (!formData.email) return;
+        if (!confirm(`Deseja reenviar o email de confirmação para ${formData.email}?`)) return;
+
+        setResendingEmail(true);
+        const { error } = await supabase.auth.resend({
+            type: 'signup',
+            email: formData.email
+        });
+
+        if (error) {
+            alert('Erro ao reenviar: ' + error.message);
+        } else {
+            alert('Email de confirmação reenviado com sucesso!');
+        }
+        setResendingEmail(false);
+    }
 
     const handleToggleActive = async (targetUser: User) => {
         const newStatus = !targetUser.active;
@@ -106,7 +137,6 @@ export function AdminUsers() {
             .eq('id', targetUser.id);
 
         if (!error) {
-            // Refresh list (user should disappear)
             fetchUsers();
         } else {
             alert('Erro ao remover professor da unidade: ' + error.message);
@@ -189,13 +219,6 @@ export function AdminUsers() {
                                                     <Pencil className="h-4 w-4" />
                                                 </button>
 
-                                                {/* Only allow global deactivate if NOT a specific unit admin OR if we want to allow it? 
-                                                    Requirements say: "exclude only on that unit". 
-                                                    So unit admin should see "Remove from Unit". 
-                                                    Global Deactivate is risky for unit admin. Let's hide it for unit admin OR make it clear.
-                                                    Let's show Remove for unit admin, and Toggle for super admin (no unit).
-                                                */}
-
                                                 {isAdminWithUnit ? (
                                                     <button
                                                         onClick={() => handleRemoveFromUnit(teacher)}
@@ -246,7 +269,7 @@ export function AdminUsers() {
             {/* Edit Modal */}
             {editingUser && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-semibold text-gray-900">Editar Professor</h2>
                             <button onClick={() => setEditingUser(null)} className="text-gray-400 hover:text-gray-600">
@@ -264,22 +287,63 @@ export function AdminUsers() {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                 />
                             </div>
+
+                            {/* Email and Resend Section */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                <input
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                />
+                                <div className="flex gap-2">
+                                    <input
+                                        type="email"
+                                        value={formData.email}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleResendConfirmation}
+                                        disabled={resendingEmail}
+                                        className="shrink-0 px-3 py-2 bg-blue-50 text-blue-600 text-xs font-bold uppercase rounded-lg hover:bg-blue-100 transition-colors flex items-center"
+                                        title="Reenviar email de confirmação de cadastro"
+                                    >
+                                        <Send className="h-3 w-3 mr-1" />
+                                        {resendingEmail ? '...' : 'Reenviar'}
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-gray-400 mt-1">
+                                    Use "Reenviar" apenas se o professor não tiver confirmado o cadastro.
+                                </p>
                             </div>
+
                             <div className="bg-gray-50 p-3 rounded-lg">
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-gray-500 mb-2">
                                     <strong>TOTVS:</strong> {editingUser.totvs_number}
                                 </p>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    <strong>Unidades:</strong> {editingUser.units?.join(', ') || 'Nenhuma'}
-                                </p>
+
+                                <label className="block text-sm font-medium text-gray-700 mb-2 mt-4">
+                                    Unidades de Acesso:
+                                </label>
+                                <div className="max-h-48 overflow-y-auto bg-white border border-gray-200 rounded p-2 space-y-1">
+                                    {SCHOOL_UNITS.map((unit) => (
+                                        <div
+                                            key={unit}
+                                            onClick={() => handleUnitToggle(unit)}
+                                            className={`flex items-center p-2 rounded cursor-pointer transition-colors ${formData.units.includes(unit)
+                                                ? 'bg-primary-50 border-primary-100 border'
+                                                : 'hover:bg-gray-50 border border-transparent'
+                                                }`}
+                                        >
+                                            <div className={`h-4 w-4 rounded border flex items-center justify-center mr-2 ${formData.units.includes(unit)
+                                                ? 'bg-primary-600 border-primary-600'
+                                                : 'border-gray-300 bg-white'
+                                                }`}>
+                                                {formData.units.includes(unit) && <Check className="h-3 w-3 text-white" />}
+                                            </div>
+                                            <span className={`text-sm ${formData.units.includes(unit) ? 'text-primary-900 font-medium' : 'text-gray-700'}`}>
+                                                {unit}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
@@ -295,7 +359,7 @@ export function AdminUsers() {
                                 disabled={saving}
                                 className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors disabled:opacity-50"
                             >
-                                {saving ? 'Salvando...' : 'Salvar'}
+                                {saving ? 'Salvando...' : 'Salvar Alterações'}
                             </button>
                         </div>
                     </div>
