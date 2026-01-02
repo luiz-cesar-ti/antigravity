@@ -81,7 +81,7 @@ export function TeacherBookings() {
 
                 <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-                <div className="relative z-50 inline-block align-bottom bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl w-full h-full sm:h-auto flex flex-col max-h-[100vh] sm:max-h-[90vh]">
+                <div className="relative z-50 inline-block align-bottom bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl w-full h-full sm:h-auto flex flex-col max-h-[100vh] sm:max-h-[85vh]">
                     <div className="bg-white px-6 py-5 flex justify-between items-center border-b border-gray-100 shrink-0 sticky top-0 z-10 transition-all">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-primary-50 rounded-xl">

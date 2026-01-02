@@ -15,6 +15,8 @@ export type BookingData = {
     equipments: { id: string; name: string; quantity: number; model?: string; brand?: string; }[];
     observations?: string;
     termAccepted: boolean;
+    displayId?: string;
+    verificationToken?: string;
 };
 
 export function BookingWizard() {

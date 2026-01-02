@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -40,6 +40,16 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
     const [error, setError] = useState('');
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
+    // Pre-generate ID and Token for the preview
+    useEffect(() => {
+        if (!data.displayId || !data.verificationToken) {
+            updateData({
+                displayId: Math.floor(100000 + Math.random() * 900000).toString(),
+                verificationToken: crypto.randomUUID()
+            });
+        }
+    }, []);
+
     const handleConfirm = async () => {
         if (!data.termAccepted) {
             setError('Você precisa aceitar os termos para confirmar o agendamento.');
@@ -50,9 +60,8 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
         setError('');
 
         try {
-            // Generate Traceability Data
-            const displayId = Math.floor(100000 + Math.random() * 900000).toString();
-            const verificationToken = crypto.randomUUID();
+            const displayId = data.displayId || Math.floor(100000 + Math.random() * 900000).toString();
+            const verificationToken = data.verificationToken || crypto.randomUUID();
 
             const termDocument = {
                 userName: data.full_name,
@@ -240,7 +249,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
 
                 <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-                <div className="relative z-50 inline-block align-bottom bg-white sm:rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl w-full h-full sm:h-auto sm:w-full flex flex-col">
+                <div className="relative z-50 inline-block align-bottom bg-white sm:rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl w-full h-full sm:h-auto flex flex-col max-h-[100vh] sm:max-h-[85vh]">
                     <div className="bg-white px-4 py-4 flex justify-between items-center border-b border-gray-100 shrink-0">
                         <div className="flex items-center gap-2 sm:gap-3">
                             <div className="p-1.5 sm:p-2 bg-primary-50 rounded-lg shrink-0">
@@ -277,10 +286,10 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                         </div>
                     </div>
 
-                    <div className="bg-gray-100 px-0 py-4 sm:px-4 sm:py-8 overflow-y-auto flex-1 flex justify-center">
-                        <div className="bg-white shadow-none sm:shadow-2xl sm:rounded-sm max-w-[210mm] w-full mx-auto">
-                            <div className="scale-[0.85] origin-top sm:scale-100">
-                                <TermDocument data={data} id="term-preview-content" />
+                    <div className="bg-gray-100 p-4 sm:p-8 overflow-y-auto flex-1 flex justify-center min-h-0">
+                        <div className="bg-white shadow-none sm:shadow-2xl mx-auto" style={{ maxWidth: '210mm' }}>
+                            <div id="term-preview-content">
+                                <TermDocument data={data} />
                             </div>
                         </div>
                     </div>

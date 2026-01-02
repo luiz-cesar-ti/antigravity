@@ -5,7 +5,7 @@ import type { Booking, Admin } from '../../types';
 import { format, parseISO } from 'date-fns';
 import {
     Search, Calendar, Users, MapPin, FileText, Trash2, AlertTriangle,
-    Monitor, Clock, Filter, Hash, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug
+    Monitor, Clock, Filter, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { TermDocument } from '../../components/TermDocument';
@@ -161,7 +161,7 @@ export function AdminBookings() {
             <div className="flex items-center justify-center min-h-screen px-0 sm:px-4 pt-0 sm:pt-4 pb-0 sm:pb-20 text-center sm:block">
                 <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" onClick={() => setModalOpen(false)}></div>
                 <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                <div className="relative z-50 inline-block align-bottom bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl w-full h-full sm:h-auto flex flex-col max-h-[100vh] sm:max-h-[90vh]">
+                <div className="relative z-50 inline-block align-bottom bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl w-full h-full sm:h-auto flex flex-col max-h-[100vh] sm:max-h-[85vh]">
                     <div className="bg-white px-6 py-5 flex justify-between items-center border-b border-gray-100 shrink-0 sticky top-0 z-10">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-primary-50 rounded-xl">
@@ -372,105 +372,110 @@ export function AdminBookings() {
                             </li>
                         ) : (
                             filteredBookings.map((booking) => (
-                                <li key={booking.id} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl hover:border-primary-100 transition-all overflow-hidden group">
-                                    <div className="px-8 py-7">
-                                        {/* Card Header */}
-                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                            <div className="flex items-center gap-5">
-                                                <div className="p-4 bg-primary-50 rounded-[1.25rem] shrink-0 group-hover:bg-primary-100 transition-all duration-300">
+                                <li key={booking.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-lg transition-all overflow-hidden group">
+                                    <div className="p-6 md:p-8">
+                                        {/* TOP SECTION: Main Info */}
+                                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-8 border-b border-gray-50">
+
+                                            {/* Left: Equipment Focus */}
+                                            <div className="flex items-start gap-5">
+                                                <div className="p-4 bg-gray-50 rounded-2xl shrink-0 group-hover:bg-primary-50 transition-colors duration-300 ring-1 ring-gray-100">
                                                     {getEquipmentIcon(booking.equipment?.name)}
                                                 </div>
-                                                <div className="min-w-0">
+                                                <div className="space-y-1.5">
                                                     <h3 className="text-xl font-black text-gray-900 tracking-tight leading-tight">
                                                         {booking.equipment?.name}
                                                     </h3>
-                                                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                                                        <div className="flex items-center text-primary-700 bg-primary-50 px-3 py-1 rounded-full border border-primary-100 shadow-inner">
-                                                            <Hash className="h-3 w-3 mr-1.5" />
-                                                            <span className="text-[10px] font-black uppercase tracking-wider">
-                                                                {booking.quantity} {booking.quantity === 1 ? 'Unidade' : 'Unidades'}
+                                                    <div className="inline-flex items-center px-2.5 py-1 bg-primary-50 text-primary-700 text-[10px] font-black uppercase tracking-wider rounded-lg border border-primary-100">
+                                                        # {booking.quantity} {booking.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Middle: Teacher & Status */}
+                                            <div className="flex-1 flex flex-col md:flex-row md:items-center gap-4 md:gap-8 px-0 md:px-8 border-l-0 md:border-l border-gray-100">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0">
+                                                        <Users className="h-5 w-5 text-indigo-600" />
+                                                    </div>
+                                                    <div className="flex flex-col min-w-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-gray-900 truncate">{(booking as any).users?.full_name}</span>
+                                                            {getStatusBadge(booking)}
+                                                        </div>
+                                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                                            <span className="truncate">{(booking as any).users?.email}</span>
+                                                            {booking.display_id && (
+                                                                <span className="text-primary-600">#{booking.display_id}</span>
+                                                            )}
+                                                            <span className="flex items-center gap-1">
+                                                                <MapPin className="h-3 w-3" />
+                                                                {booking.unit}
                                                             </span>
                                                         </div>
-                                                        <span className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-full border border-gray-100 text-[10px] text-gray-500 font-black uppercase tracking-wider">
-                                                            <MapPin className="h-3 w-3" />
-                                                            {booking.unit}
-                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div className="flex flex-col md:items-end gap-2">
-                                                {getStatusBadge(booking)}
-                                                {booking.display_id && (
-                                                    <span className="text-[10px] font-mono text-gray-400 font-black tracking-widest bg-gray-50 px-2 py-0.5 rounded-md">
-                                                        #{booking.display_id}
+                                            {/* Right: Primary Actions */}
+                                            <div className="flex items-center gap-3 shrink-0">
+                                                {booking.status === 'active' && !isBookingExpired(booking) && (
+                                                    <span className="hidden md:inline-flex px-3 py-1 bg-green-50 text-green-700 text-[10px] font-black uppercase tracking-wider rounded-full border border-green-200">
+                                                        ATIVO
                                                     </span>
                                                 )}
-                                            </div>
-                                        </div>
 
-                                        {/* Teacher Info Section */}
-                                        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="flex items-center p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/30">
-                                                <div className="p-2.5 bg-white rounded-xl shadow-sm mr-4">
-                                                    <Users className="h-5 w-5 text-indigo-600" />
-                                                </div>
-                                                <div className="flex flex-col min-w-0">
-                                                    <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Professor Requisitante</span>
-                                                    <span className="font-bold text-indigo-900 truncate">{(booking as any).users?.full_name}</span>
-                                                    <span className="text-[10px] text-indigo-600/70 truncate">{(booking as any).users?.email}</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center p-4 bg-amber-50/50 rounded-2xl border border-amber-100/30">
-                                                <div className="p-2.5 bg-white rounded-xl shadow-sm mr-4">
-                                                    <Monitor className="h-5 w-5 text-amber-600" />
-                                                </div>
-                                                <div className="flex flex-col min-w-0">
-                                                    <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">Especificação Técnica</span>
-                                                    <span className="font-bold text-amber-900 truncate">{booking.equipment?.brand} {booking.equipment?.model}</span>
-                                                    <span className="text-[10px] text-amber-600/70 truncate">{booking.local}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Time and Actions */}
-                                        <div className="mt-6 pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                            <div className="flex items-center gap-6">
-                                                <div className="flex flex-col">
-                                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">DATA AGENDADA</span>
-                                                    <div className="flex items-center text-sm font-bold text-gray-800">
-                                                        <Calendar className="h-4 w-4 mr-2 text-primary-500" />
-                                                        {format(parseISO(booking.booking_date), "dd/MM/yyyy")}
-                                                    </div>
-                                                </div>
-                                                <div className="h-8 w-px bg-gray-100 hidden sm:block"></div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">HORÁRIO</span>
-                                                    <div className="flex items-center text-sm font-bold text-gray-800">
-                                                        <Clock className="h-4 w-4 mr-2 text-primary-500" />
-                                                        {booking.start_time.slice(0, 5)} - {booking.end_time.slice(0, 5)}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-3 w-full sm:w-auto">
                                                 {booking.term_document && (
                                                     <button
                                                         onClick={() => handleOpenTermModal(booking)}
-                                                        className="flex-1 sm:flex-none h-12 px-6 bg-white border border-gray-200 text-gray-700 hover:border-primary-200 hover:text-primary-600 font-bold text-xs rounded-2xl flex items-center justify-center shadow-sm transition-all active:scale-95"
+                                                        className="flex items-center gap-2 h-11 px-5 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95"
                                                     >
-                                                        <FileText className="h-4 w-4 mr-2 text-primary-500" />
+                                                        <FileText className="h-4 w-4 text-primary-500" />
                                                         Documento
                                                     </button>
                                                 )}
 
                                                 <button
                                                     onClick={() => setDeleteModal({ isOpen: true, bookingId: booking.id })}
-                                                    className="h-12 w-12 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-bold rounded-2xl flex items-center justify-center transition-all active:scale-95 border border-red-50"
+                                                    className="h-11 w-11 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95 border border-red-100 hover:border-red-600 shadow-sm"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </button>
+                                            </div>
+                                        </div>
+
+                                        {/* BOTTOM SECTION: Grid Details */}
+                                        <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-8">
+                                            <div className="space-y-2">
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">PROFESSOR</span>
+                                                <div className="flex items-center gap-2 text-sm text-gray-600 font-bold">
+                                                    <Users className="h-4 w-4 text-gray-300" />
+                                                    {(booking as any).users?.full_name}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">ESPECIFICAÇÃO</span>
+                                                <div className="flex items-center gap-2 text-sm text-gray-600 font-bold">
+                                                    <Monitor className="h-4 w-4 text-gray-300" />
+                                                    {booking.equipment?.brand} {booking.equipment?.model}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">SALA/LOCAL</span>
+                                                <div className="flex items-center gap-2 text-sm text-gray-600 font-bold">
+                                                    <MapPin className="h-4 w-4 text-gray-300" />
+                                                    {booking.local}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">AGENDADO PARA</span>
+                                                <div className="flex items-center gap-2 text-sm text-gray-600 font-bold">
+                                                    <Clock className="h-4 w-4 text-gray-300" />
+                                                    {format(parseISO(booking.booking_date), "dd/MM/yyyy")} • {booking.start_time.slice(0, 5)} - {booking.end_time.slice(0, 5)}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
