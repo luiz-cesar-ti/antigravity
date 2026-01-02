@@ -78,8 +78,9 @@ export function AdminDashboard() {
                     .select(`
                         booking_date, 
                         equipment(name),
-                        users(full_name)
+                        users(id, full_name)
                     `)
+                    .neq('status', 'cancelled_by_user')
                     .gte('booking_date', startDate.toISOString().split('T')[0]);
 
                 // Apply Strict Filtering Logic
@@ -328,6 +329,7 @@ export function AdminDashboard() {
                                             .from('bookings')
                                             .select('*, equipment(name)')
                                             .eq('user_id', teacher.id)
+                                            .neq('status', 'cancelled_by_user')
                                             .order('booking_date', { ascending: false });
 
                                         if (data) {
