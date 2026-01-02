@@ -259,7 +259,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                         {verificationToken && (
                             <QRCode
                                 value={`${window.location.origin}/verify/${verificationToken}`}
-                                size={250}
+                                size={180}
                                 level="M"
                             />
                         )}
