@@ -162,6 +162,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                     <li style={{ marginBottom: '0.1rem' }}>Utilizar o equipamento exclusivamente durante o período agendado e no local especificado.</li>
                     <li style={{ marginBottom: '0.1rem' }}>Zelar pela conservação e bom funcionamento do equipamento.</li>
                     <li style={{ marginBottom: '0.1rem' }}>Comunicar imediatamente à equipe responsável qualquer defeito ou irregularidade constatada.</li>
+                    <li style={{ marginBottom: '0.1rem' }}>Não emprestar ou transferir o equipamento a terceiros sem autorização prévia.</li>
                 </ol>
             </div>
 
