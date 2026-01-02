@@ -5,9 +5,8 @@ import type { Booking, Admin } from '../../types';
 import { format, parseISO } from 'date-fns';
 import {
     Search, Calendar, Users, MapPin, FileText, Trash2, AlertTriangle,
-    Monitor, Clock, Filter, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug, Repeat
+    Monitor, Clock, Filter, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug, Repeat, ChevronDown, History
 } from 'lucide-react';
-import { clsx } from 'clsx';
 import { TermDocument } from '../../components/TermDocument';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
@@ -17,13 +16,16 @@ export function AdminBookings() {
     const { user, role } = useAuth();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('active'); // active, closed, all
+    const [statusFilter, setStatusFilter] = useState('active'); // active, closed, all
     const [searchTerm, setSearchTerm] = useState('');
     const [pdfData, setPdfData] = useState<any>(null);
 
     // Date range filters
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [periodFilter, setPeriodFilter] = useState<'morning' | 'afternoon' | 'night' | 'all'>('all');
+    const [recurringFilter, setRecurringFilter] = useState<'recurring' | 'normal' | 'all'>('all');
+    const [showFilters, setShowFilters] = useState(false);
 
     // state for new custom modal
     const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bookingId: string | null }>({
@@ -48,28 +50,42 @@ export function AdminBookings() {
         if (role === 'admin') {
             const unit = (user as Admin).unit;
             if (unit === 'Matriz') {
-                // Matriz admin sees all bookings from all units
+                // Matriz admin sees all bookings
             } else if (unit) {
-                // Unit admin sees ONLY their unit's bookings
                 query = query.eq('unit', unit);
             } else {
-                // Safety fallback: Admin without unit sees nothing
                 query = query.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
             }
         }
 
-        // Apply date range filter at query level if provided
-        if (startDate) {
-            query = query.gte('booking_date', startDate);
-        }
-        if (endDate) {
-            query = query.lte('booking_date', endDate);
+        if (startDate) query = query.gte('booking_date', startDate);
+        if (endDate) query = query.lte('booking_date', endDate);
+
+        if (statusFilter !== 'all') {
+            if (statusFilter === 'active') {
+                query = query.eq('status', 'active');
+            } else if (statusFilter === 'closed') {
+                query = query.eq('status', 'encerrado');
+            }
         }
 
-        query = query.order('booking_date', { ascending: true });
-        query = query.order('start_time', { ascending: true });
+        if (recurringFilter === 'recurring') {
+            query = query.eq('is_recurring', true);
+        } else if (recurringFilter === 'normal') {
+            query = query.eq('is_recurring', false);
+        }
 
-        const { data, error } = await query;
+        if (periodFilter === 'morning') {
+            query = query.gte('start_time', '07:00').lte('start_time', '12:00');
+        } else if (periodFilter === 'afternoon') {
+            query = query.gte('start_time', '12:01').lte('start_time', '18:00');
+        } else if (periodFilter === 'night') {
+            query = query.gte('start_time', '18:01').lte('start_time', '23:59');
+        }
+
+        const { data, error } = await query
+            .order('booking_date', { ascending: true })
+            .order('start_time', { ascending: true });
 
         if (!error && data) {
             setBookings(data as any);
@@ -79,7 +95,7 @@ export function AdminBookings() {
 
     useEffect(() => {
         fetchBookings();
-    }, [user, startDate, endDate]);
+    }, [user, startDate, endDate, statusFilter, periodFilter, recurringFilter]);
 
     const handleDeleteBooking = async () => {
         if (!deleteModal.bookingId) return;
@@ -243,15 +259,6 @@ export function AdminBookings() {
     };
 
     const filteredBookings = bookings.filter(b => {
-        if (filter === 'active') {
-            const expired = isBookingExpired(b);
-            if (filter === 'active' && (expired || b.status === 'encerrado')) return false;
-            if (filter === 'active' && b.status === 'cancelled') return false;
-        } else if (filter === 'closed') {
-            const expired = isBookingExpired(b);
-            if (!expired && b.status !== 'encerrado') return false;
-        }
-
         const searchLower = searchTerm.toLowerCase();
         const equipmentName = b.equipment?.name?.toLowerCase() || '';
         const userName = (b as any).users?.full_name?.toLowerCase() || '';
@@ -279,79 +286,138 @@ export function AdminBookings() {
         <div className="space-y-6">
             <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Gerenciar Agendamentos</h1>
+                    <h1 className="text-2xl font-black text-gray-900">Gerenciar Agendamentos</h1>
                     <p className="text-sm text-gray-500 mt-1">Acompanhe e gerencie todas as reservas de equipamentos.</p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
-                        <button
-                            onClick={() => setFilter('active')}
-                            className={clsx("px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all", filter === 'active' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
-                        >
-                            Ativos
-                        </button>
-                        <button
-                            onClick={() => setFilter('closed')}
-                            className={clsx("px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all", filter === 'closed' ? "bg-red-600 text-white shadow-lg shadow-red-200" : "text-gray-500 hover:bg-gray-50")}
-                        >
-                            Encerrados
-                        </button>
-                        <button
-                            onClick={() => setFilter('all')}
-                            className={clsx("px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all", filter === 'all' ? "bg-gray-800 text-white shadow-lg shadow-gray-200" : "text-gray-500 hover:bg-gray-50")}
-                        >
-                            Todos
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+                    <div className="relative w-full sm:w-80">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <input
                             type="text"
                             placeholder="Buscar professor, item ou local..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary-500 transition-all"
+                            className="w-full bg-white border border-gray-100 rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 shadow-sm outline-none transition-all"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <div className="flex-1 relative">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <input
-                                type="date"
-                                className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-xl text-xs font-medium focus:ring-2 focus:ring-primary-500 transition-all"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                            />
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all border w-full sm:w-auto justify-center ${showFilters
+                            ? 'bg-primary-600 text-white border-primary-600 shadow-xl shadow-primary-200'
+                            : 'bg-white text-gray-600 border-gray-100 hover:border-primary-200 shadow-sm'
+                            }`}
+                    >
+                        <Filter className="h-4 w-4" />
+                        Filtros
+                        {(startDate || endDate || periodFilter !== 'all' || statusFilter !== 'all' || recurringFilter !== 'all') && (
+                            <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            {/* Filter Bar */}
+            {showFilters && (
+                <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data Início</label>
+                            <div className="relative">
+                                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 outline-none"
+                                />
+                            </div>
                         </div>
-                        <span className="text-gray-400 font-bold">~</span>
-                        <div className="flex-1 relative">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <input
-                                type="date"
-                                className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-xl text-xs font-medium focus:ring-2 focus:ring-primary-500 transition-all"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                            />
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data Fim</label>
+                            <div className="relative">
+                                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Período</label>
+                            <div className="relative">
+                                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <select
+                                    value={periodFilter}
+                                    onChange={(e) => setPeriodFilter(e.target.value as any)}
+                                    className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer outline-none"
+                                >
+                                    <option value="all">Todos Períodos</option>
+                                    <option value="morning">Manhã (07h-12h)</option>
+                                    <option value="afternoon">Tarde (12h-18h)</option>
+                                    <option value="night">Noite (18h-24h)</option>
+                                </select>
+                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Status</label>
+                            <div className="relative">
+                                <History className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value as any)}
+                                    className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer outline-none"
+                                >
+                                    <option value="all">Todos Status</option>
+                                    <option value="active">Agendados (Ativos)</option>
+                                    <option value="closed">Encerrados</option>
+                                </select>
+                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tipo</label>
+                            <div className="relative">
+                                <Repeat className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <select
+                                    value={recurringFilter}
+                                    onChange={(e) => setRecurringFilter(e.target.value as any)}
+                                    className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer outline-none"
+                                >
+                                    <option value="all">Todos os Tipos</option>
+                                    <option value="normal">Agendamento Normal</option>
+                                    <option value="recurring">Agendamento Fixo</option>
+                                </select>
+                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="mt-4 pt-4 border-t border-gray-50 flex justify-end">
                         <button
-                            onClick={() => { setStartDate(''); setEndDate(''); setSearchTerm(''); }}
-                            className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-bold uppercase tracking-wider rounded-xl transition-all"
+                            onClick={() => {
+                                setStartDate('');
+                                setEndDate('');
+                                setPeriodFilter('all');
+                                setStatusFilter('active');
+                                setRecurringFilter('all');
+                                setSearchTerm('');
+                            }}
+                            className="text-[10px] font-black text-primary-600 uppercase tracking-widest hover:text-primary-700 transition-colors"
                         >
                             Limpar Filtros
                         </button>
                     </div>
                 </div>
-            </div>
+            )}
 
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-20">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
     Calendar, Clock, MapPin, Monitor, Trash2, AlertTriangle, History,
-    Laptop, Projector, Speaker, Camera, Mic, Smartphone, Share2, Tv, Plug, FileText, Download, X, Repeat, Filter, ChevronDown
+    Laptop, Projector, Speaker, Camera, Mic, Smartphone, Share2, Tv, Plug, FileText, Download, X, Repeat, Filter, ChevronDown, Search
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -31,6 +31,7 @@ export function TeacherBookings() {
     const [periodFilter, setPeriodFilter] = useState<'morning' | 'afternoon' | 'night' | 'all'>('all');
     const [statusFilter, setStatusFilter] = useState<'active' | 'encerrado' | 'all'>('all');
     const [recurringFilter, setRecurringFilter] = useState<'recurring' | 'normal' | 'all'>('all');
+    const [searchTerm, setSearchTerm] = useState('');
     const [showFilters, setShowFilters] = useState(false);
 
     const handleOpenTermModal = (booking: Booking) => {
@@ -255,6 +256,13 @@ export function TeacherBookings() {
         }
     };
 
+    const filteredBookings = bookings.filter(b => {
+        const searchLower = searchTerm.toLowerCase();
+        const equipmentName = b.equipment?.name?.toLowerCase() || '';
+        const local = b.local.toLowerCase();
+        return equipmentName.includes(searchLower) || local.includes(searchLower);
+    });
+
     if (loading) {
         return (
             <div className="flex flex-col h-64 items-center justify-center">
@@ -272,19 +280,32 @@ export function TeacherBookings() {
                     <p className="text-sm text-gray-500 mt-1">Gerencie suas reservas e visualize termos assinados.</p>
                 </div>
 
-                <button
-                    onClick={() => setShowFilters(!showFilters)}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all border ${showFilters
-                        ? 'bg-primary-600 text-white border-primary-600 shadow-xl shadow-primary-200'
-                        : 'bg-white text-gray-600 border-gray-100 hover:border-primary-200'
-                        }`}
-                >
-                    <Filter className="h-4 w-4" />
-                    Filtros
-                    {(startDate || endDate || periodFilter !== 'all' || statusFilter !== 'all' || recurringFilter !== 'all') && (
-                        <span className="flex h-2 w-2 rounded-full bg-red-500"></span>
-                    )}
-                </button>
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                    <div className="relative w-full sm:w-80">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 font-bold" />
+                        <input
+                            type="text"
+                            placeholder="Buscar item ou local..."
+                            className="w-full bg-white border border-gray-100 rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 shadow-sm outline-none transition-all"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all border w-full sm:w-auto justify-center ${showFilters
+                            ? 'bg-primary-600 text-white border-primary-600 shadow-xl shadow-primary-200'
+                            : 'bg-white text-gray-600 border-gray-100 hover:border-primary-200 shadow-sm'
+                            }`}
+                    >
+                        <Filter className="h-4 w-4 font-bold" />
+                        Filtros
+                        {(startDate || endDate || periodFilter !== 'all' || statusFilter !== 'all' || recurringFilter !== 'all') && (
+                            <span className="flex h-2 w-2 rounded-full bg-red-500"></span>
+                        )}
+                    </button>
+                </div>
             </div>
 
             {/* Filter Bar */}
@@ -378,6 +399,7 @@ export function TeacherBookings() {
                                 setPeriodFilter('all');
                                 setStatusFilter('all');
                                 setRecurringFilter('all');
+                                setSearchTerm('');
                             }}
                             className="text-[10px] font-black text-primary-600 uppercase tracking-widest hover:text-primary-700 transition-colors"
                         >
@@ -387,17 +409,21 @@ export function TeacherBookings() {
                 </div>
             )}
 
-            {bookings.length === 0 ? (
+            {filteredBookings.length === 0 ? (
                 <div className="text-center py-32 bg-white rounded-3xl shadow-sm border border-gray-100">
                     <History className="mx-auto h-20 w-20 text-gray-100 mb-6" />
-                    <h3 className="text-xl font-black text-gray-900">Nenhum agendamento ativo</h3>
+                    <h3 className="text-xl font-black text-gray-900">
+                        {searchTerm || startDate || endDate || periodFilter !== 'all' || statusFilter !== 'all' || recurringFilter !== 'all'
+                            ? 'Nenhum agendamento encontrado'
+                            : 'Nenhum agendamento ativo'}
+                    </h3>
                     <p className="mt-2 text-gray-500 text-sm max-w-xs mx-auto">
-                        Parece que você ainda não realizou agendamentos ou todos foram removidos.
+                        Tente ajustar seus filtros ou busca para encontrar suas reservas.
                     </p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                    {bookings.map((booking) => {
+                    {filteredBookings.map((booking) => {
                         const now = new Date();
                         const bookingEnd = parseISO(`${booking.booking_date}T${booking.end_time}`);
                         const isExpired = now > bookingEnd;
