@@ -1,4 +1,5 @@
 import React from 'react';
+import QRCode from 'react-qr-code';
 
 // Interfaces to handle both fresh Wizard data and stored Admin/DB data
 interface TermEquipment {
@@ -26,6 +27,10 @@ interface TermData {
     users?: any; // Allow loose access
     created_at?: string;
     timestamp?: string;
+    display_id?: string;
+    verification_token?: string;
+    displayId?: string; // Wizard format
+    verificationToken?: string; // Wizard format
 }
 
 interface TermDocumentProps {
@@ -39,6 +44,14 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
     const getTotvs = () => data.totvs_number || data.userTotvs || data.term_document?.userTotvs || data.users?.totvs_number || '';
     const getUnit = () => data.unit || data.term_document?.unit || '';
     const getLocal = () => data.local || data.term_document?.local || '';
+
+
+    // Extract Traceability Data
+    const getDisplayId = () => data.display_id || data.displayId || data.term_document?.displayId || data.term_document?.display_id;
+    const getVerificationToken = () => data.verification_token || data.verificationToken || data.term_document?.verificationToken || data.term_document?.verification_token;
+
+    const displayId = getDisplayId();
+    const verificationToken = getVerificationToken();
 
     const getDate = () => {
         const d = data.date || data.booking_date || data.term_document?.date || data.term_document?.booking_date;
@@ -152,12 +165,17 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 <p style={{ marginBottom: '0.5rem' }}>Ao aceitar este termo, comprometo-me a:</p>
                 <ol style={{ listStyleType: 'decimal', paddingLeft: '1.25rem' }}>
                     <li style={{ marginBottom: '0.25rem' }}>Utilizar o equipamento exclusivamente durante o período agendado e no local especificado.</li>
-                    <li style={{ marginBottom: '0.25rem' }}>Orientar adequadamente o uso do equipamento, zelando por sua conservação.</li>
-                    <li style={{ marginBottom: '0.25rem' }}>Responsabilizar-me por qualquer dano decorrente de mau uso ou negligência.</li>
-                    <li style={{ marginBottom: '0.25rem' }}>Informar imediatamente a administração sobre qualquer defeito identificado.</li>
-                    <li style={{ marginBottom: '0.25rem' }}>Devolver o equipamento nas mesmas condições em que foi recebido.</li>
-                    <li style={{ marginBottom: '0.25rem' }}>Utilizar o equipamento apenas para fins educacionais e pedagógicos.</li>
+                    <li style={{ marginBottom: '0.25rem' }}>Zelar pela conservação e bom funcionamento do equipamento.</li>
+                    <li style={{ marginBottom: '0.25rem' }}>Comunicar imediatamente à equipe responsável qualquer defeito ou irregularidade constatada.</li>
+                    <li style={{ marginBottom: '0.25rem' }}>Não emprestar ou transferir o equipamento a terceiros sem autorização prévia.</li>
                 </ol>
+            </div>
+
+            <div style={{ marginBottom: '2rem', textAlign: 'justify', fontSize: '10pt' }}>
+                <p>
+                    Comprometo-me a devolver o(s) equipamento(s) nas mesmas condições em que os recebi.
+                    Estou ciente que qualquer dano ou extravio será de minha responsabilidade.
+                </p>
             </div>
 
             <div style={{
@@ -205,6 +223,47 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 </div>
             </div>
 
+            {/* Traceability Footer */}
+            {(displayId || verificationToken) && (
+                <div style={{
+                    marginTop: '2rem',
+                    borderTop: '2px dashed #e5e7eb',
+                    paddingTop: '1rem',
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: '9pt'
+                }}>
+                    <div style={{ flex: 1, paddingRight: '1rem' }}>
+                        <p style={{ fontWeight: 'bold', fontSize: '12pt', marginBottom: '0.25rem', color: '#374151' }}>
+                            ID DO TERMO: #{displayId}
+                        </p>
+                        <p style={{ color: '#6b7280', marginBottom: '0.5rem' }}>
+                            Este documento possui autenticidade verificável. Escaneie o QR Code para validar.
+                        </p>
+                        <p style={{ fontFamily: 'monospace', fontSize: '8pt', color: '#9ca3af', wordBreak: 'break-all' }}>
+                            TOKEN: {verificationToken}
+                        </p>
+                    </div>
+
+                    {verificationToken && (
+                        <div style={{
+                            border: '1px solid #e5e7eb',
+                            padding: '5px',
+                            background: '#fff',
+                            borderRadius: '4px'
+                        }}>
+                            <QRCode
+                                value={`${window.location.origin}/verify/${verificationToken}`}
+                                size={80}
+                                level="M"
+                            />
+                        </div>
+                    )}
+                </div>
+            )}
+
             <div style={{
                 marginTop: '3rem',
                 borderTop: '1px dashed #e5e7eb',
@@ -215,6 +274,6 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
             }}>
                 <p>Este documento foi gerado eletronicamente pelo Sistema de Agendamentos Objetivo.</p>
             </div>
-        </div>
+        </div >
     );
 };

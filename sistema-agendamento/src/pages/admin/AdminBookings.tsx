@@ -361,6 +361,33 @@ export function AdminBookings() {
                                                                     {booking.quantity} {booking.quantity === 1 ? 'Unidade' : 'Unidades'}
                                                                 </span>
                                                             </div>
+                                                            <div className="flex items-center justify-between mb-4">
+                                                                <div className="flex items-center space-x-3">
+                                                                    <div className="p-2 bg-indigo-50 rounded-lg">
+                                                                        <Users className="h-5 w-5 text-indigo-600" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <h3 className="font-bold text-gray-900">{(booking as any).users?.full_name}</h3>
+                                                                        <p className="text-xs text-gray-50">{(booking as any).users?.email}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex flex-col items-end gap-1">
+                                                                    <span className={clsx(
+                                                                        "px-2.5 py-0.5 rounded-full text-xs font-medium border",
+                                                                        booking.status === 'active' ? "bg-green-50 text-green-700 border-green-100" :
+                                                                            booking.status === 'encerrado' ? "bg-gray-100 text-gray-700 border-gray-200" :
+                                                                                "bg-red-50 text-red-700 border-red-100"
+                                                                    )}>
+                                                                        {booking.status === 'active' ? 'Ativo' :
+                                                                            booking.status === 'encerrado' ? 'Encerrado' : 'Cancelado'}
+                                                                    </span>
+                                                                    {booking.display_id && (
+                                                                        <span className="text-[10px] font-mono text-gray-400 font-bold tracking-wider">
+                                                                            #{booking.display_id}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
                                                             <span className="flex items-center gap-1 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100 text-[10px] text-gray-500 font-bold uppercase tracking-wider">
                                                                 <MapPin className="h-3 w-3" />
                                                                 {booking.unit}

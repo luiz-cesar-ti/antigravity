@@ -7,6 +7,7 @@ import { UpdatePassword } from './pages/UpdatePassword';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { RootRedirect } from './components/RootRedirect';
 import { DebugAuth } from './pages/DebugAuth';
+import { VerificationPage } from './pages/VerificationPage';
 import { TeacherLayout } from './components/TeacherLayout';
 import { AdminLayout } from './components/AdminLayout';
 import { BookingWizard } from './pages/BookingWizard';
@@ -31,6 +32,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/update-password" element={<UpdatePassword />} />
+          <Route path="/verify/:token" element={<VerificationPage />} />
           <Route path="/debug-auth" element={<DebugAuth />} />
 
           {/* Root Redirect */}

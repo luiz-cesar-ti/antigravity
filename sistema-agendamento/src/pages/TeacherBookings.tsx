@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
     Calendar, Clock, MapPin, Monitor, Trash2, AlertTriangle, History,
-    Hash, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Share2, Tv, Plug
+    Laptop, Projector, Speaker, Camera, Mic, Smartphone, Share2, Tv, Plug
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -124,31 +124,6 @@ export function TeacherBookings() {
         }
     };
 
-    const getStatusBadge = (booking: Booking) => {
-        const now = new Date();
-        const bookingEnd = parseISO(`${booking.booking_date}T${booking.end_time}`);
-
-        let isActive = booking.status === 'active';
-
-        if (isActive && bookingEnd < now) {
-            isActive = false; // Closed by time
-        }
-
-        if (isActive) {
-            return (
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-black bg-green-100 text-green-700 border border-green-200 uppercase tracking-widest leading-none">
-                    Ativo
-                </span>
-            );
-        } else {
-            return (
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-black bg-red-100 text-red-700 border border-red-200 uppercase tracking-widest leading-none">
-                    Encerrado
-                </span>
-            );
-        }
-    };
-
     if (loading) {
         return (
             <div className="flex flex-col h-64 items-center justify-center">
@@ -185,30 +160,40 @@ export function TeacherBookings() {
                         return (
                             <div key={booking.id} className="group relative bg-white shadow-sm rounded-[2.5rem] p-8 border border-gray-100 hover:shadow-2xl hover:shadow-primary-100/30 transition-all duration-300 flex flex-col justify-between">
                                 <div>
-                                    <div className="flex justify-between items-start mb-8">
-                                        <div className="flex items-center">
-                                            <div className="bg-primary-50 p-4 rounded-3xl group-hover:bg-primary-600 group-hover:text-white transition-all duration-300">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="p-2 bg-indigo-50 rounded-lg group-hover:bg-white/20 group-hover:text-white transition-colors duration-200">
                                                 {getEquipmentIcon(booking.equipment?.name)}
                                             </div>
-                                            <div className="ml-4">
-                                                <h3 className="text-xl font-black text-gray-900 leading-tight tracking-tight group-hover:text-primary-600 transition-colors">
-                                                    {booking.equipment?.name || 'Equipamento'}
+                                            <div>
+                                                <h3 className="font-bold text-gray-900 group-hover:text-indigo-900 transition-colors duration-200">
+                                                    {booking.equipment?.name}
                                                 </h3>
-                                                <div className="flex flex-col gap-2 mt-1.5">
-                                                    <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest leading-none">
+                                                <div className="flex flex-col">
+                                                    <p className="text-xs text-indigo-600 group-hover:text-indigo-800 font-medium">
                                                         {booking.equipment?.brand} {booking.equipment?.model}
                                                     </p>
-                                                    <div className="flex items-center text-primary-600 bg-primary-50 px-2.5 py-1 rounded-lg border border-primary-100 w-fit">
-                                                        <Hash className="h-3 w-3 mr-1" />
-                                                        <span className="text-[10px] font-black uppercase tracking-wider">
-                                                            {booking.quantity} {booking.quantity === 1 ? 'Unidade' : 'Unidades'}
-                                                        </span>
-                                                    </div>
+                                                    <span className="text-[10px] text-gray-400 group-hover:text-indigo-700 font-bold">
+                                                        Qtd: {booking.quantity}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="ml-2">
-                                            {getStatusBadge(booking)}
+                                        <div className="flex flex-col items-end gap-1">
+                                            <span className={`
+                                                px-2.5 py-0.5 rounded-full text-xs font-medium border
+                                                ${booking.status === 'active' ? 'bg-green-50 text-green-700 border-green-100' :
+                                                    booking.status === 'encerrado' ? 'bg-gray-100 text-gray-700 border-gray-200' :
+                                                        'bg-red-50 text-red-700 border-red-100'}
+                                            `}>
+                                                {booking.status === 'active' ? 'Agendado' :
+                                                    booking.status === 'encerrado' ? 'Encerrado' : 'Cancelado'}
+                                            </span>
+                                            {booking.display_id && (
+                                                <span className="text-[10px] font-mono text-gray-400 font-bold tracking-wider">
+                                                    #{booking.display_id}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
 

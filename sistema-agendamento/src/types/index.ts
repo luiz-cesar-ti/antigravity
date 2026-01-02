@@ -41,6 +41,8 @@ export interface Booking {
     status: 'active' | 'encerrado' | 'cancelled' | 'cancelled_by_user';
     term_signed: boolean;
     term_document?: any;
+    display_id?: string;
+    verification_token?: string;
     created_at: string;
     updated_at: string;
 

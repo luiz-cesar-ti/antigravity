@@ -50,6 +50,10 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
         setError('');
 
         try {
+            // Generate Traceability Data
+            const displayId = Math.floor(100000 + Math.random() * 900000).toString();
+            const verificationToken = crypto.randomUUID();
+
             const termDocument = {
                 userName: data.full_name,
                 userTotvs: data.totvs_number,
@@ -60,7 +64,9 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                 endTime: data.endTime,
                 equipments: data.equipments,
                 timestamp: new Date().toISOString(),
-                userAgent: navigator.userAgent
+                userAgent: navigator.userAgent,
+                displayId,
+                verificationToken
             };
 
             const bookingsToInsert = data.equipments.map(eq => ({
@@ -75,14 +81,34 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                 observations: data.observations,
                 status: 'active',
                 term_signed: true,
-                term_document: termDocument
+                term_document: termDocument,
+                display_id: displayId,
+                verification_token: verificationToken
             }));
 
-            const { error: insertError } = await supabase
+            const { data: createdBookings, error: insertError } = await supabase
                 .from('bookings')
-                .insert(bookingsToInsert);
+                .insert(bookingsToInsert)
+                .select();
 
             if (insertError) throw insertError;
+
+            // Create Audit Log
+            if (createdBookings && createdBookings.length > 0) {
+                const logsPromises = createdBookings.map(b =>
+                    supabase.from('audit_logs').insert({
+                        booking_id: b.id,
+                        action: 'CREATED',
+                        performed_by: user?.id,
+                        details: {
+                            display_id: displayId,
+                            unit: data.unit,
+                            equipments: data.equipments.map(e => ({ name: e.name, qty: e.quantity }))
+                        }
+                    })
+                );
+                await Promise.all(logsPromises);
+            }
 
             setShowSuccessModal(true);
 
