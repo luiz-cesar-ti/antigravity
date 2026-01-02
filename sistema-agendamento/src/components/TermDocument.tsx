@@ -223,44 +223,77 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 </div>
             </div>
 
-            {/* Traceability Footer */}
+            {/* Traceability Footer (Page 2) */}
             {(displayId || verificationToken) && (
                 <div style={{
-                    marginTop: '2rem',
-                    borderTop: '2px dashed #e5e7eb',
-                    paddingTop: '1rem',
+                    pageBreakBefore: 'always',
+                    paddingTop: '3rem',
                     display: 'flex',
-                    flexDirection: 'row',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    fontSize: '9pt'
+                    justifyContent: 'center',
+                    height: '100%', // Take full height of new page effectively
                 }}>
-                    <div style={{ flex: 1, paddingRight: '1rem' }}>
-                        <p style={{ fontWeight: 'bold', fontSize: '12pt', marginBottom: '0.25rem', color: '#374151' }}>
-                            ID DO TERMO: #{displayId}
-                        </p>
-                        <p style={{ color: '#6b7280', marginBottom: '0.5rem' }}>
-                            Este documento possui autenticidade verificável. Escaneie o QR Code para validar.
-                        </p>
-                        <p style={{ fontFamily: 'monospace', fontSize: '8pt', color: '#9ca3af', wordBreak: 'break-all' }}>
-                            TOKEN: {verificationToken}
-                        </p>
+                    <div style={{
+                        width: '100%',
+                        textAlign: 'center',
+                        marginBottom: '3rem'
+                    }}>
+                        <h2 style={{
+                            fontSize: '16pt',
+                            fontWeight: 'bold',
+                            textTransform: 'uppercase',
+                            color: '#374151',
+                            marginBottom: '1rem'
+                        }}>Autenticidade do Documento</h2>
+                        <div style={{ width: '100px', height: '4px', background: '#000', margin: '0 auto' }}></div>
                     </div>
 
-                    {verificationToken && (
-                        <div style={{
-                            border: '1px solid #e5e7eb',
-                            padding: '5px',
-                            background: '#fff',
-                            borderRadius: '4px'
-                        }}>
+                    <div style={{
+                        border: '4px solid #000',
+                        padding: '2rem',
+                        background: '#fff',
+                        borderRadius: '1rem',
+                        marginBottom: '2rem'
+                    }}>
+                        {verificationToken && (
                             <QRCode
                                 value={`${window.location.origin}/verify/${verificationToken}`}
-                                size={80}
+                                size={250}
                                 level="M"
                             />
+                        )}
+                    </div>
+
+                    <div style={{ textAlign: 'center', maxWidth: '80%' }}>
+                        <p style={{ fontWeight: 'bold', fontSize: '18pt', marginBottom: '0.5rem', color: '#111827' }}>
+                            ID DO TERMO: #{displayId}
+                        </p>
+                        <p style={{ fontSize: '12pt', color: '#4b5563', marginBottom: '1.5rem' }}>
+                            Utilize a câmera do seu celular para escanear o QR Code acima e verificar a validade deste documento.
+                        </p>
+                        <div style={{
+                            background: '#f3f4f6',
+                            padding: '1rem',
+                            borderRadius: '0.5rem',
+                            fontFamily: 'monospace',
+                            fontSize: '10pt',
+                            color: '#6b7280',
+                            wordBreak: 'break-all'
+                        }}>
+                            TOKEN: {verificationToken}
                         </div>
-                    )}
+                    </div>
+
+                    <div style={{
+                        marginTop: 'auto',
+                        paddingTop: '5rem',
+                        textAlign: 'center',
+                        fontSize: '8pt',
+                        color: '#9ca3af'
+                    }}>
+                        <p>Documento gerado e autenticado eletronicamente.</p>
+                    </div>
                 </div>
             )}
 

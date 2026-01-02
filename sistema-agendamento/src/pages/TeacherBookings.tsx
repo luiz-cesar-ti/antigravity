@@ -72,15 +72,16 @@ export function TeacherBookings() {
 
     const getEquipmentIcon = (name: string = '') => {
         const n = name.toLowerCase();
-        if (n.includes('notebook') || n.includes('laptop') || n.includes('pc') || n.includes('computador')) return <Laptop className="h-6 w-6 text-primary-600 group-hover:text-white" />;
-        if (n.includes('projetor') || n.includes('datashow')) return <Projector className="h-6 w-6 text-primary-600 group-hover:text-white" />;
-        if (n.includes('caixa') || n.includes('som') || n.includes('audio')) return <Speaker className="h-6 w-6 text-primary-600 group-hover:text-white" />;
-        if (n.includes('camera') || n.includes('camara') || n.includes('foto')) return <Camera className="h-6 w-6 text-primary-600 group-hover:text-white" />;
-        if (n.includes('microfone') || n.includes('mic')) return <Mic className="h-6 w-6 text-primary-600 group-hover:text-white" />;
-        if (n.includes('tablet') || n.includes('ipad') || n.includes('celular')) return <Smartphone className="h-6 w-6 text-primary-600 group-hover:text-white" />;
-        if (n.includes('tv') || n.includes('televisao') || n.includes('monitor') || n.includes('tela')) return <Tv className="h-6 w-6 text-primary-600 group-hover:text-white" />;
-        if (n.includes('cabo') || n.includes('extensao') || n.includes('fio') || n.includes('adaptador')) return <Plug className="h-6 w-6 text-primary-600 group-hover:text-white" />;
-        return <Monitor className="h-6 w-6 text-primary-600 group-hover:text-white" />;
+        const baseClass = "h-6 w-6 text-primary-600";
+        if (n.includes('notebook') || n.includes('laptop') || n.includes('pc') || n.includes('computador')) return <Laptop className={baseClass} />;
+        if (n.includes('projetor') || n.includes('datashow')) return <Projector className={baseClass} />;
+        if (n.includes('caixa') || n.includes('som') || n.includes('audio')) return <Speaker className={baseClass} />;
+        if (n.includes('camera') || n.includes('camara') || n.includes('foto')) return <Camera className={baseClass} />;
+        if (n.includes('microfone') || n.includes('mic')) return <Mic className={baseClass} />;
+        if (n.includes('tablet') || n.includes('ipad') || n.includes('celular')) return <Smartphone className={baseClass} />;
+        if (n.includes('tv') || n.includes('televisao') || n.includes('monitor') || n.includes('tela')) return <Tv className={baseClass} />;
+        if (n.includes('cabo') || n.includes('extensao') || n.includes('fio') || n.includes('adaptador')) return <Plug className={baseClass} />;
+        return <Monitor className={baseClass} />;
     };
 
     const fetchBookings = async () => {

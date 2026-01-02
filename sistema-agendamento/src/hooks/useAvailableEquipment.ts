@@ -17,6 +17,9 @@ export function useAvailableEquipment(unit: string, date: string, startTime: str
             return;
         }
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
         const fetchAvailability = async () => {
             setLoading(true);
             setError('');
@@ -26,7 +29,8 @@ export function useAvailableEquipment(unit: string, date: string, startTime: str
                 const { data: allEquipment, error: equipError } = await supabase
                     .from('equipment')
                     .select('*')
-                    .eq('unit', unit);
+                    .eq('unit', unit)
+                    .abortSignal(controller.signal);
 
                 if (equipError) throw equipError;
 
@@ -39,7 +43,8 @@ export function useAvailableEquipment(unit: string, date: string, startTime: str
                     .eq('booking_date', date)
                     .eq('status', 'active')
                     .lt('start_time', endTime)
-                    .gt('end_time', startTime);
+                    .gt('end_time', startTime)
+                    .abortSignal(controller.signal);
 
                 if (bookingError) throw bookingError;
 
@@ -62,17 +67,32 @@ export function useAvailableEquipment(unit: string, date: string, startTime: str
                     }
                 });
 
-                setEquipments(Array.from(equipmentMap.values()));
+                if (!controller.signal.aborted) {
+                    setEquipments(Array.from(equipmentMap.values()));
+                }
 
             } catch (err: any) {
-                console.error('Error fetching availability:', err);
-                setError('Erro ao carregar disponibilidade de equipamentos.');
+                if (err.name === 'AbortError') {
+                    console.log('Availability check aborted');
+                    setError('Tempo limite excedido. Tente novamente.');
+                } else {
+                    console.error('Error fetching availability:', err);
+                    setError('Erro ao carregar disponibilidade de equipamentos.');
+                }
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted) {
+                    setLoading(false);
+                    clearTimeout(timeoutId);
+                }
             }
         };
 
         fetchAvailability();
+
+        return () => {
+            controller.abort();
+            clearTimeout(timeoutId);
+        };
     }, [unit, date, startTime, endTime]);
 
     return { equipments, loading, error };
