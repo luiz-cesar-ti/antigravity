@@ -42,75 +42,45 @@ export function VerificationPage() {
             }, 10000);
 
             try {
-                console.log('Attempting primary fetch (with joins) for token:', currentToken);
-                // Fetch booking by token (explicitly lowercase since crypto.randomUUID is lowercase)
-                const { data: list, error: pError } = await supabase
+                console.log('Attempting fetch for token:', currentToken);
+
+                // Fetch booking directly without joins to avoid RLS timeouts on related tables
+                // The 'term_document' JSONB column contains all necessary snapshot data (user name, totvs, etc.)
+                const { data: list, error } = await supabase
                     .from('bookings')
-                    .select(`
-                        id,
-                        display_id,
-                        created_at,
-                        booking_date,
-                        start_time,
-                        end_time,
-                        term_document,
-                        status,
-                        users (
-                            full_name,
-                            totvs_number
-                        )
-                    `)
+                    .select('*')
                     .eq('verification_token', currentToken)
                     .limit(1);
 
                 const data = list && list.length > 0 ? list[0] : null;
 
-                if (pError || !data) {
-                    console.warn('Primary fetch failed or returned no data. Error:', pError);
+                if (error || !data) {
+                    console.warn('Fetch failed or returned no data. Error:', error);
 
-                    console.log('Attempting fallback fetch (simple select)...');
-                    // Try to fetch with a simpler query if joins fail due to RLS
-                    const { data: sList, error: sError } = await supabase
-                        .from('bookings')
-                        .select('*')
-                        .eq('verification_token', currentToken)
-                        .limit(1);
+                    if (isMounted) {
+                        if (error) setErrorDetail(error.message);
+                        else setErrorDetail('Nenhum registro encontrado para este token.');
 
-                    const sData = sList && sList.length > 0 ? sList[0] : null;
-
-                    if (sError || !sData) {
-                        console.error('Fallback fetch also failed. Error:', sError);
-                        if (isMounted) {
-                            if (sError) setErrorDetail(sError.message);
-                            else if (pError) setErrorDetail(pError.message);
-                            else setErrorDetail('Nenhum registro encontrado para este token.');
-
-                            clearTimeout(timeoutId);
-                            setStatus('invalid');
-                        }
-                        return;
+                        clearTimeout(timeoutId);
+                        setStatus('invalid');
                     }
-                    console.log('Fallback fetch successful!');
-                    if (isMounted) setBookingData(sData);
-                } else {
-                    console.log('Primary fetch successful!');
-                    if (isMounted) setBookingData(data);
+                    return;
                 }
 
+                console.log('Fetch successful!');
                 if (isMounted) {
+                    setBookingData(data);
                     clearTimeout(timeoutId);
                     setStatus('valid');
                 }
 
-                const finalData = data || (list && list[0]) || null; // list[0] as safety
-                if (!finalData || !isMounted) return;
+                if (!isMounted) return;
 
                 // Log the verification action (Non-blocking)
-                console.log('Logging verification action...');
                 supabase.from('audit_logs').insert({
-                    booking_id: (finalData as any).id,
+                    booking_id: (data as any).id,
                     action: 'VERIFIED_QR',
-                    performed_by: 'ANONYMOUS', // Public page
+                    performed_by: 'ANONYMOUS',
                     details: { user_agent: navigator.userAgent, token_used: currentToken }
                 }).then(({ error }) => {
                     if (error) console.error('Audit log error:', error);
