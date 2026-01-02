@@ -73,13 +73,19 @@ export function useAvailableEquipment(unit: string, date: string, startTime: str
             } catch (err: any) {
                 if (err.name === 'AbortError') {
                     console.log('Availability check aborted');
-                    setError('Tempo limite excedido. Tente novamente.');
-                } else {
-                    console.error('Error fetching availability details:', err);
+                    // DO NOT set error state on natural abort (like cleanup)
+                    return;
+                }
+
+                console.error('CRITICAL: Availability Check Failed', {
+                    error: err,
+                    params: { unit, date, startTime, endTime }
+                });
+
+                if (!controller.signal.aborted) {
                     setError('Erro ao carregar disponibilidade de equipamentos.');
                 }
             } finally {
-                // Always set loading false unless component unmounted
                 if (!controller.signal.aborted) {
                     setLoading(false);
                 }
