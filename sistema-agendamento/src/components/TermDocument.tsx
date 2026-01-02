@@ -72,40 +72,40 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
     return (
         <div id={id} style={{
             width: '100%',
-            padding: '15mm',
+            padding: '10mm',
             margin: '0 auto',
             backgroundColor: '#ffffff',
             color: '#000000',
             fontFamily: 'Arial, sans-serif',
-            fontSize: '11pt',
-            lineHeight: '1.4',
+            fontSize: '10pt',
+            lineHeight: '1.3',
             position: 'relative',
             boxSizing: 'border-box'
         }}>
             {/* Header / Logo */}
-            <div style={{ textAlign: 'center', marginBottom: '1.5rem', marginTop: '5mm' }}>
+            <div style={{ textAlign: 'center', marginBottom: '1rem', marginTop: '0' }}>
                 <img
                     src="/logo-objetivo.jpg"
                     alt="Logo Colégio Objetivo"
                     crossOrigin="anonymous"
-                    style={{ maxHeight: '80px', margin: '0 auto', display: 'block' }}
+                    style={{ maxHeight: '60px', margin: '0 auto', display: 'block' }}
                 />
             </div>
 
             <h1 style={{
                 textAlign: 'center',
                 fontWeight: 'bold',
-                fontSize: '14pt',
-                marginBottom: '1.5rem',
+                fontSize: '12pt',
+                marginBottom: '1rem',
                 textTransform: 'uppercase',
                 maxWidth: '90%',
-                margin: '0 auto 1.5rem'
+                margin: '0 auto 1rem'
             }}>
                 Declaração de Responsabilidade e Termo de Uso
             </h1>
 
-            <div style={{ textAlign: 'justify', marginBottom: '1.5rem' }}>
-                <p style={{ marginBottom: '1rem' }}>
+            <div style={{ textAlign: 'justify', marginBottom: '1rem' }}>
+                <p style={{ marginBottom: '0.5rem' }}>
                     Declaro que eu, <strong style={{ fontWeight: 'bold' }}>{getName()}</strong>, portador(a) do número de usuário TOTVS <strong style={{ fontWeight: 'bold' }}>{getTotvs()}</strong>,
                     estou ciente e de acordo com as condições de uso do(s) equipamento(s) abaixo descrito(s),
                     responsabilizando-me integralmente por sua utilização durante o período de agendamento.
@@ -113,21 +113,21 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
             </div>
 
             <div style={{
-                marginBottom: '1.5rem',
+                marginBottom: '1rem',
                 border: '1px solid #d1d5db',
-                padding: '1rem',
+                padding: '0.75rem',
                 borderRadius: '0.25rem',
                 backgroundColor: '#f9fafb'
             }}>
                 <h2 style={{
                     fontWeight: 'bold',
                     borderBottom: '1px solid #d1d5db',
-                    marginBottom: '0.5rem',
+                    marginBottom: '0.25rem',
                     paddingBottom: '0.25rem',
-                    fontSize: '10pt',
+                    fontSize: '9pt',
                     textTransform: 'uppercase'
                 }}>Dados do Agendamento</h2>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '10pt' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem', fontSize: '9pt' }}>
                     <p><strong>Unidade:</strong> {getUnit()}</p>
                     <p><strong>Local:</strong> {getLocal()}</p>
                     <p><strong>Data de Uso:</strong> {getDate()}</p>
@@ -135,13 +135,13 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 </div>
             </div>
 
-            <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ marginBottom: '1rem' }}>
                 <h2 style={{
                     fontWeight: 'bold',
                     borderBottom: '1px solid #000000',
-                    marginBottom: '0.5rem',
+                    marginBottom: '0.25rem',
                     paddingBottom: '0.25rem',
-                    fontSize: '10pt',
+                    fontSize: '9pt',
                     textTransform: 'uppercase'
                 }}>Equipamento(s) Reservado(s)</h2>
                 <ul style={{ listStyleType: 'disc', paddingLeft: '1.25rem', marginTop: '0.5rem' }}>
@@ -155,18 +155,17 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 </ul>
             </div>
 
-            <div style={{ marginBottom: '2rem', textAlign: 'justify', fontSize: '10pt' }}>
-                <h2 style={{ fontWeight: 'bold', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Compromissos e Responsabilidades</h2>
-                <p style={{ marginBottom: '0.5rem' }}>Ao aceitar este termo, comprometo-me a:</p>
-                <ol style={{ listStyleType: 'decimal', paddingLeft: '1.25rem' }}>
-                    <li style={{ marginBottom: '0.25rem' }}>Utilizar o equipamento exclusivamente durante o período agendado e no local especificado.</li>
-                    <li style={{ marginBottom: '0.25rem' }}>Zelar pela conservação e bom funcionamento do equipamento.</li>
-                    <li style={{ marginBottom: '0.25rem' }}>Comunicar imediatamente à equipe responsável qualquer defeito ou irregularidade constatada.</li>
-                    <li style={{ marginBottom: '0.25rem' }}>Não emprestar ou transferir o equipamento a terceiros sem autorização prévia.</li>
+            <div style={{ marginBottom: '1rem', textAlign: 'justify', fontSize: '9pt' }}>
+                <h2 style={{ fontWeight: 'bold', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Compromissos e Responsabilidades</h2>
+                <p style={{ marginBottom: '0.25rem' }}>Ao aceitar este termo, comprometo-me a:</p>
+                <ol style={{ listStyleType: 'decimal', paddingLeft: '1rem' }}>
+                    <li style={{ marginBottom: '0.1rem' }}>Utilizar o equipamento exclusivamente durante o período agendado e no local especificado.</li>
+                    <li style={{ marginBottom: '0.1rem' }}>Zelar pela conservação e bom funcionamento do equipamento.</li>
+                    <li style={{ marginBottom: '0.1rem' }}>Comunicar imediatamente à equipe responsável qualquer defeito ou irregularidade constatada.</li>
                 </ol>
             </div>
 
-            <div style={{ marginBottom: '2rem', textAlign: 'justify', fontSize: '10pt' }}>
+            <div style={{ marginBottom: '1rem', textAlign: 'justify', fontSize: '9pt' }}>
                 <p>
                     Comprometo-me a devolver o(s) equipamento(s) nas mesmas condições em que os recebi.
                     Estou ciente que qualquer dano ou extravio será de minha responsabilidade.
@@ -174,45 +173,43 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
             </div>
 
             <div style={{
-                marginBottom: '3rem',
-                fontSize: '10pt',
+                marginBottom: '1.5rem',
+                fontSize: '9pt',
                 backgroundColor: '#f3f4f6',
-                padding: '1rem',
+                padding: '0.75rem',
                 borderLeft: '4px solid #1f2937'
             }}>
-                <h3 style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>TERMO DE CIÊNCIA</h3>
+                <h3 style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>TERMO DE CIÊNCIA</h3>
                 <p>
                     Estou ciente que a utilização inadequada pode resultar em medidas administrativas
-                    e que sou responsável pela segurança e integridade do equipamento durante o período de uso.
+                    e que sou responsável pela segurança e integridade do equipamento.
                 </p>
             </div>
 
-            <div style={{ marginTop: '5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div style={{ marginTop: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div style={{ width: '50%' }}>
                     <div style={{
                         borderBottom: '1px solid #000',
-                        marginBottom: '0.5rem',
+                        marginBottom: '0.25rem',
                         width: '100%',
                         textAlign: 'center',
                         position: 'relative',
-                        height: '1.5em', // Space for name
+                        height: '1.2em',
                         display: 'flex',
                         alignItems: 'flex-end',
                         justifyContent: 'center'
                     }}>
                         <span style={{
                             fontWeight: 'bold',
-                            fontSize: '11pt',
-                            textTransform: 'uppercase',
-                            paddingBottom: '2px' // Visual tweak
+                            fontSize: '10pt',
+                            textTransform: 'uppercase'
                         }}>{getName()}</span>
                     </div>
-                    <p style={{ fontSize: '9pt', color: '#4b5563', marginTop: '4px' }}>Professor(a) Responsável</p>
-                    <p style={{ fontSize: '9pt', color: '#4b5563' }}>TOTVS: {getTotvs()}</p>
+                    <p style={{ fontSize: '8pt', color: '#4b5563', marginTop: '2px' }}>Responsável • TOTVS: {getTotvs()}</p>
                 </div>
 
-                <div style={{ textAlign: 'right', fontSize: '9pt', color: '#6b7280' }}>
-                    <p style={{ fontWeight: 'bold', color: '#000', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Assinatura Digital</p>
+                <div style={{ textAlign: 'right', fontSize: '8pt', color: '#6b7280' }}>
+                    <p style={{ fontWeight: 'bold', color: '#000', marginBottom: '0.1rem', textTransform: 'uppercase' }}>Assinatura Digital</p>
                     <p>Data: {data.created_at ? new Date(data.created_at).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}</p>
                     <p>Hora: {data.created_at ? new Date(data.created_at).toLocaleTimeString('pt-BR') : new Date().toLocaleTimeString('pt-BR')}</p>
                 </div>
@@ -221,16 +218,16 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
             {/* Traceability Footer */}
             {displayId && (
                 <div style={{
-                    marginTop: '3rem',
-                    paddingTop: '1rem',
+                    marginTop: '1.5rem',
+                    paddingTop: '0.5rem',
                     borderTop: '1px dashed #e5e7eb',
                     textAlign: 'center'
                 }}>
-                    <p style={{ fontWeight: 'bold', fontSize: '11pt', color: '#111827' }}>
+                    <p style={{ fontWeight: 'bold', fontSize: '10pt', color: '#111827' }}>
                         ID DO TERMO: #{displayId}
                     </p>
-                    <p style={{ fontSize: '8pt', color: '#9ca3af', marginTop: '4px' }}>
-                        Este documento foi gerado eletronicamente pelo Sistema de Agendamentos Objetivo.
+                    <p style={{ fontSize: '7.5pt', color: '#9ca3af', marginTop: '2px' }}>
+                        Documento gerado eletronicamente pelo Sistema de Agendamentos Objetivo.
                     </p>
                 </div>
             )}
