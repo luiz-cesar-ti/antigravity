@@ -66,8 +66,8 @@ export function AdminBookings() {
             query = query.lte('booking_date', endDate);
         }
 
-        query = query.order('booking_date', { ascending: false });
-        query = query.order('start_time', { ascending: false });
+        query = query.order('booking_date', { ascending: true });
+        query = query.order('start_time', { ascending: true });
 
         const { data, error } = await query;
 

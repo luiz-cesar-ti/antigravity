@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
     Calendar, Clock, MapPin, Monitor, Trash2, AlertTriangle, History,
-    Laptop, Projector, Speaker, Camera, Mic, Smartphone, Share2, Tv, Plug, FileText, Download, X, Repeat
+    Laptop, Projector, Speaker, Camera, Mic, Smartphone, Share2, Tv, Plug, FileText, Download, X, Repeat, Filter, ChevronDown
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -24,6 +24,14 @@ export function TeacherBookings() {
         recurringId: null
     });
     const [deleting, setDeleting] = useState(false);
+
+    // Filters State
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [periodFilter, setPeriodFilter] = useState<'morning' | 'afternoon' | 'night' | 'all'>('all');
+    const [statusFilter, setStatusFilter] = useState<'active' | 'encerrado' | 'all'>('all');
+    const [recurringFilter, setRecurringFilter] = useState<'recurring' | 'normal' | 'all'>('all');
+    const [showFilters, setShowFilters] = useState(false);
 
     const handleOpenTermModal = (booking: Booking) => {
         setPdfData(booking);
@@ -146,16 +154,40 @@ export function TeacherBookings() {
         if (!user) return;
 
         setLoading(true);
-        const { data, error } = await supabase
+        let query = supabase
             .from('bookings')
             .select(`
                 *,
                 equipment (name, brand, model)
             `)
             .eq('user_id', user.id)
-            .neq('status', 'cancelled_by_user') // Hide excluded ones for the teacher
-            .order('booking_date', { ascending: false })
-            .order('start_time', { ascending: false });
+            .neq('status', 'cancelled_by_user');
+
+        if (startDate) query = query.gte('booking_date', startDate);
+        if (endDate) query = query.lte('booking_date', endDate);
+
+        if (statusFilter !== 'all') {
+            query = query.eq('status', statusFilter);
+        }
+
+        if (recurringFilter === 'recurring') {
+            query = query.eq('is_recurring', true);
+        } else if (recurringFilter === 'normal') {
+            query = query.eq('is_recurring', false);
+        }
+
+        // Periods logic (approximate)
+        if (periodFilter === 'morning') {
+            query = query.gte('start_time', '07:00').lte('start_time', '12:00');
+        } else if (periodFilter === 'afternoon') {
+            query = query.gte('start_time', '12:01').lte('start_time', '18:00');
+        } else if (periodFilter === 'night') {
+            query = query.gte('start_time', '18:01').lte('start_time', '23:59');
+        }
+
+        const { data, error } = await query
+            .order('booking_date', { ascending: true })
+            .order('start_time', { ascending: true });
 
         if (!error && data) {
             setBookings(data as Booking[]);
@@ -165,7 +197,7 @@ export function TeacherBookings() {
 
     useEffect(() => {
         fetchBookings();
-    }, [user]);
+    }, [user, startDate, endDate, periodFilter, statusFilter, recurringFilter]);
 
     const handleDelete = async () => {
         if (!deleteModal.bookingId) return;
@@ -239,7 +271,121 @@ export function TeacherBookings() {
                     <h1 className="text-2xl font-black text-gray-900">Meus Agendamentos</h1>
                     <p className="text-sm text-gray-500 mt-1">Gerencie suas reservas e visualize termos assinados.</p>
                 </div>
+
+                <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all border ${showFilters
+                        ? 'bg-primary-600 text-white border-primary-600 shadow-xl shadow-primary-200'
+                        : 'bg-white text-gray-600 border-gray-100 hover:border-primary-200'
+                        }`}
+                >
+                    <Filter className="h-4 w-4" />
+                    Filtros
+                    {(startDate || endDate || periodFilter !== 'all' || statusFilter !== 'all' || recurringFilter !== 'all') && (
+                        <span className="flex h-2 w-2 rounded-full bg-red-500"></span>
+                    )}
+                </button>
             </div>
+
+            {/* Filter Bar */}
+            {showFilters && (
+                <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data Início</label>
+                            <div className="relative">
+                                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data Fim</label>
+                            <div className="relative">
+                                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Período</label>
+                            <div className="relative">
+                                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <select
+                                    value={periodFilter}
+                                    onChange={(e) => setPeriodFilter(e.target.value as any)}
+                                    className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer outline-none"
+                                >
+                                    <option value="all">Todos Períodos</option>
+                                    <option value="morning">Manhã (07h-12h)</option>
+                                    <option value="afternoon">Tarde (12h-18h)</option>
+                                    <option value="night">Noite (18h-24h)</option>
+                                </select>
+                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Status</label>
+                            <div className="relative">
+                                <History className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value as any)}
+                                    className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer outline-none"
+                                >
+                                    <option value="all">Todos Status</option>
+                                    <option value="active">Agendados (Ativos)</option>
+                                    <option value="encerrado">Encerrados</option>
+                                </select>
+                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tipo</label>
+                            <div className="relative">
+                                <Repeat className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <select
+                                    value={recurringFilter}
+                                    onChange={(e) => setRecurringFilter(e.target.value as any)}
+                                    className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer outline-none"
+                                >
+                                    <option value="all">Todos os Tipos</option>
+                                    <option value="normal">Agendamento Normal</option>
+                                    <option value="recurring">Agendamento Fixo</option>
+                                </select>
+                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-gray-50 flex justify-end">
+                        <button
+                            onClick={() => {
+                                setStartDate('');
+                                setEndDate('');
+                                setPeriodFilter('all');
+                                setStatusFilter('all');
+                                setRecurringFilter('all');
+                            }}
+                            className="text-[10px] font-black text-primary-600 uppercase tracking-widest hover:text-primary-700 transition-colors"
+                        >
+                            Limpar Filtros
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {bookings.length === 0 ? (
                 <div className="text-center py-32 bg-white rounded-3xl shadow-sm border border-gray-100">
