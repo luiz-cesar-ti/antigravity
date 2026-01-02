@@ -7,6 +7,7 @@ export function VerificationPage() {
     const { token } = useParams<{ token: string }>();
     const [status, setStatus] = useState<'loading' | 'valid' | 'invalid' | 'error'>('loading');
     const [bookingData, setBookingData] = useState<any>(null);
+    const [errorDetail, setErrorDetail] = useState<string>('');
 
     useEffect(() => {
         console.log('Verification started for token:', token);
@@ -22,13 +23,14 @@ export function VerificationPage() {
                 if (status === 'loading') {
                     console.error('Verification timeout reached');
                     setStatus('error');
+                    setErrorDetail('Tempo de resposta excedido ao conectar com o banco de dados.');
                 }
             }, 10000);
 
             try {
                 console.log('Attempting primary fetch (with joins)...');
                 // Fetch booking by token
-                const { data: list, error } = await supabase
+                const { data: list, error: pError } = await supabase
                     .from('bookings')
                     .select(`
                         id,
@@ -50,8 +52,10 @@ export function VerificationPage() {
                 const data = list && list.length > 0 ? list[0] : null;
 
                 let simpleData = null;
-                if (error || !data) {
-                    console.warn('Primary fetch failed or returned no data. Error:', error);
+                if (pError || !data) {
+                    console.warn('Primary fetch failed or returned no data. Error:', pError);
+                    if (pError) setErrorDetail(pError.message);
+
                     console.log('Attempting fallback fetch (simple select)...');
                     // Try to fetch with a simpler query if joins fail due to RLS
                     const { data: sList, error: sError } = await supabase
@@ -64,6 +68,9 @@ export function VerificationPage() {
 
                     if (sError || !sData) {
                         console.error('Fallback fetch also failed. Error:', sError);
+                        if (sError) setErrorDetail(sError.message);
+                        else if (!sData) setErrorDetail('Nenhum registro encontrado para este token.');
+
                         clearTimeout(timeoutId);
                         setStatus('invalid');
                         return;
@@ -94,8 +101,9 @@ export function VerificationPage() {
                     else console.log('Audit log entry created successfully.');
                 });
 
-            } catch (err) {
+            } catch (err: any) {
                 console.error('Verification exception:', err);
+                setErrorDetail(err.message || 'Erro interno inesperado.');
                 clearTimeout(timeoutId);
                 setStatus('error');
             }
@@ -104,7 +112,7 @@ export function VerificationPage() {
         verifyToken();
 
         return () => {
-            // No cleanup needed for the timeout since it updates status which is tracked
+            // No cleanup needed
         };
     }, [token]);
 
@@ -125,15 +133,20 @@ export function VerificationPage() {
                         <XCircle className="h-10 w-10 text-red-600" />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">Documento Inválido</h1>
-                    <p className="text-gray-500 mb-6">
+                    <p className="text-gray-500 mb-6 font-medium">
                         Este código QR não corresponde a nenhum termo de responsabilidade ativo em nosso sistema.
                     </p>
                     <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex items-start text-left text-sm text-red-700">
                         <AlertTriangle className="h-5 w-5 mr-3 shrink-0" />
                         <div>
                             <p className="font-bold mb-1">Informações de Diagnóstico:</p>
-                            <p className="opacity-70 break-all mb-2">Token: {token || 'N/A'}</p>
-                            <p>Se você acredita que isso é um erro, tente realizar um novo agendamento e testar o novo código QR.</p>
+                            <p className="opacity-70 break-all mb-1 uppercase font-black text-[10px]">Token: {token || 'N/A'}</p>
+                            {errorDetail && (
+                                <p className="text-[10px] text-red-500 font-mono mt-1 border-t border-red-200 pt-1">
+                                    ERRO: {errorDetail}
+                                </p>
+                            )}
+                            <p className="mt-2 opacity-80">Se você acredita que isso é um erro, tente realizar um novo agendamento e testar o novo código QR.</p>
                         </div>
                     </div>
                 </div>
