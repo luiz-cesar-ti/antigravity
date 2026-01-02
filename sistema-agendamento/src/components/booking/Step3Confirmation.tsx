@@ -14,7 +14,8 @@ import {
     X,
     AlertTriangle,
     Share2,
-    Download
+    Download,
+    Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug
 } from 'lucide-react';
 import type { BookingData } from '../../pages/BookingWizard';
 import { useAuth } from '../../contexts/AuthContext';
@@ -144,6 +145,21 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
         }
     };
 
+    const getEquipmentIcon = (name: string = '') => {
+        const n = name.toLowerCase();
+        const baseClass = "h-5 w-5 text-gray-400 group-hover:text-primary-600 transition-colors";
+
+        if (n.includes('notebook') || n.includes('laptop') || n.includes('pc') || n.includes('computador')) return <Laptop className={baseClass} />;
+        if (n.includes('projetor') || n.includes('datashow')) return <Projector className={baseClass} />;
+        if (n.includes('caixa') || n.includes('som') || n.includes('audio')) return <Speaker className={baseClass} />;
+        if (n.includes('camera') || n.includes('camara') || n.includes('foto')) return <Camera className={baseClass} />;
+        if (n.includes('microfone') || n.includes('mic')) return <Mic className={baseClass} />;
+        if (n.includes('tablet') || n.includes('ipad') || n.includes('celular')) return <Smartphone className={baseClass} />;
+        if (n.includes('tv') || n.includes('televisao') || n.includes('monitor') || n.includes('tela')) return <Tv className={baseClass} />;
+        if (n.includes('cabo') || n.includes('extensao') || n.includes('fio') || n.includes('adaptador')) return <Plug className={baseClass} />;
+        return <Monitor className={baseClass} />;
+    };
+
     const SuccessModal = () => (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity"></div>
@@ -193,18 +209,18 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
 
     const TermModal = () => (
         <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div className="flex items-center justify-center min-h-screen px-0 pt-0 pb-0 sm:px-4 sm:pt-4 sm:pb-20 text-center sm:block sm:p-0">
                 <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" aria-hidden="true" onClick={() => setModalOpen(false)}></div>
 
                 <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-                <div className="relative z-50 inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-                    <div className="bg-white px-6 py-4 flex justify-between items-center border-b border-gray-100">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-primary-50 rounded-lg">
-                                <FileCheck className="h-5 w-5 text-primary-600" />
+                <div className="relative z-50 inline-block align-bottom bg-white sm:rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl w-full h-full sm:h-auto sm:w-full flex flex-col">
+                    <div className="bg-white px-4 py-4 flex justify-between items-center border-b border-gray-100 shrink-0">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="p-1.5 sm:p-2 bg-primary-50 rounded-lg shrink-0">
+                                <FileCheck className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-900">Termo de Responsabilidade</h3>
+                            <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-tight">Termo</h3>
                         </div>
                         <div className="flex items-center gap-2">
                             <button
@@ -213,8 +229,8 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                                 disabled={isGeneratingPdf}
                                 className="inline-flex items-center px-3 py-2 border border-gray-200 text-xs font-bold rounded-xl text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-all disabled:opacity-50"
                             >
-                                <Share2 className="h-4 w-4 mr-2 text-green-600" />
-                                {isGeneratingPdf ? '...' : 'WhatsApp'}
+                                <Share2 className="h-4 w-4 mr-0 sm:mr-2 text-green-600" />
+                                <span className="hidden sm:inline">{isGeneratingPdf ? '...' : 'WhatsApp'}</span>
                             </button>
                             <button
                                 type="button"
@@ -222,8 +238,8 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                                 disabled={isGeneratingPdf}
                                 className="inline-flex items-center px-3 py-2 border border-transparent text-xs font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all disabled:opacity-50"
                             >
-                                <Download className="h-4 w-4 mr-2" />
-                                {isGeneratingPdf ? 'Gerando...' : 'Baixar PDF'}
+                                <Download className="h-4 w-4 mr-0 sm:mr-2" />
+                                <span className="hidden sm:inline">{isGeneratingPdf ? '...' : 'Baixar PDF'}</span>
                             </button>
                             <button
                                 type="button"
@@ -235,16 +251,18 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                         </div>
                     </div>
 
-                    <div className="bg-gray-100 px-4 py-8 overflow-y-auto h-[70vh] flex justify-center">
-                        <div className="bg-white shadow-2xl rounded-sm max-w-[210mm] w-full">
-                            <TermDocument data={data} id="term-preview-content" />
+                    <div className="bg-gray-100 px-0 py-4 sm:px-4 sm:py-8 overflow-y-auto flex-1 flex justify-center">
+                        <div className="bg-white shadow-none sm:shadow-2xl sm:rounded-sm max-w-[210mm] w-full mx-auto">
+                            <div className="scale-[0.85] origin-top sm:scale-100">
+                                <TermDocument data={data} id="term-preview-content" />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="bg-white px-6 py-4 border-t border-gray-100 flex justify-end">
+                    <div className="bg-white px-6 py-4 border-t border-gray-100 flex justify-end shrink-0">
                         <button
                             type="button"
-                            className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-all"
+                            className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-all"
                             onClick={() => setModalOpen(false)}
                         >
                             Fechar Visualização
@@ -319,10 +337,15 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {data.equipments.map(eq => (
-                            <div key={eq.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                                <div className="text-left">
-                                    <p className="text-sm font-bold text-gray-900">{eq.name}</p>
-                                    <p className="text-[10px] font-bold text-primary-600 uppercase mt-0.5">{eq.brand} {eq.model}</p>
+                            <div key={eq.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 group">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center justify-center p-2 bg-white rounded-lg border border-gray-100 shadow-sm">
+                                        {getEquipmentIcon(eq.name)}
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-sm font-bold text-gray-900">{eq.name}</p>
+                                        <p className="text-[10px] font-bold text-primary-600 uppercase mt-0.5">{eq.brand} {eq.model}</p>
+                                    </div>
                                 </div>
                                 <span className="bg-white px-2.5 py-1 rounded-lg text-xs font-black text-gray-500 shadow-sm border border-gray-100">
                                     ×{eq.quantity}

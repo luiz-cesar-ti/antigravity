@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Monitor, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
+import { Monitor, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug } from 'lucide-react';
 import type { BookingData } from '../../pages/BookingWizard';
 import { useAvailableEquipment } from '../../hooks/useAvailableEquipment';
 import { clsx } from 'clsx';
@@ -60,6 +60,21 @@ export function Step2Equipment({ data, updateData, onNext, onPrev }: Step2Props)
 
         updateData({ equipments: selectedEquipmentList });
         onNext();
+    };
+
+    const getEquipmentIcon = (name: string = '', isFullyBooked: boolean) => {
+        const n = name.toLowerCase();
+        const baseClass = clsx("h-6 w-6", isFullyBooked ? "text-gray-400" : "text-primary-600");
+
+        if (n.includes('notebook') || n.includes('laptop') || n.includes('pc') || n.includes('computador')) return <Laptop className={baseClass} />;
+        if (n.includes('projetor') || n.includes('datashow')) return <Projector className={baseClass} />;
+        if (n.includes('caixa') || n.includes('som') || n.includes('audio')) return <Speaker className={baseClass} />;
+        if (n.includes('camera') || n.includes('camara') || n.includes('foto')) return <Camera className={baseClass} />;
+        if (n.includes('microfone') || n.includes('mic')) return <Mic className={baseClass} />;
+        if (n.includes('tablet') || n.includes('ipad') || n.includes('celular')) return <Smartphone className={baseClass} />;
+        if (n.includes('tv') || n.includes('televisao') || n.includes('monitor') || n.includes('tela')) return <Tv className={baseClass} />;
+        if (n.includes('cabo') || n.includes('extensao') || n.includes('fio') || n.includes('adaptador')) return <Plug className={baseClass} />;
+        return <Monitor className={baseClass} />;
     };
 
     if (loading) {
@@ -125,7 +140,7 @@ export function Step2Equipment({ data, updateData, onNext, onPrev }: Step2Props)
                                 <div className="flex justify-between items-start mb-3">
                                     <div className="flex items-center">
                                         <div className={clsx("p-2 rounded-lg mr-3", isFullyBooked ? "bg-gray-200" : "bg-primary-50")}>
-                                            <Monitor className={clsx("h-6 w-6", isFullyBooked ? "text-gray-400" : "text-primary-600")} />
+                                            {getEquipmentIcon(eq.name, isFullyBooked)}
                                         </div>
                                         <div>
                                             <h3 className="font-medium text-gray-900">{eq.name}</h3>
