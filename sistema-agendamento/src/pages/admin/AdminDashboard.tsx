@@ -325,12 +325,18 @@ export function AdminDashboard() {
                                     key={teacher.name}
                                     onClick={async () => {
                                         setSelectedTeacher(teacher);
-                                        const { data } = await supabase
+                                        let detailQuery = supabase
                                             .from('bookings')
                                             .select('*, equipment(name)')
                                             .eq('user_id', teacher.id)
-                                            .neq('status', 'cancelled_by_user')
-                                            .order('booking_date', { ascending: false });
+                                            .neq('status', 'cancelled_by_user');
+
+                                        // Apply unit filter for teacher details
+                                        if (adminUser.unit && adminUser.unit !== 'Matriz') {
+                                            detailQuery = detailQuery.eq('unit', adminUser.unit);
+                                        }
+
+                                        const { data } = await detailQuery.order('booking_date', { ascending: false });
 
                                         if (data) {
                                             const eqMap: Record<string, number> = {};
