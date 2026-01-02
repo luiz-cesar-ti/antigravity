@@ -21,56 +21,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         let mounted = true;
 
-        // Check active sessions
         const checkSession = async () => {
             try {
-                // 1. Check Supabase Auth (Teachers)
-                // Add a timeout to prevent hanging indefinitely
-                const sessionPromise = supabase.auth.getSession();
-                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000));
-
-                const result = await Promise.race([sessionPromise, timeoutPromise]) as any;
-                const session = result.data?.session;
+                const { data: { session } } = await supabase.auth.getSession();
 
                 if (session && mounted) {
-                    // Fetch user profile
-                    const { data: profile, error: profileError } = await supabase
+                    const { data: profile } = await supabase
                         .from('users')
                         .select('*')
                         .eq('id', session.user.id)
                         .single();
 
-                    if (profileError) {
-                        console.error('Error fetching profile:', profileError);
-                        // If we can't get the profile, we might still be authenticated as a user but technically not a full "teacher" in our app logic
-                        // Decide if we should sign them out or let them proceed. Safety: sign out if critical data missing.
-                    }
-
-                    if (profile) {
-                        // Check if user is active
+                    if (profile && mounted) {
                         if (profile.active === false) {
                             await supabase.auth.signOut();
-                            if (mounted) setState(prev => ({ ...prev, isLoading: false }));
+                            setState(prev => ({ ...prev, isLoading: false }));
                             return;
                         }
-                        if (mounted) {
-                            setState({
-                                user: profile as User,
-                                role: 'teacher',
-                                isAuthenticated: true,
-                                isLoading: false,
-                            });
-                        }
+                        setState({
+                            user: profile as User,
+                            role: 'teacher',
+                            isAuthenticated: true,
+                            isLoading: false,
+                        });
                         return;
                     }
                 }
 
-                // 2. Check Admin "Session" (stored in localStorage)
                 const adminSession = localStorage.getItem('admin_session');
-                if (adminSession) {
+                if (adminSession && mounted) {
                     try {
                         const admin = JSON.parse(adminSession);
-                        if (admin && admin.username && mounted) { // Basic validation
+                        if (admin && admin.username) {
                             setState({
                                 user: admin as Admin,
                                 role: 'admin',
@@ -80,24 +62,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                             return;
                         }
                     } catch (e) {
-                        console.error('Corrupt admin session, clearing:', e);
                         localStorage.removeItem('admin_session');
                     }
                 }
-
             } catch (error) {
                 console.error('Session check failed:', error);
-                // On critical failure, ensure we don't block the UI forever
             } finally {
-                if (mounted) {
-                    setState(prev => ({ ...prev, isLoading: false }));
-                }
+                if (mounted) setState(prev => ({ ...prev, isLoading: false }));
             }
         };
 
         checkSession();
 
-        // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (!mounted) return;
 
@@ -105,27 +81,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setState({ user: null, role: null, isAuthenticated: false, isLoading: false });
                 localStorage.removeItem('admin_session');
             } else if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-                // Avoid setting loading to true here to prevent flickering, just update data
                 const { data: profile } = await supabase
                     .from('users')
                     .select('*')
                     .eq('id', session.user.id)
                     .single();
 
-                if (profile) {
+                if (profile && mounted) {
                     if (profile.active === false) {
                         await supabase.auth.signOut();
-                        if (mounted) setState({ user: null, role: null, isAuthenticated: false, isLoading: false });
                         return;
                     }
-                    if (mounted) {
-                        setState({
-                            user: profile as User,
-                            role: 'teacher',
-                            isAuthenticated: true,
-                            isLoading: false,
-                        });
-                    }
+                    setState({
+                        user: profile as User,
+                        role: 'teacher',
+                        isAuthenticated: true,
+                        isLoading: false,
+                    });
                 }
             }
         });
