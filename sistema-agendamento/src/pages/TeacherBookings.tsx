@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
     Calendar, Clock, MapPin, Monitor, Trash2, AlertTriangle, History,
-    Laptop, Projector, Speaker, Camera, Mic, Smartphone, Share2, Tv, Plug, FileText, Download, X
+    Laptop, Projector, Speaker, Camera, Mic, Smartphone, Share2, Tv, Plug, FileText, Download, X, Repeat
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,10 +18,12 @@ export function TeacherBookings() {
     const [pdfData, setPdfData] = useState<Booking | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bookingId: string | null }>({
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bookingId: string | null; recurringId?: string | null }>({
         isOpen: false,
-        bookingId: null
+        bookingId: null,
+        recurringId: null
     });
+    const [deleting, setDeleting] = useState(false);
 
     const handleOpenTermModal = (booking: Booking) => {
         setPdfData(booking);
@@ -168,6 +170,7 @@ export function TeacherBookings() {
     const handleDelete = async () => {
         if (!deleteModal.bookingId) return;
 
+        setDeleting(true);
         const { error } = await supabase
             .from('bookings')
             .update({ status: 'cancelled_by_user' })
@@ -179,6 +182,44 @@ export function TeacherBookings() {
         } else {
             console.error('Delete error:', error);
             alert('Erro ao excluir agendamento.');
+        }
+        setDeleting(false);
+    };
+
+    const handleDeleteSeries = async () => {
+        if (!deleteModal.recurringId) return;
+
+        const confirmAll = window.confirm("Isso irá cancelar TODAS as ocorrências futuras deste agendamento fixo. Deseja continuar?");
+        if (!confirmAll) return;
+
+        setDeleting(true);
+        try {
+            // 1. Deactivate the rule
+            const { error: ruleError } = await supabase
+                .from('recurring_bookings')
+                .update({ is_active: false })
+                .eq('id', deleteModal.recurringId);
+
+            if (ruleError) throw ruleError;
+
+            // 2. Cancel all future instances
+            const today = new Date().toISOString().split('T')[0];
+            const { error: bookingsError } = await supabase
+                .from('bookings')
+                .update({ status: 'cancelled_by_user' })
+                .eq('recurring_id', deleteModal.recurringId)
+                .gte('booking_date', today);
+
+            if (bookingsError) throw bookingsError;
+
+            setDeleteModal({ isOpen: false, bookingId: null, recurringId: null });
+            fetchBookings();
+            alert('Agendamento fixo e todas as ocorrências futuras foram canceladas.');
+        } catch (error) {
+            console.error('Series delete error:', error);
+            alert('Erro ao cancelar a série de agendamentos.');
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -247,6 +288,12 @@ export function TeacherBookings() {
                                                 {booking.status === 'active' ? 'Agendado' :
                                                     booking.status === 'encerrado' ? 'Encerrado' : 'Cancelado'}
                                             </span>
+                                            {booking.is_recurring && (
+                                                <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-black uppercase tracking-tight rounded-lg border border-amber-100 italic">
+                                                    <Repeat className="h-2 w-2" />
+                                                    Fixo
+                                                </div>
+                                            )}
                                             {booking.display_id && (
                                                 <span className="text-[10px] font-mono text-gray-400 font-bold tracking-wider">
                                                     #{booking.display_id}
@@ -304,7 +351,11 @@ export function TeacherBookings() {
 
                                     {!isExpired && booking.status === 'active' && (
                                         <button
-                                            onClick={() => setDeleteModal({ isOpen: true, bookingId: booking.id })}
+                                            onClick={() => setDeleteModal({
+                                                isOpen: true,
+                                                bookingId: booking.id,
+                                                recurringId: booking.recurring_id
+                                            })}
                                             className="flex items-center justify-center py-4 px-6 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-black text-xs rounded-2xl transition-all active:scale-95 group/btn"
                                         >
                                             <Trash2 className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
@@ -341,23 +392,43 @@ export function TeacherBookings() {
                             </div>
 
                             <h3 className="text-2xl font-black text-gray-900 text-center mb-3">
-                                Cancelar Agendamento?
+                                {bookings.find(b => b.id === deleteModal.bookingId)?.is_recurring
+                                    ? 'Excluir Ocorrência Fixa?'
+                                    : 'Cancelar Agendamento?'
+                                }
                             </h3>
 
                             <p className="text-gray-500 text-center text-sm leading-relaxed mb-10 px-2">
-                                Os equipamentos ficarão imediatamente disponíveis para outros professores. O termo assinado continuará disponível para auditoria da administração.
+                                {bookings.find(b => b.id === deleteModal.bookingId)?.is_recurring
+                                    ? "Você está excluindo esta data específica do seu agendamento fixo. As outras semanas permanecem ativas."
+                                    : "Os equipamentos ficarão imediatamente disponíveis para outros professores. O termo assinado continuará disponível para auditoria da administração."
+                                }
                             </p>
 
                             <div className="flex flex-col gap-3">
                                 <button
+                                    disabled={deleting}
                                     onClick={handleDelete}
-                                    className="w-full px-6 py-4 bg-red-600 hover:bg-red-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-red-200 transition-all active:scale-95"
+                                    className="w-full px-6 py-4 bg-red-600 hover:bg-red-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-red-200 transition-all active:scale-95 disabled:opacity-50"
                                 >
-                                    Confirmar Cancelamento
+                                    {deleting ? 'Processando...' : 'Confirmar Cancelamento'}
                                 </button>
+
+                                {deleteModal.recurringId && (
+                                    <button
+                                        disabled={deleting}
+                                        onClick={handleDeleteSeries}
+                                        className="w-full px-6 py-4 bg-orange-600 hover:bg-orange-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-orange-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        <Repeat className="h-4 w-4" />
+                                        Cancelar SÉRIE Agendamento Fixo
+                                    </button>
+                                )}
+
                                 <button
-                                    onClick={() => setDeleteModal({ isOpen: false, bookingId: null })}
-                                    className="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-sm rounded-2xl transition-all"
+                                    disabled={deleting}
+                                    onClick={() => setDeleteModal({ isOpen: false, bookingId: null, recurringId: null })}
+                                    className="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-sm rounded-2xl transition-all disabled:opacity-50"
                                 >
                                     Manter Agendamento
                                 </button>
