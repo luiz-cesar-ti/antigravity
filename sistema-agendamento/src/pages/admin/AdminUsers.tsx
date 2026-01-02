@@ -14,7 +14,13 @@ export function AdminUsers() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [editingUser, setEditingUser] = useState<User | null>(null);
-    const [formData, setFormData] = useState({ full_name: '', email: '', units: [] as string[], recurring_booking_enabled: false });
+    const [formData, setFormData] = useState({
+        full_name: '',
+        email: '',
+        units: [] as string[],
+        recurring_booking_enabled: false,
+        recurring_booking_units: [] as string[]
+    });
     const [saving, setSaving] = useState(false);
     const [resendingEmail, setResendingEmail] = useState(false);
     const [successModal, setSuccessModal] = useState({ isOpen: false, title: '', message: '' });
@@ -52,7 +58,8 @@ export function AdminUsers() {
             full_name: user.full_name,
             email: user.email,
             units: user.units || [],
-            recurring_booking_enabled: user.recurring_booking_enabled || false
+            recurring_booking_enabled: user.recurring_booking_enabled || false,
+            recurring_booking_units: user.recurring_booking_units || []
         });
     };
 
@@ -77,7 +84,8 @@ export function AdminUsers() {
                 full_name: formData.full_name,
                 email: formData.email,
                 units: formData.units,
-                recurring_booking_enabled: formData.recurring_booking_enabled
+                recurring_booking_enabled: formData.recurring_booking_enabled,
+                recurring_booking_units: formData.recurring_booking_units
             })
             .eq('id', editingUser.id);
 
@@ -355,25 +363,66 @@ export function AdminUsers() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between p-4 bg-primary-50 rounded-2xl border border-primary-100">
-                                <div>
-                                    <p className="text-sm font-bold text-primary-900">Agendamento Fixo</p>
-                                    <p className="text-[10px] text-primary-600 font-bold uppercase tracking-tight">Permitir reservas recorrentes</p>
-                                </div>
-                                <button
-                                    onClick={() => setFormData({ ...formData, recurring_booking_enabled: !formData.recurring_booking_enabled })}
-                                    className={clsx(
-                                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2",
-                                        formData.recurring_booking_enabled ? "bg-primary-600" : "bg-gray-200"
-                                    )}
-                                >
-                                    <span
+                            <div className="flex flex-col gap-2 p-4 bg-primary-50 rounded-2xl border border-primary-100">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-bold text-primary-900">Agendamento Fixo</p>
+                                        <p className="text-[10px] text-primary-600 font-bold uppercase tracking-tight">
+                                            {role === 'admin' && (user as Admin)?.unit
+                                                ? `Autorizar para Unidade: ${(user as Admin).unit}`
+                                                : "Autorizar reservas recorrentes"
+                                            }
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            const adminUnit = (user as Admin)?.unit;
+                                            if (adminUnit) {
+                                                // Specific unit admin: toggle unit in array
+                                                setFormData(prev => {
+                                                    const units = prev.recurring_booking_units || [];
+                                                    const newUnits = units.includes(adminUnit)
+                                                        ? units.filter(u => u !== adminUnit)
+                                                        : [...units, adminUnit];
+                                                    return { ...prev, recurring_booking_units: newUnits };
+                                                });
+                                            } else {
+                                                // Global admin: use the boolean toggle (fallback)
+                                                setFormData({ ...formData, recurring_booking_enabled: !formData.recurring_booking_enabled });
+                                            }
+                                        }}
                                         className={clsx(
-                                            "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                                            formData.recurring_booking_enabled ? "translate-x-6" : "translate-x-1"
+                                            "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2",
+                                            ((user as Admin)?.unit
+                                                ? formData.recurring_booking_units?.includes((user as Admin).unit)
+                                                : formData.recurring_booking_enabled
+                                            ) ? "bg-primary-600" : "bg-gray-200"
                                         )}
-                                    />
-                                </button>
+                                    >
+                                        <span
+                                            className={clsx(
+                                                "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                                                ((user as Admin)?.unit
+                                                    ? formData.recurring_booking_units?.includes((user as Admin).unit)
+                                                    : formData.recurring_booking_enabled
+                                                ) ? "translate-x-6" : "translate-x-1"
+                                            )}
+                                        />
+                                    </button>
+                                </div>
+
+                                {formData.recurring_booking_units && formData.recurring_booking_units.length > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-primary-100">
+                                        <p className="text-[9px] font-black text-primary-400 uppercase tracking-widest mb-1">Unidades Autorizadas:</p>
+                                        <div className="flex flex-wrap gap-1">
+                                            {formData.recurring_booking_units.map(u => (
+                                                <span key={u} className="px-1.5 py-0.5 bg-white text-primary-600 text-[9px] font-bold rounded border border-primary-100">
+                                                    {u}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

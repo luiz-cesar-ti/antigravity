@@ -7,6 +7,7 @@ export interface User {
     role: 'teacher';
     active: boolean;
     recurring_booking_enabled: boolean;
+    recurring_booking_units: string[];
     created_at: string;
 }
 

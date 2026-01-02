@@ -18,7 +18,12 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
     const [error, setError] = useState('');
 
     // Auto-fill available units from user profile
-    const availableUnits = (user && 'units' in (user as any)) ? (user as any).units : [];
+    const userProfile = user as any;
+    const availableUnits = (user && 'units' in userProfile) ? userProfile.units : [];
+
+    // Authorization check for recurring bookings
+    const authorizedRecurringUnits = userProfile?.recurring_booking_units || [];
+    const hasRecurringAuth = authorizedRecurringUnits.length > 0 || userProfile?.recurring_booking_enabled;
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -78,7 +83,7 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
             <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl font-semibold text-gray-800">Informações Básicas</h2>
 
-                {(user as any)?.recurring_booking_enabled && (
+                {hasRecurringAuth && (
                     <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-sm">
                         <button
                             onClick={() => updateData({ isRecurring: false })}
@@ -131,9 +136,11 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
                             className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3"
                         >
                             <option value="">Selecione uma unidade...</option>
-                            {availableUnits.map(unit => (
-                                <option key={unit} value={unit}>{unit}</option>
-                            ))}
+                            {availableUnits
+                                .filter((unit: string) => !data.isRecurring || authorizedRecurringUnits.includes(unit) || userProfile?.recurring_booking_enabled)
+                                .map((unit: string) => (
+                                    <option key={unit} value={unit}>{unit}</option>
+                                ))}
                         </select>
                     </div>
                 </div>

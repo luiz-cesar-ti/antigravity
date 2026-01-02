@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Monitor, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug } from 'lucide-react';
+import { Monitor, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug, Repeat } from 'lucide-react';
 import type { BookingData } from '../../pages/BookingWizard';
 import { useAvailableEquipment } from '../../hooks/useAvailableEquipment';
 import { clsx } from 'clsx';
@@ -12,9 +12,27 @@ interface Step2Props {
 }
 
 export function Step2Equipment({ data, updateData, onNext, onPrev }: Step2Props) {
+    // For recurring bookings, we need a representative date to check availability
+    const getRepresentativeDate = () => {
+        if (!data.isRecurring) return data.date;
+
+        const today = new Date();
+        const targetDay = data.dayOfWeek ?? 0;
+        const currentDay = today.getDay();
+
+        let daysUntil = targetDay - currentDay;
+        if (daysUntil <= 0) daysUntil += 7;
+
+        const nextDate = new Date();
+        nextDate.setDate(today.getDate() + daysUntil);
+        return nextDate.toISOString().split('T')[0];
+    };
+
+    const representativeDate = getRepresentativeDate();
+
     const { equipments, loading, error } = useAvailableEquipment(
         data.unit,
-        data.date,
+        representativeDate,
         data.startTime,
         data.endTime
     );
@@ -100,8 +118,17 @@ export function Step2Equipment({ data, updateData, onNext, onPrev }: Step2Props)
         <div className="space-y-6">
             <div className="border-b border-gray-200 pb-4">
                 <h2 className="text-xl font-semibold text-gray-800">Equipamentos Disponíveis</h2>
-                <p className="text-sm text-gray-600">
-                    Para: <strong>{data.date.split('-').reverse().join('/')}</strong> das <strong>{data.startTime}</strong> às <strong>{data.endTime}</strong>
+                <p className="text-sm text-gray-600 flex items-center gap-2">
+                    {data.isRecurring ? (
+                        <>
+                            <Repeat className="h-3 w-3 text-primary-600" />
+                            <strong>Toda {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}</strong>
+                        </>
+                    ) : (
+                        <strong>{data.date.split('-').reverse().join('/')}</strong>
+                    )}
+                    <span> das </span>
+                    <strong>{data.startTime}</strong> às <strong>{data.endTime}</strong>
                 </p>
             </div>
 
