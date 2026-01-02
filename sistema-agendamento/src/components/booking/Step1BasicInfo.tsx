@@ -90,11 +90,11 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
                 <h2 className="text-xl font-semibold text-gray-800">Informações Básicas</h2>
 
                 {hasRecurringAuth && (
-                    <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-sm">
+                    <div className="grid grid-cols-2 bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-sm w-full">
                         <button
                             onClick={() => updateData({ isRecurring: false })}
                             className={clsx(
-                                "px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
+                                "px-4 py-2.5 sm:py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
                                 !data.isRecurring ? "bg-white text-primary-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
                             )}
                         >
@@ -115,7 +115,7 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
                                 }
                             }}
                             className={clsx(
-                                "px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-2",
+                                "px-4 py-2.5 sm:py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2",
                                 data.isRecurring ? "bg-primary-600 text-white shadow-lg shadow-primary-100" : "text-gray-500 hover:text-gray-700"
                             )}
                         >

@@ -33,8 +33,6 @@ export function AdminBookings() {
         bookingId: null
     });
 
-
-
     const fetchBookings = async () => {
         if (!user) return;
 
@@ -63,7 +61,8 @@ export function AdminBookings() {
 
         if (statusFilter !== 'all') {
             if (statusFilter === 'active') {
-                query = query.eq('status', 'active');
+                // For admin on mobile (and generally for admin), include cancelled by teacher in "active" view
+                query = query.or('status.eq.active,status.eq.cancelled_by_user');
             } else if (statusFilter === 'closed') {
                 query = query.eq('status', 'encerrado');
             }
@@ -464,7 +463,9 @@ export function AdminBookings() {
                                                     <div className="flex flex-col min-w-0">
                                                         <div className="flex items-center gap-2">
                                                             <span className="font-bold text-gray-900 truncate">{(booking as any).users?.full_name}</span>
-                                                            {getStatusBadge(booking)}
+                                                            <div className={booking.status === 'cancelled_by_user' ? 'hidden md:block' : ''}>
+                                                                {getStatusBadge(booking)}
+                                                            </div>
                                                         </div>
                                                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
                                                             <span className="truncate">{(booking as any).users?.email}</span>
@@ -481,30 +482,42 @@ export function AdminBookings() {
                                             </div>
 
                                             {/* Right: Primary Actions */}
-                                            <div className="flex items-center gap-3 shrink-0">
-                                                {booking.is_recurring && (
-                                                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-tight rounded-lg border border-amber-100 italic shadow-sm">
-                                                        <Repeat className="h-3 w-3" />
-                                                        Agendamento Fixo
-                                                    </div>
-                                                )}
+                                            <div className="flex flex-col items-end gap-3 shrink-0">
+                                                {/* Badges */}
+                                                <div className="flex flex-col items-end gap-1.5">
+                                                    {booking.is_recurring && (
+                                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-tight rounded-lg border border-amber-100 italic shadow-sm">
+                                                            <Repeat className="h-3 w-3" />
+                                                            Agendamento Fixo
+                                                        </div>
+                                                    )}
 
-                                                {booking.term_document && (
+                                                    {booking.status === 'cancelled_by_user' && (
+                                                        <div className="md:hidden">
+                                                            {getStatusBadge(booking)}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Buttons */}
+                                                <div className="flex items-center gap-2">
+                                                    {booking.term_document && (
+                                                        <button
+                                                            onClick={() => handleOpenTermModal(booking)}
+                                                            className="flex items-center gap-2 h-11 px-5 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95"
+                                                        >
+                                                            <FileText className="h-4 w-4 text-primary-500" />
+                                                            Termo
+                                                        </button>
+                                                    )}
+
                                                     <button
-                                                        onClick={() => handleOpenTermModal(booking)}
-                                                        className="flex items-center gap-2 h-11 px-5 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95"
+                                                        onClick={() => setDeleteModal({ isOpen: true, bookingId: booking.id })}
+                                                        className="h-11 w-11 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95 border border-red-100 hover:border-red-600 shadow-sm"
                                                     >
-                                                        <FileText className="h-4 w-4 text-primary-500" />
-                                                        Termo
+                                                        <Trash2 className="h-4 w-4" />
                                                     </button>
-                                                )}
-
-                                                <button
-                                                    onClick={() => setDeleteModal({ isOpen: true, bookingId: booking.id })}
-                                                    className="h-11 w-11 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95 border border-red-100 hover:border-red-600 shadow-sm"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
+                                                </div>
                                             </div>
                                         </div>
 
