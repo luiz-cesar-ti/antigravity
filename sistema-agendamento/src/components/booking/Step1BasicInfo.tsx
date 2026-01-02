@@ -37,6 +37,12 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
                 setError('Por favor, preencha todos os campos obrigatórios para o agendamento fixo.');
                 return false;
             }
+
+            // Strict unit authorization check
+            if (!authorizedRecurringUnits.includes(data.unit) && !userProfile?.recurring_booking_enabled) {
+                setError(`A unidade ${data.unit} não autorizou agendamentos fixos para seu usuário.`);
+                return false;
+            }
         } else {
             if (!data.unit || !data.totvs_number || !data.local || !data.date || !data.startTime || !data.endTime) {
                 setError('Por favor, preencha todos os campos obrigatórios.');
@@ -95,7 +101,19 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
                             Normal
                         </button>
                         <button
-                            onClick={() => updateData({ isRecurring: true })}
+                            onClick={() => {
+                                // Clear current unit if it's not authorized for recurring
+                                const currentUnit = data.unit;
+                                const isAuthorized = authorizedRecurringUnits.includes(currentUnit);
+
+                                if (authorizedRecurringUnits.length === 1 && !isAuthorized) {
+                                    updateData({ isRecurring: true, unit: authorizedRecurringUnits[0] });
+                                } else if (!isAuthorized) {
+                                    updateData({ isRecurring: true, unit: '' });
+                                } else {
+                                    updateData({ isRecurring: true });
+                                }
+                            }}
                             className={clsx(
                                 "px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-2",
                                 data.isRecurring ? "bg-primary-600 text-white shadow-lg shadow-primary-100" : "text-gray-500 hover:text-gray-700"
@@ -137,7 +155,7 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
                         >
                             <option value="">Selecione uma unidade...</option>
                             {availableUnits
-                                .filter((unit: string) => !data.isRecurring || authorizedRecurringUnits.includes(unit) || userProfile?.recurring_booking_enabled)
+                                .filter((unit: string) => !data.isRecurring || authorizedRecurringUnits.includes(unit))
                                 .map((unit: string) => (
                                     <option key={unit} value={unit}>{unit}</option>
                                 ))}
