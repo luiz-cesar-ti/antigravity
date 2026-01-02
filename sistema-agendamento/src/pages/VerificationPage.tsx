@@ -36,17 +36,33 @@ export function VerificationPage() {
                     .eq('verification_token', token)
                     .single();
 
+                let simpleData = null;
                 if (error || !data) {
-                    setStatus('invalid');
-                    return;
-                }
+                    console.warn('Individual booking verification failed, trying fallback...');
+                    // Try to fetch with a simpler query if joins fail due to RLS
+                    const { data: sData, error: sError } = await supabase
+                        .from('bookings')
+                        .select('*')
+                        .eq('verification_token', token)
+                        .single();
 
-                setBookingData(data);
+                    if (sError || !sData) {
+                        setStatus('invalid');
+                        return;
+                    }
+                    simpleData = sData;
+                    setBookingData(sData);
+                } else {
+                    setBookingData(data);
+                }
                 setStatus('valid');
+
+                const finalData = data || simpleData;
+                if (!finalData) return;
 
                 // Log the verification action (Non-blocking)
                 supabase.from('audit_logs').insert({
-                    booking_id: data.id,
+                    booking_id: finalData.id,
                     action: 'VERIFIED_QR',
                     performed_by: 'ANONYMOUS', // Public page
                     details: { user_agent: navigator.userAgent }

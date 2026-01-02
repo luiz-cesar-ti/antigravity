@@ -157,46 +157,44 @@ export function AdminBookings() {
     };
 
     const TermModal = () => (
-        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div className="flex items-center justify-center min-h-screen px-0 sm:px-4 pt-0 sm:pt-4 pb-0 sm:pb-20 text-center sm:block">
-                <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" onClick={() => setModalOpen(false)}></div>
-                <div className="relative z-50 flex flex-col w-full h-[100dvh] sm:h-[85vh] sm:max-h-[85vh] sm:max-w-5xl bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:mx-auto sm:my-8">
-                    <div className="bg-white px-6 py-5 flex justify-between items-center border-b border-gray-100 shrink-0 sticky top-0 z-10">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-primary-50 rounded-xl">
-                                <FileText className="h-5 w-5 text-primary-600" />
-                            </div>
-                            <h3 className="text-lg font-black text-gray-900">Visualizar Termo</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 md:p-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" onClick={() => setModalOpen(false)}></div>
+            <div className="relative z-50 flex flex-col w-full max-w-5xl h-full max-h-screen sm:max-h-[85vh] bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all">
+                <div className="bg-white px-6 py-5 flex justify-between items-center border-b border-gray-100 shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary-50 rounded-xl">
+                            <FileText className="h-5 w-5 text-primary-600" />
                         </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => handlePdfAction('download')}
-                                disabled={isGeneratingPdf}
-                                className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-black rounded-xl shadow-lg transition-all"
-                            >
-                                <Download className="h-4 w-4" />
-                                Baixar PDF
-                            </button>
-                            <button
-                                onClick={() => handlePdfAction('share')}
-                                disabled={isGeneratingPdf}
-                                className="sm:hidden p-2.5 bg-green-50 text-green-600 rounded-xl transition-all"
-                            >
-                                <Share2 className="h-5 w-5" />
-                            </button>
-                            <button
-                                onClick={() => setModalOpen(false)}
-                                className="p-2.5 bg-gray-50 text-gray-400 rounded-xl transition-all"
-                            >
-                                <X className="h-5 w-5" />
-                            </button>
-                        </div>
+                        <h3 className="text-lg font-black text-gray-900">Visualizar Termo</h3>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-gray-50/50">
-                        <div className="bg-white shadow-2xl mx-auto" style={{ maxWidth: '210mm' }}>
-                            <div id="admin-term-doc-inner">
-                                {pdfData && pdfData.term_document && <TermDocument data={pdfData.term_document} />}
-                            </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => handlePdfAction('download')}
+                            disabled={isGeneratingPdf}
+                            className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-black rounded-xl shadow-lg transition-all"
+                        >
+                            <Download className="h-4 w-4" />
+                            Baixar PDF
+                        </button>
+                        <button
+                            onClick={() => handlePdfAction('share')}
+                            disabled={isGeneratingPdf}
+                            className="sm:hidden p-2.5 bg-green-50 text-green-600 rounded-xl transition-all"
+                        >
+                            <Share2 className="h-5 w-5" />
+                        </button>
+                        <button
+                            onClick={() => setModalOpen(false)}
+                            className="p-2.5 bg-gray-50 text-gray-400 rounded-xl transition-all"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                    </div>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-gray-50/50">
+                    <div className="bg-white shadow-2xl mx-auto" style={{ maxWidth: '210mm' }}>
+                        <div id="admin-term-doc-inner">
+                            {pdfData && pdfData.term_document && <TermDocument data={pdfData.term_document} />}
                         </div>
                     </div>
                 </div>
