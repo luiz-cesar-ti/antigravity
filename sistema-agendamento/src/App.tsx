@@ -18,10 +18,13 @@ import { AdminUsers } from './pages/admin/AdminUsers';
 import { AdminSettings } from './pages/admin/AdminSettings';
 import { NotFound } from './pages/NotFound';
 
+import { ScrollToTop } from './components/ScrollToTop';
+
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
