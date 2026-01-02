@@ -25,6 +25,10 @@ export function useAvailableEquipment(unit: string, date: string, startTime: str
             setError('');
 
             try {
+                // Ensure time has seconds for Postgres compatibility
+                const queryStartTime = startTime.length === 5 ? `${startTime}:00` : startTime;
+                const queryEndTime = endTime.length === 5 ? `${endTime}:00` : endTime;
+
                 // 1. Fetch all equipment for the unit
                 const { data: allEquipment, error: equipError } = await supabase
                     .from('equipment')
@@ -35,15 +39,14 @@ export function useAvailableEquipment(unit: string, date: string, startTime: str
                 if (equipError) throw equipError;
 
                 // 2. Fetch active bookings that overlap with requested time
-                // Overlap logic: (StartA < EndB) and (EndA > StartB)
                 const { data: bookings, error: bookingError } = await supabase
                     .from('bookings')
                     .select('equipment_id, quantity')
                     .eq('unit', unit)
                     .eq('booking_date', date)
                     .eq('status', 'active')
-                    .lt('start_time', endTime)
-                    .gt('end_time', startTime)
+                    .lt('start_time', queryEndTime)
+                    .gt('end_time', queryStartTime)
                     .abortSignal(controller.signal);
 
                 if (bookingError) throw bookingError;
@@ -51,19 +54,15 @@ export function useAvailableEquipment(unit: string, date: string, startTime: str
                 // 3. Calculate availability
                 const equipmentMap = new Map<string, AvailableEquipment>();
 
-                // Initialize with total quantity
                 allEquipment?.forEach((eq) => {
                     equipmentMap.set(eq.id, { ...eq, available_quantity: eq.total_quantity });
                 });
 
-                // Subtract reserved quantities
                 bookings?.forEach((booking) => {
                     const eq = equipmentMap.get(booking.equipment_id);
                     if (eq) {
                         eq.available_quantity -= booking.quantity;
-                        // Clamp to 0 just in case
                         if (eq.available_quantity < 0) eq.available_quantity = 0;
-                        equipmentMap.set(booking.equipment_id, eq);
                     }
                 });
 
@@ -76,14 +75,15 @@ export function useAvailableEquipment(unit: string, date: string, startTime: str
                     console.log('Availability check aborted');
                     setError('Tempo limite excedido. Tente novamente.');
                 } else {
-                    console.error('Error fetching availability:', err);
+                    console.error('Error fetching availability details:', err);
                     setError('Erro ao carregar disponibilidade de equipamentos.');
                 }
             } finally {
+                // Always set loading false unless component unmounted
                 if (!controller.signal.aborted) {
                     setLoading(false);
-                    clearTimeout(timeoutId);
                 }
+                clearTimeout(timeoutId);
             }
         };
 

@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import {
     Calendar, Clock, MapPin, Monitor, Trash2, AlertTriangle, History,
-    Laptop, Projector, Speaker, Camera, Mic, Smartphone, Share2, Tv, Plug, FileText
+    Laptop, Projector, Speaker, Camera, Mic, Smartphone, Share2, Tv, Plug, FileText, Download, X
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Booking } from '../types';
 import { format, parseISO } from 'date-fns';
 import { TermDocument } from '../components/TermDocument';
-import { clsx } from 'clsx';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
 
@@ -24,77 +23,26 @@ export function TeacherBookings() {
         bookingId: null
     });
 
-    const handleShareTerm = async (booking: Booking) => {
+    const handleOpenTermModal = (booking: Booking) => {
         setPdfData(booking);
-
-        // Slight delay to ensure DOM is ready
-        setTimeout(async () => {
-            const element = document.getElementById('term-document');
-            if (!element) return;
-
-            const opt = {
-                margin: 0,
-                filename: `termo_${booking.id}.pdf`,
-                image: { type: 'jpeg' as const, quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
-            };
-
-            try {
-                const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
-
-                if (navigator.share) {
-                    const file = new File([pdfBlob], `Termo_Responsabilidade_${booking.equipment?.name}.pdf`, { type: 'application/pdf' });
-                    try {
-                        await navigator.share({
-                            files: [file],
-                            title: 'Termo de Responsabilidade',
-                            text: `Termo de uso do equipamento ${booking.equipment?.name}`
-                        });
-                    } catch (shareError) {
-                        // Fallback to download if share is cancelled or fails
-                        const url = URL.createObjectURL(pdfBlob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `Termo_${booking.equipment?.name}.pdf`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                    }
-                } else {
-                    // Fallback for desktop or non-supported browsers
-                    html2pdf().set(opt).from(element).save();
-                }
-            } catch (error) {
-                console.error('Error generating PDF:', error);
-                alert('Erro ao gerar documento. Tente novamente.');
-            } finally {
-                setPdfData(null);
-            }
-        }, 100);
+        setModalOpen(true);
     };
 
-    const handleDownloadTerm = (booking: Booking) => {
-        setPdfData(booking);
-        // Add timeout to let React render the TermDocument in the hidden div
-        setTimeout(() => {
-            setModalOpen(true);
-        }, 100);
-    };
-
+    // Unified PDF download/share action inside modal
     const handlePdfAction = async (action: 'download' | 'share') => {
-        const element = document.getElementById('teacher-term-doc'); // ID valid in Modal
+        const element = document.getElementById('teacher-term-doc-inner');
         if (!element || !pdfData) return;
 
         setIsGeneratingPdf(true);
 
-        const safeTotvs = (pdfData.term_document?.userTotvs || '0000').replace(/[^a-zA-Z0-9]/g, '');
-        const fileName = `TERMO_${safeTotvs}_${new Date().toISOString().split('T')[0]}.pdf`;
+        const safeName = (pdfData.term_document?.userName || 'Professor').replace(/[^a-zA-Z0-9]/g, '_');
+        const fileName = `TERMO_${safeName}_${new Date().toISOString().split('T')[0]}.pdf`;
 
         const opt = {
             margin: 0,
             filename: fileName,
             image: { type: 'jpeg' as const, quality: 0.98 },
-            html2canvas: { scale: 2 },
+            html2canvas: { scale: 2, useCORS: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
         };
 
@@ -103,15 +51,11 @@ export function TeacherBookings() {
 
             if (action === 'share' && navigator.share) {
                 const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-                try {
-                    await navigator.share({
-                        files: [file],
-                        title: 'Termo de Responsabilidade',
-                        text: 'Segue em anexo o Termo de Responsabilidade e Uso de Equipamento.'
-                    });
-                } catch (err) {
-                    console.log('User cancelled share or share failed, falling back to download');
-                }
+                await navigator.share({
+                    files: [file],
+                    title: 'Termo de Responsabilidade',
+                    text: 'Segue em anexo o Termo de Responsabilidade assinado digitalmente.'
+                });
             } else {
                 const url = URL.createObjectURL(pdfBlob);
                 const a = document.createElement('a');
@@ -122,14 +66,81 @@ export function TeacherBookings() {
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             }
-
         } catch (e) {
             console.error('PDF Error:', e);
-            alert('Erro ao gerar PDF detalhado. Tente novamente.');
+            alert('Erro ao processar o arquivo. Tente novamente.');
         } finally {
             setIsGeneratingPdf(false);
         }
     };
+
+    const TermModal = () => (
+        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div className="flex items-center justify-center min-h-screen px-0 sm:px-4 pt-0 sm:pt-4 pb-0 sm:pb-20 text-center sm:block">
+                <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" onClick={() => setModalOpen(false)}></div>
+
+                <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div className="relative z-50 inline-block align-bottom bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl w-full h-full sm:h-auto flex flex-col max-h-[100vh] sm:max-h-[90vh]">
+                    <div className="bg-white px-6 py-5 flex justify-between items-center border-b border-gray-100 shrink-0 sticky top-0 z-10 transition-all">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-primary-50 rounded-xl">
+                                <FileText className="h-5 w-5 text-primary-600" />
+                            </div>
+                            <h3 className="text-lg font-black text-gray-900 leading-none">Termo de Responsabilidade</h3>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {/* Download Desktop */}
+                            <button
+                                onClick={() => handlePdfAction('download')}
+                                disabled={isGeneratingPdf}
+                                className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-black rounded-xl shadow-lg shadow-primary-200 transition-all disabled:opacity-50 active:scale-95"
+                            >
+                                <Download className="h-4 w-4" />
+                                Baixar PDF
+                            </button>
+
+                            {/* Share Mobile */}
+                            <button
+                                onClick={() => handlePdfAction('share')}
+                                disabled={isGeneratingPdf}
+                                className="sm:hidden p-2.5 bg-green-50 text-green-600 rounded-xl active:scale-95 transition-all"
+                            >
+                                <Share2 className="h-5 w-5" />
+                            </button>
+
+                            <button
+                                onClick={() => setModalOpen(false)}
+                                className="p-2.5 bg-gray-50 text-gray-400 hover:text-gray-500 rounded-xl transition-all"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-gray-50/50">
+                        <div className="bg-white shadow-2xl mx-auto origin-top transition-transform" style={{ maxWidth: '210mm' }}>
+                            <div id="teacher-term-doc-inner">
+                                {pdfData && pdfData.term_document && <TermDocument data={pdfData.term_document} />}
+                            </div>
+                        </div>
+
+                        {/* Mobile Download Button (Visible only on mobile footer for better UX) */}
+                        <div className="sm:hidden mt-4 pb-4">
+                            <button
+                                onClick={() => handlePdfAction('download')}
+                                disabled={isGeneratingPdf}
+                                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-primary-600 text-white text-sm font-black rounded-2xl shadow-xl shadow-primary-200"
+                            >
+                                <Download className="h-5 w-5" />
+                                Download PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
     const getEquipmentIcon = (name: string = '') => {
         const n = name.toLowerCase();
@@ -145,53 +156,7 @@ export function TeacherBookings() {
         return <Monitor className={baseClass} />;
     };
 
-    const TermModal = () => (
-        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onClick={() => setModalOpen(false)}></div>
 
-                <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-                <div className="relative z-50 inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl w-full flex flex-col max-h-[90vh]">
-                    <div className="bg-white px-6 py-4 flex justify-between items-center border-b border-gray-100 shrink-0">
-                        <h3 className="text-lg font-bold text-gray-900">Termo Assinado</h3>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => handlePdfAction('share')}
-                                disabled={isGeneratingPdf}
-                                className="inline-flex items-center px-3 py-2 border border-gray-200 text-xs font-bold rounded-xl text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-all"
-                            >
-                                <Share2 className="h-4 w-4 mr-2 text-green-600" />
-                                Share
-                            </button>
-                            <button
-                                onClick={() => handlePdfAction('download')}
-                                disabled={isGeneratingPdf}
-                                className="inline-flex items-center px-3 py-2 border border-transparent text-xs font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all"
-                            >
-                                <Laptop className="h-4 w-4 mr-2" /> {/* Reuse icon temp */}
-                                Download
-                            </button>
-                            <button
-                                onClick={() => setModalOpen(false)}
-                                className="ml-2 p-2 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-500 transition-all"
-                            >
-                                <Trash2 className="h-5 w-5" /> {/* Reuse icon temp */}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-4 bg-gray-100/50">
-                        <div className="bg-white shadow-xl mx-auto origin-top transform scale-90 sm:scale-100" style={{ maxWidth: '210mm' }}>
-                            <div id="teacher-term-doc">
-                                {pdfData && pdfData.term_document && <TermDocument data={pdfData.term_document} />}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
 
     const fetchBookings = async () => {
         if (!user) return;
@@ -347,11 +312,11 @@ export function TeacherBookings() {
 
                                 <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <button
-                                        onClick={() => handleShareTerm(booking)}
+                                        onClick={() => handleOpenTermModal(booking)}
                                         className="flex items-center justify-center py-4 px-6 bg-white border border-gray-200 text-gray-700 hover:border-primary-200 hover:text-primary-600 font-bold text-xs rounded-2xl transition-all active:scale-95 shadow-sm"
                                     >
-                                        <Share2 className="h-4 w-4 mr-2" />
-                                        Termo
+                                        <FileText className="h-4 w-4 mr-2 text-primary-600" />
+                                        Ver Termo
                                     </button>
 
                                     {!isExpired && booking.status === 'active' && (
@@ -375,14 +340,8 @@ export function TeacherBookings() {
                 </div>
             )}
 
-            {/* Hidden Term Template for PDF Generation */}
-            {pdfData && (
-                <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
-                    <div id="term-document">
-                        <TermDocument data={pdfData} />
-                    </div>
-                </div>
-            )}
+            {/* Modal de Visualização do Termo */}
+            {modalOpen && <TermModal />}
 
             {/* Teacher Delete Confirmation Modal */}
             {deleteModal.isOpen && (

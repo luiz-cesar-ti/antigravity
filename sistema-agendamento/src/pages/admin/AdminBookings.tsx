@@ -9,6 +9,9 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { TermDocument } from '../../components/TermDocument';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
+import { Download, X, Share2 } from 'lucide-react';
 
 export function AdminBookings() {
     const { user, role } = useAuth();
@@ -95,86 +98,112 @@ export function AdminBookings() {
         }
     };
 
-    const handleDownloadTerm = async (booking: any) => {
+    const [modalOpen, setModalOpen] = useState(false);
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+    const handleOpenTermModal = (booking: any) => {
         if (!booking.term_document) {
             alert('Termo não disponível para este agendamento.');
             return;
         }
-
-        console.log('Iniciando geração de PDF para:', booking.id);
-        setPdfData(booking.term_document);
-
-        setTimeout(async () => {
-            const element = document.getElementById('admin-term-doc');
-            if (!element) {
-                console.error('ERRO: Elemento admin-term-doc não encontrado no DOM');
-                setPdfData(null);
-                return;
-            }
-
-            const rawName = booking.users?.full_name || booking.term_document?.userName || 'usuario';
-            const cleanName = rawName
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, "")
-                .replace(/[^a-zA-Z0-9]/g, '_')
-                .toUpperCase();
-
-            const fileName = `TERMO_${cleanName}_${booking.booking_date}.pdf`;
-
-            try {
-                const module = await import('html2pdf.js');
-                const html2pdf = (module.default || module) as any;
-
-                const opt = {
-                    margin: 0,
-                    filename: fileName,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: {
-                        scale: 2,
-                        useCORS: true,
-                        logging: false,
-                        letterRendering: true
-                    },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-
-                // Create the PDF worker
-                const worker = html2pdf().set(opt).from(element);
-
-                // Try to share first (Mobile experience)
-                if (navigator.share && navigator.canShare) {
-                    try {
-                        const pdfBlob = await worker.output('blob');
-                        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-
-                        if (navigator.canShare({ files: [file] })) {
-                            await navigator.share({
-                                files: [file],
-                                title: 'Termo de Responsabilidade',
-                                text: `Segue anexo o termo de responsabilidade de ${rawName}.`
-                            });
-                            console.log('Shared successfully');
-                            setPdfData(null);
-                            return; // Stop here if shared
-                        }
-                    } catch (shareError) {
-                        console.warn('Share API failed or closed, falling back to download:', shareError);
-                        // Fallthrough to download
-                    }
-                }
-
-                // Fallback: Standard Desktop Download
-                await worker.save();
-                console.log('Download triggered fallback');
-                setPdfData(null);
-
-            } catch (e: any) {
-                console.error('ERRO CRÍTICO NA GERAÇÃO:', e);
-                alert('Erro ao gerar o arquivo. Por favor, tente novamente.');
-                setPdfData(null);
-            }
-        }, 1500);
+        setPdfData(booking);
+        setModalOpen(true);
     };
+
+    const handlePdfAction = async (action: 'download' | 'share') => {
+        const element = document.getElementById('admin-term-doc-inner');
+        if (!element || !pdfData) return;
+
+        setIsGeneratingPdf(true);
+
+        const rawName = pdfData.term_document?.userName || 'usuario';
+        const cleanName = rawName.normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, '_').toUpperCase();
+        const fileName = `TERMO_${cleanName}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+        const opt = {
+            margin: 0,
+            filename: fileName,
+            image: { type: 'jpeg' as const, quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+        };
+
+        try {
+            const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
+
+            if (action === 'share' && navigator.share) {
+                const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+                await navigator.share({
+                    files: [file],
+                    title: 'Termo de Responsabilidade',
+                    text: `Segue anexo o termo de responsabilidade de ${rawName}.`
+                });
+            } else {
+                const url = URL.createObjectURL(pdfBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        } catch (e) {
+            console.error('PDF Error:', e);
+            alert('Erro ao processar o arquivo.');
+        } finally {
+            setIsGeneratingPdf(false);
+        }
+    };
+
+    const TermModal = () => (
+        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div className="flex items-center justify-center min-h-screen px-0 sm:px-4 pt-0 sm:pt-4 pb-0 sm:pb-20 text-center sm:block">
+                <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" onClick={() => setModalOpen(false)}></div>
+                <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div className="relative z-50 inline-block align-bottom bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl w-full h-full sm:h-auto flex flex-col max-h-[100vh] sm:max-h-[90vh]">
+                    <div className="bg-white px-6 py-5 flex justify-between items-center border-b border-gray-100 shrink-0 sticky top-0 z-10">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-primary-50 rounded-xl">
+                                <FileText className="h-5 w-5 text-primary-600" />
+                            </div>
+                            <h3 className="text-lg font-black text-gray-900">Visualizar Termo</h3>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => handlePdfAction('download')}
+                                disabled={isGeneratingPdf}
+                                className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-black rounded-xl shadow-lg transition-all"
+                            >
+                                <Download className="h-4 w-4" />
+                                Baixar PDF
+                            </button>
+                            <button
+                                onClick={() => handlePdfAction('share')}
+                                disabled={isGeneratingPdf}
+                                className="sm:hidden p-2.5 bg-green-50 text-green-600 rounded-xl transition-all"
+                            >
+                                <Share2 className="h-5 w-5" />
+                            </button>
+                            <button
+                                onClick={() => setModalOpen(false)}
+                                className="p-2.5 bg-gray-50 text-gray-400 rounded-xl transition-all"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-gray-50/50">
+                        <div className="bg-white shadow-2xl mx-auto" style={{ maxWidth: '210mm' }}>
+                            <div id="admin-term-doc-inner">
+                                {pdfData && pdfData.term_document && <TermDocument data={pdfData.term_document} />}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
     const isBookingExpired = (booking: Booking) => {
         const now = new Date();
@@ -343,136 +372,105 @@ export function AdminBookings() {
                             </li>
                         ) : (
                             filteredBookings.map((booking) => (
-                                <li key={booking.id} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-md hover:border-primary-100 transition-all overflow-hidden group">
-                                    <div className="px-8 py-6">
-                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                            {/* Top Row: Info & Standard Status */}
-                                            <div className="flex justify-between items-start w-full md:w-auto">
-                                                <div className="flex items-start gap-4">
-                                                    <div className="p-3 bg-primary-50 rounded-2xl shrink-0 group-hover:bg-primary-100 transition-all duration-300">
-                                                        {getEquipmentIcon(booking.equipment?.name)}
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <p className="text-xl font-black text-gray-900 tracking-tight leading-none">
-                                                            {booking.equipment?.name}
-                                                        </p>
-                                                        <div className="flex flex-wrap items-center gap-2 mt-2">
-                                                            <div className="flex items-center text-primary-600 bg-primary-50 px-2.5 py-1 rounded-lg border border-primary-100 shadow-sm">
-                                                                <Hash className="h-3 w-3 mr-1" />
-                                                                <span className="text-[10px] font-black uppercase tracking-wider">
-                                                                    {booking.quantity} {booking.quantity === 1 ? 'Unidade' : 'Unidades'}
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex items-center justify-between mb-4">
-                                                                <div className="flex items-center space-x-3">
-                                                                    <div className="p-2 bg-indigo-50 rounded-lg">
-                                                                        <Users className="h-5 w-5 text-indigo-600" />
-                                                                    </div>
-                                                                    <div>
-                                                                        <h3 className="font-bold text-gray-900">{(booking as any).users?.full_name}</h3>
-                                                                        <p className="text-xs text-gray-50">{(booking as any).users?.email}</p>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex flex-col items-end gap-1">
-                                                                    <span className={clsx(
-                                                                        "px-2.5 py-0.5 rounded-full text-xs font-medium border",
-                                                                        booking.status === 'active' ? "bg-green-50 text-green-700 border-green-100" :
-                                                                            booking.status === 'encerrado' ? "bg-gray-100 text-gray-700 border-gray-200" :
-                                                                                "bg-red-50 text-red-700 border-red-100"
-                                                                    )}>
-                                                                        {booking.status === 'active' ? 'Ativo' :
-                                                                            booking.status === 'encerrado' ? 'Encerrado' : 'Cancelado'}
-                                                                    </span>
-                                                                    {booking.display_id && (
-                                                                        <span className="text-[10px] font-mono text-gray-400 font-bold tracking-wider">
-                                                                            #{booking.display_id}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                            <span className="flex items-center gap-1 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100 text-[10px] text-gray-500 font-bold uppercase tracking-wider">
-                                                                <MapPin className="h-3 w-3" />
-                                                                {booking.unit}
+                                <li key={booking.id} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl hover:border-primary-100 transition-all overflow-hidden group">
+                                    <div className="px-8 py-7">
+                                        {/* Card Header */}
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                            <div className="flex items-center gap-5">
+                                                <div className="p-4 bg-primary-50 rounded-[1.25rem] shrink-0 group-hover:bg-primary-100 transition-all duration-300">
+                                                    {getEquipmentIcon(booking.equipment?.name)}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h3 className="text-xl font-black text-gray-900 tracking-tight leading-tight">
+                                                        {booking.equipment?.name}
+                                                    </h3>
+                                                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                                                        <div className="flex items-center text-primary-700 bg-primary-50 px-3 py-1 rounded-full border border-primary-100 shadow-inner">
+                                                            <Hash className="h-3 w-3 mr-1.5" />
+                                                            <span className="text-[10px] font-black uppercase tracking-wider">
+                                                                {booking.quantity} {booking.quantity === 1 ? 'Unidade' : 'Unidades'}
                                                             </span>
                                                         </div>
+                                                        <span className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-full border border-gray-100 text-[10px] text-gray-500 font-black uppercase tracking-wider">
+                                                            <MapPin className="h-3 w-3" />
+                                                            {booking.unit}
+                                                        </span>
                                                     </div>
                                                 </div>
-
-                                                {/* Status Badge (Desktop: hidden here / Mobile: Top Right unless cancelled_by_user) */}
-                                                {booking.status !== 'cancelled_by_user' && (
-                                                    <div className="block md:hidden ml-2 shrink-0">
-                                                        {getStatusBadge(booking)}
-                                                    </div>
-                                                )}
                                             </div>
 
-                                            {/* Bottom Row: Actions & Status (Desktop & Mobile Exceptions) */}
-                                            <div className="flex items-center justify-start md:justify-end gap-3 w-full md:w-auto border-t md:border-t-0 border-gray-50 pt-3 md:pt-0">
-
-                                                {/* Desktop Status - Always show here on desktop */}
-                                                <div className="hidden md:block">
-                                                    {getStatusBadge(booking)}
-                                                </div>
-
-                                                <div className="flex items-center gap-2">
-                                                    {booking.term_document && (
-                                                        <button
-                                                            onClick={() => handleDownloadTerm(booking)}
-                                                            className="h-10 px-4 bg-white border border-gray-200 text-gray-700 hover:border-primary-200 hover:text-primary-600 font-bold text-xs rounded-xl flex items-center shadow-sm transition-all active:scale-95"
-                                                        >
-                                                            <FileText className="h-4 w-4 mr-2" />
-                                                            <span className="hidden sm:inline">Documento</span>
-                                                            <span className="sm:hidden">Termo</span>
-                                                        </button>
-                                                    )}
-
-                                                    <button
-                                                        onClick={() => setDeleteModal({ isOpen: true, bookingId: booking.id })}
-                                                        className="h-10 px-4 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-bold text-xs rounded-xl flex items-center transition-all active:scale-95 border border-red-50"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
-                                                </div>
-
-                                                {/* Mobile: Cancelled By User Status - Show here on right side of buttons */}
-                                                {booking.status === 'cancelled_by_user' && (
-                                                    <div className="block md:hidden ml-auto">
-                                                        {getStatusBadge(booking)}
-                                                    </div>
+                                            <div className="flex flex-col md:items-end gap-2">
+                                                {getStatusBadge(booking)}
+                                                {booking.display_id && (
+                                                    <span className="text-[10px] font-mono text-gray-400 font-black tracking-widest bg-gray-50 px-2 py-0.5 rounded-md">
+                                                        #{booking.display_id}
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="mt-8 pt-6 border-t border-gray-50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] uppercase font-black text-gray-400 tracking-[0.2em]">Professor</span>
-                                                <div className="flex items-center text-sm text-gray-700 mt-2 font-bold">
-                                                    <Users className="flex-shrink-0 mr-2.5 h-4 w-4 text-gray-300" />
-                                                    {(booking as any).users?.full_name}
+                                        {/* Teacher Info Section */}
+                                        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="flex items-center p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/30">
+                                                <div className="p-2.5 bg-white rounded-xl shadow-sm mr-4">
+                                                    <Users className="h-5 w-5 text-indigo-600" />
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Professor Requisitante</span>
+                                                    <span className="font-bold text-indigo-900 truncate">{(booking as any).users?.full_name}</span>
+                                                    <span className="text-[10px] text-indigo-600/70 truncate">{(booking as any).users?.email}</span>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] uppercase font-black text-gray-400 tracking-[0.2em]">Especificação</span>
-                                                <div className="flex items-center text-sm text-gray-700 mt-2 font-bold">
-                                                    <Monitor className="flex-shrink-0 mr-2.5 h-4 w-4 text-gray-300" />
-                                                    <span className="truncate">
-                                                        {booking.equipment?.brand} {booking.equipment?.model}
-                                                    </span>
+
+                                            <div className="flex items-center p-4 bg-amber-50/50 rounded-2xl border border-amber-100/30">
+                                                <div className="p-2.5 bg-white rounded-xl shadow-sm mr-4">
+                                                    <Monitor className="h-5 w-5 text-amber-600" />
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">Especificação Técnica</span>
+                                                    <span className="font-bold text-amber-900 truncate">{booking.equipment?.brand} {booking.equipment?.model}</span>
+                                                    <span className="text-[10px] text-amber-600/70 truncate">{booking.local}</span>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] uppercase font-black text-gray-400 tracking-[0.2em]">Sala/Local</span>
-                                                <div className="flex items-center text-sm text-gray-700 mt-2 font-bold">
-                                                    <MapPin className="flex-shrink-0 mr-2.5 h-4 w-4 text-gray-300" />
-                                                    {booking.local}
+                                        </div>
+
+                                        {/* Time and Actions */}
+                                        <div className="mt-6 pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                            <div className="flex items-center gap-6">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">DATA AGENDADA</span>
+                                                    <div className="flex items-center text-sm font-bold text-gray-800">
+                                                        <Calendar className="h-4 w-4 mr-2 text-primary-500" />
+                                                        {format(parseISO(booking.booking_date), "dd/MM/yyyy")}
+                                                    </div>
+                                                </div>
+                                                <div className="h-8 w-px bg-gray-100 hidden sm:block"></div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">HORÁRIO</span>
+                                                    <div className="flex items-center text-sm font-bold text-gray-800">
+                                                        <Clock className="h-4 w-4 mr-2 text-primary-500" />
+                                                        {booking.start_time.slice(0, 5)} - {booking.end_time.slice(0, 5)}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] uppercase font-black text-gray-400 tracking-[0.2em]">Agendado para</span>
-                                                <div className="flex items-center text-sm text-gray-700 mt-2 font-bold">
-                                                    <Clock className="flex-shrink-0 mr-2.5 h-4 w-4 text-gray-300" />
-                                                    <span>{format(parseISO(booking.booking_date), "dd/MM/yyyy")} • {booking.start_time.slice(0, 5)} - {booking.end_time.slice(0, 5)}</span>
-                                                </div>
+
+                                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                                                {booking.term_document && (
+                                                    <button
+                                                        onClick={() => handleOpenTermModal(booking)}
+                                                        className="flex-1 sm:flex-none h-12 px-6 bg-white border border-gray-200 text-gray-700 hover:border-primary-200 hover:text-primary-600 font-bold text-xs rounded-2xl flex items-center justify-center shadow-sm transition-all active:scale-95"
+                                                    >
+                                                        <FileText className="h-4 w-4 mr-2 text-primary-500" />
+                                                        Documento
+                                                    </button>
+                                                )}
+
+                                                <button
+                                                    onClick={() => setDeleteModal({ isOpen: true, bookingId: booking.id })}
+                                                    className="h-12 w-12 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-bold rounded-2xl flex items-center justify-center transition-all active:scale-95 border border-red-50"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -523,13 +521,7 @@ export function AdminBookings() {
                 </div>
             )}
 
-            {pdfData && (
-                <div style={{ position: 'absolute', left: '-9999px', top: 0, width: '210mm' }}>
-                    <div id="admin-term-doc" style={{ width: '190mm', margin: '0 auto', background: 'white' }}>
-                        <TermDocument data={pdfData} />
-                    </div>
-                </div>
-            )}
+            {modalOpen && <TermModal />}
         </div>
     );
 }
