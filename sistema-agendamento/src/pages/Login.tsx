@@ -148,7 +148,7 @@ export function Login() {
                                         Sua Senha
                                     </label>
                                     <Link to="/forgot-password" title="Clique para recuperar sua senha" className="text-[10px] font-black uppercase tracking-widest text-primary-600 hover:text-primary-700 transition-colors">
-                                        Esqueci Senha
+                                        Esqueci a Senha
                                     </Link>
                                 </div>
                                 <div className="relative group">

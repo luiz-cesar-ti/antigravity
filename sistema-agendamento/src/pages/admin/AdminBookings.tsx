@@ -416,19 +416,13 @@ export function AdminBookings() {
 
                                             {/* Right: Primary Actions */}
                                             <div className="flex items-center gap-3 shrink-0">
-                                                {booking.status === 'active' && !isBookingExpired(booking) && (
-                                                    <span className="hidden md:inline-flex px-3 py-1 bg-green-50 text-green-700 text-[10px] font-black uppercase tracking-wider rounded-full border border-green-200">
-                                                        ATIVO
-                                                    </span>
-                                                )}
-
                                                 {booking.term_document && (
                                                     <button
                                                         onClick={() => handleOpenTermModal(booking)}
                                                         className="flex items-center gap-2 h-11 px-5 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95"
                                                     >
                                                         <FileText className="h-4 w-4 text-primary-500" />
-                                                        Documento
+                                                        Termo
                                                     </button>
                                                 )}
 
