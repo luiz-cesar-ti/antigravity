@@ -160,8 +160,7 @@ export function AdminBookings() {
         <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div className="flex items-center justify-center min-h-screen px-0 sm:px-4 pt-0 sm:pt-4 pb-0 sm:pb-20 text-center sm:block">
                 <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" onClick={() => setModalOpen(false)}></div>
-                <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                <div className="relative z-50 inline-block align-bottom bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl w-full h-full sm:h-auto flex flex-col max-h-[100vh] sm:max-h-[85vh]">
+                <div className="relative z-50 flex flex-col w-full h-[100dvh] sm:h-[85vh] sm:max-h-[85vh] sm:max-w-5xl bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:mx-auto sm:my-8">
                     <div className="bg-white px-6 py-5 flex justify-between items-center border-b border-gray-100 shrink-0 sticky top-0 z-10">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-primary-50 rounded-xl">
