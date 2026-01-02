@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { User, Mail, Lock, AlertCircle, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { SCHOOL_UNITS } from '../utils/constants';
+import { SuccessModal } from '../components/SuccessModal';
 
 export function Register() {
     const navigate = useNavigate();
@@ -17,6 +18,7 @@ export function Register() {
     });
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -79,10 +81,14 @@ export function Register() {
             setError(signUpError);
             setIsSubmitting(false);
         } else {
-            // Success - Show confirmation message
-            alert('Um e-mail de confirmação foi enviado para ' + formData.email + '. Por favor, verifique sua caixa de entrada para ativar sua conta.');
-            navigate('/login');
+            // Success - Show confirmation modal
+            setShowSuccessModal(true);
         }
+    };
+
+    const handleCloseSuccess = () => {
+        setShowSuccessModal(false);
+        navigate('/login');
     };
 
     return (
@@ -287,6 +293,14 @@ export function Register() {
                     </div>
                 </div>
             </div>
+
+            <SuccessModal
+                isOpen={showSuccessModal}
+                onClose={handleCloseSuccess}
+                title="Confirme seu E-mail"
+                message={`Um e-mail de confirmação foi enviado para ${formData.email}. Verifique sua caixa de entrada (e spam) para ativar sua conta e acessar o sistema.`}
+                type="email"
+            />
         </div>
     );
 }

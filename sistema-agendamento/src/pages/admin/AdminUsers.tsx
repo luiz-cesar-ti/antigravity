@@ -5,6 +5,7 @@ import { SCHOOL_UNITS } from '../../utils/constants';
 import type { User, Admin } from '../../types';
 import { Search, Mail, Building, Pencil, X, ToggleLeft, ToggleRight, AlertCircle, UserMinus, Check, Send } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { SuccessModal } from '../../components/SuccessModal';
 
 export function AdminUsers() {
     const { user, role } = useAuth();
@@ -15,6 +16,7 @@ export function AdminUsers() {
     const [formData, setFormData] = useState({ full_name: '', email: '', units: [] as string[] });
     const [saving, setSaving] = useState(false);
     const [resendingEmail, setResendingEmail] = useState(false);
+    const [successModal, setSuccessModal] = useState({ isOpen: false, title: '', message: '' });
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -98,7 +100,11 @@ export function AdminUsers() {
         if (error) {
             alert('Erro ao reenviar: ' + error.message);
         } else {
-            alert('Email de confirmação reenviado com sucesso!');
+            setSuccessModal({
+                isOpen: true,
+                title: 'Email Reenviado',
+                message: `O email de confirmação foi reenviado com sucesso para ${formData.email}.`
+            });
         }
         setResendingEmail(false);
     }
@@ -117,7 +123,7 @@ export function AdminUsers() {
             .eq('id', targetUser.id);
 
         if (!error) {
-            await fetchUsers();
+            fetchUsers();
         } else {
             alert('Erro ao atualizar status: ' + error.message);
         }
@@ -365,6 +371,14 @@ export function AdminUsers() {
                     </div>
                 </div>
             )}
+
+            <SuccessModal
+                isOpen={successModal.isOpen}
+                onClose={() => setSuccessModal({ ...successModal, isOpen: false })}
+                title={successModal.title}
+                message={successModal.message}
+                type="email"
+            />
         </div>
     );
 }
