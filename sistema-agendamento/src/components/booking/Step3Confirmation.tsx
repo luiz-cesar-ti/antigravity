@@ -81,6 +81,20 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                 verificationToken
             };
 
+            // 1. Insert into dedicated Verification Table (Robustness)
+            const { error: termError } = await supabase.from('booking_terms').insert({
+                display_id: displayId,
+                verification_token: verificationToken,
+                term_data: termDocument,
+                user_id: user?.id
+            });
+
+            if (termError) {
+                console.error('Error creating term snapshot:', termError);
+                throw new Error('Falha ao criar termo de verificação.');
+            }
+
+            // 2. Insert into main Bookings Table
             const bookingsToInsert = data.equipments.map(eq => ({
                 user_id: user?.id,
                 unit: data.unit,

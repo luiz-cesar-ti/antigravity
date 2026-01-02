@@ -44,17 +44,16 @@ export function VerificationPage() {
             try {
                 console.log('Attempting fetch for token:', currentToken);
 
-                // Fetch booking directly without joins to avoid RLS timeouts on related tables
-                // The 'term_document' JSONB column contains all necessary snapshot data (user name, totvs, etc.)
+                // Fetch booking directly from the optimized 'booking_terms' table
                 const { data: list, error } = await supabase
-                    .from('bookings')
-                    .select('*')
+                    .from('booking_terms')
+                    .select('term_data')
                     .eq('verification_token', currentToken)
                     .limit(1);
 
-                const data = list && list.length > 0 ? list[0] : null;
+                const record = list && list.length > 0 ? list[0] : null;
 
-                if (error || !data) {
+                if (error || !record) {
                     console.warn('Fetch failed or returned no data. Error:', error);
 
                     if (isMounted) {
@@ -69,7 +68,8 @@ export function VerificationPage() {
 
                 console.log('Fetch successful!');
                 if (isMounted) {
-                    setBookingData(data);
+                    // The 'term_data' column contains the exact object structure we need
+                    setBookingData(record.term_data);
                     clearTimeout(timeoutId);
                     setStatus('valid');
                 }
@@ -78,7 +78,10 @@ export function VerificationPage() {
 
                 // Log the verification action (Non-blocking)
                 supabase.from('audit_logs').insert({
-                    booking_id: (data as any).id,
+                    // We don't have a booking_id easily here since we decoupled tables, 
+                    // but we can log the action with null ID or add a loose reference.
+                    // For now, logging general verification is enough.
+                    booking_id: null,
                     action: 'VERIFIED_QR',
                     performed_by: 'ANONYMOUS',
                     details: { user_agent: navigator.userAgent, token_used: currentToken }
