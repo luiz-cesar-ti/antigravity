@@ -198,7 +198,7 @@ export function TeacherBookings() {
 
     useEffect(() => {
         fetchBookings();
-    }, [user, startDate, endDate, periodFilter, statusFilter, recurringFilter]);
+    }, [user?.id, startDate, endDate, periodFilter, statusFilter, recurringFilter]);
 
     const handleDelete = async () => {
         if (!deleteModal.bookingId) return;
