@@ -12,14 +12,38 @@ export function Login() {
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Load remembered credentials
+    // Load remembered credentials and check if already logged in
     useEffect(() => {
         const savedIdentifier = localStorage.getItem('remembered_identifier');
         if (savedIdentifier) {
             setIdentifier(savedIdentifier);
             setRememberMe(true);
         }
-    }, []);
+
+        // FAIL-SAFE: If already authenticated, go to root (RootRedirect will handle dashboards)
+        const token = localStorage.getItem('sb-mcnkueyuxlyasntmsvke-auth-token') || localStorage.getItem('admin_session');
+        if (!isLoading && token) {
+            const checkAuth = setTimeout(() => {
+                // Settle check
+            }, 500);
+            return () => clearTimeout(checkAuth);
+        }
+    }, [isLoading]);
+
+    // Secondary effect for direct redirection when state settles
+    useEffect(() => {
+        const token = localStorage.getItem('sb-mcnkueyuxlyasntmsvke-auth-token') || localStorage.getItem('admin_session');
+        if (!isLoading && token) {
+            // Give AuthContext a moment to finalize profile fetch
+            const timer = setTimeout(() => {
+                const updatedToken = localStorage.getItem('sb-mcnkueyuxlyasntmsvke-auth-token') || localStorage.getItem('admin_session');
+                if (updatedToken) {
+                    navigate('/');
+                }
+            }, 800);
+            return () => clearTimeout(timer);
+        }
+    }, [isLoading, navigate]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
