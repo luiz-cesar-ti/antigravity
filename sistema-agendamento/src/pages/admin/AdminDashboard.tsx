@@ -41,7 +41,6 @@ export function AdminDashboard() {
         bookingsByDay: [] as any[],
         popularEquipment: [] as any[],
         topTeachers: [] as any[],
-        auditLogs: [] as any[],
     });
     const [loading, setLoading] = useState(true);
 
@@ -113,53 +112,16 @@ export function AdminDashboard() {
                     }
                 }
 
-                const [bookingsRes, completedRes, equipmentRes, usersRes, allBookings, auditRes] = await Promise.all([
+                const [bookingsRes, completedRes, equipmentRes, usersRes, allBookings] = await Promise.all([
                     activeBookingsQuery,
                     completedBookingsQuery,
                     totalEquipmentQuery,
                     totalTeachersQuery,
                     chartsQuery,
-                    supabase
-                        .from('audit_logs')
-                        .select('*') // JOIN REMOVIDO para evitar erro 400
-                        .order('created_at', { ascending: false })
-                        .limit(5)
+                    // Removed audit_logs query
                 ]);
 
-                // Correção Manual do Join (Supabase API Workaround)
-                let finalAuditLogs = auditRes.data || [];
-                if (finalAuditLogs.length > 0) {
-                    const userIds = [...new Set(finalAuditLogs.map((l: any) => l.performed_by).filter(Boolean))];
-                    if (userIds.length > 0) {
-                        // 1. Tenta buscar na tabela de PROFESSORES
-                        const { data: usersData } = await supabase
-                            .from('users')
-                            .select('id, full_name')
-                            .in('id', userIds);
-
-                        // 2. Tenta buscar na tabela de ADMINS (para os IDs de admins)
-                        const { data: adminsData } = await supabase
-                            .from('admins')
-                            .select('id, username')
-                            .in('id', userIds);
-
-                        // 3. Combina os resultados
-                        const combinedUserMap = new Map();
-
-                        if (usersData) {
-                            usersData.forEach((u: any) => combinedUserMap.set(u.id, { full_name: u.full_name }));
-                        }
-                        if (adminsData) {
-                            adminsData.forEach((a: any) => combinedUserMap.set(a.id, { full_name: `(Admin) ${a.username}` }));
-                        }
-
-                        // 4. Aplica ao log
-                        finalAuditLogs = finalAuditLogs.map((log: any) => ({
-                            ...log,
-                            users: combinedUserMap.get(log.performed_by) || { full_name: 'Usuário Desconhecido' }
-                        }));
-                    }
-                }
+                // Removed Manual Join logic for audit logs
 
                 const bookings = allBookings.data || [];
 
@@ -213,8 +175,7 @@ export function AdminDashboard() {
                 setChartData({
                     bookingsByDay,
                     popularEquipment,
-                    topTeachers,
-                    auditLogs: finalAuditLogs
+                    topTeachers
                 });
 
             } catch (error) {
@@ -494,64 +455,7 @@ export function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Audit Logs Section - NEW */}
-            <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
-                <div className="flex items-center gap-4 mb-6">
-                    <div className="p-3 bg-purple-50 rounded-2xl text-purple-600">
-                        <Users className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <h3 className="text-xl font-black text-gray-900">Registros de Auditoria</h3>
-                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Últimas 5 atividades do sistema</p>
-                    </div>
-                </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="hidden md:table-header-group">
-                            <tr className="border-b border-gray-100">
-                                <th className="text-left text-[10px] font-black text-gray-400 uppercase tracking-wider pb-4">Data/Hora</th>
-                                <th className="text-left text-[10px] font-black text-gray-400 uppercase tracking-wider pb-4">Usuário</th>
-                                <th className="text-left text-[10px] font-black text-gray-400 uppercase tracking-wider pb-4">Ação</th>
-                                <th className="text-left text-[10px] font-black text-gray-400 uppercase tracking-wider pb-4">Detalhes</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {chartData.auditLogs && chartData.auditLogs.length > 0 ? (
-                                chartData.auditLogs.map((log: any) => (
-                                    <tr key={log.id} className="group hover:bg-gray-50/50 transition-colors">
-                                        <td className="py-4 text-xs font-bold text-gray-500 w-40">
-                                            {format(parseISO(log.created_at), "dd/MM 'às' HH:mm")}
-                                        </td>
-                                        <td className="py-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-6 w-6 rounded-full bg-primary-100 flex items-center justify-center text-[10px] font-bold text-primary-700">
-                                                    {log.users?.full_name?.substring(0, 2) || 'S'}
-                                                </div>
-                                                <span className="text-sm font-bold text-gray-700">{log.users?.full_name || 'Sistema'}</span>
-                                            </div>
-                                        </td>
-                                        <td className="py-4">
-                                            <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-white border border-gray-200 text-[10px] font-black text-gray-600 uppercase tracking-tight shadow-sm">
-                                                {log.action}
-                                            </span>
-                                        </td>
-                                        <td className="py-4 text-xs text-gray-500 truncate max-w-md">
-                                            {JSON.stringify(log.details)}
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan={4} className="py-8 text-center text-sm text-gray-400 font-medium">
-                                        Nenhum registro de auditoria disponível no momento.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
             {/* Teacher Analytics Modal */}
             {isModalOpen && selectedTeacher && (
