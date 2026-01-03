@@ -420,6 +420,25 @@ export function AdminLoans() {
     };
 
     const handleViewManualTerm = async (fileKey: string) => {
+        // Open window immediately to avoid popup blockers, especially on mobile
+        const newWindow = window.open('', '_blank');
+
+        // Optional: specific visual feedback in the new tab while loading
+        if (newWindow) {
+            newWindow.document.write(`
+                <html>
+                    <head><title>Carregando...</title></head>
+                    <body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #f9fafb;">
+                        <div style="text-align: center;">
+                            <div style="width: 40px; height: 40px; border: 3px solid #f3f4f6; border-top: 3px solid #4f46e5; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                            <p style="color: #6b7280;">Carregando documento seguro...</p>
+                            <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+                        </div>
+                    </body>
+                </html>
+            `);
+        }
+
         try {
             // Extract filename if it's a full path, though we store filename
             const cleanKey = fileKey.split('/').pop() || fileKey;
@@ -431,18 +450,26 @@ export function AdminLoans() {
 
             if (error) throw error;
             if (data?.signedUrl) {
-                window.open(data.signedUrl, '_blank');
+                if (newWindow) {
+                    newWindow.location.href = data.signedUrl;
+                } else {
+                    // Fallback if window failed to open
+                    window.location.href = data.signedUrl;
+                }
+            } else {
+                throw new Error('URL assinada não retornada.');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error generating signed URL:', error);
-            alert('Erro ao abrir o termo.');
+            newWindow?.close();
+            setModalInfo({ type: 'error', message: 'Erro ao abrir o termo. Tente novamente.' });
         }
     };
 
     const generatePDF = (loan: EquipmentLoan, download = true) => {
         const element = document.createElement('div');
         element.innerHTML = `
-            <div style="padding: 20px; font-family: sans-serif; line-height: 1.3; color: #1a1a1a;">
+        < div style = "padding: 20px; font-family: sans-serif; line-height: 1.3; color: #1a1a1a;" >
                 <div style="text-align: center; margin-bottom: 12px;">
                     <img src="${window.location.origin}/logo-objetivo.jpg" style="max-height: 85px; width: auto; margin-bottom: 8px; display: block; margin-left: auto; margin-right: auto;" onerror="this.style.display='none'" />
                     <h1 style="color: #3D52A0; margin: 0; font-size: 18px; text-transform: uppercase;">TERMO DE EMPRÉSTIMO E RESPONSABILIDADE</h1>
@@ -503,7 +530,7 @@ export function AdminLoans() {
                 <div style="margin-top: 25px; text-align: center; font-size: 9px; color: #999; border-top: 1px dashed #eee; padding-top: 5px;">
                     Documento emitido em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")}
                 </div>
-            </div>
+            </div >
         `;
 
         const opt = {
@@ -633,7 +660,7 @@ export function AdminLoans() {
                                     name="start_date"
                                     value={formData.start_date}
                                     onChange={handleInputChange}
-                                    className="block w-full px-4 py-3 bg-white border-2 border-transparent focus:border-primary-100 rounded-xl text-[12px] font-bold outline-none"
+                                    className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all placeholder-gray-400"
                                 />
                                 <div className="relative">
                                     <input
@@ -641,9 +668,9 @@ export function AdminLoans() {
                                         name="start_time"
                                         value={formData.start_time}
                                         onChange={handleInputChange}
-                                        className="block w-full px-4 py-3 bg-white border-2 border-transparent focus:border-primary-100 rounded-xl text-[12px] font-bold outline-none"
+                                        className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all placeholder-gray-400"
                                     />
-                                    <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-300 pointer-events-none" />
+                                    <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
                                 </div>
                             </div>
                         </div>
@@ -659,7 +686,7 @@ export function AdminLoans() {
                                     name="end_date"
                                     value={formData.end_date}
                                     onChange={handleInputChange}
-                                    className="block w-full px-4 py-3 bg-white border-2 border-transparent focus:border-primary-100 rounded-xl text-[12px] font-bold outline-none"
+                                    className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all placeholder-gray-400"
                                 />
                                 <div className="relative">
                                     <input
@@ -667,9 +694,9 @@ export function AdminLoans() {
                                         name="end_time"
                                         value={formData.end_time}
                                         onChange={handleInputChange}
-                                        className="block w-full px-4 py-3 bg-white border-2 border-transparent focus:border-primary-100 rounded-xl text-[12px] font-bold outline-none"
+                                        className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all placeholder-gray-400"
                                     />
-                                    <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-300 pointer-events-none" />
+                                    <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
                                 </div>
                             </div>
                         </div>
@@ -730,7 +757,7 @@ export function AdminLoans() {
                                                 value={asset}
                                                 onChange={(e) => handleAssetChange(index, e.target.value)}
                                                 className="block w-full px-5 py-3 bg-gray-50 border-2 border-transparent focus:border-primary-100 focus:bg-white rounded-xl text-sm font-bold transition-all outline-none"
-                                                placeholder={`Patrimônio ${index + 1}`}
+                                                placeholder={`Patrimônio ${index + 1} `}
                                             />
                                             <Hash className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-200" />
                                         </div>
@@ -886,15 +913,15 @@ export function AdminLoans() {
                                                     <div className="relative flex-1">
                                                         <input
                                                             type="file"
-                                                            id={`upload-${loan.id}`}
+                                                            id={`upload - ${loan.id} `}
                                                             className="hidden"
                                                             accept="image/png, image/jpeg, image/jpg"
                                                             onChange={(e) => handleFileUpload(e, loan.id)}
                                                             disabled={uploadingLoanId === loan.id}
                                                         />
                                                         <label
-                                                            htmlFor={`upload-${loan.id}`}
-                                                            className={`h-full py-3 px-3 flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer ${uploadingLoanId === loan.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                            htmlFor={`upload - ${loan.id} `}
+                                                            className={`h - full py - 3 px - 3 flex items - center justify - center gap - 2 bg - white border border - gray - 200 text - gray - 700 hover: border - primary - 500 hover: text - primary - 600 font - bold text - xs rounded - xl shadow - sm transition - all active: scale - 95 cursor - pointer ${uploadingLoanId === loan.id ? 'opacity-50 cursor-not-allowed' : ''} `}
                                                             title="Anexar Imagem do Termo Assinado"
                                                         >
                                                             {uploadingLoanId === loan.id ? (
