@@ -46,7 +46,7 @@ export function AdminHelp() {
             <div className="mb-12 text-center md:text-left">
                 <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-4">Manual do Administrador</h1>
                 <p className="text-lg text-gray-600 max-w-3xl">
-                    Guia completo de referência sobre todas as funcionalidades, regras de negócio e fluxos operacionais do Sistema de Agendamento Antigravity.
+                    Guia completo de referência sobre todas as funcionalidades, regras de negócio e fluxos operacionais do Sistema de Agendamento.
                 </p>
             </div>
 
@@ -92,8 +92,8 @@ export function AdminHelp() {
                                 <p className="text-gray-600 leading-relaxed">
                                     O Dashboard é a central de monitoramento em tempo real da unidade. Ele fornece uma visão macro da utilização dos recursos e métricas de desempenho.
                                 </p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                                <div className="flex justify-center">
+                                    <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 max-w-2xl w-full">
                                         <h3 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
                                             <Search className="h-4 w-4 text-primary-600" /> Métricas Principais
                                         </h3>
@@ -102,14 +102,6 @@ export function AdminHelp() {
                                             <li>• <strong>Agendamentos Concluídos:</strong> Contagem total de agendamentos realizados com sucesso.</li>
                                             <li>• <strong>Usuários Totais:</strong> Contagem de professores e admins cadastrados na unidade.</li>
                                         </ul>
-                                    </div>
-                                    <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                                        <h3 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-                                            <Shield className="h-4 w-4 text-purple-600" /> Auditoria Rápida
-                                        </h3>
-                                        <p className="text-sm text-gray-600">
-                                            Os últimos 5 registros de atividade (logs) são exibidos para controle rápido de segurança, mostrando quem fez o que e quando.
-                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -132,16 +124,16 @@ export function AdminHelp() {
                                     <h3 className="text-lg font-black text-gray-900 mb-4">Status do Card de Agendamento</h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                         <div className="p-4 rounded-xl bg-green-50 border border-green-100">
-                                            <span className="text-xs font-black text-green-700 bg-green-100 px-2 py-1 rounded mb-2 inline-block">ATIVO</span>
-                                            <p className="text-xs text-green-800">Reserva válida e futura. O equipamento está reservado.</p>
+                                            <span className="text-sm font-black text-green-700 bg-green-100 px-2 py-1 rounded mb-2 inline-block">ATIVO</span>
+                                            <p className="text-sm text-green-800">Reserva válida e futura. O equipamento está reservado.</p>
                                         </div>
                                         <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-                                            <span className="text-xs font-black text-blue-700 bg-blue-100 px-2 py-1 rounded mb-2 inline-block">CONCLUÍDO</span>
-                                            <p className="text-xs text-blue-800">Data/Hora já passaram. O sistema encerra automaticamente.</p>
+                                            <span className="text-sm font-black text-blue-700 bg-blue-100 px-2 py-1 rounded mb-2 inline-block">CONCLUÍDO</span>
+                                            <p className="text-sm text-blue-800">Data/Hora já passaram. O sistema encerra automaticamente.</p>
                                         </div>
                                         <div className="p-4 rounded-xl bg-amber-50 border border-amber-100">
-                                            <span className="text-xs font-black text-amber-700 bg-amber-100 px-2 py-1 rounded mb-2 inline-block">EXCLUÍDO (PROF)</span>
-                                            <p className="text-xs text-amber-800">Professor excluiu da visão dele. Admin ainda vê o registro.</p>
+                                            <span className="text-sm font-black text-amber-700 bg-amber-100 px-2 py-1 rounded mb-2 inline-block">EXCLUÍDO (PROF)</span>
+                                            <p className="text-sm text-amber-800">Professor excluiu da visão dele. Admin ainda vê o registro.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -154,7 +146,7 @@ export function AdminHelp() {
                                         <div>
                                             <h4 className="font-bold text-gray-700 mb-2">Pelo Professor</h4>
                                             <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-xl">
-                                                O professor realiza uma <strong>"Exclusão Lógica"</strong> (Soft Delete). O agendamento some da lista dele para limpar a visão, mas permanece no banco de dados com a flag <code>deleted_by_teacher</code>. O administrador continua vendo esse registro marcado em amarelo.
+                                                O professor realiza uma exclusão visual para organização pessoal. O agendamento some da lista dele para limpar a visão, mas permanece registrado no sistema. O administrador continua vendo esse registro marcado em amarelo para fins de histórico.
                                             </p>
                                         </div>
                                         <div>
@@ -460,8 +452,8 @@ export function AdminHelp() {
             </div>
 
             <div className="mt-20 text-center border-t border-gray-100 pt-10">
-                <p className="text-gray-400 text-sm font-medium">Antigravity System v2.2 • Todos os direitos reservados</p>
+                <p className="text-gray-400 text-sm font-medium"></p>
             </div>
-        </div>
+        </div >
     );
 }
