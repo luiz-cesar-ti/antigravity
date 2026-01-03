@@ -11,6 +11,7 @@ import { TeacherLayout } from './components/TeacherLayout';
 import { AdminLayout } from './components/AdminLayout';
 import { BookingWizard } from './pages/BookingWizard';
 import { TeacherBookings } from './pages/TeacherBookings';
+import { TeacherAbout } from './pages/TeacherAbout';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminBookings } from './pages/admin/AdminBookings';
 import { AdminEquipment } from './pages/admin/AdminEquipment';
@@ -43,6 +44,7 @@ function App() {
             <Route element={<TeacherLayout />}>
               <Route index element={<BookingWizard />} />
               <Route path="bookings" element={<TeacherBookings />} />
+              <Route path="about" element={<TeacherAbout />} />
             </Route>
           </Route>
 

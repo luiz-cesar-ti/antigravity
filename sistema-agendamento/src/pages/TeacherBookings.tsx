@@ -233,18 +233,13 @@ export function TeacherBookings() {
     const handleDelete = async () => {
         if (!deleteModal.bookingId) return;
 
-        const bookingToDelete = bookings.find(b => b.id === deleteModal.bookingId);
-        const now = new Date();
-        const isExpired = bookingToDelete ? now > parseISO(`${bookingToDelete.booking_date}T${bookingToDelete.end_time}`) : false;
-        const isEncerrado = bookingToDelete?.status === 'encerrado' || isExpired;
-
         setDeleting(true);
 
-        const query = isEncerrado
-            ? supabase.from('bookings').delete().eq('id', deleteModal.bookingId) // Hard delete for ended items
-            : supabase.from('bookings').update({ status: 'cancelled_by_user' }).eq('id', deleteModal.bookingId); // Soft delete for others
-
-        const { error } = await query;
+        // Always soft delete (update status) to keep history for admin
+        const { error } = await supabase
+            .from('bookings')
+            .update({ status: 'cancelled_by_user' })
+            .eq('id', deleteModal.bookingId);
 
         if (!error) {
             setDeleteModal({ isOpen: false, bookingId: null });
@@ -566,31 +561,17 @@ export function TeacherBookings() {
                                         Ver Termo
                                     </button>
 
-                                    {isEffectivelyClosed ? (
-                                        <button
-                                            onClick={() => setDeleteModal({
-                                                isOpen: true,
-                                                bookingId: booking.id,
-                                                recurringId: null
-                                            })}
-                                            className="flex items-center justify-center py-4 px-6 bg-red-100 text-red-700 hover:bg-red-600 hover:text-white font-black text-xs rounded-2xl transition-all active:scale-95 group/btn border border-red-200"
-                                        >
-                                            <Trash2 className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
-                                            Excluir Histórico
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => setDeleteModal({
-                                                isOpen: true,
-                                                bookingId: booking.id,
-                                                recurringId: booking.recurring_id
-                                            })}
-                                            className="flex items-center justify-center py-4 px-6 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-black text-xs rounded-2xl transition-all active:scale-95 group/btn border border-red-100"
-                                        >
-                                            <Trash2 className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
-                                            Cancelar
-                                        </button>
-                                    )}
+                                    <button
+                                        onClick={() => setDeleteModal({
+                                            isOpen: true,
+                                            bookingId: booking.id,
+                                            recurringId: booking.recurring_id
+                                        })}
+                                        className="flex items-center justify-center py-4 px-6 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-black text-xs rounded-2xl transition-all active:scale-95 group/btn border border-red-100"
+                                    >
+                                        <Trash2 className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
+                                        Excluir
+                                    </button>
                                 </div>
                             </div>
                         );
@@ -618,16 +599,14 @@ export function TeacherBookings() {
                             <h3 className="text-2xl font-black text-gray-900 text-center mb-3">
                                 {bookings.find(b => b.id === deleteModal.bookingId)?.is_recurring
                                     ? 'Excluir Ocorrência Fixa?'
-                                    : 'Cancelar Agendamento?'
+                                    : 'Excluir Agendamento?'
                                 }
                             </h3>
 
                             <p className="text-gray-500 text-center text-sm leading-relaxed mb-10 px-2">
-                                {bookings.find(b => b.id === deleteModal.bookingId)?.status === 'encerrado' || (bookings.find(b => b.id === deleteModal.bookingId) && (new Date() > parseISO(`${bookings.find(b => b.id === deleteModal.bookingId)?.booking_date}T${bookings.find(b => b.id === deleteModal.bookingId)?.end_time}`)))
-                                    ? "Esta ação removerá permanentemente o histórico deste agendamento. O termo assinado não poderá mais ser visualizado."
-                                    : bookings.find(b => b.id === deleteModal.bookingId)?.is_recurring
-                                        ? "Você está excluindo esta data específica do seu agendamento fixo. As outras semanas permanecem ativas."
-                                        : "Os equipamentos ficarão imediatamente disponíveis para outros professores. O termo assinado continuará disponível para auditoria da administração."
+                                {bookings.find(b => b.id === deleteModal.bookingId)?.is_recurring
+                                    ? "Você está excluindo esta data específica do seu agendamento fixo. As outras semanas permanecem ativas."
+                                    : "Este agendamento será marcado como excluído e o equipamento ficará disponível se ainda estiver no período de uso."
                                 }
                             </p>
 
@@ -637,7 +616,7 @@ export function TeacherBookings() {
                                     onClick={handleDelete}
                                     className="w-full px-6 py-4 bg-red-600 hover:bg-red-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-red-200 transition-all active:scale-95 disabled:opacity-50"
                                 >
-                                    {deleting ? 'Processando...' : 'Confirmar Cancelamento'}
+                                    {deleting ? 'Processando...' : 'Confirmar Exclusão'}
                                 </button>
 
                                 {deleteModal.recurringId && (
@@ -647,7 +626,7 @@ export function TeacherBookings() {
                                         className="w-full px-6 py-4 bg-orange-600 hover:bg-orange-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-orange-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                                     >
                                         <Repeat className="h-4 w-4" />
-                                        Cancelar SÉRIE Agendamento Fixo
+                                        Excluir SÉRIE Completa
                                     </button>
                                 )}
 
@@ -656,7 +635,7 @@ export function TeacherBookings() {
                                     onClick={() => setDeleteModal({ isOpen: false, bookingId: null, recurringId: null })}
                                     className="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-sm rounded-2xl transition-all disabled:opacity-50"
                                 >
-                                    Manter Agendamento
+                                    Cancelar
                                 </button>
                             </div>
                         </div>

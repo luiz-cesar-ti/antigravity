@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, Home, Calendar, Menu, X } from 'lucide-react';
+import { LogOut, Home, Calendar, Menu, X, BookOpen } from 'lucide-react';
 
 export function TeacherLayout() {
     const { signOut, user } = useAuth();
@@ -36,6 +36,9 @@ export function TeacherLayout() {
                             </Link>
                             <Link to="/teacher/bookings" className="hover:text-primary-200 px-3 py-2 text-sm font-medium flex items-center gap-2">
                                 <Calendar className="w-4 h-4" /> Agendamentos
+                            </Link>
+                            <Link to="/teacher/about" className="hover:text-primary-200 px-3 py-2 text-sm font-medium flex items-center gap-2">
+                                <BookOpen className="w-4 h-4" /> Sobre
                             </Link>
                         </nav>
 
@@ -90,6 +93,14 @@ export function TeacherLayout() {
                                 className="text-primary-100 hover:bg-primary-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium flex items-center gap-2"
                             >
                                 <Calendar className="w-5 h-5" /> Agendamentos
+                            </Link>
+
+                            <Link
+                                to="/teacher/about"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="text-primary-100 hover:bg-primary-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium flex items-center gap-2"
+                            >
+                                <BookOpen className="w-5 h-5" /> Sobre
                             </Link>
 
                             <button
