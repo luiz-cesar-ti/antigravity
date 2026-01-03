@@ -11,7 +11,6 @@ import {
     Monitor,
     Package,
     Hash,
-    AlertTriangle,
     Info,
     ArrowRight,
     Laptop,
@@ -22,6 +21,7 @@ import {
     Smartphone
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { ConfirmModal } from '../../components/ConfirmModal';
 
 export function AdminEquipment() {
     const { user } = useAuth();
@@ -393,48 +393,16 @@ export function AdminEquipment() {
                 </div>
             )}
 
-            {/* Delete Confirmation Modal (Professional replacement for confirm()) */}
-            {deleteModal.isOpen && (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity"></div>
-
-                    <div className="relative bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full overflow-hidden transform transition-all animate-in zoom-in-95 duration-200">
-                        <div className="p-10">
-                            <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-50 mb-8">
-                                <AlertTriangle className="h-10 w-10 text-red-600" />
-                            </div>
-
-                            <h3 className="text-2xl font-black text-gray-900 text-center mb-3 tracking-tight">
-                                Excluir Item?
-                            </h3>
-
-                            <p className="text-gray-500 text-center text-sm leading-relaxed mb-10 px-2 font-medium">
-                                Você está prestes a remover <span className="text-gray-900 font-bold">{deleteModal.item?.name}</span> do inventário. Esta ação removerá o item permanentemente.
-                            </p>
-
-                            <div className="flex flex-col gap-3">
-                                <button
-                                    onClick={handleDelete}
-                                    className="w-full px-6 py-4 bg-red-600 hover:bg-red-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-red-200 transition-all active:scale-95"
-                                >
-                                    Sim, Excluir Item
-                                </button>
-                                <button
-                                    onClick={() => setDeleteModal({ isOpen: false, item: null })}
-                                    className="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 text-gray-500 font-bold text-sm rounded-2xl transition-all"
-                                >
-                                    Manter no Inventário
-                                </button>
-                            </div>
-                        </div>
-                        <div className="bg-red-50 py-3 border-t border-red-100">
-                            <p className="text-[9px] text-red-400 text-center font-bold uppercase tracking-widest px-4">
-                                Atenção: Se houverem agendamentos ativos, a exclusão será bloqueada.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, item: null })}
+                onConfirm={handleDelete}
+                title="Excluir Item?"
+                message={`Você está prestes a remover ${deleteModal.item?.name} do inventário. Esta ação removerá o item permanentemente.`}
+                confirmText="Sim, Excluir Item"
+                cancelText="Manter no Inventário"
+                type="danger"
+            />
         </div>
     );
 }

@@ -6,6 +6,7 @@ import type { User, Admin } from '../../types';
 import { Search, Mail, Building, Pencil, X, ToggleLeft, ToggleRight, AlertCircle, UserMinus, Check, Send, Repeat } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { SuccessModal } from '../../components/SuccessModal';
+import { ConfirmModal } from '../../components/ConfirmModal';
 import { clsx } from 'clsx';
 
 export function AdminUsers() {
@@ -24,6 +25,21 @@ export function AdminUsers() {
     const [saving, setSaving] = useState(false);
     const [resendingEmail, setResendingEmail] = useState(false);
     const [successModal, setSuccessModal] = useState({ isOpen: false, title: '', message: '' });
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        confirmText: string;
+        type: 'danger' | 'warning' | 'info' | 'remove';
+        action: (() => void) | null;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        confirmText: '',
+        type: 'danger',
+        action: null
+    });
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -100,7 +116,6 @@ export function AdminUsers() {
 
     const handleResendConfirmation = async () => {
         if (!formData.email) return;
-        if (!confirm(`Deseja reenviar o email de confirmação para ${formData.email}?`)) return;
 
         setResendingEmail(true);
         const { error } = await supabase.auth.resend({
@@ -120,13 +135,22 @@ export function AdminUsers() {
         setResendingEmail(false);
     }
 
+    const triggerResendConfirmation = () => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Reenviar Convite?',
+            message: `Deseja reenviar o email de confirmação de cadastro para ${formData.email}?`,
+            confirmText: 'Sim, Reenviar',
+            type: 'info',
+            action: () => {
+                handleResendConfirmation();
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            }
+        });
+    }
+
     const handleToggleActive = async (targetUser: User) => {
         const newStatus = !targetUser.active;
-        const confirmMessage = newStatus
-            ? `Deseja reativar o professor "${targetUser.full_name}"?`
-            : `Deseja desativar o professor "${targetUser.full_name}"? Ele não conseguirá fazer login.`;
-
-        if (!confirm(confirmMessage)) return;
 
         const { error } = await supabase
             .from('users')
@@ -135,16 +159,29 @@ export function AdminUsers() {
 
         if (!error) {
             fetchUsers();
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } else {
             alert('Erro ao atualizar status: ' + error.message);
         }
     };
 
+    const triggerToggleActive = (targetUser: User) => {
+        const newStatus = !targetUser.active;
+        setConfirmModal({
+            isOpen: true,
+            title: newStatus ? 'Reativar Usuário?' : 'Desativar Usuário?',
+            message: newStatus
+                ? `Deseja reativar o acesso do professor "${targetUser.full_name}" ao sistema?`
+                : `Deseja desativar o professor "${targetUser.full_name}"? Ele não conseguirá mais acessar nenhuma funcionalidade do sistema.`,
+            confirmText: newStatus ? 'Reativar Agora' : 'Desativar Globalmente',
+            type: newStatus ? 'info' : 'danger',
+            action: () => handleToggleActive(targetUser)
+        });
+    }
+
     const handleRemoveFromUnit = async (targetUser: User) => {
         const adminUnit = (user as Admin)?.unit;
         if (!adminUnit) return;
-
-        if (!confirm(`Tem certeza que deseja remover o professor "${targetUser.full_name}" da unidade ${adminUnit}? Ele não terá mais acesso a esta unidade, mas permanecerá no sistema se tiver outras unidades.`)) return;
 
         const newUnits = (targetUser.units || []).filter(u => u !== adminUnit);
 
@@ -155,10 +192,23 @@ export function AdminUsers() {
 
         if (!error) {
             fetchUsers();
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } else {
             alert('Erro ao remover professor da unidade: ' + error.message);
         }
     };
+
+    const triggerRemoveFromUnit = (targetUser: User) => {
+        const adminUnit = (user as Admin)?.unit;
+        setConfirmModal({
+            isOpen: true,
+            title: 'Remover da Unidade?',
+            message: `Tem certeza que deseja remover o professor "${targetUser.full_name}" da unidade ${adminUnit}? Ele perderá o acesso a esta unidade específica.`,
+            confirmText: 'Confirmar Remoção',
+            type: 'remove',
+            action: () => handleRemoveFromUnit(targetUser)
+        });
+    }
 
     const filteredUsers = users.filter(user =>
         (user.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -238,7 +288,7 @@ export function AdminUsers() {
 
                                                 {isAdminWithUnit ? (
                                                     <button
-                                                        onClick={() => handleRemoveFromUnit(teacher)}
+                                                        onClick={() => triggerRemoveFromUnit(teacher)}
                                                         className="p-2 text-red-400 hover:bg-red-50 rounded-full transition-colors"
                                                         title="Remover desta Unidade"
                                                     >
@@ -246,7 +296,7 @@ export function AdminUsers() {
                                                     </button>
                                                 ) : (
                                                     <button
-                                                        onClick={() => handleToggleActive(teacher)}
+                                                        onClick={() => triggerToggleActive(teacher)}
                                                         className={`p-2 rounded-full transition-colors ${teacher.active === false ? 'text-green-500 hover:bg-green-50' : 'text-red-400 hover:bg-red-50'}`}
                                                         title={teacher.active === false ? 'Ativar' : 'Desativar Globalmente'}
                                                     >
@@ -317,7 +367,7 @@ export function AdminUsers() {
                                     />
                                     <button
                                         type="button"
-                                        onClick={handleResendConfirmation}
+                                        onClick={triggerResendConfirmation}
                                         disabled={resendingEmail}
                                         className="shrink-0 px-3 py-2 bg-blue-50 text-blue-600 text-xs font-bold uppercase rounded-lg hover:bg-blue-100 transition-colors flex items-center"
                                         title="Reenviar email de confirmação de cadastro"
@@ -470,6 +520,16 @@ export function AdminUsers() {
                 title={successModal.title}
                 message={successModal.message}
                 type="email"
+            />
+
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={() => confirmModal.action?.()}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                confirmText={confirmModal.confirmText}
+                type={confirmModal.type}
             />
         </div>
     );
