@@ -126,6 +126,9 @@ export function AdminDashboard() {
                         .limit(5)
                 ]);
 
+                console.log('--- DEBUG AUDIT LOGS ---');
+                console.log('Error:', auditRes.error);
+                console.log('Data:', auditRes.data);
 
                 const bookings = allBookings.data || [];
 

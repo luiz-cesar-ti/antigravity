@@ -165,8 +165,9 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
 
                 // Create Audit Log
                 if (createdBookings && createdBookings.length > 0) {
-                    const logsPromises = createdBookings.map(b =>
-                        supabase.from('audit_logs').insert({
+                    console.log('--- ATTEMPTING AUDIT LOG INSERT ---');
+                    const logsPromises = createdBookings.map(async (b) => {
+                        const result = await supabase.from('audit_logs').insert({
                             booking_id: b.id,
                             action: 'CREATED',
                             performed_by: user?.id,
@@ -175,8 +176,10 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                                 unit: data.unit,
                                 equipments: data.equipments.map(e => ({ name: e.name, qty: e.quantity }))
                             }
-                        })
-                    );
+                        }).select();
+                        console.log('Log Insert Result:', result);
+                        return result;
+                    });
                     await Promise.all(logsPromises);
                 }
             }
