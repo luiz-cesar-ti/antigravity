@@ -25,14 +25,17 @@ export function NotificationBell() {
     }, []);
 
     const handleBellClick = () => {
-        if (!isOpen && unreadCount > 0) {
-            markAllAsRead();
+        if (!isOpen) {
+            // User is opening the bell. Mark everything as read/seen.
+            if (unreadCount > 0) {
+                markAllAsRead();
+            }
         }
         setIsOpen(!isOpen);
     };
 
     const handleNotificationClick = async (id: string) => {
-        await markAsRead(id);
+        // Already marked as read by opening, but specific logic for link is fine
         setIsOpen(false);
     };
 
@@ -54,15 +57,10 @@ export function NotificationBell() {
                 <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200 ring-1 ring-black ring-opacity-5 animate-in fade-in zoom-in duration-200">
                     <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-md">
                         <span className="text-sm font-semibold text-gray-700">Notificações</span>
-                        {unreadCount > 0 && (
-                            <button
-                                onClick={() => markAllAsRead()}
-                                className="text-xs text-primary-600 hover:text-primary-800 font-medium flex items-center gap-1"
-                            >
-                                <Check className="h-3 w-3" />
-                                Marcar todas como lidas
-                            </button>
-                        )}
+                        {/* Status indicator instead of button since it's auto-read */}
+                        <span className="text-[10px] text-gray-400 font-medium">
+                            {unreadCount === 0 ? 'Todas lidas' : 'Marcando como lidas...'}
+                        </span>
                     </div>
 
                     <div className="max-h-96 overflow-y-auto">
@@ -94,17 +92,22 @@ export function NotificationBell() {
                                                 {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: ptBR })}
                                             </p>
                                         </div>
-                                        {!notification.read && (
-                                            <span className="h-2 w-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
-                                        )}
                                     </div>
                                 </div>
                             ))
                         )}
                     </div>
-                    {notifications.length > 5 && (
+
+                    {/* Always show View More if there are notifications */}
+                    {notifications.length > 0 && (
                         <div className="px-4 py-2 border-t border-gray-100 bg-gray-50 text-center rounded-b-md">
-                            <Link to="/admin/notifications" className="text-xs text-primary-600 hover:text-primary-800 font-medium">Ver todas</Link>
+                            <Link
+                                to="/admin/notifications"
+                                onClick={() => setIsOpen(false)}
+                                className="text-xs text-primary-600 hover:text-primary-800 font-medium w-full block"
+                            >
+                                Ver mais
+                            </Link>
                         </div>
                     )}
                 </div>

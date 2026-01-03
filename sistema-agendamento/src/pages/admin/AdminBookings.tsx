@@ -117,6 +117,28 @@ export function AdminBookings() {
 
     useEffect(() => {
         fetchBookings();
+
+        // Realtime Subscription
+        const subscription = supabase
+            .channel('admin_bookings_channel')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'bookings'
+                },
+                () => {
+                    // Optimized: Only fetch if necessary or just simple fetch for safety
+                    console.log('Booking update detected, refreshing list...');
+                    fetchBookings();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            subscription.unsubscribe();
+        };
     }, [user?.id, (user as Admin)?.unit, startDate, endDate, statusFilter, periodFilter, recurringFilter]);
 
     const handleDeleteBooking = async () => {
