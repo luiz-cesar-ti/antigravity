@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Check, ExternalLink } from 'lucide-react';
+import { Bell, Check } from 'lucide-react';
 import { useNotifications } from '../contexts/NotificationContext';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
@@ -25,6 +25,9 @@ export function NotificationBell() {
     }, []);
 
     const handleBellClick = () => {
+        if (!isOpen && unreadCount > 0) {
+            markAllAsRead();
+        }
         setIsOpen(!isOpen);
     };
 
@@ -37,11 +40,13 @@ export function NotificationBell() {
         <div className="relative mr-4" ref={dropdownRef}>
             <button
                 onClick={handleBellClick}
-                className="relative p-2 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-white"
+                className="relative p-2 text-gray-600 bg-white hover:bg-gray-50 border border-gray-200 hover:border-primary-300 hover:text-primary-600 transition-all rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 active:scale-95"
             >
                 <Bell className="h-6 w-6" />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 h-2.5 w-2.5 bg-red-500 rounded-full ring-2 ring-primary-700 animate-pulse"></span>
+                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-white animate-in zoom-in duration-200">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
                 )}
             </button>
 

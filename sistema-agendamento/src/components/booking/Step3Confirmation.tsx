@@ -183,28 +183,9 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
 
             // 3. Trigger Notification (Email + In-App)
             // Fire and forget to not block the UI
-            const notificationPayload = {
-                unit: data.unit,
-                local: data.local,
-                booking_date: data.isRecurring ?
-                    `Recorrente: Toda ${['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}` :
-                    data.date.split('-').reverse().join('/'),
-                start_time: data.startTime,
-                end_time: data.endTime,
-                observations: data.observations,
-                user_id: user?.id
-            };
-
-            supabase.functions.invoke('send-new-booking-email', {
-                body: { record: notificationPayload }
-            }).then(({ data, error: fnError }) => {
-                if (fnError) {
-                    console.error('Notification Error:', fnError);
-                    // alert('Erro ao enviar email: ' + JSON.stringify(fnError));
-                } else {
-                    console.log('Notification Response:', data);
-                }
-            });
+            // 3. Notification (In-App)
+            // Handled automatically by Database Trigger (create_booking_notification)
+            // Email notification removed per user request.
 
             setShowSuccessModal(true);
 

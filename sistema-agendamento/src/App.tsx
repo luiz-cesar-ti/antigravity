@@ -17,6 +17,7 @@ import { AdminEquipment } from './pages/admin/AdminEquipment';
 import { AdminUsers } from './pages/admin/AdminUsers';
 import { AdminSettings } from './pages/admin/AdminSettings';
 import { AdminLoans } from './pages/admin/AdminLoans';
+import { AdminNotifications } from './pages/admin/AdminNotifications';
 import { NotFound } from './pages/NotFound';
 
 import { ScrollToTop } from './components/ScrollToTop';
@@ -54,6 +55,7 @@ function App() {
               <Route path="users" element={<AdminUsers />} />
               <Route path="emprestimos" element={<AdminLoans />} />
               <Route path="settings" element={<AdminSettings />} />
+              <Route path="notifications" element={<AdminNotifications />} />
             </Route>
           </Route>
 

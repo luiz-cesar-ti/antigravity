@@ -83,15 +83,24 @@ serve(async (req) => {
                 }),
             });
 
-            const data = await res.json();
             if (!res.ok) {
                 console.error("Resend API Error:", data);
+                return new Response(JSON.stringify({ error: "Resend Error", details: data }), {
+                    headers: { ...corsHeaders, "Content-Type": "application/json" },
+                    status: 400,
+                });
             } else {
                 console.log("Email sent successfully:", data);
                 emailSent = true;
             }
         } else {
-            console.log("Email sending skipped. Enabled:", notification_email_enabled, "Email:", notification_email, "Key Present:", !!RESEND_API_KEY);
+            console.log("Email sending skipped...");
+            if (notification_email_enabled && (!notification_email || !RESEND_API_KEY)) {
+                return new Response(JSON.stringify({ error: "Configuration Missing", details: "Email enabled but missing email or API Key" }), {
+                    headers: { ...corsHeaders, "Content-Type": "application/json" },
+                    status: 400,
+                });
+            }
         }
 
         return new Response(JSON.stringify({ success: true, emailSent }), {
