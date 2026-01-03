@@ -165,19 +165,29 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
 
                 // Create Audit Log
                 if (createdBookings && createdBookings.length > 0) {
-                    const logsPromises = createdBookings.map(b =>
-                        supabase.from('audit_logs').insert({
-                            booking_id: b.id,
-                            action: 'CREATED',
-                            performed_by: user?.id,
-                            details: {
-                                display_id: displayId,
-                                unit: data.unit,
-                                equipments: data.equipments.map(e => ({ name: e.name, qty: e.quantity }))
+                    try {
+                        console.log('[AUDIT] User ID being logged:', user?.id);
+                        const logsPromises = createdBookings.map(b =>
+                            supabase.from('audit_logs').insert({
+                                booking_id: b.id,
+                                action: 'CREATED',
+                                performed_by: user?.id,
+                                details: {
+                                    display_id: displayId,
+                                    unit: data.unit,
+                                    equipments: data.equipments.map(e => ({ name: e.name, qty: e.quantity }))
+                                }
+                            })
+                        );
+                        const results = await Promise.all(logsPromises);
+                        results.forEach((res, i) => {
+                            if (res.error) {
+                                console.error(`[AUDIT] Insert error for booking ${i}:`, res.error);
                             }
-                        })
-                    );
-                    await Promise.all(logsPromises);
+                        });
+                    } catch (auditErr) {
+                        console.error('[AUDIT] Unexpected error:', auditErr);
+                    }
                 }
             }
 
