@@ -10,6 +10,7 @@ export interface Notification {
     read: boolean;
     created_at: string;
     recipient_role: string;
+    unit?: string;
 }
 
 interface NotificationContextType {
@@ -28,17 +29,27 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     useEffect(() => {
         if (!user || role !== 'admin') return;
 
+        const adminUser = user as { unit: string }; // Custom Admin type has unit
+        const adminUnit = adminUser.unit;
+
         // 1. Initial Fetch (Last 7 days)
         const fetchNotifications = async () => {
             const sevenDaysAgo = new Date();
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-            const { data } = await supabase
+            let query = supabase
                 .from('notifications')
                 .select('*')
                 .eq('recipient_role', 'admin')
                 .gte('created_at', sevenDaysAgo.toISOString())
                 .order('created_at', { ascending: false });
+
+            // Filter by Admin Unit
+            if (adminUnit) {
+                query = query.eq('unit', adminUnit);
+            }
+
+            const { data } = await query;
 
             if (data) {
                 setNotifications(data);
@@ -48,6 +59,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         fetchNotifications();
 
         // 2. Realtime Subscription
+        // Note: 'filter' in postgres_changes is limited to simple equality on columns.
+        // We can filter by unit if the column exists.
         const subscription = supabase
             .channel('notifications_channel')
             .on(
@@ -56,7 +69,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     event: '*',
                     schema: 'public',
                     table: 'notifications',
-                    filter: "recipient_role=eq.admin"
+                    filter: `recipient_role=eq.admin${adminUnit ? `&unit=eq.${adminUnit}` : ''}`
                 },
                 (payload) => {
                     if (payload.eventType === 'INSERT') {
