@@ -665,11 +665,6 @@ export function AdminLoans() {
                                         onChange={handleInputChange}
                                         className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all"
                                     />
-                                    {!formData.start_date && (
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] font-bold uppercase tracking-wider pointer-events-none">
-                                            Data
-                                        </span>
-                                    )}
                                 </div>
                                 <div className="relative">
                                     <input
@@ -679,11 +674,6 @@ export function AdminLoans() {
                                         onChange={handleInputChange}
                                         className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all"
                                     />
-                                    {!formData.start_time && (
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] font-bold uppercase tracking-wider pointer-events-none">
-                                            Hora
-                                        </span>
-                                    )}
                                     <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
                                 </div>
                             </div>
@@ -703,11 +693,6 @@ export function AdminLoans() {
                                         onChange={handleInputChange}
                                         className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all"
                                     />
-                                    {!formData.end_date && (
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] font-bold uppercase tracking-wider pointer-events-none">
-                                            Data
-                                        </span>
-                                    )}
                                 </div>
                                 <div className="relative">
                                     <input
@@ -717,11 +702,6 @@ export function AdminLoans() {
                                         onChange={handleInputChange}
                                         className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all"
                                     />
-                                    {!formData.end_time && (
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] font-bold uppercase tracking-wider pointer-events-none">
-                                            Hora
-                                        </span>
-                                    )}
                                     <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
                                 </div>
                             </div>

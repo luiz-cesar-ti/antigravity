@@ -75,6 +75,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     filter: "recipient_role=eq.admin" // Filter only by role server-side to avoid syntax errors
                 },
                 (payload) => {
+                    console.log('Notification Realtime Event:', payload);
+
                     if (payload.eventType === 'INSERT') {
                         const newNotif = payload.new as Notification;
 
@@ -83,24 +85,25 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                             return;
                         }
 
-                        setNotifications((prev) => [newNotif, ...prev]);
+                        // Avoid duplicates
+                        setNotifications((prev) => {
+                            if (prev.some(n => n.id === newNotif.id)) return prev;
+                            return [newNotif, ...prev];
+                        });
+
                         // Optional: Play sound
                         // const audio = new Audio('/notification.mp3'); 
                         // audio.play().catch(() => {});
                     } else if (payload.eventType === 'UPDATE') {
                         const updatedNotif = payload.new as Notification;
 
-                        // Client-side filtering just in case
-                        if (adminUnit && updatedNotif.unit && updatedNotif.unit !== adminUnit) {
-                            return;
-                        }
-
+                        // Handle updates (like read status changes)
                         setNotifications((prev) => prev.map(n => n.id === updatedNotif.id ? updatedNotif : n));
                     }
                 }
             )
             .subscribe((status) => {
-                console.log('Realtime Subscription Status:', status);
+                console.log('Notification Subscription Status:', status);
             });
 
         return () => {
