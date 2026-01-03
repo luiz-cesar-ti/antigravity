@@ -117,26 +117,41 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         // Optimistic update
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
 
-        await supabase
-            .from('notifications')
-            .update({ read: true })
-            .eq('id', id);
+        try {
+            const { error } = await supabase
+                .from('notifications')
+                .update({ read: true })
+                .eq('id', id);
+
+            if (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        } catch (err) {
+            console.error('Exception marking notification as read:', err);
+        }
     };
 
     const markAllAsRead = async () => {
         // Optimistic update
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
 
-        // Batch update is efficient
-        // We only update the ones that are unread to save DB writes, but logic is simpler this way
-        // actually for postgres RLS we might simply update all unread.
         const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
         if (unreadIds.length === 0) return;
 
-        await supabase
-            .from('notifications')
-            .update({ read: true })
-            .in('id', unreadIds);
+        try {
+            const { error } = await supabase
+                .from('notifications')
+                .update({ read: true })
+                .in('id', unreadIds);
+
+            if (error) {
+                console.error('Error marking ALL notifications as read:', error);
+            } else {
+                console.log('Successfully marked all notifications as read in DB');
+            }
+        } catch (err) {
+            console.error('Exception marking ALL notifications as read:', err);
+        }
     };
 
     return (
