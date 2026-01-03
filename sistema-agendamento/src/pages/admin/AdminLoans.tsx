@@ -555,7 +555,9 @@ export function AdminLoans() {
                         <p className="text-gray-500 text-sm leading-relaxed">
                             Ao registrar um empréstimo, o sistema gerará automaticamente um <span className="text-gray-900 font-bold">Termo de Responsabilidade</span> personalizado para impressão.
                             <br /><br />
-                            <span className="text-amber-700 font-bold underline">Atenção:</span> A quantidade de itens emprestados será <span className="font-bold">removida temporariamente</span> do inventário geral. O estoque será restabelecido automaticamente assim que a devolução for confirmada no histórico abaixo.
+                            Você poderá <span className="text-gray-900 font-bold">anexar o termo assinado</span> pelo usuário diretamente no card do empréstimo.
+                            <br /><br />
+                            <span className="text-amber-700 font-bold underline">Atenção:</span> A quantidade de itens emprestados será <span className="font-bold">removida temporariamente</span> do inventário geral. Ao excluir um registro de empréstimo, o termo assinado anexado também será <span className="text-red-600 font-bold">excluído permanentemente</span>.
                         </p>
                     </div>
                 </div>
