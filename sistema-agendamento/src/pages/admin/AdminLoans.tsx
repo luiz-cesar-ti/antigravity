@@ -284,7 +284,6 @@ export function AdminLoans() {
     };
 
     const handleReturn = async (loan: EquipmentLoan) => {
-        if (!confirm('Confirmar devolução do equipamento?')) return;
         try {
             const { error: loanError } = await supabase
                 .from('equipment_loans')
