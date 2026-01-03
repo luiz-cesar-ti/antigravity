@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LayoutDashboard, Calendar, Monitor, Users, Settings, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Calendar, Monitor, Users, Settings, LogOut, Menu, X, ClipboardCheck } from 'lucide-react';
 
 export function AdminLayout() {
     const { signOut, user } = useAuth();
@@ -92,6 +92,16 @@ export function AdminLayout() {
                             >
                                 <Users className="w-5 h-5" />
                                 <span>Usuários</span>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                to="/admin/emprestimos"
+                                onClick={() => setIsSidebarOpen(false)}
+                                className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/emprestimos')}`}
+                            >
+                                <ClipboardCheck className="w-5 h-5" />
+                                <span>Empréstimos</span>
                             </Link>
                         </li>
                         <li>

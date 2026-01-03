@@ -77,6 +77,26 @@ export interface Settings {
     updated_at: string;
 }
 
+export interface EquipmentLoan {
+    id: string;
+    unit: string;
+    user_full_name: string;
+    user_role: string;
+    location: string;
+    start_at: string;
+    end_at: string;
+    equipment_id: string;
+    quantity: number;
+    asset_number: string;
+    cpf?: string;
+    status: 'active' | 'returned' | 'cancelled';
+    created_at: string;
+    updated_at: string;
+
+    // Joins
+    equipment?: Equipment;
+}
+
 export type UserRole = 'teacher' | 'admin';
 
 export interface AuthState {
