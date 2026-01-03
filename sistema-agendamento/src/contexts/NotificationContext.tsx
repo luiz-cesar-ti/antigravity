@@ -36,6 +36,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             const { data } = await supabase
                 .from('notifications')
                 .select('*')
+                .eq('recipient_role', 'admin')
                 .gte('created_at', sevenDaysAgo.toISOString())
                 .order('created_at', { ascending: false });
 
@@ -52,17 +53,22 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             .on(
                 'postgres_changes',
                 {
-                    event: 'INSERT',
+                    event: '*',
                     schema: 'public',
                     table: 'notifications',
                     filter: "recipient_role=eq.admin"
                 },
                 (payload) => {
-                    const newNotif = payload.new as Notification;
-                    setNotifications((prev) => [newNotif, ...prev]);
-                    // Optional: Play sound
-                    const audio = new Audio('/notification.mp3'); // We'll need a file or remove this
-                    // audio.play().catch(() => {});
+                    if (payload.eventType === 'INSERT') {
+                        const newNotif = payload.new as Notification;
+                        setNotifications((prev) => [newNotif, ...prev]);
+                        // Optional: Play sound
+                        // const audio = new Audio('/notification.mp3'); 
+                        // audio.play().catch(() => {});
+                    } else if (payload.eventType === 'UPDATE') {
+                        const updatedNotif = payload.new as Notification;
+                        setNotifications((prev) => prev.map(n => n.id === updatedNotif.id ? updatedNotif : n));
+                    }
                 }
             )
             .subscribe();

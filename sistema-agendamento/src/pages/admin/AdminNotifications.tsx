@@ -1,79 +1,24 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../../services/supabase';
+import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Check, Clock, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-interface Notification {
-    id: string;
-    message: string;
-    link?: string;
-    read: boolean;
-    created_at: string;
-    recipient_role: string;
-}
+import { useNotifications } from '../../contexts/NotificationContext';
 
 export function AdminNotifications() {
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { notifications, markAsRead, markAllAsRead } = useNotifications();
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
-    const fetchNotifications = async () => {
-        setLoading(true);
-        let query = supabase
-            .from('notifications')
-            .select('*')
-            .eq('recipient_role', 'admin')
-            .order('created_at', { ascending: false })
-            .limit(50); // Limit to last 50 for performance
-
-        if (filter === 'unread') {
-            query = query.eq('read', false);
-        }
-
-        const { data, error } = await query;
-        if (error) {
-            console.error('Error fetching notifications:', error);
-        } else {
-            setNotifications(data || []);
-        }
-        setLoading(false);
-    };
-
-    useEffect(() => {
-        fetchNotifications();
-    }, [filter]);
-
-    const markAsRead = async (id: string) => {
-        // Optimistic update
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-
-        await supabase
-            .from('notifications')
-            .update({ read: true })
-            .eq('id', id);
-    };
-
-    const markAllAsRead = async () => {
-        // Optimistic update
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-
-        const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
-        if (unreadIds.length > 0) {
-            await supabase
-                .from('notifications')
-                .update({ read: true })
-                .in('id', unreadIds);
-        }
-    };
+    const filteredNotifications = filter === 'unread'
+        ? notifications.filter(n => !n.read)
+        : notifications;
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Notificações</h1>
-                    <p className="text-gray-500">Histórico de alertas do sistema</p>
+                    <p className="text-gray-500">Histórico de alertas do sistema (últimos 7 dias)</p>
                 </div>
                 <button
                     onClick={markAllAsRead}
@@ -102,18 +47,14 @@ export function AdminNotifications() {
                     </button>
                 </div>
 
-                {loading ? (
-                    <div className="p-12 text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-                    </div>
-                ) : notifications.length === 0 ? (
+                {filteredNotifications.length === 0 ? (
                     <div className="p-12 text-center text-gray-500">
                         <Bell className="h-12 w-12 mx-auto text-gray-300 mb-4" />
                         <p>Nenhuma notificação encontrada.</p>
                     </div>
                 ) : (
                     <ul className="divide-y divide-gray-200">
-                        {notifications.map((notification) => (
+                        {filteredNotifications.map((notification) => (
                             <li
                                 key={notification.id}
                                 className={`p-4 hover:bg-gray-50 transition-colors ${!notification.read ? 'bg-blue-50/40' : ''}`}
