@@ -121,14 +121,30 @@ export function AdminDashboard() {
                     chartsQuery,
                     supabase
                         .from('audit_logs')
-                        .select('*, users:performed_by(full_name)')
+                        .select('*') // JOIN REMOVIDO para evitar erro 400
                         .order('created_at', { ascending: false })
                         .limit(5)
                 ]);
 
-                console.log('--- DEBUG AUDIT LOGS ---');
-                console.log('Error:', auditRes.error);
-                console.log('Data:', auditRes.data);
+                // Correção Manual do Join (Supabase API Workaround)
+                let finalAuditLogs = auditRes.data || [];
+                if (finalAuditLogs.length > 0) {
+                    const userIds = [...new Set(finalAuditLogs.map((l: any) => l.performed_by).filter(Boolean))];
+                    if (userIds.length > 0) {
+                        const { data: usersData } = await supabase
+                            .from('users')
+                            .select('id, full_name')
+                            .in('id', userIds);
+
+                        if (usersData) {
+                            const userMap = new Map(usersData.map((u: any) => [u.id, u]));
+                            finalAuditLogs = finalAuditLogs.map((log: any) => ({
+                                ...log,
+                                users: userMap.get(log.performed_by) || null
+                            }));
+                        }
+                    }
+                }
 
                 const bookings = allBookings.data || [];
 
@@ -183,7 +199,7 @@ export function AdminDashboard() {
                     bookingsByDay,
                     popularEquipment,
                     topTeachers,
-                    auditLogs: auditRes.data || []
+                    auditLogs: finalAuditLogs
                 });
 
             } catch (error) {
