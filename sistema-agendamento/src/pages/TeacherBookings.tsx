@@ -191,7 +191,37 @@ export function TeacherBookings() {
             .order('start_time', { ascending: true });
 
         if (!error && data) {
-            setBookings(data as Booking[]);
+            const fetchedBookings = data as Booking[];
+
+            // Sync status to 'encerrado' for expired ones
+            const now = new Date();
+            const expiredIds = fetchedBookings
+                .filter(b => {
+                    if (b.status !== 'active' || !b.booking_date || !b.end_time) return false;
+                    const bDate = b.booking_date;
+                    const bTime = b.end_time.length === 5 ? `${b.end_time}:00` : b.end_time;
+                    try {
+                        const expiration = parseISO(`${bDate}T${bTime}`);
+                        return !isNaN(expiration.getTime()) && now > expiration;
+                    } catch (e) {
+                        return false;
+                    }
+                })
+                .map(b => b.id);
+
+            if (expiredIds.length > 0) {
+                await supabase
+                    .from('bookings')
+                    .update({ status: 'encerrado' })
+                    .in('id', expiredIds);
+
+                // Update local status as well to avoid a second fetch
+                fetchedBookings.forEach(b => {
+                    if (expiredIds.includes(b.id)) b.status = 'encerrado';
+                });
+            }
+
+            setBookings(fetchedBookings);
         }
         setLoading(false);
     };
@@ -203,11 +233,18 @@ export function TeacherBookings() {
     const handleDelete = async () => {
         if (!deleteModal.bookingId) return;
 
+        const bookingToDelete = bookings.find(b => b.id === deleteModal.bookingId);
+        const now = new Date();
+        const isExpired = bookingToDelete ? now > parseISO(`${bookingToDelete.booking_date}T${bookingToDelete.end_time}`) : false;
+        const isEncerrado = bookingToDelete?.status === 'encerrado' || isExpired;
+
         setDeleting(true);
-        const { error } = await supabase
-            .from('bookings')
-            .update({ status: 'cancelled_by_user' })
-            .eq('id', deleteModal.bookingId);
+
+        const query = isEncerrado
+            ? supabase.from('bookings').delete().eq('id', deleteModal.bookingId) // Hard delete for ended items
+            : supabase.from('bookings').update({ status: 'cancelled_by_user' }).eq('id', deleteModal.bookingId); // Soft delete for others
+
+        const { error } = await query;
 
         if (!error) {
             setDeleteModal({ isOpen: false, bookingId: null });
@@ -276,7 +313,7 @@ export function TeacherBookings() {
         <div className="space-y-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-black text-gray-900">Meus Agendamentos</h1>
+                    <h1 className="text-2xl font-black text-gray-900">Meus Agendamentos <span className="text-primary-600 text-xs font-bold">(Sincronizado)</span></h1>
                     <p className="text-sm text-gray-500 mt-1">Gerencie suas reservas e visualize termos assinados.</p>
                 </div>
 
@@ -425,8 +462,16 @@ export function TeacherBookings() {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                     {filteredBookings.map((booking) => {
                         const now = new Date();
-                        const bookingEnd = parseISO(`${booking.booking_date}T${booking.end_time}`);
-                        const isExpired = now > bookingEnd;
+                        const bDate = booking.booking_date || '';
+                        const bTime = (booking.end_time && booking.end_time.length === 5) ? `${booking.end_time}:00` : (booking.end_time || '00:00:00');
+                        let isExpired = false;
+                        try {
+                            const bookingEnd = parseISO(`${bDate}T${bTime}`);
+                            isExpired = !isNaN(bookingEnd.getTime()) && now > bookingEnd;
+                        } catch (e) {
+                            isExpired = false;
+                        }
+                        const isEffectivelyClosed = booking.status === 'encerrado' || (booking.status === 'active' && isExpired);
 
                         return (
                             <div key={booking.id} className="group relative bg-white shadow-sm rounded-[2.5rem] p-8 border border-gray-100 hover:shadow-2xl hover:shadow-primary-100/30 transition-all duration-300 flex flex-col justify-between">
@@ -453,12 +498,12 @@ export function TeacherBookings() {
                                         <div className="flex flex-col items-end gap-1">
                                             <span className={`
                                                 px-2.5 py-0.5 rounded-full text-xs font-medium border
-                                                ${booking.status === 'active' ? 'bg-green-50 text-green-700 border-green-100' :
-                                                    booking.status === 'encerrado' ? 'bg-gray-100 text-gray-700 border-gray-200' :
+                                                ${booking.status === 'active' && !isExpired ? 'bg-green-50 text-green-700 border-green-100' :
+                                                    isEffectivelyClosed ? 'bg-red-50 text-red-700 border-red-100' :
                                                         'bg-red-50 text-red-700 border-red-100'}
                                             `}>
-                                                {booking.status === 'active' ? 'Agendado' :
-                                                    booking.status === 'encerrado' ? 'Encerrado' : 'Cancelado'}
+                                                {booking.status === 'active' && !isExpired ? 'Agendado' :
+                                                    isEffectivelyClosed ? 'Encerrado' : 'Cancelado'}
                                             </span>
                                             {booking.is_recurring && (
                                                 <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-black uppercase tracking-tight rounded-lg border border-amber-100 italic">
@@ -521,23 +566,30 @@ export function TeacherBookings() {
                                         Ver Termo
                                     </button>
 
-                                    {!isExpired && booking.status === 'active' && (
+                                    {isEffectivelyClosed ? (
+                                        <button
+                                            onClick={() => setDeleteModal({
+                                                isOpen: true,
+                                                bookingId: booking.id,
+                                                recurringId: null
+                                            })}
+                                            className="flex items-center justify-center py-4 px-6 bg-red-100 text-red-700 hover:bg-red-600 hover:text-white font-black text-xs rounded-2xl transition-all active:scale-95 group/btn border border-red-200"
+                                        >
+                                            <Trash2 className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
+                                            Excluir Histórico
+                                        </button>
+                                    ) : (
                                         <button
                                             onClick={() => setDeleteModal({
                                                 isOpen: true,
                                                 bookingId: booking.id,
                                                 recurringId: booking.recurring_id
                                             })}
-                                            className="flex items-center justify-center py-4 px-6 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-black text-xs rounded-2xl transition-all active:scale-95 group/btn"
+                                            className="flex items-center justify-center py-4 px-6 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-black text-xs rounded-2xl transition-all active:scale-95 group/btn border border-red-100"
                                         >
                                             <Trash2 className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
-                                            Excluir
+                                            Cancelar
                                         </button>
-                                    )}
-                                    {isExpired && (
-                                        <div className="py-4 px-6 bg-gray-50 text-gray-400 font-bold text-xs rounded-2xl text-center border border-dashed border-gray-200">
-                                            Finalizado
-                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -571,9 +623,11 @@ export function TeacherBookings() {
                             </h3>
 
                             <p className="text-gray-500 text-center text-sm leading-relaxed mb-10 px-2">
-                                {bookings.find(b => b.id === deleteModal.bookingId)?.is_recurring
-                                    ? "Você está excluindo esta data específica do seu agendamento fixo. As outras semanas permanecem ativas."
-                                    : "Os equipamentos ficarão imediatamente disponíveis para outros professores. O termo assinado continuará disponível para auditoria da administração."
+                                {bookings.find(b => b.id === deleteModal.bookingId)?.status === 'encerrado' || (bookings.find(b => b.id === deleteModal.bookingId) && (new Date() > parseISO(`${bookings.find(b => b.id === deleteModal.bookingId)?.booking_date}T${bookings.find(b => b.id === deleteModal.bookingId)?.end_time}`)))
+                                    ? "Esta ação removerá permanentemente o histórico deste agendamento. O termo assinado não poderá mais ser visualizado."
+                                    : bookings.find(b => b.id === deleteModal.bookingId)?.is_recurring
+                                        ? "Você está excluindo esta data específica do seu agendamento fixo. As outras semanas permanecem ativas."
+                                        : "Os equipamentos ficarão imediatamente disponíveis para outros professores. O termo assinado continuará disponível para auditoria da administração."
                                 }
                             </p>
 

@@ -80,7 +80,37 @@ export function AdminBookings() {
             .order('start_time', { ascending: true });
 
         if (!error && data) {
-            setBookings(data as any);
+            const fetchedBookings = data as any[];
+
+            // Sync status to 'encerrado' for expired ones
+            const now = new Date();
+            const expiredIds = fetchedBookings
+                .filter(b => {
+                    if (b.status !== 'active' || !b.booking_date || !b.end_time) return false;
+                    const bDate = b.booking_date;
+                    const bTime = b.end_time.length === 5 ? `${b.end_time}:00` : b.end_time;
+                    try {
+                        const expiration = parseISO(`${bDate}T${bTime}`);
+                        return !isNaN(expiration.getTime()) && now > expiration;
+                    } catch (e) {
+                        return false;
+                    }
+                })
+                .map(b => b.id);
+
+            if (expiredIds.length > 0) {
+                await supabase
+                    .from('bookings')
+                    .update({ status: 'encerrado' })
+                    .in('id', expiredIds);
+
+                // Update local status as well to avoid a second fetch
+                fetchedBookings.forEach(b => {
+                    if (expiredIds.includes(b.id)) b.status = 'encerrado';
+                });
+            }
+
+            setBookings(fetchedBookings);
         }
         setLoading(false);
     };
@@ -211,9 +241,14 @@ export function AdminBookings() {
     );
 
     const isBookingExpired = (booking: Booking) => {
+        if (!booking.booking_date || !booking.end_time) return false;
         const now = new Date();
-        const bookingEnd = parseISO(`${booking.booking_date}T${booking.end_time}`);
-        return now > bookingEnd;
+        try {
+            const bookingEnd = parseISO(`${booking.booking_date}T${booking.end_time}`);
+            return !isNaN(bookingEnd.getTime()) && now > bookingEnd;
+        } catch (e) {
+            return false;
+        }
     };
 
     const getStatusBadge = (booking: Booking) => {
