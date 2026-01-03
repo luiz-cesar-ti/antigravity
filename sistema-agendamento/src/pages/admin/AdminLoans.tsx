@@ -654,7 +654,7 @@ export function AdminLoans() {
                             <label className="text-[10px] font-black text-primary-600 uppercase tracking-widest ml-1 flex items-center">
                                 <Calendar className="h-3 w-3 mr-1" /> Início do Empréstimo
                             </label>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="relative">
                                     <input
                                         type="date"
@@ -692,7 +692,7 @@ export function AdminLoans() {
                             <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest ml-1 flex items-center">
                                 <Clock className="h-3 w-3 mr-1" /> Previsão de Devolução
                             </label>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="relative">
                                     <input
                                         type="date"
@@ -934,27 +934,31 @@ export function AdminLoans() {
                                                         <FileText className="h-4 w-4" /> {loan.status !== 'active' && "Termo"}
                                                     </button>
 
-                                                    <div className="relative flex-1">
+                                                    <div className="relative">
                                                         <input
                                                             type="file"
-                                                            id={`upload - ${loan.id} `}
+                                                            id={`upload-${loan.id}`}
                                                             className="hidden"
                                                             accept="image/png, image/jpeg, image/jpg"
                                                             onChange={(e) => handleFileUpload(e, loan.id)}
                                                             disabled={uploadingLoanId === loan.id}
                                                         />
                                                         <label
-                                                            htmlFor={`upload - ${loan.id} `}
-                                                            className={`h - full py - 3 px - 3 flex items - center justify - center gap - 2 bg - white border border - gray - 200 text - gray - 700 hover: border - primary - 500 hover: text - primary - 600 font - bold text - xs rounded - xl shadow - sm transition - all active: scale - 95 cursor - pointer ${uploadingLoanId === loan.id ? 'opacity-50 cursor-not-allowed' : ''} `}
+                                                            htmlFor={`upload-${loan.id}`}
+                                                            className={clsx(
+                                                                "h-full py-3 px-3 flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer",
+                                                                uploadingLoanId === loan.id && 'opacity-50 cursor-not-allowed',
+                                                                loan.status !== 'active' && "aspect-square w-12" // Force square shape for icon-only button
+                                                            )}
                                                             title="Anexar Imagem do Termo Assinado"
                                                         >
                                                             {uploadingLoanId === loan.id ? (
-                                                                <Loader2 className="h-5 w-5 animate-spin text-primary-500" />
+                                                                <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin text-primary-500" />
                                                             ) : (
-                                                                <Upload className="h-5 w-5 text-primary-500" />
+                                                                <Upload className="h-4 w-4 md:h-5 md:w-5 text-primary-500" />
                                                             )}
-                                                            {/* Show text only if active or space permits */}
-                                                            {loan.status === 'active' ? (uploadingLoanId === loan.id ? 'Subindo...' : loan.manual_term_url ? 'Substituir' : 'Anexar') : ''}
+                                                            {/* Show text only if active */}
+                                                            {loan.status === 'active' && (uploadingLoanId === loan.id ? 'Subindo...' : loan.manual_term_url ? 'Substituir' : 'Anexar')}
                                                         </label>
                                                     </div>
                                                 </div>
