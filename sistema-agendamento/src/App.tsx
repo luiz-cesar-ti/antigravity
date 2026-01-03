@@ -19,6 +19,7 @@ import { AdminUsers } from './pages/admin/AdminUsers';
 import { AdminSettings } from './pages/admin/AdminSettings';
 import { AdminLoans } from './pages/admin/AdminLoans';
 import { AdminNotifications } from './pages/admin/AdminNotifications';
+import { AdminHelp } from './pages/admin/AdminHelp';
 import { NotFound } from './pages/NotFound';
 
 import { ScrollToTop } from './components/ScrollToTop';
@@ -58,6 +59,7 @@ function App() {
               <Route path="emprestimos" element={<AdminLoans />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="notifications" element={<AdminNotifications />} />
+              <Route path="about" element={<AdminHelp />} />
             </Route>
           </Route>
 
@@ -71,4 +73,3 @@ function App() {
 
 
 export default App;
-

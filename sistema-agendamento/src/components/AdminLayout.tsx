@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LayoutDashboard, Calendar, Monitor, Users, Settings, LogOut, Menu, X, ClipboardCheck } from 'lucide-react';
+import { LayoutDashboard, Calendar, Monitor, Users, Settings, LogOut, Menu, X, ClipboardCheck, BookOpen } from 'lucide-react';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import { NotificationBell } from './NotificationBell';
 
@@ -118,6 +118,16 @@ export function AdminLayout() {
                                 >
                                     <Settings className="w-5 h-5" />
                                     <span>Configurações</span>
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    to="/admin/about"
+                                    onClick={() => setIsSidebarOpen(false)}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/about')}`}
+                                >
+                                    <BookOpen className="w-5 h-5" />
+                                    <span>Manual do Admin</span>
                                 </Link>
                             </li>
                         </ul>

@@ -40,6 +40,7 @@ export function AdminDashboard() {
         bookingsByDay: [] as any[],
         popularEquipment: [] as any[],
         topTeachers: [] as any[],
+        auditLogs: [] as any[],
     });
     const [loading, setLoading] = useState(true);
 
@@ -104,11 +105,16 @@ export function AdminDashboard() {
                     }
                 }
 
-                const [bookingsRes, equipmentRes, usersRes, allBookings] = await Promise.all([
+                const [bookingsRes, equipmentRes, usersRes, allBookings, auditRes] = await Promise.all([
                     activeBookingsQuery,
                     totalEquipmentQuery,
                     totalTeachersQuery,
-                    chartsQuery
+                    chartsQuery,
+                    supabase
+                        .from('audit_logs')
+                        .select('*, users(full_name)')
+                        .order('created_at', { ascending: false })
+                        .limit(5)
                 ]);
 
 
@@ -160,7 +166,7 @@ export function AdminDashboard() {
                     totalEquipment: equipmentRes.count || 0,
                     totalTeachers: usersRes.count || 0,
                 });
-                setChartData({ bookingsByDay, popularEquipment, topTeachers });
+                setChartData({ bookingsByDay, popularEquipment, topTeachers, auditLogs: auditRes.data || [] });
 
             } catch (error) {
                 console.error('Error fetching stats:', error);
@@ -427,6 +433,65 @@ export function AdminDashboard() {
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
+                </div>
+            </div>
+
+            {/* Audit Logs Section - NEW */}
+            <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="p-3 bg-purple-50 rounded-2xl text-purple-600">
+                        <Users className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-black text-gray-900">Registros de Auditoria</h3>
+                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Últimas 5 atividades do sistema</p>
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="hidden md:table-header-group">
+                            <tr className="border-b border-gray-100">
+                                <th className="text-left text-[10px] font-black text-gray-400 uppercase tracking-wider pb-4">Data/Hora</th>
+                                <th className="text-left text-[10px] font-black text-gray-400 uppercase tracking-wider pb-4">Usuário</th>
+                                <th className="text-left text-[10px] font-black text-gray-400 uppercase tracking-wider pb-4">Ação</th>
+                                <th className="text-left text-[10px] font-black text-gray-400 uppercase tracking-wider pb-4">Detalhes</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {chartData.auditLogs && chartData.auditLogs.length > 0 ? (
+                                chartData.auditLogs.map((log: any) => (
+                                    <tr key={log.id} className="group hover:bg-gray-50/50 transition-colors">
+                                        <td className="py-4 text-xs font-bold text-gray-500 w-40">
+                                            {format(parseISO(log.created_at), "dd/MM 'às' HH:mm")}
+                                        </td>
+                                        <td className="py-4">
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-6 w-6 rounded-full bg-primary-100 flex items-center justify-center text-[10px] font-bold text-primary-700">
+                                                    {log.users?.full_name?.substring(0, 2) || 'S'}
+                                                </div>
+                                                <span className="text-sm font-bold text-gray-700">{log.users?.full_name || 'Sistema'}</span>
+                                            </div>
+                                        </td>
+                                        <td className="py-4">
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-white border border-gray-200 text-[10px] font-black text-gray-600 uppercase tracking-tight shadow-sm">
+                                                {log.action}
+                                            </span>
+                                        </td>
+                                        <td className="py-4 text-xs text-gray-500 truncate max-w-md">
+                                            {JSON.stringify(log.details)}
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={4} className="py-8 text-center text-sm text-gray-400 font-medium">
+                                        Nenhum registro de auditoria disponível no momento.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
