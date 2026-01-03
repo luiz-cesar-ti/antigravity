@@ -98,7 +98,7 @@ export function AdminUsers() {
             .from('users')
             .update({
                 full_name: formData.full_name,
-                email: formData.email,
+                // Email cannot be updated by admin
                 units: formData.units,
                 recurring_booking_enabled: formData.recurring_booking_enabled,
                 recurring_booking_units: formData.recurring_booking_units
@@ -357,13 +357,13 @@ export function AdminUsers() {
 
                             {/* Email and Resend Section */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-xs text-gray-400 font-normal">(Não editável)</span></label>
                                 <div className="flex gap-2">
                                     <input
                                         type="email"
                                         value={formData.email}
-                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                        disabled={true}
+                                        className="w-full px-3 py-2 border border-gray-200 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed"
                                     />
                                     <button
                                         type="button"
@@ -377,7 +377,7 @@ export function AdminUsers() {
                                     </button>
                                 </div>
                                 <p className="text-[10px] text-gray-400 mt-1">
-                                    Use "Reenviar" apenas se o professor não tiver confirmado o cadastro.
+                                    Para redefinir senha, o usuário deve usar "Esqueci a Senha" no login.
                                 </p>
                             </div>
 

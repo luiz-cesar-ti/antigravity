@@ -33,6 +33,7 @@ export function AdminDashboard() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [stats, setStats] = useState({
         activeBookings: 0,
+        completedBookings: 0,
         totalEquipment: 0,
         totalTeachers: 0,
     });
@@ -66,6 +67,11 @@ export function AdminDashboard() {
                     .eq('status', 'active')
                     .gte('booking_date', today.toISOString().split('T')[0]);
 
+                let completedBookingsQuery = supabase
+                    .from('bookings')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'encerrado');
+
                 let totalEquipmentQuery = supabase
                     .from('equipment')
                     .select('*', { count: 'exact', head: true });
@@ -92,6 +98,7 @@ export function AdminDashboard() {
                     if (unit) {
                         // Nomal Unit Admin: Filter by their unit
                         activeBookingsQuery = activeBookingsQuery.eq('unit', unit);
+                        completedBookingsQuery = completedBookingsQuery.eq('unit', unit);
                         totalEquipmentQuery = totalEquipmentQuery.eq('unit', unit);
                         totalTeachersQuery = totalTeachersQuery.contains('units', [unit]);
                         chartsQuery = chartsQuery.eq('unit', unit);
@@ -99,14 +106,16 @@ export function AdminDashboard() {
                         // Safety fallback: Admin without unit sees nothing (prevents leak)
                         console.warn('Security Warning: Admin user detected without assigned unit. Access blocked.');
                         activeBookingsQuery = activeBookingsQuery.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
+                        completedBookingsQuery = completedBookingsQuery.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
                         totalEquipmentQuery = totalEquipmentQuery.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
                         totalTeachersQuery = totalTeachersQuery.eq('id', '00000000-0000-0000-0000-000000000000');
                         chartsQuery = chartsQuery.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
                     }
                 }
 
-                const [bookingsRes, equipmentRes, usersRes, allBookings, auditRes] = await Promise.all([
+                const [bookingsRes, completedRes, equipmentRes, usersRes, allBookings, auditRes] = await Promise.all([
                     activeBookingsQuery,
+                    completedBookingsQuery,
                     totalEquipmentQuery,
                     totalTeachersQuery,
                     chartsQuery,
@@ -163,10 +172,16 @@ export function AdminDashboard() {
 
                 setStats({
                     activeBookings: bookingsRes.count || 0,
+                    completedBookings: completedRes.count || 0,
                     totalEquipment: equipmentRes.count || 0,
                     totalTeachers: usersRes.count || 0,
                 });
-                setChartData({ bookingsByDay, popularEquipment, topTeachers, auditLogs: auditRes.data || [] });
+                setChartData({
+                    bookingsByDay,
+                    popularEquipment,
+                    topTeachers,
+                    auditLogs: auditRes.data || []
+                });
 
             } catch (error) {
                 console.error('Error fetching stats:', error);
@@ -227,7 +242,7 @@ export function AdminDashboard() {
             </div>
 
             {/* Stats Cards - Redesigned */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center group hover:border-primary-200 transition-all">
                     <div className="p-4 rounded-2xl bg-blue-50 text-blue-600 mr-5 group-hover:scale-110 transition-transform">
                         <Calendar className="h-7 w-7" />
@@ -235,6 +250,15 @@ export function AdminDashboard() {
                     <div>
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Agendamentos Futuros</p>
                         <p className="text-3xl font-black text-gray-900">{stats.activeBookings}</p>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center group hover:border-indigo-200 transition-all">
+                    <div className="p-4 rounded-2xl bg-indigo-50 text-indigo-600 mr-5 group-hover:scale-110 transition-transform">
+                        <Trophy className="h-7 w-7" />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Agendamentos Concluídos</p>
+                        <p className="text-3xl font-black text-gray-900">{stats.completedBookings}</p>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center group hover:border-green-200 transition-all">
