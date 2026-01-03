@@ -75,6 +75,8 @@ export interface Settings {
     unit: string;
     min_advance_time_enabled: boolean;
     min_advance_time_hours: number;
+    notification_email?: string;
+    notification_email_enabled?: boolean;
     updated_at: string;
 }
 

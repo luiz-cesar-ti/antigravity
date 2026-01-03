@@ -55,6 +55,8 @@ export function AdminSettings() {
                 unit: adminUser.unit,
                 min_advance_time_enabled: settings.min_advance_time_enabled,
                 min_advance_time_hours: settings.min_advance_time_hours,
+                notification_email: settings.notification_email,
+                notification_email_enabled: settings.notification_email_enabled,
                 updated_at: new Date().toISOString()
             };
 
@@ -161,6 +163,50 @@ export function AdminSettings() {
                                 />
                             </div>
                             <p className="mt-1 text-xs text-gray-500">Ex: 24 horas = 1 dia antes.</p>
+                        </div>
+                    </div>
+
+                    <div className="pt-6 border-t border-gray-200">
+                        <div className="flex items-start">
+                            <div className="flex items-center h-5">
+                                <input
+                                    id="email_enabled"
+                                    name="email_enabled"
+                                    type="checkbox"
+                                    checked={settings.notification_email_enabled || false}
+                                    onChange={(e) => setSettings({ ...settings, notification_email_enabled: e.target.checked })}
+                                    className="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300 rounded"
+                                />
+                            </div>
+                            <div className="ml-3 text-sm">
+                                <label htmlFor="email_enabled" className="font-medium text-gray-700">
+                                    Notificações por E-mail
+                                </label>
+                                <p className="text-gray-500">
+                                    Se habilitado, você receberá um e-mail a cada novo agendamento realizado.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className={`ml-7 mt-3 transition-opacity duration-200 ${settings.notification_email_enabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
+                            <label htmlFor="notif_email" className="block text-sm font-medium text-gray-700">
+                                E-mail de Destino
+                            </label>
+                            <div className="mt-1 relative rounded-md shadow-sm max-w-md">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span className="text-gray-400">@</span>
+                                </div>
+                                <input
+                                    type="email"
+                                    name="notif_email"
+                                    id="notif_email"
+                                    placeholder="admin@objetivoportal.com.br"
+                                    value={settings.notification_email || ''}
+                                    onChange={(e) => setSettings({ ...settings, notification_email: e.target.value })}
+                                    className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-8 sm:text-sm border-gray-300 rounded-md p-2"
+                                />
+                            </div>
+                            <p className="mt-1 text-xs text-gray-500">Obrigatório uso de domínio @objetivoportal.com.br</p>
                         </div>
                     </div>
 
