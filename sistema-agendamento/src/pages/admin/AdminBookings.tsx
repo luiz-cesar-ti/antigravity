@@ -16,7 +16,7 @@ export function AdminBookings() {
     const { user, role } = useAuth();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
-    const [statusFilter, setStatusFilter] = useState('active'); // active, closed, all
+    const [statusFilter, setStatusFilter] = useState('all'); // default to all to prevent items from "disappearing" automatically
     const [searchTerm, setSearchTerm] = useState('');
     const [pdfData, setPdfData] = useState<any>(null);
 
@@ -300,6 +300,9 @@ export function AdminBookings() {
         } else if (statusFilter === 'cancelled') {
             // Explicitly show only cancelled/deleted ones
             if (!isCancelled) return false;
+        } else if (statusFilter === 'all') {
+            // "All" keeps everything visible
+            return true;
         }
 
         // 2. Search Logic
@@ -330,8 +333,8 @@ export function AdminBookings() {
         <div className="space-y-6">
             <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
                 <div>
-                    <h1 className="text-2xl font-black text-gray-900">Gerenciar Agendamentos</h1>
-                    <p className="text-sm text-gray-500 mt-1">Acompanhe e gerencie todas as reservas de equipamentos.</p>
+                    <h1 className="text-2xl font-black text-gray-900">Gerenciar Agendamentos <span className="text-primary-600 text-xs font-bold">(v2.2)</span></h1>
+                    <p className="text-sm text-gray-500 mt-1">Acompanhe e gerencie todas as reservas de equipamentos (Sincronização Ativa).</p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">

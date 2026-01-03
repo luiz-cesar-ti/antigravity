@@ -313,7 +313,7 @@ export function TeacherBookings() {
         <div className="space-y-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-black text-gray-900">Meus Agendamentos <span className="text-primary-600 text-xs font-bold">(Sincronizado)</span></h1>
+                    <h1 className="text-2xl font-black text-gray-900">Meus Agendamentos <span className="text-primary-600 text-xs font-bold">(v2.2)</span></h1>
                     <p className="text-sm text-gray-500 mt-1">Gerencie suas reservas e visualize termos assinados.</p>
                 </div>
 
