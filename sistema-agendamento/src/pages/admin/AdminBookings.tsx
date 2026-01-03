@@ -59,14 +59,7 @@ export function AdminBookings() {
         if (startDate) query = query.gte('booking_date', startDate);
         if (endDate) query = query.lte('booking_date', endDate);
 
-        if (statusFilter !== 'all') {
-            if (statusFilter === 'active') {
-                // For admin on mobile (and generally for admin), include cancelled by teacher in "active" view
-                query = query.or('status.eq.active,status.eq.cancelled_by_user');
-            } else if (statusFilter === 'closed') {
-                query = query.eq('status', 'encerrado');
-            }
-        }
+        // Status filtering moved to local filteredBookings to account for logical expiration (date/time)
 
         if (recurringFilter === 'recurring') {
             query = query.eq('is_recurring', true);
@@ -258,6 +251,23 @@ export function AdminBookings() {
     };
 
     const filteredBookings = bookings.filter(b => {
+        const expired = isBookingExpired(b);
+        const isCancelled = b.status === 'cancelled_by_user' || b.status === 'cancelled';
+
+        // 1. Status Logic
+        if (statusFilter === 'active') {
+            // "Active" means not expired, not encerrado, and not cancelled
+            if (expired || b.status === 'encerrado' || isCancelled) return false;
+        } else if (statusFilter === 'closed') {
+            // "Closed" means explicitly encerrado OR naturally expired (and not cancelled)
+            if (!expired && b.status !== 'encerrado') return false;
+            if (isCancelled) return false;
+        } else if (statusFilter === 'cancelled') {
+            // Explicitly show only cancelled/deleted ones
+            if (!isCancelled) return false;
+        }
+
+        // 2. Search Logic
         const searchLower = searchTerm.toLowerCase();
         const equipmentName = b.equipment?.name?.toLowerCase() || '';
         const userName = (b as any).users?.full_name?.toLowerCase() || '';
@@ -377,6 +387,7 @@ export function AdminBookings() {
                                     <option value="all">Todos Status</option>
                                     <option value="active">Agendados (Ativos)</option>
                                     <option value="closed">Encerrados</option>
+                                    <option value="cancelled">Cancelados/Excluídos</option>
                                 </select>
                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                             </div>
