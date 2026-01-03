@@ -121,7 +121,7 @@ export function AdminDashboard() {
                     chartsQuery,
                     supabase
                         .from('audit_logs')
-                        .select('*, users(full_name)')
+                        .select('*, users:performed_by(full_name)')
                         .order('created_at', { ascending: false })
                         .limit(5)
                 ]);
