@@ -61,6 +61,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         // 2. Realtime Subscription
         // Note: 'filter' in postgres_changes is limited to simple equality on columns.
         // We can filter by unit if the column exists.
+        // 2. Realtime Subscription
+        console.log('Setting up realtime subscription for Admin:', adminUnit);
+
         const subscription = supabase
             .channel('notifications_channel')
             .on(
@@ -69,22 +72,36 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     event: '*',
                     schema: 'public',
                     table: 'notifications',
-                    filter: `recipient_role=eq.admin${adminUnit ? `&unit=eq.${adminUnit}` : ''}`
+                    filter: "recipient_role=eq.admin" // Filter only by role server-side to avoid syntax errors
                 },
                 (payload) => {
                     if (payload.eventType === 'INSERT') {
                         const newNotif = payload.new as Notification;
+
+                        // Client-side filtering for Unit
+                        if (adminUnit && newNotif.unit && newNotif.unit !== adminUnit) {
+                            return;
+                        }
+
                         setNotifications((prev) => [newNotif, ...prev]);
                         // Optional: Play sound
                         // const audio = new Audio('/notification.mp3'); 
                         // audio.play().catch(() => {});
                     } else if (payload.eventType === 'UPDATE') {
                         const updatedNotif = payload.new as Notification;
+
+                        // Client-side filtering just in case
+                        if (adminUnit && updatedNotif.unit && updatedNotif.unit !== adminUnit) {
+                            return;
+                        }
+
                         setNotifications((prev) => prev.map(n => n.id === updatedNotif.id ? updatedNotif : n));
                     }
                 }
             )
-            .subscribe();
+            .subscribe((status) => {
+                console.log('Realtime Subscription Status:', status);
+            });
 
         return () => {
             subscription.unsubscribe();
