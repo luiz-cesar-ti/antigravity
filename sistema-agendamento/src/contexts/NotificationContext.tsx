@@ -118,13 +118,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
 
         try {
-            const { error } = await supabase
-                .from('notifications')
-                .update({ read: true })
-                .eq('id', id);
+            // Using RPC to bypass potential RLS issues
+            const { error } = await supabase.rpc('mark_notification_read', { p_id: id });
 
             if (error) {
-                console.error('Error marking notification as read:', error);
+                console.error('Error marking notification as read (RPC):', error);
+
+                // Fallback attempt
+                await supabase.from('notifications').update({ read: true }).eq('id', id);
             }
         } catch (err) {
             console.error('Exception marking notification as read:', err);
@@ -135,19 +136,16 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         // Optimistic update
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
 
-        const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
-        if (unreadIds.length === 0) return;
-
         try {
-            const { error } = await supabase
-                .from('notifications')
-                .update({ read: true })
-                .in('id', unreadIds);
+            // Using RPC to bypass potential RLS issues
+            const { error } = await supabase.rpc('mark_all_notifications_read', {
+                p_unit: (user as any)?.unit || null
+            });
 
             if (error) {
-                console.error('Error marking ALL notifications as read:', error);
+                console.error('Error marking ALL notifications as read (RPC):', error);
             } else {
-                console.log('Successfully marked all notifications as read in DB');
+                console.log('Successfully marked all notifications as read via RPC');
             }
         } catch (err) {
             console.error('Exception marking ALL notifications as read:', err);
