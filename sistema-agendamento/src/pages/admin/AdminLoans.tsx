@@ -469,7 +469,7 @@ export function AdminLoans() {
     const generatePDF = (loan: EquipmentLoan, download = true) => {
         const element = document.createElement('div');
         element.innerHTML = `
-        < div style = "padding: 20px; font-family: sans-serif; line-height: 1.3; color: #1a1a1a;" >
+        <div style="padding: 20px; font-family: sans-serif; line-height: 1.3; color: #1a1a1a;">
                 <div style="text-align: center; margin-bottom: 12px;">
                     <img src="${window.location.origin}/logo-objetivo.jpg" style="max-height: 85px; width: auto; margin-bottom: 8px; display: block; margin-left: auto; margin-right: auto;" onerror="this.style.display='none'" />
                     <h1 style="color: #3D52A0; margin: 0; font-size: 18px; text-transform: uppercase;">TERMO DE EMPRÉSTIMO E RESPONSABILIDADE</h1>
@@ -530,7 +530,7 @@ export function AdminLoans() {
                 <div style="margin-top: 25px; text-align: center; font-size: 9px; color: #999; border-top: 1px dashed #eee; padding-top: 5px;">
                     Documento emitido em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")}
                 </div>
-            </div >
+            </div>
         `;
 
         const opt = {
@@ -655,21 +655,33 @@ export function AdminLoans() {
                                 <Calendar className="h-3 w-3 mr-1" /> Início do Empréstimo
                             </label>
                             <div className="grid grid-cols-2 gap-3">
-                                <input
-                                    type="date"
-                                    name="start_date"
-                                    value={formData.start_date}
-                                    onChange={handleInputChange}
-                                    className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all placeholder-gray-400"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="date"
+                                        name="start_date"
+                                        value={formData.start_date}
+                                        onChange={handleInputChange}
+                                        className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all"
+                                    />
+                                    {!formData.start_date && (
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] font-bold uppercase tracking-wider pointer-events-none">
+                                            Data
+                                        </span>
+                                    )}
+                                </div>
                                 <div className="relative">
                                     <input
                                         type="time"
                                         name="start_time"
                                         value={formData.start_time}
                                         onChange={handleInputChange}
-                                        className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all placeholder-gray-400"
+                                        className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all"
                                     />
+                                    {!formData.start_time && (
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] font-bold uppercase tracking-wider pointer-events-none">
+                                            Hora
+                                        </span>
+                                    )}
                                     <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
                                 </div>
                             </div>
@@ -681,21 +693,33 @@ export function AdminLoans() {
                                 <Clock className="h-3 w-3 mr-1" /> Previsão de Devolução
                             </label>
                             <div className="grid grid-cols-2 gap-3">
-                                <input
-                                    type="date"
-                                    name="end_date"
-                                    value={formData.end_date}
-                                    onChange={handleInputChange}
-                                    className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all placeholder-gray-400"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="date"
+                                        name="end_date"
+                                        value={formData.end_date}
+                                        onChange={handleInputChange}
+                                        className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all"
+                                    />
+                                    {!formData.end_date && (
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] font-bold uppercase tracking-wider pointer-events-none">
+                                            Data
+                                        </span>
+                                    )}
+                                </div>
                                 <div className="relative">
                                     <input
                                         type="time"
                                         name="end_time"
                                         value={formData.end_time}
                                         onChange={handleInputChange}
-                                        className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all placeholder-gray-400"
+                                        className="block w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 focus:border-primary-100 focus:bg-white rounded-xl text-[12px] font-bold outline-none transition-all"
                                     />
+                                    {!formData.end_time && (
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] font-bold uppercase tracking-wider pointer-events-none">
+                                            Hora
+                                        </span>
+                                    )}
                                     <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
                                 </div>
                             </div>
@@ -925,9 +949,9 @@ export function AdminLoans() {
                                                             title="Anexar Imagem do Termo Assinado"
                                                         >
                                                             {uploadingLoanId === loan.id ? (
-                                                                <Loader2 className="h-4 w-4 animate-spin text-primary-500" />
+                                                                <Loader2 className="h-5 w-5 animate-spin text-primary-500" />
                                                             ) : (
-                                                                <Upload className="h-4 w-4 text-primary-500" />
+                                                                <Upload className="h-5 w-5 text-primary-500" />
                                                             )}
                                                             {/* Show text only if active or space permits */}
                                                             {loan.status === 'active' ? (uploadingLoanId === loan.id ? 'Subindo...' : loan.manual_term_url ? 'Substituir' : 'Anexar') : ''}
