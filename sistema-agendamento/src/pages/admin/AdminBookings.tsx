@@ -5,12 +5,12 @@ import type { Booking, Admin } from '../../types';
 import { format, parseISO } from 'date-fns';
 import {
     Search, Calendar, Users, MapPin, FileText, Trash2, AlertTriangle,
-    Monitor, Clock, Filter, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug, Repeat, ChevronDown, History
+    Monitor, Clock, Filter, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug, Repeat, ChevronDown, History,
+    Download, X, Share2
 } from 'lucide-react';
 import { TermDocument } from '../../components/TermDocument';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
-import { Download, X, Share2 } from 'lucide-react';
 
 export function AdminBookings() {
     const { user, role } = useAuth();

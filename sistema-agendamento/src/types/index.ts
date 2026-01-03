@@ -43,6 +43,7 @@ export interface Booking {
     status: 'active' | 'encerrado' | 'cancelled' | 'cancelled_by_user';
     term_signed: boolean;
     term_document?: any;
+    manual_term_url?: string;
     display_id?: string;
     is_recurring?: boolean;
     recurring_id?: string;
@@ -90,6 +91,7 @@ export interface EquipmentLoan {
     asset_number: string;
     cpf?: string;
     status: 'active' | 'returned' | 'cancelled';
+    manual_term_url?: string;
     created_at: string;
     updated_at: string;
 

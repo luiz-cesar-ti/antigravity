@@ -31,6 +31,10 @@ import { clsx } from 'clsx';
 import html2pdf from 'html2pdf.js';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
+import imageCompression from 'browser-image-compression';
+import { Loader2, Upload } from 'lucide-react';
+
+const BUCKET_NAME = 'manual-terms';
 
 // --- Custom Professional Modal Component ---
 const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }: any) => (
@@ -82,6 +86,7 @@ export function AdminLoans() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [uploadingLoanId, setUploadingLoanId] = useState<string | null>(null);
 
     // Modal States
     const [modalInfo, setModalInfo] = useState<{ type: 'success' | 'error' | 'preview' | 'delete' | 'return', message?: string, loanData?: any } | null>(null);
@@ -314,7 +319,20 @@ export function AdminLoans() {
 
     const handleDeleteLoan = async (loan: EquipmentLoan) => {
         try {
-            // If loan is active, restore inventory first
+            // 1. Delete file from Storage if exists
+            if (loan.manual_term_url) {
+                const fileKey = loan.manual_term_url.split('/').pop();
+                if (fileKey) {
+                    const { error: storageError } = await supabase
+                        .storage
+                        .from(BUCKET_NAME)
+                        .remove([fileKey]);
+
+                    if (storageError) console.error('Error deleting file:', storageError);
+                }
+            }
+
+            // 2. If loan is active, restore inventory
             if (loan.status === 'active') {
                 const { data: eqData, error: eqFetchError } = await supabase
                     .from('equipment')
@@ -330,6 +348,7 @@ export function AdminLoans() {
                 }
             }
 
+            // 3. Delete from DB
             const { error } = await supabase
                 .from('equipment_loans')
                 .delete()
@@ -342,6 +361,81 @@ export function AdminLoans() {
             setModalInfo({ type: 'success', message: 'Registro excluído permanentemente.' });
         } catch (error: any) {
             setModalInfo({ type: 'error', message: `Erro ao excluir: ${error.message}` });
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, loanId: string) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // USER ORDER: Only images (png, jpg, jpeg)
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Apenas imagens (PNG, JPG, JPEG) são permitidas.');
+            return;
+        }
+
+        setUploadingLoanId(loanId);
+
+        try {
+            // 1. Compress image (Max 1MB as per USER ORDER)
+            const options = {
+                maxSizeMB: 1,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true,
+                fileType: file.type as any
+            };
+            const compressedFile = await imageCompression(file, options);
+
+            // 2. Upload to Supabase Storage
+            const fileExt = file.name.split('.').pop();
+            const fileName = `loan-term-${loanId}-${Date.now()}.${fileExt}`;
+
+            const { error: uploadError } = await supabase
+                .storage
+                .from(BUCKET_NAME)
+                .upload(fileName, compressedFile, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (uploadError) throw uploadError;
+
+            // 3. Update Database
+            const { error: updateError } = await supabase
+                .from('equipment_loans')
+                .update({ manual_term_url: fileName })
+                .eq('id', loanId);
+
+            if (updateError) throw updateError;
+
+            fetchLoans();
+            alert('Termo assinado enviado com sucesso!');
+        } catch (error: any) {
+            console.error('Upload error:', error);
+            alert(`Erro ao realizar upload: ${error.message || 'Erro desconhecido'}`);
+        } finally {
+            setUploadingLoanId(null);
+        }
+    };
+
+    const handleViewManualTerm = async (fileKey: string) => {
+        try {
+            // Extract filename if it's a full path, though we store filename
+            const cleanKey = fileKey.split('/').pop() || fileKey;
+
+            const { data, error } = await supabase
+                .storage
+                .from(BUCKET_NAME)
+                .createSignedUrl(cleanKey, 3600); // 1 hour
+
+            if (error) throw error;
+            if (data?.signedUrl) {
+                window.open(data.signedUrl, '_blank');
+            }
+        } catch (error) {
+            console.error('Error generating signed URL:', error);
+            alert('Erro ao abrir o termo.');
         }
     };
 
@@ -713,7 +807,10 @@ export function AdminLoans() {
                             </div>
                         ) : (
                             filteredLoans.map(loan => (
-                                <div key={loan.id} className="group bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300">
+                                <div key={loan.id} className={clsx(
+                                    "group bg-white rounded-[2rem] shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300",
+                                    loan.status === 'active' ? "p-7" : "p-5 opacity-90 hover:opacity-100" // Compact padding for inactive
+                                )}>
                                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                                         <div className="flex items-start gap-4 flex-1">
                                             <div className={clsx(
@@ -754,9 +851,12 @@ export function AdminLoans() {
                                             </div>
                                         </div>
 
-                                        <div className="flex flex-col gap-3 shrink-0">
-                                            <div className="flex gap-2 text-[11px] font-black bg-gray-50 rounded-xl p-3 border border-gray-100">
-                                                <div className="flex flex-col border-r border-gray-200 pr-3">
+                                        <div className={clsx(
+                                            "flex flex-col gap-4 shrink-0 transition-all duration-300",
+                                            loan.status === 'active' ? "min-w-[320px] md:min-w-[400px]" : "min-w-[200px] md:min-w-[250px]"
+                                        )}>
+                                            <div className="flex gap-2 text-[11px] font-black bg-gray-50 rounded-xl p-3 border border-gray-100 justify-between">
+                                                <div className="flex flex-col border-r border-gray-200 pr-4">
                                                     <span className="text-gray-400 uppercase tracking-widest text-[8px] mb-1">Início</span>
                                                     <span>{format(parseISO(loan.start_at), "dd/MM/yy HH:mm")}</span>
                                                 </div>
@@ -766,28 +866,81 @@ export function AdminLoans() {
                                                 </div>
                                             </div>
 
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => setModalInfo({ type: 'preview', loanData: loan })}
-                                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-primary-200 text-primary-600 hover:bg-primary-50 font-bold text-xs rounded-xl transition-all active:scale-95"
-                                                >
-                                                    <Eye className="h-4 w-4" /> Ver Termo
-                                                </button>
-                                                <button
-                                                    onClick={() => setModalInfo({ type: 'delete', loanData: loan })}
-                                                    className="p-2.5 bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95"
-                                                    title="Excluir Registro"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
+                                            {/* Smart Action Layout: Grid for Active, Flex/Compact for Inactive */}
+                                            <div className={clsx(
+                                                "gap-3 transition-all",
+                                                loan.status === 'active' ? "grid grid-cols-2" : "flex flex-col"
+                                            )}>
+                                                {/* Group 1: Documents */}
+                                                <div className={clsx("flex gap-2", loan.status !== 'active' && "flex-row")}>
+                                                    <button
+                                                        onClick={() => setModalInfo({ type: 'preview', loanData: loan })}
+                                                        className="flex-1 flex items-center justify-center gap-2 py-3 px-3 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95"
+                                                        title="Ver Termo para Impressão"
+                                                    >
+                                                        <FileText className="h-4 w-4" /> {loan.status !== 'active' && "Termo"}
+                                                    </button>
+
+                                                    <div className="relative flex-1">
+                                                        <input
+                                                            type="file"
+                                                            id={`upload-${loan.id}`}
+                                                            className="hidden"
+                                                            accept="image/png, image/jpeg, image/jpg"
+                                                            onChange={(e) => handleFileUpload(e, loan.id)}
+                                                            disabled={uploadingLoanId === loan.id}
+                                                        />
+                                                        <label
+                                                            htmlFor={`upload-${loan.id}`}
+                                                            className={`h-full py-3 px-3 flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer ${uploadingLoanId === loan.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                            title="Anexar Imagem do Termo Assinado"
+                                                        >
+                                                            {uploadingLoanId === loan.id ? (
+                                                                <Loader2 className="h-4 w-4 animate-spin text-primary-500" />
+                                                            ) : (
+                                                                <Upload className="h-4 w-4 text-primary-500" />
+                                                            )}
+                                                            {/* Show text only if active or space permits */}
+                                                            {loan.status === 'active' ? (uploadingLoanId === loan.id ? 'Subindo...' : loan.manual_term_url ? 'Substituir' : 'Anexar') : ''}
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                {/* Viewing Signed Term */}
+                                                {loan.manual_term_url && (
+                                                    <button
+                                                        onClick={() => handleViewManualTerm(loan.manual_term_url!)}
+                                                        className={clsx(
+                                                            "flex items-center justify-center gap-2 py-3 px-3 bg-indigo-50 border border-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95",
+                                                            loan.status === 'active' ? "col-span-2" : "w-full"
+                                                        )}
+                                                        title="Ver Termo Assinado Manualmente"
+                                                    >
+                                                        <Eye className="h-4 w-4" /> Ver termo assinado
+                                                    </button>
+                                                )}
+
+                                                {/* Group 2: Lifecycle Actions */}
                                                 {loan.status === 'active' && (
                                                     <button
                                                         onClick={() => setModalInfo({ type: 'return', loanData: loan })}
-                                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-green-600 text-white hover:bg-green-700 font-black text-xs rounded-xl shadow-lg shadow-green-100 transition-all active:scale-95"
+                                                        className="flex items-center justify-center gap-2 py-3 px-3 bg-green-600 text-white hover:bg-green-700 font-black text-xs rounded-xl shadow-lg shadow-green-100 transition-all active:scale-95"
                                                     >
                                                         <CheckCircle2 className="h-4 w-4" /> Devolver
                                                     </button>
                                                 )}
+
+                                                <button
+                                                    onClick={() => setModalInfo({ type: 'delete', loanData: loan })}
+                                                    className={clsx(
+                                                        "flex items-center justify-center p-3 bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95 border border-red-100 hover:border-red-600",
+                                                        loan.status !== 'active' && "w-full"
+                                                    )}
+                                                    title="Excluir Registro"
+                                                >
+                                                    {loan.status !== 'active' && <span className="mr-2 text-xs font-bold">Excluir Registro</span>}
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
