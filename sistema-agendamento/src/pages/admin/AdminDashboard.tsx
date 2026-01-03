@@ -131,18 +131,33 @@ export function AdminDashboard() {
                 if (finalAuditLogs.length > 0) {
                     const userIds = [...new Set(finalAuditLogs.map((l: any) => l.performed_by).filter(Boolean))];
                     if (userIds.length > 0) {
+                        // 1. Tenta buscar na tabela de PROFESSORES
                         const { data: usersData } = await supabase
                             .from('users')
                             .select('id, full_name')
                             .in('id', userIds);
 
+                        // 2. Tenta buscar na tabela de ADMINS (para os IDs de admins)
+                        const { data: adminsData } = await supabase
+                            .from('admins')
+                            .select('id, username')
+                            .in('id', userIds);
+
+                        // 3. Combina os resultados
+                        const combinedUserMap = new Map();
+
                         if (usersData) {
-                            const userMap = new Map(usersData.map((u: any) => [u.id, u]));
-                            finalAuditLogs = finalAuditLogs.map((log: any) => ({
-                                ...log,
-                                users: userMap.get(log.performed_by) || null
-                            }));
+                            usersData.forEach((u: any) => combinedUserMap.set(u.id, { full_name: u.full_name }));
                         }
+                        if (adminsData) {
+                            adminsData.forEach((a: any) => combinedUserMap.set(a.id, { full_name: `(Admin) ${a.username}` }));
+                        }
+
+                        // 4. Aplica ao log
+                        finalAuditLogs = finalAuditLogs.map((log: any) => ({
+                            ...log,
+                            users: combinedUserMap.get(log.performed_by) || { full_name: 'Usuário Desconhecido' }
+                        }));
                     }
                 }
 
