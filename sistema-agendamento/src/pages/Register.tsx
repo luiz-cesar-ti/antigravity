@@ -78,7 +78,11 @@ export function Register() {
         });
 
         if (signUpError) {
-            setError(signUpError);
+            if (signUpError.includes('already registered') || signUpError.includes('User already registered') || signUpError.includes('duplicate key')) {
+                setError('Este e-mail já está cadastrado no sistema.');
+            } else {
+                setError(signUpError);
+            }
             setIsSubmitting(false);
         } else {
             // Success - Show confirmation modal

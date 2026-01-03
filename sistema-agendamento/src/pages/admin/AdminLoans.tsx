@@ -585,6 +585,8 @@ export function AdminLoans() {
                             Você poderá <span className="text-gray-900 font-bold">anexar o termo assinado</span> pelo usuário diretamente no card do empréstimo.
                             <br /><br />
                             <span className="text-amber-700 font-bold underline">Atenção:</span> A quantidade de itens emprestados será <span className="font-bold">removida temporariamente</span> do inventário geral. Ao excluir um registro de empréstimo, o termo assinado anexado também será <span className="text-red-600 font-bold">excluído permanentemente</span>.
+                            <br /><br />
+                            <span className="text-gray-900 font-bold">Formatos aceitos:</span> JPG e PNG. <span className="text-gray-600 italic">Prefira fotos claras e legíveis.</span>
                         </p>
                     </div>
                 </div>
