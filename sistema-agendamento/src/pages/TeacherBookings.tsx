@@ -399,7 +399,7 @@ export function TeacherBookings() {
                                 >
                                     <option value="all">Todos Status</option>
                                     <option value="active">Agendados (Ativos)</option>
-                                    <option value="encerrado">Encerrados</option>
+                                    <option value="encerrado">Concluídos</option>
                                 </select>
                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                             </div>
@@ -494,11 +494,11 @@ export function TeacherBookings() {
                                             <span className={`
                                                 px-2.5 py-0.5 rounded-full text-xs font-medium border
                                                 ${booking.status === 'active' && !isExpired ? 'bg-green-50 text-green-700 border-green-100' :
-                                                    isEffectivelyClosed ? 'bg-red-50 text-red-700 border-red-100' :
+                                                    isEffectivelyClosed ? 'bg-blue-100 text-blue-700 border-blue-100' :
                                                         'bg-red-50 text-red-700 border-red-100'}
                                             `}>
                                                 {booking.status === 'active' && !isExpired ? 'Agendado' :
-                                                    isEffectivelyClosed ? 'Encerrado' : 'Cancelado'}
+                                                    isEffectivelyClosed ? 'Concluído' : 'Cancelado'}
                                             </span>
                                             {booking.is_recurring && (
                                                 <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-black uppercase tracking-tight rounded-lg border border-amber-100 italic">

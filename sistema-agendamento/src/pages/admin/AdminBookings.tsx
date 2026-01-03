@@ -294,8 +294,8 @@ export function AdminBookings() {
 
         if (expired || booking.status === 'encerrado') {
             return (
-                <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-red-100 text-red-700 border border-red-200">
-                    Encerrado
+                <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+                    Concluído
                 </span>
             );
         }
@@ -446,7 +446,7 @@ export function AdminBookings() {
                                 >
                                     <option value="all">Todos Status</option>
                                     <option value="active">Agendados (Ativos)</option>
-                                    <option value="closed">Encerrados</option>
+                                    <option value="closed">Concluídos</option>
                                     <option value="cancelled">Cancelados/Excluídos</option>
                                 </select>
                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />

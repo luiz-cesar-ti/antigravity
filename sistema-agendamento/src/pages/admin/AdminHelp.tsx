@@ -134,9 +134,9 @@ export function AdminHelp() {
                                             <span className="text-xs font-black text-green-700 bg-green-100 px-2 py-1 rounded mb-2 inline-block">ATIVO</span>
                                             <p className="text-xs text-green-800">Reserva válida e futura. O equipamento está reservado.</p>
                                         </div>
-                                        <div className="p-4 rounded-xl bg-red-50 border border-red-100">
-                                            <span className="text-xs font-black text-red-700 bg-red-100 px-2 py-1 rounded mb-2 inline-block">ENCERRADO</span>
-                                            <p className="text-xs text-red-800">Data/Hora já passaram. O sistema encerra automaticamente.</p>
+                                        <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
+                                            <span className="text-xs font-black text-blue-700 bg-blue-100 px-2 py-1 rounded mb-2 inline-block">CONCLUÍDO</span>
+                                            <p className="text-xs text-blue-800">Data/Hora já passaram. O sistema encerra automaticamente.</p>
                                         </div>
                                         <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
                                             <span className="text-xs font-black text-gray-600 bg-gray-200 px-2 py-1 rounded mb-2 inline-block">CANCELADO</span>

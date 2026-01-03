@@ -105,10 +105,10 @@ export function TeacherAbout() {
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <div className="mt-1">
-                                        <span className="block h-2 w-2 rounded-full bg-gray-400"></span>
+                                        <span className="block h-2 w-2 rounded-full bg-blue-600"></span>
                                     </div>
                                     <span className="text-sm text-gray-600">
-                                        <strong>Encerrado:</strong> O período de uso já finalizou.
+                                        <strong>Concluído:</strong> O período de uso já finalizou.
                                     </span>
                                 </li>
                             </ul>
