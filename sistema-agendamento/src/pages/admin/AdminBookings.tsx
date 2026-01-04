@@ -512,131 +512,186 @@ export function AdminBookings() {
                                 <p className="text-sm text-gray-500 mt-1">Tente ajustar seus filtros ou termos de pesquisa.</p>
                             </li>
                         ) : (
-                            filteredBookings.map((booking) => (
-                                <li key={booking.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-lg transition-all overflow-hidden group">
-                                    <div className="p-6 md:p-8">
-                                        {/* TOP SECTION: Main Info */}
-                                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-8 border-b border-gray-50">
+                            (() => {
+                                // Group bookings by display_id
+                                const grouped: Record<string, Booking[]> = {};
+                                const singleBookings: Booking[] = [];
 
-                                            {/* Left: Equipment Focus */}
-                                            <div className="flex items-start gap-5">
-                                                <div className="p-4 bg-gray-50 rounded-2xl shrink-0 group-hover:bg-primary-50 transition-colors duration-300 ring-1 ring-gray-100">
-                                                    {getEquipmentIcon(booking.equipment?.name)}
-                                                </div>
-                                                <div className="space-y-1.5">
-                                                    <h3 className="text-xl font-black text-gray-900 tracking-tight leading-tight">
-                                                        {booking.equipment?.name}
-                                                    </h3>
-                                                    <div className="inline-flex items-center px-2.5 py-1 bg-primary-50 text-primary-700 text-[10px] font-black uppercase tracking-wider rounded-lg border border-primary-100">
-                                                        # {booking.quantity} {booking.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
-                                                    </div>
-                                                </div>
-                                            </div>
+                                filteredBookings.forEach(b => {
+                                    if (b.display_id) {
+                                        if (!grouped[b.display_id]) grouped[b.display_id] = [];
+                                        grouped[b.display_id].push(b);
+                                    } else {
+                                        singleBookings.push(b);
+                                    }
+                                });
 
-                                            {/* Middle: Teacher & Status */}
-                                            <div className="flex-1 flex flex-col md:flex-row md:items-center gap-4 md:gap-8 px-0 md:px-8 border-l-0 md:border-l border-gray-100">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0">
-                                                        <Users className="h-5 w-5 text-indigo-600" />
+                                const displayIds = Array.from(new Set(filteredBookings.map(b => b.display_id).filter(id => !!id) as string[]));
+
+                                return [...displayIds.map(id => grouped[id]), ...singleBookings.map(b => [b])].map((group) => {
+                                    const first = group[0];
+                                    const isMulti = group.length > 1;
+
+                                    return (
+                                        <li key={first.display_id || first.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-lg transition-all overflow-hidden group">
+                                            <div className="p-6 md:p-8">
+                                                {/* TOP SECTION: Main Info */}
+                                                <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-8 border-b border-gray-50">
+
+                                                    {/* Left: Equipment Focus */}
+                                                    <div className="flex-1">
+                                                        {!isMulti ? (
+                                                            <div className="flex items-start gap-5">
+                                                                <div className="p-4 bg-gray-50 rounded-2xl shrink-0 group-hover:bg-primary-50 transition-colors duration-300 ring-1 ring-gray-100">
+                                                                    {getEquipmentIcon(first.equipment?.name)}
+                                                                </div>
+                                                                <div className="space-y-1.5 min-w-0">
+                                                                    <h3 className="text-xl font-black text-gray-900 tracking-tight leading-tight truncate">
+                                                                        {first.equipment?.name}
+                                                                    </h3>
+                                                                    <div className="inline-flex items-center px-2.5 py-1 bg-primary-50 text-primary-700 text-[10px] font-black uppercase tracking-wider rounded-lg border border-primary-100">
+                                                                        # {first.quantity} {first.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100">
+                                                                        <Monitor className="h-5 w-5 text-white" />
+                                                                    </div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">Múltiplos Equipamentos</span>
+                                                                        <h3 className="text-lg font-black text-gray-900 tracking-tight">Agendamento Conjugado</h3>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-2">
+                                                                    {group.map((b) => (
+                                                                        <div key={b.id} className="flex items-center gap-3 p-3 bg-gray-50/50 rounded-2xl border border-transparent group-hover:border-indigo-100/50 transition-all">
+                                                                            <div className="shrink-0 scale-75">
+                                                                                {getEquipmentIcon(b.equipment?.name)}
+                                                                            </div>
+                                                                            <div className="min-w-0">
+                                                                                <p className="text-xs font-bold text-gray-900 truncate">{b.equipment?.name}</p>
+                                                                                <p className="text-[10px] text-indigo-600/70 font-bold uppercase truncate">{b.quantity} {b.quantity === 1 ? 'unidade' : 'unidades'}</p>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <div className="flex flex-col min-w-0">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-bold text-gray-900 truncate">{(booking as any).users?.full_name}</span>
-                                                            <div className={booking.status === 'cancelled_by_user' ? 'hidden md:block' : ''}>
-                                                                {getStatusBadge(booking)}
+
+                                                    {/* Middle: Teacher & Status */}
+                                                    <div className="flex-1 flex flex-col md:flex-row md:items-center gap-4 md:gap-8 px-0 md:px-8 border-l-0 md:border-l border-gray-100">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0">
+                                                                <Users className="h-5 w-5 text-indigo-600" />
+                                                            </div>
+                                                            <div className="flex flex-col min-w-0">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-bold text-gray-900 truncate">{(first as any).users?.full_name}</span>
+                                                                    <div className={first.status === 'cancelled_by_user' ? 'hidden md:block' : ''}>
+                                                                        {getStatusBadge(first)}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                                                    <span className="truncate">{(first as any).users?.email}</span>
+                                                                    {first.display_id && (
+                                                                        <span className="text-primary-600">#{first.display_id}</span>
+                                                                    )}
+                                                                    <span className="flex items-center gap-1">
+                                                                        <MapPin className="h-3 w-3" />
+                                                                        {first.unit}
+                                                                    </span>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                                                            <span className="truncate">{(booking as any).users?.email}</span>
-                                                            {booking.display_id && (
-                                                                <span className="text-primary-600">#{booking.display_id}</span>
+                                                    </div>
+
+                                                    {/* Right: Primary Actions */}
+                                                    <div className="flex flex-col items-end gap-3 shrink-0">
+                                                        {/* Badges */}
+                                                        <div className="flex flex-col items-end gap-1.5">
+                                                            {first.is_recurring && (
+                                                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-tight rounded-lg border border-amber-100 italic shadow-sm">
+                                                                    <Repeat className="h-3 w-3" />
+                                                                    Agendamento Fixo
+                                                                </div>
                                                             )}
-                                                            <span className="flex items-center gap-1">
-                                                                <MapPin className="h-3 w-3" />
-                                                                {booking.unit}
-                                                            </span>
+
+                                                            {first.status === 'cancelled_by_user' && (
+                                                                <div className="md:hidden">
+                                                                    {getStatusBadge(first)}
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Buttons */}
+                                                        <div className="flex items-center gap-2">
+                                                            {first.term_document && (
+                                                                <button
+                                                                    onClick={() => handleOpenTermModal(first)}
+                                                                    className="flex items-center gap-2 h-11 px-5 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95"
+                                                                >
+                                                                    <FileText className="h-4 w-4 text-primary-500" />
+                                                                    Termo
+                                                                </button>
+                                                            )}
+
+                                                            <button
+                                                                onClick={() => setDeleteModal({ isOpen: true, bookingId: first.id })}
+                                                                className="h-11 w-11 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95 border border-red-100 hover:border-red-600 shadow-sm"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* BOTTOM SECTION: Grid Details */}
+                                                <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-8">
+                                                    <div className="space-y-2 text-left">
+                                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">PROFESSOR</span>
+                                                        <div className="flex items-center gap-2 text-sm text-gray-600 font-bold">
+                                                            <Users className="h-4 w-4 text-gray-300" />
+                                                            {(first as any).users?.full_name}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-2 text-left">
+                                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">ESPECIFICAÇÃO</span>
+                                                        <div className="flex items-center gap-2 text-sm text-gray-600 font-bold truncate">
+                                                            <Monitor className="h-4 w-4 text-gray-300" />
+                                                            {isMulti ? (
+                                                                <span className="text-indigo-600">Vários Itens</span>
+                                                            ) : (
+                                                                `${first.equipment?.brand || ''} ${first.equipment?.model || ''}`
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-2 text-left">
+                                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">SALA/LOCAL</span>
+                                                        <div className="flex items-center gap-2 text-sm text-gray-600 font-bold">
+                                                            <MapPin className="h-4 w-4 text-gray-300" />
+                                                            {first.local}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-2 text-left">
+                                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">AGENDADO PARA</span>
+                                                        <div className="flex items-center gap-2 text-sm text-gray-600 font-bold">
+                                                            <Clock className="h-4 w-4 text-gray-300" />
+                                                            {format(parseISO(first.booking_date), "dd/MM/yyyy")} • {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            {/* Right: Primary Actions */}
-                                            <div className="flex flex-col items-end gap-3 shrink-0">
-                                                {/* Badges */}
-                                                <div className="flex flex-col items-end gap-1.5">
-                                                    {booking.is_recurring && (
-                                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-tight rounded-lg border border-amber-100 italic shadow-sm">
-                                                            <Repeat className="h-3 w-3" />
-                                                            Agendamento Fixo
-                                                        </div>
-                                                    )}
-
-                                                    {booking.status === 'cancelled_by_user' && (
-                                                        <div className="md:hidden">
-                                                            {getStatusBadge(booking)}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Buttons */}
-                                                <div className="flex items-center gap-2">
-                                                    {booking.term_document && (
-                                                        <button
-                                                            onClick={() => handleOpenTermModal(booking)}
-                                                            className="flex items-center gap-2 h-11 px-5 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95"
-                                                        >
-                                                            <FileText className="h-4 w-4 text-primary-500" />
-                                                            Termo
-                                                        </button>
-                                                    )}
-
-                                                    <button
-                                                        onClick={() => setDeleteModal({ isOpen: true, bookingId: booking.id })}
-                                                        className="h-11 w-11 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95 border border-red-100 hover:border-red-600 shadow-sm"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* BOTTOM SECTION: Grid Details */}
-                                        <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-8">
-                                            <div className="space-y-2">
-                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">PROFESSOR</span>
-                                                <div className="flex items-center gap-2 text-sm text-gray-600 font-bold">
-                                                    <Users className="h-4 w-4 text-gray-300" />
-                                                    {(booking as any).users?.full_name}
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">ESPECIFICAÇÃO</span>
-                                                <div className="flex items-center gap-2 text-sm text-gray-600 font-bold">
-                                                    <Monitor className="h-4 w-4 text-gray-300" />
-                                                    {booking.equipment?.brand} {booking.equipment?.model}
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">SALA/LOCAL</span>
-                                                <div className="flex items-center gap-2 text-sm text-gray-600 font-bold">
-                                                    <MapPin className="h-4 w-4 text-gray-300" />
-                                                    {booking.local}
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">AGENDADO PARA</span>
-                                                <div className="flex items-center gap-2 text-sm text-gray-600 font-bold">
-                                                    <Clock className="h-4 w-4 text-gray-300" />
-                                                    {format(parseISO(booking.booking_date), "dd/MM/yyyy")} • {booking.start_time.slice(0, 5)} - {booking.end_time.slice(0, 5)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </li>
-                            ))
+                                        </li>
+                                    );
+                                });
+                            })()
                         )}
                     </ul>
                 </div>

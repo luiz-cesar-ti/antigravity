@@ -642,7 +642,7 @@ export function AdminDashboard() {
                                         className="h-2 w-2 rounded-full shrink-0"
                                         style={{ backgroundColor: COLORS[index % COLORS.length] }}
                                     />
-                                    <span className="text-xs font-bold text-gray-500 uppercase tracking-tight group-hover:text-gray-900 transition-colors">
+                                    <span className="text-sm font-bold text-gray-500 uppercase tracking-tight group-hover:text-gray-900 transition-colors">
                                         {item.name}
                                     </span>
                                 </div>

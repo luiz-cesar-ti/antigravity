@@ -578,7 +578,7 @@ export function AdminHelp() {
                                             <AlertTriangle className="h-5 w-5 text-amber-600" />
                                             <h4 className="font-bold text-gray-900">3. Baixa no Estoque</h4>
                                         </div>
-                                        <p className="text-xs text-gray-500">Itens emprestados são deduzidos do inventário. Ao devolver, o estoque é reposto automaticamente.</p>
+                                        <p className="text-xs text-gray-500">Itens emprestados são reduzidos no inventário. Ao devolver, o estoque é reposto automaticamente.</p>
                                     </div>
                                 </div>
 
