@@ -38,6 +38,10 @@ interface TermDocumentProps {
     id?: string;
 }
 
+// CRITICAL: This component's layout and content (especially responsibilities and signature)
+// have been legally approved and must remain exact.
+// The signature date MUST use data.created_at to ensure immutability.
+// DO NOT MODIFY WITHOUT EXPLICIT PERMISSION.
 export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
     // Helper to extract data regardless of source (Wizard, DB Booking, or Term JSON)
     const getName = () => data.full_name || data.userName || data.term_document?.userName || data.term_document?.full_name || data.users?.full_name || '';
