@@ -38,9 +38,10 @@ interface TermDocumentProps {
     id?: string;
 }
 
-// CRITICAL: This component's layout and content (especially responsibilities and signature)
+// CRITICAL: This component's layout and content (especially responsibilities, signature, AND RECURRING DATES)
 // have been legally approved and must remain exact.
 // The signature date MUST use data.created_at to ensure immutability.
+// The layout MUST remain on a SINGLE PAGE A4.
 // DO NOT MODIFY WITHOUT EXPLICIT PERMISSION.
 export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
     // Helper to extract data regardless of source (Wizard, DB Booking, or Term JSON)
@@ -119,8 +120,8 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
             backgroundColor: '#ffffff',
             color: '#000000',
             fontFamily: 'Arial, sans-serif',
-            fontSize: '10pt',
-            lineHeight: '1.3',
+            fontSize: '11pt',
+            lineHeight: '1.25',
             position: 'relative',
             boxSizing: 'border-box'
         }}>
@@ -141,12 +142,12 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 marginBottom: '1rem',
                 textTransform: 'uppercase',
                 maxWidth: '90%',
-                margin: '0 auto 1rem'
+                margin: '0 auto 0.5rem'
             }}>
                 Declaração de Responsabilidade e Termo de Uso
             </h1>
 
-            <div style={{ textAlign: 'justify', marginBottom: '1rem' }}>
+            <div style={{ textAlign: 'justify', marginBottom: '0.75rem' }}>
                 <p style={{ marginBottom: '0.5rem' }}>
                     Declaro que eu, <strong style={{ fontWeight: 'bold' }}>{getName()}</strong>, portador(a) do número de usuário TOTVS <strong style={{ fontWeight: 'bold' }}>{getTotvs()}</strong>,
                     estou ciente e de acordo com as condições de uso do(s) equipamento(s) abaixo descrito(s),
@@ -177,15 +178,18 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 </div>
                 {getRecurringDates() && (
                     <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed #d1d5db' }}>
-                        <p style={{ fontSize: '8pt', color: '#4b5563', marginBottom: '4px' }}><strong>Datas agendadas para o mês atual:</strong></p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {/* LOCKED LAYOUT: DO NOT CHANGE SPACING OR FONT SIZE OF RECURRING DATES. MUST FIT SINGLE PAGE. */}
+                        <p style={{ fontSize: '9pt', color: '#374151', marginBottom: '6px', fontWeight: 'bold' }}>Datas agendadas para o mês atual:</p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
                             {getRecurringDates()?.map(date => (
                                 <span key={date} style={{
                                     backgroundColor: '#fff',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    border: '1px solid #e5e7eb',
-                                    fontSize: '8pt'
+                                    padding: '4px 10px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #9ca3af',
+                                    fontSize: '10pt',
+                                    fontWeight: 'bold',
+                                    color: '#1f2937'
                                 }}>{date}</span>
                             ))}
                         </div>
@@ -246,14 +250,14 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
             </div>
 
             <div style={{
-                marginBottom: '1.5rem',
+                marginBottom: '1rem',
                 fontSize: '9pt',
                 backgroundColor: '#f3f4f6',
-                padding: '0.75rem',
+                padding: '0.5rem',
                 borderLeft: '4px solid #1f2937'
             }}>
-                <h3 style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>TERMO DE CIÊNCIA</h3>
-                <p>
+                <h3 style={{ fontWeight: 'bold', marginBottom: '0' }}>TERMO DE CIÊNCIA</h3>
+                <p style={{ margin: 0 }}>
                     Estou ciente que a utilização inadequada pode resultar em medidas administrativas
                     e que sou responsável pela segurança e integridade do equipamento.
                 </p>
