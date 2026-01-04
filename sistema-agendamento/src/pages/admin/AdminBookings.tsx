@@ -687,27 +687,32 @@ export function AdminBookings() {
                                                 <div className="lg:hidden space-y-5">
                                                     {/* Top Section: Professor Info + Actions */}
                                                     <div className="flex justify-between items-start gap-3">
-                                                        <div className="min-w-0 flex-1">
-                                                            <h3 className="text-sm font-black text-gray-900 leading-tight truncate uppercase">
-                                                                {(first as any).users?.full_name}
-                                                            </h3>
-                                                            <p className="text-[10px] text-gray-400 font-bold truncate lowercase mt-0.5">
-                                                                {(first as any).users?.email}
-                                                            </p>
-                                                            <div className="flex flex-wrap items-center gap-2 mt-2">
-                                                                {getStatusBadge(first)}
-                                                                {first.is_recurring && (
-                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[8px] font-black uppercase tracking-tight rounded-full border border-amber-100 italic">
-                                                                        <Repeat className="h-2 w-2" />
-                                                                        Recorrente
-                                                                    </div>
-                                                                )}
-                                                                {first.display_id && (
-                                                                    <span className="text-[9px] text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
-                                                                )}
+                                                        <div className="flex gap-3 min-w-0 flex-1">
+                                                            <div className="h-10 w-10 min-w-[40px] rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0">
+                                                                <Users className="h-5 w-5 text-indigo-600" />
+                                                            </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <h3 className="text-sm font-black text-gray-900 leading-tight truncate uppercase">
+                                                                    {(first as any).users?.full_name}
+                                                                </h3>
+                                                                <p className="text-[10px] text-gray-400 font-bold truncate lowercase mt-0.5">
+                                                                    {(first as any).users?.email}
+                                                                </p>
+                                                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                                                    {getStatusBadge(first)}
+                                                                    {first.is_recurring && (
+                                                                        <div className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[8px] font-black uppercase tracking-tight rounded-full border border-amber-100 italic">
+                                                                            <Repeat className="h-2 w-2" />
+                                                                            Recorrente
+                                                                        </div>
+                                                                    )}
+                                                                    {first.display_id && (
+                                                                        <span className="text-[9px] text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        <div className="flex flex-col gap-2 shrink-0">
+                                                        <div className="flex flex-row gap-2 shrink-0">
                                                             {first.term_document && (
                                                                 <button
                                                                     onClick={() => handleOpenTermModal(first)}
@@ -737,7 +742,7 @@ export function AdminBookings() {
                                                                 <div className="min-w-0 flex-1">
                                                                     <h4 className="text-[11px] font-black text-gray-900 truncate leading-tight">{b.equipment?.name}</h4>
                                                                     <p className="text-[9px] text-blue-600 font-black uppercase tracking-tighter mt-0.5">
-                                                                        Quantidade {b.quantity} {b.quantity === 1 ? 'UN' : 'UNS'}
+                                                                        Quantidade: {b.quantity} Unidade (s)
                                                                     </p>
                                                                 </div>
                                                             </div>
