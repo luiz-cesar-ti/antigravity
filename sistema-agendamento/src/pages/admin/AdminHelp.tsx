@@ -16,7 +16,10 @@ import {
     Users,
     ClipboardCheck,
     Settings,
-    Bell
+    Bell,
+    TrendingUp,
+    PieChart,
+    Trophy
 } from 'lucide-react';
 
 export function AdminHelp() {
@@ -86,25 +89,67 @@ export function AdminHelp() {
                             <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-8 text-white">
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
-                                        <LayoutDashboard className="h-8 w-8" />
+                                        <Monitor className="h-8 w-8" />
                                     </div>
-                                    <h2 className="text-2xl font-black">Dashboard</h2>
+                                    <h2 className="text-2xl font-black">Dashboard Estratégico</h2>
                                 </div>
                             </div>
                             <div className="p-8 space-y-6">
                                 <p className="text-gray-600 leading-relaxed">
-                                    O Dashboard é a central de monitoramento em tempo real da unidade. Ele fornece uma visão macro da utilização dos recursos e métricas de desempenho.
+                                    O Dashboard é a central de inteligência da sua unidade. Utilize os gráficos para entender o comportamento de uso e otimizar a distribuição de recursos.
                                 </p>
-                                <div className="flex justify-center">
-                                    <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 max-w-2xl w-full">
-                                        <h3 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-                                            <Search className="h-4 w-4 text-primary-600" /> Métricas Principais
-                                        </h3>
-                                        <ul className="space-y-2 text-sm text-gray-600">
-                                            <li>• <strong>Agendamentos Ativos:</strong> Total de reservas futuras validas.</li>
-                                            <li>• <strong>Agendamentos Concluídos:</strong> Contagem total de agendamentos realizados com sucesso.</li>
-                                            <li>• <strong>Docentes ativos:</strong> Contagem de professores cadastrados na unidade.</li>
-                                        </ul>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Indicadores de Pico */}
+                                    <div className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm hover:border-blue-100 transition-all">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                                                <TrendingUp className="h-5 w-5" />
+                                            </div>
+                                            <h4 className="font-bold text-gray-900">Indicadores de Pico</h4>
+                                        </div>
+                                        <p className="text-sm text-gray-600 leading-relaxed">
+                                            Gráficos de barras e linhas mostram os dias de maior demanda nos agendamentos.
+                                        </p>
+                                    </div>
+
+                                    {/* Mix de Utilização */}
+                                    <div className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm hover:border-green-100 transition-all">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="p-2 bg-green-50 text-green-600 rounded-xl">
+                                                <PieChart className="h-5 w-5" />
+                                            </div>
+                                            <h4 className="font-bold text-gray-900">Mix de Utilização</h4>
+                                        </div>
+                                        <p className="text-sm text-gray-600 leading-relaxed">
+                                            O gráfico de rosca revela quais equipamentos são essenciais. Agora com <strong>filtros por turno</strong> (07h-13h e 13h-18h) para análise por período.
+                                        </p>
+                                    </div>
+
+                                    {/* Busca de Professores */}
+                                    <div className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm hover:border-purple-100 transition-all">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="p-2 bg-purple-50 text-purple-600 rounded-xl">
+                                                <Users className="h-5 w-5" />
+                                            </div>
+                                            <h4 className="font-bold text-gray-900">Busca Inteligente</h4>
+                                        </div>
+                                        <p className="text-sm text-gray-600 leading-relaxed">
+                                            Pesquise docentes pelo Nome ou TOTVS para visualizar um relatório individual de analytics.
+                                        </p>
+                                    </div>
+
+                                    {/* Top Rankings */}
+                                    <div className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm hover:border-amber-100 transition-all">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                                                <Trophy className="h-5 w-5" />
+                                            </div>
+                                            <h4 className="font-bold text-gray-900">Top Docentes</h4>
+                                        </div>
+                                        <p className="text-sm text-gray-600 leading-relaxed">
+                                            Ranking dos professores que mais utilizam os recursos da unidade no período selecionado.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -241,7 +286,7 @@ export function AdminHelp() {
                                         <div className="p-6 bg-gray-50 rounded-xl border border-gray-100 h-full">
                                             <span className="text-xs font-black text-purple-600 bg-purple-100 px-2 py-1 rounded mb-3 inline-block">FIXO (RECORRENTE)</span>
                                             <h4 className="font-bold text-gray-800 text-lg mb-2">Termo Recorrente</h4>
-                                            <p className="text-sm text-gray-600 leading-relaxed">Função ativada pelo Admin. Permite ao professor agendar um dia fixo na semana. O termo assinado valida todas as datas do semestre de uma vez.</p>
+                                            <p className="text-sm text-gray-600 leading-relaxed">Função ativada pelo Admin. Permite ao professor agendar um dia fixo na semana. O termo assinado valida todas as datas agendadas para o mês vigente.</p>
                                         </div>
                                         <div className="p-6 bg-gray-50 rounded-xl border border-gray-100 h-full">
                                             <span className="text-xs font-black text-amber-600 bg-amber-100 px-2 py-1 rounded mb-3 inline-block">EMPRÉSTIMO</span>
@@ -519,12 +564,12 @@ export function AdminHelp() {
                                             <FileText className="h-5 w-5 text-amber-600" />
                                             <h4 className="font-bold text-gray-900">1. Geração de Termo</h4>
                                         </div>
-                                        <p className="text-xs text-gray-500">Sistema gera um PDF formal. O campo <strong>CPF é preenchido manualmente</strong> pelo solicitante no papel, pois o sistema não guarda essa informação para segurança.</p>
+                                        <p className="text-xs text-gray-500">O Admin preenche manualmente um pequeno formulário com as informações do solicitante. O sistema então gera um PDF formal onde o <strong>CPF deve ser preenchido à mão</strong> no ato da assinatura.</p>
                                     </div>
                                     <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm">
                                         <div className="flex items-center gap-2 mb-3">
                                             <Upload className="h-5 w-5 text-amber-600" />
-                                            <h4 className="font-bold text-gray-900">2. Upload do Assinado</h4>
+                                            <h4 className="font-bold text-gray-900">2. Upload do termo assinado</h4>
                                         </div>
                                         <p className="text-xs text-gray-500">O Admin fotografa (JPG/PNG) o termo assinado e anexa ao registro digital para arquivamento.</p>
                                     </div>

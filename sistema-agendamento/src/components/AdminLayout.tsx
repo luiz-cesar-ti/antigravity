@@ -145,7 +145,7 @@ export function AdminLayout() {
                 </aside>
 
                 {/* Main Content */}
-                <main className="flex-1 overflow-auto flex flex-col w-full relative">
+                <main id="admin-main-content" className="flex-1 overflow-auto flex flex-col w-full relative">
                     {/* Header (Desktop & Mobile) */}
                     <header className="bg-white border-b border-gray-200 sticky top-0 z-30 px-4 py-3 flex items-center justify-between shadow-sm">
 

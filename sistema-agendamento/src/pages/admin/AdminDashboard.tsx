@@ -16,7 +16,6 @@ import {
     PieChart,
     Pie,
     Cell,
-    Legend,
     AreaChart,
     Area,
     BarChart,
@@ -29,6 +28,7 @@ export function AdminDashboard() {
     const [period, setPeriod] = useState<'week' | 'month' | 'total' | 'custom'>('month');
     const [customStartDate, setCustomStartDate] = useState('');
     const [customEndDate, setCustomEndDate] = useState('');
+    const [donutShift, setDonutShift] = useState<'all' | 'morning' | 'afternoon'>('all');
     const [selectedTeacher, setSelectedTeacher] = useState<any | null>(null);
     const [teacherBookings, setTeacherBookings] = useState<any[]>([]);
     const [teacherStats, setTeacherStats] = useState<any>({ equipmentUsage: [], weeklyTrend: [] });
@@ -45,6 +45,88 @@ export function AdminDashboard() {
         topTeachers: [] as any[],
     });
     const [loading, setLoading] = useState(true);
+    const [teacherSearchQuery, setTeacherSearchQuery] = useState('');
+    const [teacherSearchResults, setTeacherSearchResults] = useState<any[]>([]);
+    const [isSearchingTeachers, setIsSearchingTeachers] = useState(false);
+
+    const fetchTeacherAnalytics = async (teacherId: string, teacherName: string) => {
+        setLoading(true);
+        try {
+            setSelectedTeacher({ id: teacherId, name: teacherName });
+
+            let detailQuery = supabase
+                .from('bookings')
+                .select('*, equipment(name)')
+                .eq('user_id', teacherId)
+                .neq('status', 'cancelled_by_user');
+
+            // Apply unit filter for teacher details if admin is not Matriz
+            if (adminUser.unit && adminUser.unit !== 'Matriz') {
+                detailQuery = detailQuery.eq('unit', adminUser.unit);
+            }
+
+            const { data, error } = await detailQuery.order('booking_date', { ascending: false });
+
+            if (error) throw error;
+
+            if (data) {
+                const eqMap: Record<string, number> = {};
+                const weekTrend: Record<string, number> = { 'Seg': 0, 'Ter': 0, 'Qua': 0, 'Qui': 0, 'Sex': 0 };
+                const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+                data.forEach((b: any) => {
+                    const ename = b.equipment?.name || 'Vários';
+                    eqMap[ename] = (eqMap[ename] || 0) + 1;
+
+                    const dayName = days[new Date(b.booking_date).getDay()];
+                    if (weekTrend[dayName] !== undefined) {
+                        weekTrend[dayName]++;
+                    }
+                });
+
+                setTeacherBookings(data);
+                setTeacherStats({
+                    equipmentUsage: Object.entries(eqMap).map(([name, value]) => ({ name, value })),
+                    weeklyTrend: Object.entries(weekTrend).map(([day, count]) => ({ day, count }))
+                });
+                setIsModalOpen(true);
+            }
+        } catch (err) {
+            console.error('Error fetching teacher analytics:', err);
+            alert('Erro ao carregar dados do professor.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleTeacherSearch = async (query: string) => {
+        setTeacherSearchQuery(query);
+        if (query.length < 3) {
+            setTeacherSearchResults([]);
+            return;
+        }
+
+        setIsSearchingTeachers(true);
+        try {
+            let userQuery = supabase
+                .from('users')
+                .select('id, full_name, totvs_number')
+                .eq('role', 'teacher')
+                .or(`full_name.ilike.%${query}%,totvs_number.ilike.%${query}%`)
+                .limit(5);
+
+            if (adminUser.unit && adminUser.unit !== 'Matriz') {
+                userQuery = userQuery.contains('units', [adminUser.unit]);
+            }
+
+            const { data } = await userQuery;
+            setTeacherSearchResults(data || []);
+        } catch (err) {
+            console.error('Teacher search error:', err);
+        } finally {
+            setIsSearchingTeachers(false);
+        }
+    };
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -103,6 +185,7 @@ export function AdminDashboard() {
                     .from('bookings')
                     .select(`
                         booking_date, 
+                        start_time,
                         equipment(name),
                         users(id, full_name)
                     `)
@@ -164,8 +247,17 @@ export function AdminDashboard() {
                     }));
 
                 // 2. Popular Equipment (Pie/Donut)
+                const filteredForDonut = bookings.filter((b: any) => {
+                    if (donutShift === 'all') return true;
+                    if (!b.start_time) return false;
+                    const hour = parseInt(b.start_time.split(':')[0]);
+                    if (donutShift === 'morning') return hour >= 7 && hour < 13;
+                    if (donutShift === 'afternoon') return hour >= 13 && hour <= 18;
+                    return true;
+                });
+
                 const equipmentMap: Record<string, number> = {};
-                bookings.forEach((b: any) => {
+                filteredForDonut.forEach((b: any) => {
                     const name = b.equipment?.name || 'Desconhecido';
                     equipmentMap[name] = (equipmentMap[name] || 0) + 1;
                 });
@@ -210,8 +302,7 @@ export function AdminDashboard() {
         };
 
         fetchStats();
-        fetchStats();
-    }, [period, adminUser?.unit, adminUser?.id, customStartDate, customEndDate]);
+    }, [period, adminUser?.unit, adminUser?.id, customStartDate, customEndDate, donutShift]);
 
     const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
@@ -238,31 +329,70 @@ export function AdminDashboard() {
                     </div>
                 </div>
 
-                <div className="flex flex-col items-end gap-3">
-                    <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm">
-                        <Filter className="h-4 w-4 text-gray-400 ml-2 mr-1" />
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-end gap-3 w-full lg:w-auto">
+                    {/* Teacher Search Section */}
+                    <div className="relative w-full lg:w-80">
+                        <div className="relative">
+                            <Users className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Pesquisar Professor (Nome ou TOTVS)..."
+                                className="w-full bg-white border border-gray-100 rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 shadow-sm outline-none transition-all"
+                                value={teacherSearchQuery}
+                                onChange={(e) => handleTeacherSearch(e.target.value)}
+                            />
+                            {isSearchingTeachers && (
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                    <div className="animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full"></div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Search Results Dropdown */}
+                        {teacherSearchResults.length > 0 && teacherSearchQuery.length >= 3 && (
+                            <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                {teacherSearchResults.map((t) => (
+                                    <button
+                                        key={t.id}
+                                        onClick={() => {
+                                            fetchTeacherAnalytics(t.id, t.full_name);
+                                            setTeacherSearchResults([]);
+                                            setTeacherSearchQuery('');
+                                        }}
+                                        className="w-full px-5 py-3 text-left hover:bg-gray-50 flex flex-col gap-0.5 transition-colors border-b border-gray-50 last:border-0"
+                                    >
+                                        <span className="text-sm font-black text-gray-900">{t.full_name}</span>
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">TOTVS: {t.totvs_number}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm w-full lg:w-auto overflow-x-auto scrollbar-hide">
+                        <Filter className="h-4 w-4 text-gray-400 ml-2 mr-1 shrink-0" />
                         <button
                             onClick={() => setPeriod('week')}
-                            className={clsx("px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all", period === 'week' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
+                            className={clsx("whitespace-nowrap px-3 sm:px-4 py-2 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all", period === 'week' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
                         >
                             Semana
                         </button>
                         <button
                             onClick={() => setPeriod('month')}
-                            className={clsx("px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all", period === 'month' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
+                            className={clsx("whitespace-nowrap px-3 sm:px-4 py-2 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all", period === 'month' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
                         >
                             Mês
                         </button>
                         <button
                             onClick={() => setPeriod('total')}
-                            className={clsx("px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all", period === 'total' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
+                            className={clsx("whitespace-nowrap px-3 sm:px-4 py-2 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all", period === 'total' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
                         >
                             Ano
                         </button>
-                        <div className="w-px h-6 bg-gray-200 mx-1"></div>
+                        <div className="w-px h-6 bg-gray-200 mx-1 shrink-0"></div>
                         <button
                             onClick={() => setPeriod('custom')}
-                            className={clsx("px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all", period === 'custom' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
+                            className={clsx("whitespace-nowrap px-3 sm:px-4 py-2 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all", period === 'custom' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
                         >
                             Personalizado
                         </button>
@@ -400,44 +530,7 @@ export function AdminDashboard() {
                             chartData.topTeachers.map((teacher, index) => (
                                 <button
                                     key={teacher.name}
-                                    onClick={async () => {
-                                        setSelectedTeacher(teacher);
-                                        let detailQuery = supabase
-                                            .from('bookings')
-                                            .select('*, equipment(name)')
-                                            .eq('user_id', teacher.id)
-                                            .neq('status', 'cancelled_by_user');
-
-                                        // Apply unit filter for teacher details
-                                        if (adminUser.unit && adminUser.unit !== 'Matriz') {
-                                            detailQuery = detailQuery.eq('unit', adminUser.unit);
-                                        }
-
-                                        const { data } = await detailQuery.order('booking_date', { ascending: false });
-
-                                        if (data) {
-                                            const eqMap: Record<string, number> = {};
-                                            const weekTrend: Record<string, number> = { 'Seg': 0, 'Ter': 0, 'Qua': 0, 'Qui': 0, 'Sex': 0 };
-                                            const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-
-                                            data.forEach((b: any) => {
-                                                const ename = b.equipment?.name || 'Vários';
-                                                eqMap[ename] = (eqMap[ename] || 0) + 1;
-
-                                                const dayName = days[new Date(b.booking_date).getDay()];
-                                                if (weekTrend[dayName] !== undefined) {
-                                                    weekTrend[dayName]++;
-                                                }
-                                            });
-
-                                            setTeacherBookings(data);
-                                            setTeacherStats({
-                                                equipmentUsage: Object.entries(eqMap).map(([name, value]) => ({ name, value })),
-                                                weeklyTrend: Object.entries(weekTrend).map(([day, count]) => ({ day, count }))
-                                            });
-                                            setIsModalOpen(true);
-                                        }
-                                    }}
+                                    onClick={() => fetchTeacherAnalytics(teacher.id, teacher.name)}
                                     className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-primary-100 hover:bg-white transition-all group active:scale-[0.98]"
                                 >
                                     <div className="flex items-center gap-3">
@@ -465,8 +558,8 @@ export function AdminDashboard() {
                 </div>
 
                 {/* 3. Popular Equipment (Donut/Pie Chart) */}
-                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
-                    <div className="flex items-center justify-between mb-8">
+                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col">
+                    <div className="flex items-center justify-between mb-6">
                         <div>
                             <h3 className="text-xl font-black text-gray-900">Mix de Itens</h3>
                             <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Itens mais requisitados</p>
@@ -476,33 +569,88 @@ export function AdminDashboard() {
                         </div>
                     </div>
 
-                    <div className="h-64">
+                    {/* Donut Shift Selector */}
+                    <div className="flex p-1 bg-gray-50 rounded-xl mb-6 self-start">
+                        <button
+                            onClick={() => setDonutShift('all')}
+                            className={clsx(
+                                "px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all",
+                                donutShift === 'all' ? "bg-white text-primary-600 shadow-sm" : "text-gray-400 hover:text-gray-600"
+                            )}
+                        >
+                            Todos
+                        </button>
+                        <button
+                            onClick={() => setDonutShift('morning')}
+                            className={clsx(
+                                "px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all",
+                                donutShift === 'morning' ? "bg-white text-primary-600 shadow-sm" : "text-gray-400 hover:text-gray-600"
+                            )}
+                        >
+                            07h - 13h
+                        </button>
+                        <button
+                            onClick={() => setDonutShift('afternoon')}
+                            className={clsx(
+                                "px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all",
+                                donutShift === 'afternoon' ? "bg-white text-primary-600 shadow-sm" : "text-gray-400 hover:text-gray-600"
+                            )}
+                        >
+                            13h - 18h
+                        </button>
+                    </div>
+
+                    <div className="h-72 w-full relative">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
                                     data={chartData.popularEquipment}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={55}
-                                    outerRadius={80}
+                                    innerRadius={60}
+                                    outerRadius={85}
                                     paddingAngle={5}
                                     dataKey="value"
                                     stroke="none"
                                 >
                                     {chartData.popularEquipment.map((_, index) => (
-                                        <Cell key={`cell - ${index}`} fill={COLORS[index % COLORS.length]} />
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
                                 <Tooltip
                                     contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
-                                />
-                                <Legend
-                                    verticalAlign="bottom"
-                                    iconType="circle"
-                                    formatter={(value) => <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">{value}</span>}
+                                    formatter={(value: any) => [`${value} Agendamentos`, 'Quantidade']}
                                 />
                             </PieChart>
                         </ResponsiveContainer>
+                        {chartData.popularEquipment.length > 0 && (
+                            <div className="absolute top-[50%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                                <p className="text-3xl font-black text-gray-900 leading-none">
+                                    {chartData.popularEquipment.reduce((acc, curr) => acc + curr.value, 0)}
+                                </p>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">Total</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Custom Legend with Quantities */}
+                    <div className="mt-6 space-y-2">
+                        {chartData.popularEquipment.map((item, index) => (
+                            <div key={item.name} className="flex items-center justify-between group">
+                                <div className="flex items-center gap-2">
+                                    <div
+                                        className="h-2 w-2 rounded-full shrink-0"
+                                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                                    />
+                                    <span className="text-xs font-bold text-gray-500 uppercase tracking-tight group-hover:text-gray-900 transition-colors">
+                                        {item.name}
+                                    </span>
+                                </div>
+                                <span className="text-[10px] font-black text-primary-600 bg-primary-50 px-2 py-0.5 rounded-lg group-hover:bg-primary-600 group-hover:text-white transition-all">
+                                    {item.value}
+                                </span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -510,91 +658,93 @@ export function AdminDashboard() {
 
 
             {/* Teacher Analytics Modal */}
-            {isModalOpen && selectedTeacher && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
-                        {/* Modal Header */}
-                        <div className="px-8 py-6 bg-primary-600 text-white flex items-center justify-between">
-                            <div>
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-200">Analytics por Professor</p>
-                                <h2 className="text-2xl font-black">{selectedTeacher.name}</h2>
-                            </div>
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="p-2 hover:bg-white/10 rounded-xl transition-colors"
-                            >
-                                <X className="h-6 w-6" />
-                            </button>
-                        </div>
-
-                        {/* Modal Content */}
-                        <div className="flex-1 overflow-y-auto p-8 bg-gray-50">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total de Reservas</p>
-                                    <p className="text-3xl font-black text-primary-600">{teacherBookings.length}</p>
+            {
+                isModalOpen && selectedTeacher && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                        <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+                            {/* Modal Header */}
+                            <div className="px-8 py-6 bg-primary-600 text-white flex items-center justify-between">
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-200">Analytics por Professor</p>
+                                    <h2 className="text-2xl font-black">{selectedTeacher.name}</h2>
                                 </div>
-                                <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Mix de Equipamentos usados</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {teacherStats.equipmentUsage.map((eq: any, idx: number) => (
-                                            <span key={idx} className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-[10px] font-bold uppercase tracking-tight">
-                                                {eq.name} ({eq.value})
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
+                                <button
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                                >
+                                    <X className="h-6 w-6" />
+                                </button>
                             </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Frequência Semanal</h4>
-                                    <div className="h-48">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={teacherStats.weeklyTrend}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
-                                                <XAxis dataKey="day" fontSize={10} axisLine={false} tickLine={false} />
-                                                <YAxis fontSize={10} axisLine={false} tickLine={false} />
-                                                <Bar dataKey="count" fill="#4F46E5" radius={[4, 4, 0, 0]} />
-                                            </BarChart>
-                                        </ResponsiveContainer>
+                            {/* Modal Content */}
+                            <div className="flex-1 overflow-y-auto p-8 bg-gray-50">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total de Reservas</p>
+                                        <p className="text-3xl font-black text-primary-600">{teacherBookings.length}</p>
                                     </div>
-                                </div>
-
-                                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Histórico Recente</h4>
-                                    <div className="space-y-3 overflow-y-auto max-h-48 pr-2">
-                                        {teacherBookings.map((booking, idx) => (
-                                            <div key={idx} className="p-3 bg-gray-50 rounded-xl flex items-center justify-between border border-transparent hover:border-primary-100 transition-colors">
-                                                <div>
-                                                    <p className="text-xs font-bold text-gray-700">{booking.equipment?.name}</p>
-                                                    <p className="text-[9px] text-gray-400 font-bold uppercase">{format(parseISO(booking.booking_date), 'dd/MM/yyyy')} • {booking.start_time}</p>
-                                                </div>
-                                                <span className={clsx(
-                                                    "text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter",
-                                                    booking.status === 'completed' ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
-                                                )}>
-                                                    {booking.status}
+                                    <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Mix de Equipamentos usados</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {teacherStats.equipmentUsage.map((eq: any, idx: number) => (
+                                                <span key={idx} className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-[10px] font-bold uppercase tracking-tight">
+                                                    {eq.name} ({eq.value})
                                                 </span>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Frequência Semanal</h4>
+                                        <div className="h-48">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={teacherStats.weeklyTrend}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                                                    <XAxis dataKey="day" fontSize={10} axisLine={false} tickLine={false} />
+                                                    <YAxis fontSize={10} axisLine={false} tickLine={false} />
+                                                    <Bar dataKey="count" fill="#4F46E5" radius={[4, 4, 0, 0]} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Histórico Recente</h4>
+                                        <div className="space-y-3 overflow-y-auto max-h-48 pr-2">
+                                            {teacherBookings.map((booking, idx) => (
+                                                <div key={idx} className="p-3 bg-gray-50 rounded-xl flex items-center justify-between border border-transparent hover:border-primary-100 transition-colors">
+                                                    <div>
+                                                        <p className="text-xs font-bold text-gray-700">{booking.equipment?.name}</p>
+                                                        <p className="text-[9px] text-gray-400 font-bold uppercase">{format(parseISO(booking.booking_date), 'dd/MM/yyyy')} • {booking.start_time}</p>
+                                                    </div>
+                                                    <span className={clsx(
+                                                        "text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter",
+                                                        booking.status === 'completed' ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                                                    )}>
+                                                        {booking.status}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Modal Footer */}
-                        <div className="px-8 py-5 border-t border-gray-100 bg-white flex justify-end">
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 font-black text-xs uppercase tracking-widest rounded-xl transition-all"
-                            >
-                                Fechar Relatório
-                            </button>
+                            {/* Modal Footer */}
+                            <div className="px-8 py-5 border-t border-gray-100 bg-white flex justify-end">
+                                <button
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 font-black text-xs uppercase tracking-widest rounded-xl transition-all"
+                                >
+                                    Fechar Relatório
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }
