@@ -183,6 +183,12 @@ export function AdminHelp() {
                                             <span className="text-sm font-black text-amber-700 bg-amber-100 px-2 py-1 rounded mb-2 inline-block">Excluído pelo Professor</span>
                                             <p className="text-sm text-amber-800">Professor excluiu da visão dele. Admin ainda vê o registro.</p>
                                         </div>
+                                        <div className="p-4 rounded-xl bg-purple-50 border border-purple-100">
+                                            <div className="flex items-center gap-1.5 mb-2">
+                                                <span className="text-sm font-black text-purple-700 bg-purple-100 px-2 py-1 rounded inline-block">RECORRENTE</span>
+                                            </div>
+                                            <p className="text-sm text-purple-800">Agendamento fixo semanal. O professor consegue criar vários agendamentos fixos até o final do mês corrente.</p>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -618,6 +624,10 @@ export function AdminHelp() {
                                                 <Bell className="h-5 w-5" /> Tipos de Alerta
                                             </h3>
                                             <ul className="space-y-3 text-sm text-cyan-800">
+                                                <li className="flex items-start gap-2">
+                                                    <div className="h-1.5 w-1.5 rounded-full bg-cyan-600 mt-2 shrink-0"></div>
+                                                    <span><strong>Novo Agendamento:</strong> Alerta imediato sobre reserva de equipamento na unidade.</span>
+                                                </li>
                                                 <li className="flex items-start gap-2">
                                                     <div className="h-1.5 w-1.5 rounded-full bg-cyan-600 mt-2 shrink-0"></div>
                                                     <span><strong>Novo Usuário:</strong> Quando um professor se cadastra na unidade.</span>
