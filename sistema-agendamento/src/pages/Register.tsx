@@ -19,6 +19,7 @@ export function Register() {
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -266,11 +267,52 @@ export function Register() {
                             </div>
                         </div>
 
-                        <div className="pt-4">
+                        {/* LGPD Consent */}
+                        <div className="mt-8 bg-gray-50 border border-gray-200 rounded-xl p-5">
+                            <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                <AlertCircle className="h-4 w-4 text-primary-600" />
+                                Termos de Uso e Privacidade
+                            </h3>
+                            <div className="bg-white p-3 rounded-lg border border-gray-100 mb-4 h-32 overflow-y-auto text-xs text-gray-600 leading-relaxed shadow-inner">
+                                <p className="mb-2">
+                                    Declaro que li e aceito os termos. Estou ciente de que o sistema armazenará meu <strong>Nome</strong>, <strong>E-mail Institucional</strong> e <strong>Unidade</strong> para fins de identificação e acesso.
+                                </p>
+                                <p className="mb-2">
+                                    Concordo que todas as minhas ações de agendamento e empréstimo gerarão <strong>registros digitais (logs)</strong> para segurança e auditoria.
+                                </p>
+                                <p>
+                                    Autorizo também o armazenamento de cópias digitais dos <strong>Termos de Responsabilidade</strong> assinados por mim, para fins de controle de patrimônio da instituição.
+                                </p>
+                            </div>
+
+                            <div className="flex items-start">
+                                <div className="flex items-center h-5">
+                                    <input
+                                        id="terms"
+                                        name="terms"
+                                        type="checkbox"
+                                        required
+                                        checked={acceptedTerms}
+                                        onChange={(e) => setAcceptedTerms(e.target.checked)}
+                                        className="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300 rounded cursor-pointer"
+                                    />
+                                </div>
+                                <div className="ml-3 text-sm">
+                                    <label htmlFor="terms" className="font-medium text-gray-700 cursor-pointer select-none">
+                                        Li e concordo com os termos acima <span className="text-red-500">*</span>
+                                    </label>
+                                    <p className="text-gray-500 text-xs mt-1">
+                                        Você precisa aceitar os termos para criar sua conta.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-6">
                             <button
                                 type="submit"
-                                disabled={isSubmitting}
-                                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200 disabled:opacity-50"
+                                disabled={isSubmitting || !acceptedTerms}
+                                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? 'Cadastrando...' : 'Finalizar Cadastro'}
                             </button>
