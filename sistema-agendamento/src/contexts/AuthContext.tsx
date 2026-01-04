@@ -337,7 +337,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 totvs_number: data.totvs_number,
                 full_name: data.full_name,
                 email: data.email,
-                units: data.units
+                units: data.units,
+                terms_accepted: data.terms_accepted,
+                terms_accepted_at: data.terms_accepted ? new Date().toISOString() : null,
+                terms_version: 'v1.0' // Versão inicial dos termos
             });
 
         if (profileError) return { error: profileError.message };

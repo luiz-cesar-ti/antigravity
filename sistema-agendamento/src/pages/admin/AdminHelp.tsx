@@ -1,12 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-    LayoutDashboard,
-    Calendar,
-    Monitor,
-    Users,
-    ClipboardCheck,
-    Settings,
-    ChevronDown,
     ChevronRight,
     Search,
     Info,
@@ -17,7 +10,13 @@ import {
     AlertTriangle,
     Shield,
     BookOpen,
-    UserPlus
+    UserPlus,
+    LayoutDashboard,
+    Calendar,
+    Monitor,
+    Users,
+    ClipboardCheck,
+    Settings
 } from 'lucide-react';
 
 export function AdminHelp() {

@@ -3,7 +3,7 @@ import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { SCHOOL_UNITS } from '../../utils/constants';
 import type { User, Admin } from '../../types';
-import { Search, Mail, Building, Pencil, X, ToggleLeft, ToggleRight, AlertCircle, UserMinus, Check, Send, Repeat } from 'lucide-react';
+import { Search, Mail, Building, Pencil, X, ToggleLeft, ToggleRight, AlertCircle, UserMinus, Check, Send, Repeat, ShieldCheck } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { SuccessModal } from '../../components/SuccessModal';
 import { ConfirmModal } from '../../components/ConfirmModal';
@@ -320,6 +320,12 @@ export function AdminUsers() {
                                                     <Building className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
                                                     {teacher.units && teacher.units.length > 0 ? teacher.units.join(', ') : 'Nenhuma unidade'}
                                                 </p>
+                                                {teacher.terms_accepted && (
+                                                    <p className="flex items-center text-sm text-green-600 mt-2 sm:mt-0" title={`Termos aceitos em: ${teacher.terms_accepted_at ? format(parseISO(teacher.terms_accepted_at), 'dd/MM/yyyy HH:mm') : 'N/A'}`}>
+                                                        <ShieldCheck className="flex-shrink-0 mr-1.5 h-4 w-4" />
+                                                        LGPD OK
+                                                    </p>
+                                                )}
                                             </div>
                                             <div className="mt-2 sm:mt-0 text-xs text-gray-400">
                                                 Cadastrado em {teacher.created_at ? format(parseISO(teacher.created_at), 'dd/MM/yyyy') : '-'}

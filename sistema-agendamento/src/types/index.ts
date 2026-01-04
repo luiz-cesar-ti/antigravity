@@ -8,6 +8,9 @@ export interface User {
     active: boolean;
     recurring_booking_enabled: boolean;
     recurring_booking_units: string[];
+    terms_accepted?: boolean;
+    terms_accepted_at?: string;
+    terms_version?: string;
     created_at: string;
 }
 

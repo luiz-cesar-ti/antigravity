@@ -76,6 +76,7 @@ export function Register() {
             totvs_number: formData.totvs_number,
             full_name: formData.full_name,
             units: formData.units,
+            terms_accepted: acceptedTerms,
         });
 
         if (signUpError) {
