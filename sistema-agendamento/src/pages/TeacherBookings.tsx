@@ -515,26 +515,26 @@ export function TeacherBookings() {
                             const isEffectivelyClosed = first.status === 'encerrado' || (first.status === 'active' && isExpired);
 
                             return (
-                                <div key={first.display_id || first.id} className="group relative bg-white shadow-sm rounded-[2.5rem] p-8 border border-gray-100 hover:shadow-2xl hover:shadow-primary-100/30 transition-all duration-300 flex flex-col justify-between">
-                                    <div>
+                                <div key={first.display_id || first.id} className="group relative bg-white shadow-sm rounded-[2rem] p-5 md:p-6 border border-gray-100 hover:shadow-2xl hover:shadow-primary-100/30 transition-all duration-300 flex flex-col justify-between h-full">
+                                    <div className="flex flex-col h-full">
                                         <div className="flex justify-between items-start mb-4">
-                                            <div className="flex-1">
+                                            <div className="flex-1 min-w-0">
                                                 {!isMulti ? (
                                                     // Layout Original para Item Único
                                                     <div className="flex items-center space-x-3">
-                                                        <div className="p-2 bg-indigo-50 rounded-lg group-hover:bg-white/20 group-hover:text-white transition-colors duration-200 shrink-0">
+                                                        <div className="p-2 bg-indigo-50 rounded-xl group-hover:bg-primary-50 transition-colors duration-200 shrink-0 ring-1 ring-gray-50">
                                                             {getEquipmentIcon(first.equipment?.name)}
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <h3 className="font-bold text-gray-900 group-hover:text-indigo-900 transition-colors duration-200 truncate">
+                                                            <h3 className="font-bold text-gray-900 group-hover:text-primary-900 transition-colors duration-200 truncate leading-tight">
                                                                 {first.equipment?.name}
                                                             </h3>
-                                                            <div className="flex flex-col">
-                                                                <p className="text-xs text-indigo-600 group-hover:text-indigo-800 font-medium truncate">
+                                                            <div className="flex flex-col mt-0.5">
+                                                                <p className="text-[10px] text-primary-600 group-hover:text-primary-800 font-bold uppercase truncate">
                                                                     {first.equipment?.brand} {first.equipment?.model}
                                                                 </p>
-                                                                <span className="text-[10px] text-gray-400 group-hover:text-indigo-700 font-bold">
-                                                                    Qtd: {first.quantity}
+                                                                <span className="text-[10px] text-gray-400 group-hover:text-primary-700 font-black">
+                                                                    QTD: {first.quantity}
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -542,21 +542,21 @@ export function TeacherBookings() {
                                                 ) : (
                                                     // Novo Layout para Múltiplos Itens
                                                     <div className="space-y-3">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <div className="p-1.5 bg-indigo-600 rounded-lg">
-                                                                <Monitor className="h-4 w-4 text-white" />
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <div className="p-1 bg-indigo-600 rounded">
+                                                                <Monitor className="h-3 w-3 text-white" />
                                                             </div>
-                                                            <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Múltiplos Equipamentos</span>
+                                                            <span className="text-[9px] font-black text-indigo-600 uppercase tracking-widest italic">Multi-Equipamentos ({group.length})</span>
                                                         </div>
-                                                        <div className="space-y-2">
+                                                        <div className="space-y-1.5 max-h-[150px] overflow-y-auto pr-1">
                                                             {group.map((b) => (
-                                                                <div key={b.id} className="flex items-start gap-3 p-2 bg-gray-50 rounded-xl border border-transparent group-hover:border-indigo-100 transition-all">
-                                                                    <div className="shrink-0 mt-0.5">
+                                                                <div key={b.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded-xl border border-transparent group-hover:border-indigo-100 transition-all">
+                                                                    <div className="shrink-0 scale-75">
                                                                         {getEquipmentIcon(b.equipment?.name)}
                                                                     </div>
                                                                     <div className="min-w-0 flex-1">
-                                                                        <p className="text-xs font-bold text-gray-900 truncate">{b.equipment?.name}</p>
-                                                                        <p className="text-[9px] text-gray-500 truncate">{b.equipment?.brand} {b.equipment?.model} • Qtd: {b.quantity}</p>
+                                                                        <p className="text-[11px] font-bold text-gray-900 truncate leading-tight">{b.equipment?.name}</p>
+                                                                        <p className="text-[9px] text-gray-500 truncate font-medium uppercase">{b.equipment?.brand} • {b.quantity} un</p>
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -565,75 +565,75 @@ export function TeacherBookings() {
                                                 )}
                                             </div>
 
-                                            <div className="flex flex-col items-end gap-1 ml-4 shrink-0">
+                                            <div className="flex flex-col items-end gap-1 ml-3 shrink-0">
                                                 <span className={`
-                                                    px-2.5 py-0.5 rounded-full text-xs font-medium border
+                                                    px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-tighter
                                                     ${first.status === 'active' && !isExpired ? 'bg-green-50 text-green-700 border-green-100' :
-                                                        isEffectivelyClosed ? 'bg-blue-100 text-blue-700 border-blue-100' :
+                                                        isEffectivelyClosed ? 'bg-blue-50 text-blue-700 border-blue-100' :
                                                             'bg-red-50 text-red-700 border-red-100'}
                                                 `}>
-                                                    {first.status === 'active' && !isExpired ? 'Agendado' :
+                                                    {first.status === 'active' && !isExpired ? 'Reservado' :
                                                         isEffectivelyClosed ? 'Concluído' : 'Cancelado'}
                                                 </span>
                                                 {first.is_recurring && (
-                                                    <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-black uppercase tracking-tight rounded-lg border border-amber-100 italic">
+                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[8px] font-black uppercase tracking-tight rounded border border-amber-100 italic">
                                                         <Repeat className="h-2 w-2" />
                                                         Fixo
                                                     </div>
                                                 )}
                                                 {first.display_id && (
-                                                    <span className="text-[10px] font-mono text-gray-400 font-bold tracking-wider">
-                                                        #{first.display_id}
+                                                    <span className="text-[10px] font-black text-indigo-600 italic mt-0.5">
+                                                        ID TERMO #{first.display_id}
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="space-y-4 text-sm text-gray-600">
-                                            <div className="flex items-center p-3 bg-gray-50 rounded-2xl border border-gray-50 group-hover:border-primary-100 transition-all">
-                                                <div className="p-1.5 bg-white rounded-lg mr-4 shadow-sm">
-                                                    <MapPin className="h-4 w-4 text-primary-600" />
+                                        <div className="space-y-3 text-sm text-gray-600 mt-auto">
+                                            <div className="flex items-center p-2.5 bg-gray-50/50 rounded-2xl border border-gray-50 group-hover:border-primary-100/50 transition-all">
+                                                <div className="p-1.5 bg-white rounded-lg mr-3 shadow-sm shrink-0">
+                                                    <MapPin className="h-3.5 w-3.5 text-primary-600" />
                                                 </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Localização</span>
-                                                    <span className="font-bold text-gray-700">{first.local} • {first.unit}</span>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Localização</span>
+                                                    <span className="font-bold text-gray-700 text-xs truncate">{first.local} • {first.unit}</span>
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="flex flex-col p-3 bg-gray-50 rounded-2xl border border-gray-50">
-                                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Data</span>
-                                                    <div className="flex items-center font-bold text-gray-700">
-                                                        <Calendar className="h-4 w-4 mr-2 text-primary-600" />
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="flex flex-col p-2.5 bg-gray-50/50 rounded-2xl border border-gray-50 shrink-0">
+                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Data</span>
+                                                    <div className="flex items-center font-bold text-gray-700 text-xs">
+                                                        <Calendar className="h-3.5 w-3.5 mr-1.5 text-primary-600" />
                                                         {format(parseISO(first.booking_date), "dd/MM/yy")}
                                                     </div>
                                                 </div>
-                                                <div className="flex flex-col p-3 bg-gray-50 rounded-2xl border border-gray-50">
-                                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Horário</span>
-                                                    <div className="flex items-center font-bold text-gray-700">
-                                                        <Clock className="h-4 w-4 mr-2 text-primary-600" />
-                                                        {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
+                                                <div className="flex flex-col p-2.5 bg-gray-50/50 rounded-2xl border border-gray-50 shrink-0">
+                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Horário</span>
+                                                    <div className="flex items-center font-bold text-gray-700 text-xs">
+                                                        <Clock className="h-3.5 w-3.5 mr-1.5 text-primary-600" />
+                                                        {first.start_time.slice(0, 5)}-{first.end_time.slice(0, 5)}
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {first.observations && (
-                                            <div className="mt-6 p-4 bg-amber-50 rounded-2xl border border-amber-100/50">
-                                                <p className="text-[11px] text-amber-800 font-medium italic leading-relaxed line-clamp-2">
+                                            <div className="mt-4 p-3 bg-amber-50/50 rounded-xl border border-amber-100/30">
+                                                <p className="text-[10px] text-amber-800 font-medium italic leading-relaxed line-clamp-1">
                                                     "{first.observations}"
                                                 </p>
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <button
                                             onClick={() => handleOpenTermModal(first)}
-                                            className="flex items-center justify-center py-4 px-6 bg-white border border-gray-200 text-gray-700 hover:border-primary-200 hover:text-primary-600 font-bold text-xs rounded-2xl transition-all active:scale-95 shadow-sm"
+                                            className="flex items-center justify-center py-3 px-4 bg-white border border-gray-200 text-gray-700 hover:border-primary-200 hover:text-primary-600 font-bold text-[10px] rounded-xl transition-all active:scale-95 shadow-sm uppercase tracking-wider"
                                         >
-                                            <FileText className="h-4 w-4 mr-2 text-primary-600" />
-                                            Ver Termo
+                                            <FileText className="h-3.5 w-3.5 mr-1.5 text-primary-600" />
+                                            Termo
                                         </button>
 
                                         <button
@@ -642,9 +642,9 @@ export function TeacherBookings() {
                                                 bookingId: first.id,
                                                 recurringId: first.recurring_id
                                             })}
-                                            className="flex items-center justify-center py-4 px-6 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-black text-xs rounded-2xl transition-all active:scale-95 group/btn border border-red-100"
+                                            className="flex items-center justify-center py-3 px-4 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-black text-[10px] rounded-xl transition-all active:scale-95 group/btn border border-red-100 uppercase tracking-wider"
                                         >
-                                            <Trash2 className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
+                                            <Trash2 className="h-3.5 w-3.5 mr-1.5 group-hover/btn:scale-110 transition-transform" />
                                             Excluir
                                         </button>
                                     </div>
