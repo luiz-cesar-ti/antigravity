@@ -41,6 +41,7 @@ export function AdminBookings() {
             .from('bookings')
             .select(`
                 *,
+                created_at,
                 equipment (name, brand, model),
                 users (full_name, email) 
             `);
@@ -254,7 +255,14 @@ export function AdminBookings() {
                 <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-gray-50/50">
                     <div className="bg-white shadow-2xl mx-auto" style={{ maxWidth: '210mm' }}>
                         <div id="admin-term-doc-inner">
-                            {pdfData && pdfData.term_document && <TermDocument data={pdfData.term_document} />}
+                            {pdfData && pdfData.term_document && (
+                                <TermDocument
+                                    data={{
+                                        ...pdfData.term_document,
+                                        created_at: pdfData.created_at
+                                    }}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>
