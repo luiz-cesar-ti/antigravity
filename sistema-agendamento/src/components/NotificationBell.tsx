@@ -1,13 +1,13 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Check } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { useNotifications } from '../contexts/NotificationContext';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export function NotificationBell() {
-    const { unreadCount, notifications, markAsRead, markAllAsRead } = useNotifications();
+    const { unreadCount, notifications, markAllAsRead } = useNotifications();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -34,20 +34,23 @@ export function NotificationBell() {
         setIsOpen(!isOpen);
     };
 
-    const handleNotificationClick = async (id: string) => {
+    const handleNotificationClick = async () => {
         // Already marked as read by opening, but specific logic for link is fine
         setIsOpen(false);
     };
 
     return (
-        <div className="relative mr-4" ref={dropdownRef}>
+        <div className="relative" ref={dropdownRef}>
             <button
                 onClick={handleBellClick}
-                className="relative p-2 text-gray-600 bg-white hover:bg-gray-50 border border-gray-200 hover:border-primary-300 hover:text-primary-600 transition-all rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 active:scale-95"
+                className={`relative p-2.5 transition-all rounded-full shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 active:scale-95 border-2 ${unreadCount > 0
+                    ? 'bg-primary-600 text-white border-primary-400 hover:bg-primary-700 animate-pulse-subtle shadow-primary-200'
+                    : 'bg-white text-gray-600 border-gray-100 hover:bg-gray-50 hover:border-primary-200'
+                    }`}
             >
-                <Bell className="h-6 w-6" />
+                <Bell className={`h-6 w-6 ${unreadCount > 0 ? 'fill-current' : ''}`} />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-white animate-in zoom-in duration-200">
+                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] font-black text-white ring-2 ring-white shadow-lg">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
@@ -80,7 +83,7 @@ export function NotificationBell() {
                                             {notification.link ? (
                                                 <Link
                                                     to={notification.link}
-                                                    onClick={() => handleNotificationClick(notification.id)}
+                                                    onClick={() => handleNotificationClick()}
                                                     className="block text-sm font-medium text-gray-900 hover:underline"
                                                 >
                                                     {notification.message}

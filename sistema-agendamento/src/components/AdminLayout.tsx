@@ -164,11 +164,8 @@ export function AdminLayout() {
                         <div className="hidden md:block"></div>
 
                         {/* Right Actions */}
-                        <div className="flex items-center">
+                        <div className="flex items-center mr-6">
                             <NotificationBell />
-                            <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold border border-primary-200">
-                                {adminUser?.username?.substring(0, 2).toUpperCase() || 'AD'}
-                            </div>
                         </div>
                     </header>
 
