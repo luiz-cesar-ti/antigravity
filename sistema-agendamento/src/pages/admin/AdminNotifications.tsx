@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Check, Clock, Bell } from 'lucide-react';
+import { Check, Clock, Bell, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useNotifications } from '../../contexts/NotificationContext';
 
 export function AdminNotifications() {
-    const { notifications, markAsRead, markAllAsRead } = useNotifications();
+    const { notifications, markAsRead, markAllAsRead, removeNotification } = useNotifications();
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
     const filteredNotifications = filter === 'unread'
@@ -83,14 +83,23 @@ export function AdminNotifications() {
                                         </div>
                                     </div>
 
-                                    {!notification.read && (
+                                    <div className="flex items-center gap-2">
+                                        {!notification.read && (
+                                            <button
+                                                onClick={() => markAsRead(notification.id)}
+                                                className="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-full transition-colors"
+                                            >
+                                                Marcar como lida
+                                            </button>
+                                        )}
                                         <button
-                                            onClick={() => markAsRead(notification.id)}
-                                            className="ml-4 text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-full transition-colors"
+                                            onClick={() => removeNotification(notification.id)}
+                                            className="p-1 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                            title="Excluir notificação"
                                         >
-                                            Marcar como lida
+                                            <Trash2 className="h-4 w-4" />
                                         </button>
-                                    )}
+                                    </div>
                                 </div>
                             </li>
                         ))}

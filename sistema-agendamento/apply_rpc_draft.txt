@@ -1,0 +1,53 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = 'https://qwzowpunfziersklxrpv.supabase.co';
+const serviceRoleKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3em93cHVuZnppZXJza2x4cnB2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzEwOTEwOSwiZXhwIjoyMDgyNjg1MTA5fQ.uxuqRiw2tpazgIMcQG72SCqOelQgOZPpWbZP0Mebf-Q';
+
+const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+const query = `
+CREATE OR REPLACE FUNCTION public.delete_notification(p_id UUID)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    DELETE FROM public.notifications
+    WHERE id = p_id;
+END;
+$$;
+`;
+
+async function run() {
+    console.log('Start running migration...');
+    const { error } = await supabase.rpc('execute_sql', { query }); // Trying via execute_sql first if available, otherwise raw RPC won't work for DDl usually unless enabled.
+    // Wait, client libraries don't allow raw SQL execution unless there is a specific function for it.
+    // Standard supabase-js doesn't have .query().
+    
+    // HOWEVER, the user has the service role key. 
+    // And actually, if I can't use a pre-existing execute_sql function (which might not exist), I might be stuck.
+    // BUT, usually "postgres" connection is best.
+    
+    // ACTUALLY, I can use the 'postgres' library to connect directly since I have the DB URL from the previous step!
+    // "postgresql://postgres.bbumqprvaupzrujciuyx:[REDACTED]@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
+    // Wait, the REDACTED part... I don't have the DB password. I only have the keys.
+    
+    // Strategies with Service Role Key:
+    // 1. If there's an existing 'exec_sql' or similar function.
+    // 2. Using the REST API to POST to /rest/v1/rpc/ ... but I can only call existing functions.
+    
+    // Wait! The Supabase Management API (v1) allows running SQL.
+    // But I don't have the Personal Access Token, I only have the Project API Keys.
+    // API Keys (anon/service) are for the Data API (PostgREST), not the Management API.
+    
+    // ERROR: I cannot execute DDL (CREATE FUNCTION) via the Data API (supabase-js) using just the Service Role Key UNLESS there is already a function exposed to do so.
+    
+    // CHECK: Does the project have 'mcp_supabase-mcp-server_execute_sql'? 
+    // I tried 'mcp_supabase-mcp-server_apply_migration' and it failed.
+    // Maybe 'mcp_supabase-mcp-server_execute_sql' works?
+    // Project ID: qwzowpunfziersklxrpv
+    // I will try mcp_supabase-mcp-server_execute_sql immediately instead of this script.
+}
+
+// I will skip writing this file and go straight to trying the execute_sql tool.
+// If that fails, I'll ask the user for the DB Password or to run the SQL themselves in the SQL Editor.

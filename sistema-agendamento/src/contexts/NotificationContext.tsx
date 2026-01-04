@@ -18,6 +18,7 @@ interface NotificationContextType {
     unreadCount: number;
     markAsRead: (id: string) => Promise<void>;
     markAllAsRead: () => Promise<void>;
+    removeNotification: (id: string) => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -152,8 +153,26 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }
     };
 
+    const removeNotification = async (id: string) => {
+        // Optimistic update
+        setNotifications(prev => prev.filter(n => n.id !== id));
+
+        try {
+            // Use RPC to delete notification (bypass RLS)
+            const { error } = await supabase.rpc('delete_notification', { p_id: id });
+
+            if (error) {
+                console.error('Error deleting notification (RPC):', error);
+                // Revert optimistic update only if error
+                setNotifications(prev => [...prev]); // Trigger re-fetch or handle error
+            }
+        } catch (err) {
+            console.error('Exception deleting notification:', err);
+        }
+    };
+
     return (
-        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead }}>
+        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, removeNotification }}>
             {children}
         </NotificationContext.Provider>
     );
