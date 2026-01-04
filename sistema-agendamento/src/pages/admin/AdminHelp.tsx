@@ -16,7 +16,8 @@ import {
     CheckCircle2,
     AlertTriangle,
     Shield,
-    BookOpen
+    BookOpen,
+    UserPlus
 } from 'lucide-react';
 
 export function AdminHelp() {
@@ -27,6 +28,7 @@ export function AdminHelp() {
         { id: 'bookings', title: 'Agendamentos', icon: Calendar },
         { id: 'terms', title: 'Termo de Responsabilidade', icon: FileText },
         { id: 'equipments', title: 'Equipamentos', icon: Monitor },
+        { id: 'register', title: 'Cadastro de Professores', icon: UserPlus },
         { id: 'users', title: 'Usuários', icon: Users },
         { id: 'loans', title: 'Empréstimos', icon: ClipboardCheck },
         { id: 'settings', title: 'Configurações', icon: Settings },
@@ -100,7 +102,7 @@ export function AdminHelp() {
                                         <ul className="space-y-2 text-sm text-gray-600">
                                             <li>• <strong>Agendamentos Ativos:</strong> Total de reservas futuras validas.</li>
                                             <li>• <strong>Agendamentos Concluídos:</strong> Contagem total de agendamentos realizados com sucesso.</li>
-                                            <li>• <strong>Usuários Totais:</strong> Contagem de professores e admins cadastrados na unidade.</li>
+                                            <li>• <strong>Docentes ativos:</strong> Contagem de professores cadastrados na unidade.</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -132,7 +134,7 @@ export function AdminHelp() {
                                             <p className="text-sm text-blue-800">Data/Hora já passaram. O sistema encerra automaticamente.</p>
                                         </div>
                                         <div className="p-4 rounded-xl bg-amber-50 border border-amber-100">
-                                            <span className="text-sm font-black text-amber-700 bg-amber-100 px-2 py-1 rounded mb-2 inline-block">EXCLUÍDO (PROF)</span>
+                                            <span className="text-sm font-black text-amber-700 bg-amber-100 px-2 py-1 rounded mb-2 inline-block">Excluído pelo Professor</span>
                                             <p className="text-sm text-amber-800">Professor excluiu da visão dele. Admin ainda vê o registro.</p>
                                         </div>
                                     </div>
@@ -309,6 +311,100 @@ export function AdminHelp() {
                         </div>
                     </section>
 
+                    {/* Cadastro de Professores - NEW */}
+                    <section id="register" className="scroll-mt-8">
+                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-pink-600 to-pink-800 p-8 text-white">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
+                                        <UserPlus className="h-8 w-8" />
+                                    </div>
+                                    <h2 className="text-2xl font-black">Cadastro de Professores</h2>
+                                </div>
+                            </div>
+                            <div className="p-8 space-y-8">
+                                <p className="text-gray-600 leading-relaxed text-lg">
+                                    Para acessar o sistema e realizar agendamentos, todo professor deve realizar seu próprio cadastro através da tela pública de registro. O processo é rigoroso para garantir a segurança e a organização das unidades.
+                                </p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-6">
+                                        <h3 className="text-lg font-black text-gray-900 border-l-4 border-pink-500 pl-3">Dados Obrigatórios</h3>
+
+                                        <div className="space-y-4">
+                                            <div className="bg-pink-50/50 p-4 rounded-xl border border-pink-100">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <span className="font-bold text-gray-800">1. Número TOTVS</span>
+                                                    <span className="text-[10px] font-black text-pink-500 bg-pink-100 px-2 py-0.5 rounded">ID APENAS</span>
+                                                </div>
+                                                <p className="text-sm text-gray-600">Identificador único do professor. Usado apenas para fins de cadastro e distinção.</p>
+                                            </div>
+
+                                            <div className="bg-pink-50/50 p-4 rounded-xl border border-pink-100">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <span className="font-bold text-gray-800">2. E-mail Institucional</span>
+                                                    <span className="text-[10px] font-black text-red-500 bg-red-100 px-2 py-0.5 rounded">RESTRIÇÃO</span>
+                                                </div>
+                                                <p className="text-sm text-gray-600 mb-2">O sistema aceita <strong>exclusivamente</strong> e-mails com o domínio oficial:</p>
+                                                <code className="text-sm font-bold text-pink-600 bg-white px-2 py-1 rounded border border-pink-200 block text-center">
+                                                    @objetivoportal.com.br
+                                                </code>
+                                            </div>
+
+                                            <div className="bg-pink-50/50 p-4 rounded-xl border border-pink-100">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <span className="font-bold text-gray-800">3. Confirmação de E-mail</span>
+                                                    <span className="text-[10px] font-black text-amber-500 bg-amber-100 px-2 py-0.5 rounded">OBRIGATÓRIO</span>
+                                                </div>
+                                                <p className="text-sm text-gray-600">Para a segurança do sistema e identificação real do professor, é necessário acessar a caixa de entrada do email institucional e clicar no link de confirmação enviado.</p>
+                                            </div>
+
+                                            <div className="bg-pink-50/50 p-4 rounded-xl border border-pink-100">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <span className="font-bold text-gray-800">4. Senha Segura</span>
+                                                    <span className="text-[10px] font-black text-gray-500 bg-gray-200 px-2 py-0.5 rounded">SEGURANÇA</span>
+                                                </div>
+                                                <p className="text-sm text-gray-600">Mínimo de <strong>8 dígitos</strong> requeridos.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <h3 className="text-lg font-black text-gray-900 border-l-4 border-blue-500 pl-3">Regras de Acesso</h3>
+
+                                        <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm"><Users className="h-5 w-5" /></div>
+                                                <h4 className="font-bold text-blue-900">Seleção de Unidades</h4>
+                                            </div>
+                                            <p className="text-sm text-blue-800 leading-relaxed mb-4">
+                                                Para que o professor consiga visualizar e agendar equipamentos em múltiplas escolas, ele <strong>DEVE selecionar TODAS as unidades</strong> em que trabalha no momento do cadastro.
+                                            </p>
+                                            <div className="bg-white p-3 rounded-lg border border-blue-100 text-xs text-gray-500 italic">
+                                                "Se o professor trabalha na unidade Objetivo São Vicente e Objetivo Praia Grande, ele precisa marcar ambas as unidades do Objetivo. Caso contrário, o professor não conseguirá selecionar as unidades para realizar o agendamento."
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <div className="p-2 bg-white rounded-lg text-gray-600 shadow-sm"><Shield className="h-5 w-5" /></div>
+                                                <h4 className="font-bold text-gray-900">Termo de Consentimento</h4>
+                                            </div>
+                                            <p className="text-sm text-gray-600 leading-relaxed">
+                                                Etapa final obrigatória. O professor deve ler e clicar na caixa de aceite ("Li e concordo") declarando estar ciente de que:
+                                            </p>
+                                            <ul className="mt-3 space-y-2 text-sm text-gray-500 list-disc list-inside">
+                                                <li>O sistema coleta Nome e E-mail para identificação.</li>
+                                                <li>Suas ações geram <strong>logs de segurança</strong>.</li>
+                                                <li>Cópias dos termos assinados são armazenadas digitalmente.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                     {/* Usuários */}
                     <section id="users" className="scroll-mt-8">
                         <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
@@ -325,19 +421,25 @@ export function AdminHelp() {
                                     <div className="flex-1">
                                         <h3 className="text-lg font-black text-gray-900 mb-4">Funções do Administrador</h3>
                                         <div className="space-y-4">
-                                            <div className="flex items-start gap-3">
-                                                <div className="p-2 bg-gray-100 rounded-lg"><Search className="h-4 w-4" /></div>
-                                                <div>
-                                                    <p className="font-bold text-gray-900 text-sm">Reset de Senha</p>
-                                                    <p className="text-xs text-gray-500">O Admin NÃO redefine senhas manualmente. O próprio usuário deve clicar em "Esqueci a Senha" na tela de login.</p>
+                                            <div className="bg-orange-50 border border-orange-100 rounded-xl p-5">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <div className="p-2 bg-white rounded-lg text-orange-600 shadow-sm"><Search className="h-5 w-5" /></div>
+                                                    <h4 className="font-bold text-orange-900 text-base">Reset de Senha</h4>
                                                 </div>
+                                                <p className="text-sm text-orange-800 leading-relaxed">
+                                                    O Admin NÃO redefine senhas manualmente. O próprio usuário deve clicar em "Esqueci a Senha" na tela de login.
+                                                </p>
                                             </div>
-                                            <div className="flex items-start gap-3">
-                                                <div className="p-2 bg-gray-100 rounded-lg"><Settings className="h-4 w-4" /></div>
-                                                <div>
-                                                    <p className="font-bold text-gray-900 text-sm">Edição de Dados</p>
-                                                    <p className="text-xs text-gray-500">
-                                                        Admin só altera <strong>Nome e Unidade</strong>. O campo <strong>Email é bloqueado</strong> para segurança. É possível reenviar o email de confirmação se necessário.
+
+                                            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <div className="p-2 bg-white rounded-lg text-indigo-600 shadow-sm"><Settings className="h-5 w-5" /></div>
+                                                    <h4 className="font-bold text-indigo-900 text-base">Edição de Dados</h4>
+                                                </div>
+                                                <div className="text-sm text-indigo-800 space-y-2 leading-relaxed">
+                                                    <p>O Administrador possui controle total para corrigir o <strong>Nome Completo</strong> do professor caso haja erros de digitação.</p>
+                                                    <p className="pt-2 border-t border-indigo-100/50">
+                                                        <strong>Gestão de Unidades:</strong> É possível incluir ou remover um professor de uma unidade específica a qualquer momento. Isso libera ou revoga o acesso dele à agenda daquela escola imediatamente.
                                                     </p>
                                                 </div>
                                             </div>
@@ -355,6 +457,36 @@ export function AdminHelp() {
                                                 <p className="text-xs text-gray-600 mt-1">Acesso restrito. Vê apenas seus próprios agendamentos e disponibilidade de equipamentos.</p>
                                             </li>
                                         </ul>
+                                    </div>
+                                </div>
+
+                                {/* Agendamento Recorrente - NEW BLOCK */}
+                                <div className="mt-8 bg-purple-50 border border-purple-100 rounded-2xl p-6">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="p-2 bg-white rounded-lg text-purple-600 shadow-sm"><Calendar className="h-5 w-5" /></div>
+                                        <h3 className="font-bold text-lg text-purple-900">Agendamento Fixo (Recorrente)</h3>
+                                    </div>
+                                    <p className="text-sm text-purple-900 mb-4 leading-relaxed">
+                                        O agendamento recorrente permite que um professor tenha um agendamento fixo toda semana (ex: Toda Quinta às 08:00).
+                                    </p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="bg-white p-4 rounded-xl border border-purple-100">
+                                            <h4 className="text-sm font-bold text-gray-800 mb-2">Renovação Mensal</h4>
+                                            <p className="text-xs text-gray-600 leading-relaxed">
+                                                O sistema gera os agendamentos automáticos <strong>apenas até o final do mês atual</strong>. No início de cada mês, o professor deve realizar um novo agendamento.
+                                                <br /><br />
+                                                Isso garante que um <strong>novo Termo de Responsabilidade</strong>, com as datas atualizadas, seja assinado mensalmente, aumentando a segurança jurídica.
+                                            </p>
+                                        </div>
+                                        <div className="bg-white p-4 rounded-xl border border-purple-100 relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded-bl-lg">REGRA DE OURO</div>
+                                            <h4 className="text-sm font-bold text-gray-800 mb-2">Permissão de Acesso</h4>
+                                            <p className="text-xs text-gray-600 leading-relaxed">
+                                                <strong>Exclusivo de Admins:</strong> Apenas um Administrador pode liberar essa função para um professor.
+                                                <br /><br />
+                                                <span className="italic text-purple-600">"Um Admin de uma unidade só pode conceder permissão de recorrência para professores daquela mesma unidade. Se o professor atua em outra escola, o Admin de lá é quem deve liberar."</span>
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -449,7 +581,7 @@ export function AdminHelp() {
                     </section>
 
                 </div>
-            </div>
+            </div >
 
             <div className="mt-20 text-center border-t border-gray-100 pt-10">
                 <p className="text-gray-400 text-sm font-medium"></p>

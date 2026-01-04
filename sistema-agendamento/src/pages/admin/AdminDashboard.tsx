@@ -243,7 +243,7 @@ export function AdminDashboard() {
                         <Calendar className="h-7 w-7" />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Agendamentos Futuros</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Agendamentos Ativos</p>
                         <p className="text-3xl font-black text-gray-900">{stats.activeBookings}</p>
                     </div>
                 </div>
