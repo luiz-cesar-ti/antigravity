@@ -472,7 +472,7 @@ export function AdminBookings() {
                                 >
                                     <option value="all">Todos os Tipos</option>
                                     <option value="normal">Agendamento Normal</option>
-                                    <option value="recurring">Agendamento Fixo</option>
+                                    <option value="recurring">Agendamento Recorrente</option>
                                 </select>
                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                             </div>
@@ -513,27 +513,34 @@ export function AdminBookings() {
                             </li>
                         ) : (
                             (() => {
-                                // Group bookings by display_id
+                                // Group bookings by date and display_id to separate recurring dates
                                 const grouped: Record<string, Booking[]> = {};
                                 const singleBookings: Booking[] = [];
 
                                 filteredBookings.forEach(b => {
                                     if (b.display_id) {
-                                        if (!grouped[b.display_id]) grouped[b.display_id] = [];
-                                        grouped[b.display_id].push(b);
+                                        // Include date in grouping key to separate recurring cards
+                                        const groupKey = `${b.booking_date}_${b.display_id}`;
+                                        if (!grouped[groupKey]) grouped[groupKey] = [];
+                                        grouped[groupKey].push(b);
                                     } else {
                                         singleBookings.push(b);
                                     }
                                 });
 
-                                const displayIds = Array.from(new Set(filteredBookings.map(b => b.display_id).filter(id => !!id) as string[]));
+                                // Get unique keys while maintaining order
+                                const groupKeys = Array.from(new Set(
+                                    filteredBookings
+                                        .filter(b => !!b.display_id)
+                                        .map(b => `${b.booking_date}_${b.display_id}`)
+                                ));
 
-                                return [...displayIds.map(id => grouped[id]), ...singleBookings.map(b => [b])].map((group) => {
+                                return [...groupKeys.map(key => grouped[key]), ...singleBookings.map(b => [b])].map((group) => {
                                     const first = group[0];
                                     const isMulti = group.length > 1;
 
                                     return (
-                                        <li key={first.display_id || first.id} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-lg transition-all overflow-hidden group">
+                                        <li key={first.display_id ? `${first.booking_date}_${first.display_id}` : first.id} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-lg transition-all overflow-hidden group">
                                             <div className="p-4 md:p-6 lg:p-7">
 
                                                 {/* 1. TOP SECTION: Conditional Layout */}
@@ -563,7 +570,15 @@ export function AdminBookings() {
                                                             <div className="flex flex-col min-w-0">
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="font-bold text-gray-900 truncate">{(first as any).users?.full_name}</span>
-                                                                    {getStatusBadge(first)}
+                                                                    <div className="flex items-center gap-2">
+                                                                        {getStatusBadge(first)}
+                                                                        {first.is_recurring && (
+                                                                            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-100 italic leading-4">
+                                                                                <Repeat className="h-3 w-3" />
+                                                                                Recorrente
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5 text-xs text-gray-400 font-bold uppercase tracking-wider">
                                                                     <span className="truncate">{(first as any).users?.email}</span>
@@ -597,6 +612,7 @@ export function AdminBookings() {
                                                                 <Trash2 className="h-5 w-5" />
                                                             </button>
                                                         </div>
+
                                                     </div>
                                                 ) : (
                                                     // MULTI ITEM LAYOUT (Requested Style) - Refined Spacing
@@ -612,7 +628,15 @@ export function AdminBookings() {
                                                                         <span className="text-sm font-black text-gray-900 truncate leading-none">
                                                                             {(first as any).users?.full_name}
                                                                         </span>
-                                                                        {getStatusBadge(first)}
+                                                                        <div className="flex items-center gap-2">
+                                                                            {getStatusBadge(first)}
+                                                                            {first.is_recurring && (
+                                                                                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-100 italic leading-4">
+                                                                                    <Repeat className="h-3 w-3" />
+                                                                                    Recorrente
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-xs text-gray-400 font-bold uppercase tracking-wider">
                                                                         <span className="truncate">{(first as any).users?.email}</span>
@@ -646,6 +670,8 @@ export function AdminBookings() {
                                                                 </button>
                                                             </div>
                                                         </div>
+
+
 
                                                         {/* Horizontal Equipment List (Middle) */}
                                                         <div className="flex flex-wrap items-center gap-4 pb-2 scrollbar-none">
@@ -711,9 +737,8 @@ export function AdminBookings() {
                                     );
                                 });
                             })()
-                        )}
-                    </ul>
-                </div>
+                        )}</ul >
+                </div >
             )}
 
             {

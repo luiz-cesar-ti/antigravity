@@ -284,7 +284,7 @@ export function AdminHelp() {
                                             <p className="text-sm text-gray-600 leading-relaxed">O termo padrão criado automaticamente para os agendamentos do dia a dia. Válido para reservas pontuais.</p>
                                         </div>
                                         <div className="p-6 bg-gray-50 rounded-xl border border-gray-100 h-full">
-                                            <span className="text-xs font-black text-purple-600 bg-purple-100 px-2 py-1 rounded mb-3 inline-block">FIXO (RECORRENTE)</span>
+                                            <span className="text-xs font-black text-purple-600 bg-purple-100 px-2 py-1 rounded mb-3 inline-block">RECORRENTE</span>
                                             <h4 className="font-bold text-gray-800 text-lg mb-2">Termo Recorrente</h4>
                                             <p className="text-sm text-gray-600 leading-relaxed">Função ativada pelo Admin. Permite ao professor agendar um dia fixo na semana. O termo assinado valida todas as datas agendadas para o mês vigente.</p>
                                         </div>
@@ -510,7 +510,7 @@ export function AdminHelp() {
                                 <div className="mt-8 bg-purple-50 border border-purple-100 rounded-2xl p-6">
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="p-2 bg-white rounded-lg text-purple-600 shadow-sm"><Calendar className="h-5 w-5" /></div>
-                                        <h3 className="font-bold text-lg text-purple-900">Agendamento Fixo (Recorrente)</h3>
+                                        <h3 className="font-bold text-lg text-purple-900">Agendamento Recorrente</h3>
                                     </div>
                                     <p className="text-sm text-purple-900 mb-4 leading-relaxed">
                                         O agendamento recorrente permite que um professor tenha um agendamento fixo toda semana (ex: Toda Quinta às 08:00).

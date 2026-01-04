@@ -422,7 +422,7 @@ export function AdminUsers() {
                             <div className="flex flex-col gap-2 p-4 bg-primary-50 rounded-2xl border border-primary-100">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm font-bold text-primary-900">Agendamento Fixo</p>
+                                        <p className="text-sm font-bold text-primary-900">Agendamento Recorrente</p>
                                         <p className="text-[10px] text-primary-600 font-bold uppercase tracking-tight">
                                             {(user as Admin)?.unit
                                                 ? `Autorizar para Unidade: ${(user as Admin).unit}`

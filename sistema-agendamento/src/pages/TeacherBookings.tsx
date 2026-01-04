@@ -158,9 +158,9 @@ export function TeacherBookings() {
         </div>
     );
 
-    const getEquipmentIcon = (name: string = '') => {
+    const getEquipmentIcon = (name: string = '', className?: string) => {
         const n = name.toLowerCase();
-        const baseClass = "h-6 w-6 text-primary-600";
+        const baseClass = className || "h-6 w-6 text-primary-600";
         if (n.includes('notebook') || n.includes('laptop') || n.includes('pc') || n.includes('computador')) return <Laptop className={baseClass} />;
         if (n.includes('projetor') || n.includes('datashow')) return <Projector className={baseClass} />;
         if (n.includes('caixa') || n.includes('som') || n.includes('audio')) return <Speaker className={baseClass} />;
@@ -440,7 +440,7 @@ export function TeacherBookings() {
                                 >
                                     <option value="all">Todos os Tipos</option>
                                     <option value="normal">Agendamento Normal</option>
-                                    <option value="recurring">Agendamento Fixo</option>
+                                    <option value="recurring">Agendamento Recorrente</option>
                                 </select>
                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                             </div>
@@ -478,27 +478,31 @@ export function TeacherBookings() {
                     </p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-start">
                     {(() => {
-                        // Group bookings by display_id
+                        // Group bookings by date and display_id to separate recurring dates
                         const grouped: Record<string, Booking[]> = {};
                         const singleBookings: Booking[] = [];
 
                         filteredBookings.forEach(b => {
                             if (b.display_id) {
-                                if (!grouped[b.display_id]) grouped[b.display_id] = [];
-                                grouped[b.display_id].push(b);
+                                // Include date in grouping key to separate recurring cards
+                                const groupKey = `${b.booking_date}_${b.display_id}`;
+                                if (!grouped[groupKey]) grouped[groupKey] = [];
+                                grouped[groupKey].push(b);
                             } else {
                                 singleBookings.push(b);
                             }
                         });
 
-                        // Merged list of unique entries (either a group or a single un-id'd booking)
-                        // Using a Map or similar to preserve first occurrence order if needed, 
-                        // but here we can just iterate the IDs in order they appeared
-                        const displayIds = Array.from(new Set(filteredBookings.map(b => b.display_id).filter(id => !!id) as string[]));
+                        // Get unique keys while maintaining order
+                        const groupKeys = Array.from(new Set(
+                            filteredBookings
+                                .filter(b => !!b.display_id)
+                                .map(b => `${b.booking_date}_${b.display_id}`)
+                        ));
 
-                        return [...displayIds.map(id => grouped[id]), ...singleBookings.map(b => [b])].map((group) => {
+                        return [...groupKeys.map(key => grouped[key]), ...singleBookings.map(b => [b])].map((group) => {
                             const first = group[0];
                             const isMulti = group.length > 1;
 
@@ -515,15 +519,15 @@ export function TeacherBookings() {
                             const isEffectivelyClosed = first.status === 'encerrado' || (first.status === 'active' && isExpired);
 
                             return (
-                                <div key={first.display_id || first.id} className="group relative bg-white shadow-sm rounded-[2rem] p-5 md:p-6 border border-gray-100 hover:shadow-2xl hover:shadow-primary-100/30 transition-all duration-300 flex flex-col justify-between h-full">
-                                    <div className="flex flex-col h-full">
+                                <div key={first.display_id ? `${first.booking_date}_${first.display_id}` : first.id} className="group relative bg-white shadow-sm rounded-[2rem] p-5 md:p-6 border border-gray-100 hover:shadow-2xl hover:shadow-primary-100/30 transition-all duration-300 flex flex-col">
+                                    <div className="flex flex-col">
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex-1 min-w-0">
                                                 {!isMulti ? (
                                                     // Layout Original para Item Único
                                                     <div className="flex items-center space-x-3">
-                                                        <div className="p-2 bg-indigo-50 rounded-xl group-hover:bg-primary-50 transition-colors duration-200 shrink-0 ring-1 ring-gray-50">
-                                                            {getEquipmentIcon(first.equipment?.name)}
+                                                        <div className="h-12 w-12 bg-indigo-50 rounded-2xl flex items-center justify-center group-hover:bg-primary-50 transition-colors duration-200 shrink-0 ring-1 ring-gray-100 shadow-sm">
+                                                            {getEquipmentIcon(first.equipment?.name, "h-6 w-6")}
                                                         </div>
                                                         <div className="min-w-0">
                                                             <h3 className="font-bold text-gray-900 group-hover:text-primary-900 transition-colors duration-200 truncate leading-tight">
@@ -533,30 +537,30 @@ export function TeacherBookings() {
                                                                 <p className="text-[10px] text-primary-600 group-hover:text-primary-800 font-bold uppercase truncate">
                                                                     {first.equipment?.brand} {first.equipment?.model}
                                                                 </p>
-                                                                <span className="text-[10px] text-gray-400 group-hover:text-primary-700 font-black">
-                                                                    QTD: {first.quantity}
+                                                                <span className="text-xs md:text-sm font-black text-blue-600 uppercase tracking-tight mt-1">
+                                                                    Quantidade {first.quantity}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 ) : (
                                                     // Novo Layout para Múltiplos Itens
-                                                    <div className="space-y-3">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <div className="p-1 bg-indigo-600 rounded">
+                                                    <div className="space-y-4">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <div className="p-1.5 bg-indigo-600 rounded-lg shadow-sm">
                                                                 <Monitor className="h-3 w-3 text-white" />
                                                             </div>
-                                                            <span className="text-[9px] font-black text-indigo-600 uppercase tracking-widest italic">Multi-Equipamentos ({group.length})</span>
+                                                            <span className="text-[10px] font-black text-indigo-700 uppercase tracking-tight">Multi-Equipamentos ({group.length})</span>
                                                         </div>
-                                                        <div className="space-y-1.5 max-h-[150px] overflow-y-auto pr-1">
+                                                        <div className="space-y-1 pr-1">
                                                             {group.map((b) => (
-                                                                <div key={b.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded-xl border border-transparent group-hover:border-indigo-100 transition-all">
-                                                                    <div className="shrink-0 scale-75">
+                                                                <div key={b.id} className="flex items-center gap-2 p-1.5 bg-gray-50/50 rounded-xl border border-transparent group-hover:border-indigo-100 transition-all">
+                                                                    <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shrink-0 border border-gray-100 shadow-sm">
                                                                         {getEquipmentIcon(b.equipment?.name)}
                                                                     </div>
                                                                     <div className="min-w-0 flex-1">
-                                                                        <p className="text-[11px] font-bold text-gray-900 truncate leading-tight">{b.equipment?.name}</p>
-                                                                        <p className="text-[9px] text-gray-500 truncate font-medium uppercase">{b.equipment?.brand} • {b.quantity} un</p>
+                                                                        <p className="text-[10px] font-black text-gray-900 truncate leading-tight tracking-tight">{b.equipment?.name}</p>
+                                                                        <p className="text-[9px] text-gray-500 truncate font-bold uppercase">{b.equipment?.brand} • <span className="text-blue-600 font-black">Quantidade {b.quantity}</span></p>
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -576,9 +580,9 @@ export function TeacherBookings() {
                                                         isEffectivelyClosed ? 'Concluído' : 'Cancelado'}
                                                 </span>
                                                 {first.is_recurring && (
-                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[8px] font-black uppercase tracking-tight rounded border border-amber-100 italic">
-                                                        <Repeat className="h-2 w-2" />
-                                                        Fixo
+                                                    <div className="flex items-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-tight rounded-lg border border-amber-100 italic">
+                                                        <Repeat className="h-3 w-3" />
+                                                        Recorrente
                                                     </div>
                                                 )}
                                                 {first.display_id && (
@@ -589,7 +593,7 @@ export function TeacherBookings() {
                                             </div>
                                         </div>
 
-                                        <div className="space-y-3 text-sm text-gray-600 mt-auto">
+                                        <div className="space-y-3 text-sm text-gray-600 mt-4">
                                             <div className="flex items-center p-2.5 bg-gray-50/50 rounded-2xl border border-gray-50 group-hover:border-primary-100/50 transition-all">
                                                 <div className="p-1.5 bg-white rounded-lg mr-3 shadow-sm shrink-0">
                                                     <MapPin className="h-3.5 w-3.5 text-primary-600" />
