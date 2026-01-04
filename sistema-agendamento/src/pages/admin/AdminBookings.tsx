@@ -346,17 +346,18 @@ export function AdminBookings() {
             local.includes(searchLower);
     });
 
-    const getEquipmentIcon = (name: string = '') => {
+    const getEquipmentIcon = (name: string = '', className?: string) => {
         const n = name.toLowerCase();
-        if (n.includes('notebook') || n.includes('laptop') || n.includes('pc') || n.includes('computador')) return <Laptop className="h-6 w-6 text-primary-600" />;
-        if (n.includes('projetor') || n.includes('datashow')) return <Projector className="h-6 w-6 text-primary-600" />;
-        if (n.includes('caixa') || n.includes('som') || n.includes('audio')) return <Speaker className="h-6 w-6 text-primary-600" />;
-        if (n.includes('camera') || n.includes('camara') || n.includes('foto')) return <Camera className="h-6 w-6 text-primary-600" />;
-        if (n.includes('microfone') || n.includes('mic')) return <Mic className="h-6 w-6 text-primary-600" />;
-        if (n.includes('tablet') || n.includes('ipad') || n.includes('celular')) return <Smartphone className="h-6 w-6 text-primary-600" />;
-        if (n.includes('tv') || n.includes('televisao') || n.includes('monitor') || n.includes('tela')) return <Tv className="h-6 w-6 text-primary-600" />;
-        if (n.includes('cabo') || n.includes('extensao') || n.includes('fio') || n.includes('adaptador')) return <Plug className="h-6 w-6 text-primary-600" />;
-        return <Monitor className="h-6 w-6 text-primary-600" />;
+        const baseClass = className || "h-6 w-6 text-primary-600";
+        if (n.includes('notebook') || n.includes('laptop') || n.includes('pc') || n.includes('computador')) return <Laptop className={baseClass} />;
+        if (n.includes('projetor') || n.includes('datashow')) return <Projector className={baseClass} />;
+        if (n.includes('caixa') || n.includes('som') || n.includes('audio')) return <Speaker className={baseClass} />;
+        if (n.includes('camera') || n.includes('camara') || n.includes('foto')) return <Camera className={baseClass} />;
+        if (n.includes('microfone') || n.includes('mic')) return <Mic className={baseClass} />;
+        if (n.includes('tablet') || n.includes('ipad') || n.includes('celular')) return <Smartphone className={baseClass} />;
+        if (n.includes('tv') || n.includes('televisao') || n.includes('monitor') || n.includes('tela')) return <Tv className={baseClass} />;
+        if (n.includes('cabo') || n.includes('extensao') || n.includes('fio') || n.includes('adaptador')) return <Plug className={baseClass} />;
+        return <Monitor className={baseClass} />;
     };
 
     return (
@@ -543,91 +544,30 @@ export function AdminBookings() {
                                         <li key={first.display_id ? `${first.booking_date}_${first.display_id}` : first.id} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-lg transition-all overflow-hidden group">
                                             <div className="p-4 md:p-6 lg:p-7">
 
-                                                {/* 1. TOP SECTION: Conditional Layout */}
-                                                {!isMulti ? (
-                                                    // SINGLE ITEM LAYOUT (Old Style)
-                                                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 mb-6 border-b border-gray-50/80">
-                                                        {/* Equipment (Left) */}
-                                                        <div className="flex items-center gap-4 min-w-0 lg:max-w-[30%]">
-                                                            <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-100 shadow-sm group-hover:border-indigo-100 transition-colors duration-300">
-                                                                {getEquipmentIcon(first.equipment?.name)}
-                                                            </div>
-                                                            <div className="space-y-1 min-w-0">
-                                                                <h3 className="text-lg font-black text-gray-900 tracking-tight leading-tight truncate">
-                                                                    {first.equipment?.name}
-                                                                </h3>
-                                                                <div className="inline-flex items-center px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[9px] font-black uppercase tracking-wider rounded border border-indigo-100 italic">
-                                                                    # {first.quantity} {first.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
+                                                {/* --- DESKTOP LAYOUT (Preserved) --- */}
+                                                <div className="hidden lg:block">
+                                                    {!isMulti ? (
+                                                        <div className="flex flex-row items-center justify-between gap-6 pb-6 mb-6 border-b border-gray-50/80">
+                                                            <div className="flex items-center gap-4 min-w-0 max-w-[30%]">
+                                                                <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-100 shadow-sm group-hover:border-indigo-100 transition-colors duration-300">
+                                                                    {getEquipmentIcon(first.equipment?.name)}
                                                                 </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Profile (Middle) */}
-                                                        <div className="flex-1 flex items-center gap-3 px-0 lg:px-6 lg:border-l border-gray-100">
-                                                            <div className="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0">
-                                                                <Users className="h-5 w-5 text-indigo-600" />
-                                                            </div>
-                                                            <div className="flex flex-col min-w-0">
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="font-bold text-gray-900 truncate">{(first as any).users?.full_name}</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        {getStatusBadge(first)}
-                                                                        {first.is_recurring && (
-                                                                            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-100 italic leading-4">
-                                                                                <Repeat className="h-3 w-3" />
-                                                                                Recorrente
-                                                                            </div>
-                                                                        )}
+                                                                <div className="space-y-1 min-w-0">
+                                                                    <h3 className="text-lg font-black text-gray-900 tracking-tight leading-tight truncate">
+                                                                        {first.equipment?.name}
+                                                                    </h3>
+                                                                    <div className="inline-flex items-center px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[9px] font-black uppercase tracking-wider rounded border border-indigo-100 italic">
+                                                                        # {first.quantity} {first.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
                                                                     </div>
                                                                 </div>
-                                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5 text-xs text-gray-400 font-bold uppercase tracking-wider">
-                                                                    <span className="truncate">{(first as any).users?.email}</span>
-                                                                    <span className="text-gray-300">-</span>
-                                                                    <span className="text-gray-600 font-black">{first.unit}</span>
-                                                                    {first.display_id && (
-                                                                        <>
-                                                                            <span className="text-gray-300">-</span>
-                                                                            <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
-                                                                        </>
-                                                                    )}
-                                                                </div>
                                                             </div>
-                                                        </div>
-
-                                                        {/* Actions (Right) */}
-                                                        <div className="flex items-center gap-2 shrink-0">
-                                                            {first.term_document && (
-                                                                <button
-                                                                    onClick={() => handleOpenTermModal(first)}
-                                                                    className="flex items-center gap-2 h-10 px-4 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-[10px] rounded-xl shadow-sm transition-all active:scale-95 uppercase tracking-wider"
-                                                                >
-                                                                    <FileText className="h-5 w-5 text-primary-500" />
-                                                                    Termo
-                                                                </button>
-                                                            )}
-                                                            <button
-                                                                onClick={() => setDeleteModal({ isOpen: true, bookingId: first.id })}
-                                                                className="h-10 w-10 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95 border border-red-100 shadow-sm"
-                                                            >
-                                                                <Trash2 className="h-5 w-5" />
-                                                            </button>
-                                                        </div>
-
-                                                    </div>
-                                                ) : (
-                                                    // MULTI ITEM LAYOUT (Requested Style) - Refined Spacing
-                                                    <div className="space-y-5">
-                                                        {/* Profile & Actions (Top Row) */}
-                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-50/80">
-                                                            <div className="flex items-center gap-4 min-w-0">
+                                                            <div className="flex-1 flex items-center gap-3 px-6 border-l border-gray-100">
                                                                 <div className="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0">
                                                                     <Users className="h-5 w-5 text-indigo-600" />
                                                                 </div>
                                                                 <div className="flex flex-col min-w-0">
-                                                                    <div className="flex flex-wrap items-center gap-2">
-                                                                        <span className="text-sm font-black text-gray-900 truncate leading-none">
-                                                                            {(first as any).users?.full_name}
-                                                                        </span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="font-bold text-gray-900 truncate">{(first as any).users?.full_name}</span>
                                                                         <div className="flex items-center gap-2">
                                                                             {getStatusBadge(first)}
                                                                             {first.is_recurring && (
@@ -638,21 +578,20 @@ export function AdminBookings() {
                                                                             )}
                                                                         </div>
                                                                     </div>
-                                                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-xs text-gray-400 font-bold uppercase tracking-wider">
+                                                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5 text-xs text-gray-400 font-bold uppercase tracking-wider">
                                                                         <span className="truncate">{(first as any).users?.email}</span>
-                                                                        <span className="text-gray-400">-</span>
+                                                                        <span className="text-gray-300">-</span>
                                                                         <span className="text-gray-600 font-black">{first.unit}</span>
                                                                         {first.display_id && (
                                                                             <>
-                                                                                <span className="text-gray-400">-</span>
+                                                                                <span className="text-gray-300">-</span>
                                                                                 <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
                                                                             </>
                                                                         )}
                                                                     </div>
                                                                 </div>
                                                             </div>
-
-                                                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                                            <div className="flex items-center gap-2 shrink-0">
                                                                 {first.term_document && (
                                                                     <button
                                                                         onClick={() => handleOpenTermModal(first)}
@@ -664,38 +603,150 @@ export function AdminBookings() {
                                                                 )}
                                                                 <button
                                                                     onClick={() => setDeleteModal({ isOpen: true, bookingId: first.id })}
-                                                                    className="h-10 w-10 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95 border border-red-50 shadow-sm"
+                                                                    className="h-10 w-10 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95 border border-red-100 shadow-sm"
                                                                 >
                                                                     <Trash2 className="h-5 w-5" />
                                                                 </button>
                                                             </div>
                                                         </div>
-
-
-
-                                                        {/* Horizontal Equipment List (Middle) */}
-                                                        <div className="flex flex-wrap items-center gap-4 pb-2 scrollbar-none">
-                                                            {group.map((b) => (
-                                                                <div key={b.id} className="flex items-center gap-3 min-w-[140px] p-2 bg-gray-50/40 rounded-2xl border border-gray-100/60">
-                                                                    <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-100 shadow-sm">
-                                                                        {getEquipmentIcon(b.equipment?.name)}
+                                                    ) : (
+                                                        <div className="space-y-5">
+                                                            <div className="flex flex-row items-center justify-between gap-4 pb-4 border-b border-gray-50/80">
+                                                                <div className="flex items-center gap-4 min-w-0">
+                                                                    <div className="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0">
+                                                                        <Users className="h-5 w-5 text-indigo-600" />
                                                                     </div>
-                                                                    <div className="space-y-0.5 min-w-0">
-                                                                        <h4 className="text-xs font-black text-gray-900 tracking-tight leading-tight truncate">
-                                                                            {b.equipment?.name}
-                                                                        </h4>
-                                                                        <div className="inline-flex items-center px-1.5 py-0.5 bg-indigo-50 text-indigo-600 text-[8px] font-black uppercase tracking-wider rounded border border-indigo-100 italic">
-                                                                            # {b.quantity} {b.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
+                                                                    <div className="flex flex-col min-w-0">
+                                                                        <div className="flex flex-wrap items-center gap-2">
+                                                                            <span className="text-sm font-black text-gray-900 truncate leading-none">
+                                                                                {(first as any).users?.full_name}
+                                                                            </span>
+                                                                            <div className="flex items-center gap-2">
+                                                                                {getStatusBadge(first)}
+                                                                                {first.is_recurring && (
+                                                                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-100 italic leading-4">
+                                                                                        <Repeat className="h-3 w-3" />
+                                                                                        Recorrente
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-xs text-gray-400 font-bold uppercase tracking-wider">
+                                                                            <span className="truncate">{(first as any).users?.email}</span>
+                                                                            <span className="text-gray-400">-</span>
+                                                                            <span className="text-gray-600 font-black">{first.unit}</span>
+                                                                            {first.display_id && (
+                                                                                <>
+                                                                                    <span className="text-gray-400">-</span>
+                                                                                    <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
+                                                                                </>
+                                                                            )}
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                            ))}
+                                                                <div className="flex items-center gap-2 shrink-0">
+                                                                    {first.term_document && (
+                                                                        <button
+                                                                            onClick={() => handleOpenTermModal(first)}
+                                                                            className="flex items-center gap-2 h-10 px-4 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-[10px] rounded-xl shadow-sm transition-all active:scale-95 uppercase tracking-wider"
+                                                                        >
+                                                                            <FileText className="h-5 w-5 text-primary-500" />
+                                                                            Termo
+                                                                        </button>
+                                                                    )}
+                                                                    <button
+                                                                        onClick={() => setDeleteModal({ isOpen: true, bookingId: first.id })}
+                                                                        className="h-10 w-10 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95 border border-red-100 shadow-sm"
+                                                                    >
+                                                                        <Trash2 className="h-5 w-5" />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex flex-wrap items-center gap-4 pb-2 scrollbar-none">
+                                                                {group.map((b) => (
+                                                                    <div key={b.id} className="flex items-center gap-3 min-w-[140px] p-2 bg-gray-50/40 rounded-2xl border border-gray-100/60">
+                                                                        <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-100 shadow-sm">
+                                                                            {getEquipmentIcon(b.equipment?.name)}
+                                                                        </div>
+                                                                        <div className="space-y-0.5 min-w-0">
+                                                                            <h4 className="text-xs font-black text-gray-900 tracking-tight leading-tight truncate">
+                                                                                {b.equipment?.name}
+                                                                            </h4>
+                                                                            <div className="inline-flex items-center px-1.5 py-0.5 bg-indigo-50 text-indigo-600 text-[8px] font-black uppercase tracking-wider rounded border border-indigo-100 italic">
+                                                                                # {b.quantity} {b.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* --- MOBILE LAYOUT (New Exclusive) --- */}
+                                                <div className="lg:hidden space-y-5">
+                                                    {/* Top Section: Professor Info + Actions */}
+                                                    <div className="flex justify-between items-start gap-3">
+                                                        <div className="min-w-0 flex-1">
+                                                            <h3 className="text-sm font-black text-gray-900 leading-tight truncate uppercase">
+                                                                {(first as any).users?.full_name}
+                                                            </h3>
+                                                            <p className="text-[10px] text-gray-400 font-bold truncate lowercase mt-0.5">
+                                                                {(first as any).users?.email}
+                                                            </p>
+                                                            <div className="flex flex-wrap items-center gap-2 mt-2">
+                                                                {getStatusBadge(first)}
+                                                                {first.is_recurring && (
+                                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[8px] font-black uppercase tracking-tight rounded-full border border-amber-100 italic">
+                                                                        <Repeat className="h-2 w-2" />
+                                                                        Recorrente
+                                                                    </div>
+                                                                )}
+                                                                {first.display_id && (
+                                                                    <span className="text-[9px] text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex flex-col gap-2 shrink-0">
+                                                            {first.term_document && (
+                                                                <button
+                                                                    onClick={() => handleOpenTermModal(first)}
+                                                                    className="p-2 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100 active:scale-95 transition-all shadow-sm flex items-center justify-center"
+                                                                    title="Ver Termo"
+                                                                >
+                                                                    <FileText className="h-4 w-4" />
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => setDeleteModal({ isOpen: true, bookingId: first.id })}
+                                                                className="p-2 bg-red-50 text-red-500 rounded-xl border border-red-100 active:scale-95 transition-all shadow-sm flex items-center justify-center"
+                                                                title="Excluir"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
                                                         </div>
                                                     </div>
-                                                )}
 
-                                                {/* 3. BOTTOM SECTION: Details Grid (Always Present) */}
-                                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-12 pt-4 border-t border-gray-50/80">
+                                                    {/* Center Section: All Equipments */}
+                                                    <div className="py-4 border-y border-gray-50 space-y-2">
+                                                        {group.map((b) => (
+                                                            <div key={b.id} className="flex items-center gap-3 p-2 bg-gray-50/50 rounded-2xl border border-gray-100/50">
+                                                                <div className="h-9 w-9 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-100 shadow-sm">
+                                                                    {getEquipmentIcon(b.equipment?.name, "h-5 w-5 text-primary-600")}
+                                                                </div>
+                                                                <div className="min-w-0 flex-1">
+                                                                    <h4 className="text-[11px] font-black text-gray-900 truncate leading-tight">{b.equipment?.name}</h4>
+                                                                    <p className="text-[9px] text-blue-600 font-black uppercase tracking-tighter mt-0.5">
+                                                                        Quantidade {b.quantity} {b.quantity === 1 ? 'UN' : 'UNS'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Common Footer Grid (Responsive) */}
+                                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-12 pt-4 lg:pt-4 lg:border-t border-gray-50/80">
                                                     <div className="space-y-1 text-left">
                                                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] block">PROFESSOR</span>
                                                         <div className="flex items-center gap-2 text-xs text-gray-500 font-bold truncate">
