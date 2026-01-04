@@ -9,14 +9,14 @@ import {
     CheckCircle2,
     AlertTriangle,
     Shield,
-    BookOpen,
     UserPlus,
     LayoutDashboard,
     Calendar,
     Monitor,
     Users,
     ClipboardCheck,
-    Settings
+    Settings,
+    Bell
 } from 'lucide-react';
 
 export function AdminHelp() {
@@ -30,6 +30,7 @@ export function AdminHelp() {
         { id: 'register', title: 'Cadastro de Professores', icon: UserPlus },
         { id: 'users', title: 'Usuários', icon: Users },
         { id: 'loans', title: 'Empréstimos', icon: ClipboardCheck },
+        { id: 'notifications', title: 'Notificações', icon: Bell },
         { id: 'settings', title: 'Configurações', icon: Settings },
         { id: 'security', title: 'Segurança e LGPD', icon: Shield },
     ];
@@ -543,6 +544,60 @@ export function AdminHelp() {
                                         <p className="text-sm text-amber-800">
                                             O sistema não armazena CPF (preenchimento manual). Ao excluir um empréstimo, a imagem do termo assinado também é apagada permanentemente do servidor, garantindo privacidade total.
                                         </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Notificações - NEW */}
+                    <section id="notifications" className="scroll-mt-8">
+                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-cyan-600 to-cyan-800 p-8 text-white">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
+                                        <Bell className="h-8 w-8" />
+                                    </div>
+                                    <h2 className="text-2xl font-black">Sistema de Notificações</h2>
+                                </div>
+                            </div>
+                            <div className="p-8 space-y-8">
+                                <p className="text-gray-600 leading-relaxed text-lg">
+                                    O sistema notifica os administradores instantaneamente sobre eventos importantes, como novos cadastros ou solicitações.
+                                </p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-6">
+                                        <div className="bg-cyan-50 p-6 rounded-2xl border border-cyan-100">
+                                            <h3 className="font-bold text-cyan-900 mb-4 flex items-center gap-2">
+                                                <Bell className="h-5 w-5" /> Tipos de Alerta
+                                            </h3>
+                                            <ul className="space-y-3 text-sm text-cyan-800">
+                                                <li className="flex items-start gap-2">
+                                                    <div className="h-1.5 w-1.5 rounded-full bg-cyan-600 mt-2 shrink-0"></div>
+                                                    <span><strong>Novo Usuário:</strong> Quando um professor se cadastra na unidade.</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <div className="bg-amber-50 p-6 rounded-2xl border border-amber-100">
+                                            <h3 className="font-bold text-amber-900 mb-4 flex items-center gap-2">
+                                                <Trash2 className="h-5 w-5" /> Política de Retenção (Limpeza)
+                                            </h3>
+                                            <p className="text-sm text-amber-800 leading-relaxed mb-4">
+                                                Para manter a performance do sistema e evitar acúmulo de dados desnecessários:
+                                            </p>
+                                            <div className="bg-white p-4 rounded-xl border border-amber-200">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-2xl font-black text-amber-600">7 DIAS</span>
+                                                    <p className="text-sm font-medium text-gray-700 leading-snug">
+                                                        É o tempo máximo que uma notificação fica guardada. Após esse período, ela é <strong>excluída permanentemente</strong> do banco de dados automaticamente.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
