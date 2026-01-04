@@ -31,6 +31,7 @@ export function AdminHelp() {
         { id: 'users', title: 'Usuários', icon: Users },
         { id: 'loans', title: 'Empréstimos', icon: ClipboardCheck },
         { id: 'settings', title: 'Configurações', icon: Settings },
+        { id: 'security', title: 'Segurança e LGPD', icon: Shield },
     ];
 
     const scrollToSection = (id: string) => {
@@ -572,6 +573,88 @@ export function AdminHelp() {
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded">CONFIGURÁVEL</span>
                                             <span className="text-xs text-gray-400">Pode ser habilitado ou desabilitado.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Segurança e LGPD */}
+                    <section id="security" className="scroll-mt-8">
+                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-emerald-700 to-teal-900 p-8 text-white">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
+                                        <Shield className="h-8 w-8" />
+                                    </div>
+                                    <h2 className="text-2xl font-black">Segurança e Proteção de Dados (LGPD)</h2>
+                                </div>
+                            </div>
+                            <div className="p-8 space-y-8">
+                                <p className="text-gray-600">
+                                    O sistema utiliza arquitetura de segurança em camadas para garantir a integridade e privacidade dos dados, conforme a LGPD.
+                                </p>
+
+                                <div className="grid grid-cols-1 gap-6">
+                                    <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-2 bg-emerald-50 rounded-lg">
+                                                <FileText className="h-6 w-6 text-emerald-600" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-lg font-bold text-gray-900 mb-2">1. Auditoria de Consentimento (Prova Jurídica Imutável)</h4>
+                                                <p className="text-sm text-gray-600 leading-relaxed mb-3">
+                                                    O aceite do termo sobre <strong>informações dos professores na página de cadastro</strong> gera um <strong>registro blindado</strong> e auditável. O sistema armazena a prova contendo:
+                                                </p>
+                                                <ul className="list-disc pl-5 space-y-1 text-sm text-gray-500">
+                                                    <li><strong>Identidade (Quem):</strong> Nome, E-mail e Matrícula.</li>
+                                                    <li><strong>Momento (Quando):</strong> Data e hora exata do aceite.</li>
+                                                    <li><strong>Conteúdo (O Que):</strong> Cópia fiel da versão "v1.0" do contrato aceito.</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-2 bg-blue-50 rounded-lg">
+                                                <LayoutDashboard className="h-6 w-6 text-blue-600" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-lg font-bold text-gray-900 mb-2">2. Histórico Operacional</h4>
+                                                <p className="text-sm text-gray-600 leading-relaxed">
+                                                    O sistema mantém o histórico completo de agendamentos ativos, realizados e cancelados para consulta.
+                                                </p>
+                                                <p className="text-xs text-gray-500 mt-2 italic bg-gray-50 p-2 rounded border border-gray-200">
+                                                    Nota: Para garantir o "Direito ao Esquecimento" (outro pilar da LGPD), agendamentos antigos podem ser excluídos permanentemente pela administração, removendo seus vestígios do banco de dados quando não forem mais necessários.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-2 bg-purple-50 rounded-lg">
+                                                <Shield className="h-6 w-6 text-purple-600" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-lg font-bold text-gray-900 mb-2">3. Segurança da Informação</h4>
+                                                <ul className="space-y-3 text-sm text-gray-600">
+                                                    <li className="flex items-center gap-2">
+                                                        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                                                        <span><strong>Criptografia:</strong> Tráfego de dados 100% via HTTPS/SSL.</span>
+                                                    </li>
+                                                    <li className="flex items-start gap-2">
+                                                        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                                                        <span><strong>Controle Rígido (RLS):</strong> O banco de dados bloqueia nativamente acessos não autorizados. Dados sensíveis (como Matrícula) são visíveis estritamente para a administração.</span>
+                                                    </li>
+                                                    <li className="flex items-start gap-2">
+                                                        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                                                        <span><strong>Infraestrutura de Nuvem:</strong> O sistema é hospedado em plataforma global que fornece proteção contra ataques (DDoS) e certificações de segurança corporativa.</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
