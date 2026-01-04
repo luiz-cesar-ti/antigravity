@@ -565,10 +565,15 @@ export function AdminBookings() {
                                                                     <span className="font-bold text-gray-900 truncate">{(first as any).users?.full_name}</span>
                                                                     {getStatusBadge(first)}
                                                                 </div>
-                                                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-xs text-gray-400 font-bold uppercase tracking-wider">
+                                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5 text-xs text-gray-400 font-bold uppercase tracking-wider">
                                                                     <span className="truncate">{(first as any).users?.email}</span>
+                                                                    <span className="text-gray-300">-</span>
+                                                                    <span className="text-gray-600 font-black">{first.unit}</span>
                                                                     {first.display_id && (
-                                                                        <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
+                                                                        <>
+                                                                            <span className="text-gray-300">-</span>
+                                                                            <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
+                                                                        </>
                                                                     )}
                                                                 </div>
                                                             </div>
@@ -609,15 +614,16 @@ export function AdminBookings() {
                                                                         </span>
                                                                         {getStatusBadge(first)}
                                                                     </div>
-                                                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-gray-400 font-bold uppercase tracking-wider">
+                                                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-xs text-gray-400 font-bold uppercase tracking-wider">
                                                                         <span className="truncate">{(first as any).users?.email}</span>
+                                                                        <span className="text-gray-400">-</span>
+                                                                        <span className="text-gray-600 font-black">{first.unit}</span>
                                                                         {first.display_id && (
-                                                                            <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
+                                                                            <>
+                                                                                <span className="text-gray-400">-</span>
+                                                                                <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
+                                                                            </>
                                                                         )}
-                                                                        <span className="flex items-center gap-1 text-gray-600 font-black">
-                                                                            <MapPin className="h-3.5 w-4" />
-                                                                            {first.unit}
-                                                                        </span>
                                                                     </div>
                                                                 </div>
                                                             </div>
