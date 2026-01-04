@@ -26,7 +26,9 @@ import {
 export function AdminDashboard() {
     const { user } = useAuth();
     const adminUser = user as Admin;
-    const [period, setPeriod] = useState<'week' | 'month' | 'total'>('month');
+    const [period, setPeriod] = useState<'week' | 'month' | 'total' | 'custom'>('month');
+    const [customStartDate, setCustomStartDate] = useState('');
+    const [customEndDate, setCustomEndDate] = useState('');
     const [selectedTeacher, setSelectedTeacher] = useState<any | null>(null);
     const [teacherBookings, setTeacherBookings] = useState<any[]>([]);
     const [teacherStats, setTeacherStats] = useState<any>({ equipmentUsage: [], weeklyTrend: [] });
@@ -49,27 +51,45 @@ export function AdminDashboard() {
             setLoading(true);
             try {
                 const today = new Date();
-                let startDate: Date;
+                let queryStartDate: string;
+                let queryEndDate: string | null = null;
 
                 if (period === 'week') {
-                    startDate = startOfWeek(today, { locale: ptBR });
+                    queryStartDate = startOfWeek(today, { locale: ptBR }).toISOString().split('T')[0];
                 } else if (period === 'month') {
-                    startDate = startOfMonth(today);
+                    queryStartDate = startOfMonth(today).toISOString().split('T')[0];
+                } else if (period === 'custom') {
+                    if (!customStartDate || !customEndDate) {
+                        setLoading(false);
+                        return;
+                    }
+                    queryStartDate = customStartDate;
+                    queryEndDate = customEndDate;
                 } else {
-                    startDate = subDays(today, 365); // Last year for "total"
+                    queryStartDate = subDays(today, 365).toISOString().split('T')[0];
                 }
 
                 // Prepare base queries
                 let activeBookingsQuery = supabase
                     .from('bookings')
                     .select('*', { count: 'exact', head: true })
-                    .eq('status', 'active')
-                    .gte('booking_date', today.toISOString().split('T')[0]);
+                    .eq('status', 'active');
+
+                // Apply date filter for active bookings too? Yes, usually "Active within this period"
+                activeBookingsQuery = activeBookingsQuery.gte('booking_date', queryStartDate);
+                if (queryEndDate) {
+                    activeBookingsQuery = activeBookingsQuery.lte('booking_date', queryEndDate);
+                }
 
                 let completedBookingsQuery = supabase
                     .from('bookings')
                     .select('*', { count: 'exact', head: true })
                     .eq('status', 'encerrado');
+
+                completedBookingsQuery = completedBookingsQuery.gte('booking_date', queryStartDate);
+                if (queryEndDate) {
+                    completedBookingsQuery = completedBookingsQuery.lte('booking_date', queryEndDate);
+                }
 
                 let totalEquipmentQuery = supabase
                     .from('equipment')
@@ -87,7 +107,11 @@ export function AdminDashboard() {
                         users(id, full_name)
                     `)
                     .neq('status', 'cancelled_by_user')
-                    .gte('booking_date', startDate.toISOString().split('T')[0]);
+                    .gte('booking_date', queryStartDate);
+
+                if (queryEndDate) {
+                    chartsQuery = chartsQuery.lte('booking_date', queryEndDate);
+                }
 
                 // Apply Strict Filtering Logic
                 const unit = adminUser.unit;
@@ -186,7 +210,8 @@ export function AdminDashboard() {
         };
 
         fetchStats();
-    }, [period, adminUser?.unit, adminUser?.id]);
+        fetchStats();
+    }, [period, adminUser?.unit, adminUser?.id, customStartDate, customEndDate]);
 
     const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
@@ -213,26 +238,53 @@ export function AdminDashboard() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm">
-                    <Filter className="h-4 w-4 text-gray-400 ml-2 mr-1" />
-                    <button
-                        onClick={() => setPeriod('week')}
-                        className={clsx("px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all", period === 'week' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
-                    >
-                        Semana
-                    </button>
-                    <button
-                        onClick={() => setPeriod('month')}
-                        className={clsx("px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all", period === 'month' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
-                    >
-                        Mês
-                    </button>
-                    <button
-                        onClick={() => setPeriod('total')}
-                        className={clsx("px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all", period === 'total' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
-                    >
-                        Ano
-                    </button>
+                <div className="flex flex-col items-end gap-3">
+                    <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm">
+                        <Filter className="h-4 w-4 text-gray-400 ml-2 mr-1" />
+                        <button
+                            onClick={() => setPeriod('week')}
+                            className={clsx("px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all", period === 'week' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
+                        >
+                            Semana
+                        </button>
+                        <button
+                            onClick={() => setPeriod('month')}
+                            className={clsx("px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all", period === 'month' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
+                        >
+                            Mês
+                        </button>
+                        <button
+                            onClick={() => setPeriod('total')}
+                            className={clsx("px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all", period === 'total' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
+                        >
+                            Ano
+                        </button>
+                        <div className="w-px h-6 bg-gray-200 mx-1"></div>
+                        <button
+                            onClick={() => setPeriod('custom')}
+                            className={clsx("px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all", period === 'custom' ? "bg-primary-600 text-white shadow-lg shadow-primary-200" : "text-gray-500 hover:bg-gray-50")}
+                        >
+                            Personalizado
+                        </button>
+                    </div>
+
+                    {period === 'custom' && (
+                        <div className="flex items-center gap-2 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm animate-in slide-in-from-right-2">
+                            <input
+                                type="date"
+                                value={customStartDate}
+                                onChange={(e) => setCustomStartDate(e.target.value)}
+                                className="px-3 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 rounded-lg border-transparent focus:border-primary-500 focus:bg-white focus:ring-0 transition-all"
+                            />
+                            <span className="text-gray-400 font-bold text-xs">ATÉ</span>
+                            <input
+                                type="date"
+                                value={customEndDate}
+                                onChange={(e) => setCustomEndDate(e.target.value)}
+                                className="px-3 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 rounded-lg border-transparent focus:border-primary-500 focus:bg-white focus:ring-0 transition-all"
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 

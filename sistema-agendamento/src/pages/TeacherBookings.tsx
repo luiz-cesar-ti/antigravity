@@ -53,7 +53,23 @@ export function TeacherBookings() {
             margin: 0,
             filename: fileName,
             image: { type: 'jpeg' as const, quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                onclone: (clonedDoc: any) => {
+                    const el = clonedDoc.getElementById('teacher-term-doc-inner');
+                    if (el) {
+                        el.style.width = '210mm';
+                        el.style.maxWidth = 'none';
+                        el.style.margin = '0 auto';
+                        // Ensure parent wrapper in clone doesn't constrain it
+                        if (el.parentElement) {
+                            el.parentElement.style.width = '210mm';
+                            el.parentElement.style.maxWidth = 'none';
+                        }
+                    }
+                }
+            },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
         };
 
@@ -127,7 +143,14 @@ export function TeacherBookings() {
                 <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-gray-50/50">
                     <div className="bg-white shadow-2xl mx-auto origin-top transition-transform" style={{ maxWidth: '210mm' }}>
                         <div id="teacher-term-doc-inner">
-                            {pdfData && pdfData.term_document && <TermDocument data={pdfData.term_document} />}
+                            {pdfData && pdfData.term_document && (
+                                <TermDocument
+                                    data={{
+                                        ...pdfData.term_document,
+                                        created_at: pdfData.created_at
+                                    }}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>

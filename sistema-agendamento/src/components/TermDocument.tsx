@@ -126,7 +126,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                     src="/logo-objetivo.jpg"
                     alt="Logo Colégio Objetivo"
                     crossOrigin="anonymous"
-                    style={{ maxHeight: '60px', margin: '0 auto', display: 'block' }}
+                    style={{ maxHeight: '100px', margin: '0 auto', display: 'block' }}
                 />
             </div>
 
@@ -212,15 +212,26 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
             <div style={{ marginBottom: '1rem', textAlign: 'justify', fontSize: '9pt' }}>
                 <h2 style={{ fontWeight: 'bold', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Compromissos e Responsabilidades</h2>
                 <p style={{ marginBottom: '0.25rem' }}>Ao aceitar este termo, comprometo-me a:</p>
-                <ol style={{ listStyleType: 'decimal', paddingLeft: '1rem' }}>
-                    <li style={{ marginBottom: '0.1rem' }}>Utilizar o equipamento exclusivamente durante o período agendado e no local especificado.</li>
-                    <li style={{ marginBottom: '0.1rem' }}>Zelar pela conservação e bom funcionamento do equipamento.</li>
-                    <li style={{ marginBottom: '0.1rem' }}>Comunicar imediatamente à equipe responsável qualquer defeito ou irregularidade constatada.</li>
-                    <li style={{ marginBottom: '0.1rem' }}>Não emprestar ou transferir o equipamento a terceiros sem autorização prévia.</li>
+                <div style={{ paddingLeft: '0.5rem' }}>
+                    {[
+                        "Utilizar o equipamento exclusivamente durante o período agendado e no local especificado.",
+                        "Zelar pela conservação e bom funcionamento do equipamento.",
+                        "Comunicar imediatamente à equipe responsável qualquer defeito ou irregularidade constatada.",
+                        "Não emprestar ou transferir o equipamento a terceiros sem autorização prévia.",
+                        "Orientar adequadamente o uso do equipamento, quando utilizado por alunos, zelando por sua conservação e bom funcionamento."
+                    ].map((item, index) => (
+                        <div key={index} style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '0.2rem' }}>
+                            <span style={{ minWidth: '15px', fontWeight: 'bold' }}>{index + 1}.</span>
+                            <span style={{ textAlign: 'justify' }}>{item}</span>
+                        </div>
+                    ))}
                     {(data.isRecurring || data.term_document?.isRecurring) && (
-                        <li style={{ marginBottom: '0.1rem' }}>Declaro ciência que este é um <strong style={{ fontWeight: 'bold' }}>Agendamento Fixo</strong> e concordo em assinar digitalmente todos os termos gerados automaticamente para cada ocorrência desta recorrência.</li>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '0.2rem' }}>
+                            <span style={{ minWidth: '15px', fontWeight: 'bold' }}>6.</span>
+                            <span style={{ textAlign: 'justify' }}>Declaro ciência que este é um <strong style={{ fontWeight: 'bold' }}>Agendamento Fixo</strong> e concordo em assinar digitalmente todos os termos gerados automaticamente para cada ocorrência desta recorrência.</span>
+                        </div>
                     )}
-                </ol>
+                </div>
             </div>
 
             <div style={{ marginBottom: '1rem', textAlign: 'justify', fontSize: '9pt' }}>
@@ -247,21 +258,22 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
             <div style={{ marginTop: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div style={{ width: '50%' }}>
                     <div style={{
-                        borderBottom: '1px solid #000',
-                        marginBottom: '0.25rem',
                         width: '100%',
                         textAlign: 'center',
-                        position: 'relative',
-                        height: '1.2em',
-                        display: 'flex',
-                        alignItems: 'flex-end',
-                        justifyContent: 'center'
+                        marginBottom: '0.25rem'
                     }}>
-                        <span style={{
+                        <div style={{
+                            marginBottom: '10px', // Space between name and line
                             fontWeight: 'bold',
                             fontSize: '10pt',
                             textTransform: 'uppercase'
-                        }}>{getName()}</span>
+                        }}>
+                            {getName()}
+                        </div>
+                        <div style={{
+                            borderBottom: '1px solid #000',
+                            width: '100%'
+                        }}></div>
                     </div>
                     <p style={{ fontSize: '8pt', color: '#4b5563', marginTop: '2px' }}>Responsável • TOTVS: {getTotvs()}</p>
                 </div>
