@@ -182,6 +182,7 @@ export function TeacherBookings() {
             .from('bookings')
             .select(`
                 *,
+                created_at,
                 equipment (name, brand, model)
             `)
             .eq('user_id', user.id)
