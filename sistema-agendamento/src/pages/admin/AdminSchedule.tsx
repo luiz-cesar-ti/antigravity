@@ -328,7 +328,7 @@ export function AdminSchedule() {
 
             {/* Filters & View Controls */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 space-y-3">
+                <div className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 space-y-3 order-3 md:order-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1">
                         <Clock className="h-3 w-3" /> Dia da Semana
                     </label>
@@ -348,7 +348,7 @@ export function AdminSchedule() {
                     </div>
                 </div>
 
-                <div className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 space-y-3">
+                <div className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 space-y-3 order-2 md:order-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1">
                         <LayoutGrid className="h-3 w-3" /> Seguimento
                     </label>
@@ -368,7 +368,7 @@ export function AdminSchedule() {
                     </div>
                 </div>
 
-                <div className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 space-y-3">
+                <div className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 space-y-3 order-1 md:order-3">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1">
                         <LayoutGrid className="h-3 w-3" /> Largura das Colunas
                     </label>
