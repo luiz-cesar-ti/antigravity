@@ -95,7 +95,7 @@ export function AdminHelp() {
                                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
                                         <Monitor className="h-8 w-8" />
                                     </div>
-                                    <h2 className="text-2xl font-black">Dashboard Estratégico</h2>
+                                    <h2 className="text-2xl font-black">Dashboard</h2>
                                 </div>
                             </div>
                             <div className="p-8 space-y-6">
@@ -168,7 +168,7 @@ export function AdminHelp() {
                                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
                                         <Clock className="h-8 w-8" />
                                     </div>
-                                    <h2 className="text-2xl font-black">Horário de Aulas e Logística</h2>
+                                    <h2 className="text-2xl font-black">Horário de Aulas</h2>
                                 </div>
                             </div>
                             <div className="p-8 space-y-6">
