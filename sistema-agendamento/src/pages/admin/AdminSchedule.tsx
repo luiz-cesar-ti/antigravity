@@ -11,7 +11,9 @@ import {
     CheckCircle2,
     FileSpreadsheet,
     Clock,
-    LayoutGrid
+    LayoutGrid,
+    Lock,
+    Unlock
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -54,6 +56,7 @@ export function AdminSchedule() {
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [columnWidth, setColumnWidth] = useState(150);
+    const [isLocked, setIsLocked] = useState(true);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -299,14 +302,16 @@ export function AdminSchedule() {
                 <div className="flex flex-wrap items-center gap-3">
                     <button
                         onClick={downloadTemplate}
-                        className="flex items-center gap-2 px-6 py-3 bg-white text-gray-700 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-gray-100 hover:border-primary-200 hover:text-primary-600 transition-all shadow-sm active:scale-95"
+                        disabled={isLocked}
+                        className="flex items-center gap-2 px-6 py-3 bg-white text-gray-700 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-gray-100 hover:border-primary-200 hover:text-primary-600 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Download className="h-4 w-4" />
                         Baixar Modelo
                     </button>
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center gap-2 px-6 py-3 bg-primary-50 text-primary-700 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-primary-100 hover:bg-primary-100 transition-all shadow-sm active:scale-95"
+                        disabled={isLocked}
+                        className="flex items-center gap-2 px-6 py-3 bg-primary-50 text-primary-700 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-primary-100 hover:bg-primary-100 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Upload className="h-4 w-4" />
                         Importar CSV
@@ -412,8 +417,18 @@ export function AdminSchedule() {
                                 </div>
                             )}
                             <button
+                                onClick={() => setIsLocked(!isLocked)}
+                                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 ${isLocked
+                                    ? 'bg-red-50 text-red-600 border-2 border-red-100 hover:bg-red-100'
+                                    : 'bg-green-50 text-green-600 border-2 border-green-100 hover:bg-green-100'}`}
+                                title={isLocked ? "Desbloquear edição" : "Bloquear edição"}
+                            >
+                                {isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                                <span className="hidden md:inline">{isLocked ? 'Bloqueado' : 'Desbloqueado'}</span>
+                            </button>
+                            <button
                                 onClick={handleSave}
-                                disabled={isSaving}
+                                disabled={isSaving || isLocked}
                                 className="flex items-center justify-center gap-2 px-6 py-2.5 bg-primary-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-primary-700 transition-all shadow-lg active:scale-95 disabled:opacity-50 w-full md:w-auto"
                             >
                                 <Save className="h-4 w-4" />
@@ -440,8 +455,9 @@ export function AdminSchedule() {
                                                     className={`w-full p-2 bg-gray-50 border-2 border-transparent focus:border-indigo-400 focus:bg-white rounded-2xl text-xs font-black text-center uppercase tracking-wider transition-all outline-none ${i === 0 ? 'text-indigo-600' : 'text-gray-700'}`}
                                                     style={{ height: '60px' }}
                                                     placeholder={i === 0 ? "Horário" : "Turma"}
+                                                    disabled={isLocked}
                                                 />
-                                                {i > 0 && (
+                                                {i > 0 && !isLocked && (
                                                     <button
                                                         onClick={() => removeColumn(i)}
                                                         className="absolute -top-2 -right-2 p-1.5 bg-white border border-red-100 text-red-500 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50"
@@ -453,14 +469,16 @@ export function AdminSchedule() {
                                         </th>
                                     ))}
                                     <th className="w-16">
-                                        <div className="flex justify-center">
-                                            <button
-                                                onClick={addColumn}
-                                                className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl border-2 border-indigo-100 hover:bg-indigo-100 active:scale-90"
-                                            >
-                                                <Plus className="h-5 w-5" />
-                                            </button>
-                                        </div>
+                                        {!isLocked && (
+                                            <div className="flex justify-center">
+                                                <button
+                                                    onClick={addColumn}
+                                                    className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl border-2 border-indigo-100 hover:bg-indigo-100 active:scale-90"
+                                                >
+                                                    <Plus className="h-5 w-5" />
+                                                </button>
+                                            </div>
+                                        )}
                                     </th>
                                 </tr>
                             </thead>
@@ -490,14 +508,15 @@ export function AdminSchedule() {
                                                                 }
                                                                 ${colIndex === 0 && rowIndex === 0 ? 'opacity-0' : ''}`}
                                                             placeholder={colIndex === 0 ? "00:00" : "Sala"}
-                                                            disabled={colIndex === 0 && rowIndex === 0}
+                                                            disabled={(colIndex === 0 && rowIndex === 0) || isLocked}
                                                             style={{ height: '60px' }}
                                                         />
                                                     ) : (
                                                         <textarea
                                                             value={cell}
                                                             onChange={(e) => updateCell(rowIndex, colIndex, e.target.value)}
-                                                            className="w-full bg-transparent border-none outline-none resize-none text-center text-gray-600 font-medium text-[10px] leading-tight px-1 flex items-center justify-center"
+                                                            disabled={isLocked}
+                                                            className={`w-full bg-transparent border-none outline-none resize-none text-center text-gray-600 font-medium text-[10px] leading-tight px-1 flex items-center justify-center ${isLocked ? 'cursor-not-allowed' : ''}`}
                                                             placeholder="Prof."
                                                             style={{
                                                                 height: '60px',
@@ -512,29 +531,34 @@ export function AdminSchedule() {
                                             </td>
                                         ))}
                                         <td className="w-16">
-                                            <div className="flex justify-center">
-                                                <button
-                                                    onClick={() => removeRow(rowIndex)}
-                                                    className="p-3 text-red-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                                                >
-                                                    <Trash2 className="h-5 w-5" />
-                                                </button>
-                                            </div>
+                                            {!isLocked && (
+                                                <div className="flex justify-center">
+                                                    <button
+                                                        onClick={() => removeRow(rowIndex)}
+                                                        className="p-3 text-red-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                                    >
+                                                        <Trash2 className="h-5 w-5" />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
 
-                        <div className="flex justify-center mt-4">
-                            <button
-                                onClick={addRow}
-                                className="flex items-center gap-2 px-8 py-3 bg-gray-50 text-gray-400 font-black text-xs uppercase tracking-widest rounded-2xl border-2 border-dashed border-gray-200 hover:border-primary-300 hover:text-primary-600 transition-all active:scale-95"
-                            >
-                                <Plus className="h-4 w-4" />
-                                Adicionar Linha
-                            </button>
-                        </div>
+                        {/* Show add row only if not locked */}
+                        {!isLocked && (
+                            <div className="flex justify-center mt-4">
+                                <button
+                                    onClick={addRow}
+                                    className="flex items-center gap-2 px-8 py-3 bg-gray-50 text-gray-400 font-black text-xs uppercase tracking-widest rounded-2xl border-2 border-dashed border-gray-200 hover:border-primary-300 hover:text-primary-600 transition-all active:scale-95"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    Adicionar Linha
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

@@ -87,6 +87,7 @@ export function AdminLoans() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [uploadingLoanId, setUploadingLoanId] = useState<string | null>(null);
+    const [loanHashes, setLoanHashes] = useState<Record<string, string>>({}); // Store calculated hashes
 
     // Modal States
     const [modalInfo, setModalInfo] = useState<{ type: 'success' | 'error' | 'preview' | 'delete' | 'return', message?: string, loanData?: any } | null>(null);
@@ -158,6 +159,25 @@ export function AdminLoans() {
             if (previewUrl) URL.revokeObjectURL(previewUrl);
         };
     }, [modalInfo]);
+
+    // Calculate Hashes for Cards
+    useEffect(() => {
+        const calculateHashes = async () => {
+            const newHashes: Record<string, string> = {};
+            for (const loan of loans) {
+                // Same formula as PDF
+                const dataString = `${loan.id}-${loan.user_full_name}-${loan.equipment_id}-${loan.start_at}-${loan.end_at}`;
+                const encoder = new TextEncoder();
+                const data = encoder.encode(dataString);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                newHashes[loan.id] = hashHex.substring(0, 16).toUpperCase();
+            }
+            setLoanHashes(newHashes);
+        };
+        if (loans.length > 0) calculateHashes();
+    }, [loans]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -466,7 +486,16 @@ export function AdminLoans() {
         }
     };
 
-    const generatePDF = (loan: EquipmentLoan, download = true) => {
+    const generatePDF = async (loan: EquipmentLoan, download = true) => {
+        // Generate a deterministic hash for the document
+        const dataString = `${loan.id}-${loan.user_full_name}-${loan.equipment_id}-${loan.start_at}-${loan.end_at}`;
+        const encoder = new TextEncoder();
+        const data = encoder.encode(dataString);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        const shortHash = hashHex.substring(0, 16).toUpperCase(); // Show first 16 chars for readability
+
         const element = document.createElement('div');
         element.innerHTML = `
         <div style="padding: 20px; font-family: sans-serif; line-height: 1.3; color: #1a1a1a;">
@@ -527,8 +556,9 @@ export function AdminLoans() {
                     <br/><span style="font-size: 10.5px; color: #888;">(Preencher à mão)</span>
                 </div>
 
-                <div style="margin-top: 25px; text-align: center; font-size: 9px; color: #999; border-top: 1px dashed #eee; padding-top: 5px;">
-                    Documento emitido em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")}
+                <div style="margin-top: 40px; text-align: center; font-size: 10px; color: #555; border-top: 1px solid #ddd; padding-top: 8px;">
+                    Documento emitido em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")} <br/>
+                    <strong>ID: ${loan.id.slice(0, 8).toUpperCase()}</strong> | <span style="font-family: monospace;">HASH: ${shortHash}</span>
                 </div>
             </div>
         `;
@@ -658,6 +688,7 @@ export function AdminLoans() {
                             </label>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="relative">
+                                    <span className="absolute -top-2 left-3 bg-gray-50 px-1 text-[9px] font-black text-gray-400 uppercase tracking-widest md:hidden">Data de Início</span>
                                     <input
                                         type="date"
                                         name="start_date"
@@ -667,6 +698,7 @@ export function AdminLoans() {
                                     />
                                 </div>
                                 <div className="relative">
+                                    <span className="absolute -top-2 left-3 bg-gray-50 px-1 text-[9px] font-black text-gray-400 uppercase tracking-widest md:hidden">Horário</span>
                                     <input
                                         type="time"
                                         name="start_time"
@@ -686,6 +718,7 @@ export function AdminLoans() {
                             </label>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="relative">
+                                    <span className="absolute -top-2 left-3 bg-gray-50 px-1 text-[9px] font-black text-gray-400 uppercase tracking-widest md:hidden">Data de Término</span>
                                     <input
                                         type="date"
                                         name="end_date"
@@ -695,6 +728,7 @@ export function AdminLoans() {
                                     />
                                 </div>
                                 <div className="relative">
+                                    <span className="absolute -top-2 left-3 bg-gray-50 px-1 text-[9px] font-black text-gray-400 uppercase tracking-widest md:hidden">Horário</span>
                                     <input
                                         type="time"
                                         name="end_time"
@@ -859,7 +893,17 @@ export function AdminLoans() {
                                             </div>
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-3">
-                                                    <h4 className="font-black text-gray-900 group-hover:text-primary-600 transition-colors">{loan.user_full_name}</h4>
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <h4 className="font-black text-gray-900 group-hover:text-primary-600 transition-colors">{loan.user_full_name}</h4>
+                                                            <span className="text-[10px] font-bold text-gray-400">ID {loan.id.slice(0, 8).toUpperCase()}</span>
+                                                        </div>
+                                                        {loanHashes[loan.id] && (
+                                                            <span className="text-[10px] font-mono text-gray-600 font-bold tracking-tight" title="Hash Digital de Autenticidade">
+                                                                HASH: {loanHashes[loan.id]}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <span className={clsx(
                                                         "text-[9px] font-black uppercase px-2 py-0.5 rounded-full border",
                                                         loan.status === 'active' ? "text-amber-600 bg-amber-50 border-amber-100" : "text-green-600 bg-green-50 border-green-100"
@@ -890,30 +934,28 @@ export function AdminLoans() {
                                             "flex flex-col gap-4 shrink-0 transition-all duration-300",
                                             loan.status === 'active' ? "min-w-[320px] md:min-w-[400px]" : "min-w-[200px] md:min-w-[250px]"
                                         )}>
-                                            <div className="flex gap-2 text-[11px] font-black bg-gray-50 rounded-xl p-3 border border-gray-100 justify-between">
-                                                <div className="flex flex-col border-r border-gray-200 pr-4">
-                                                    <span className="text-gray-400 uppercase tracking-widest text-[8px] mb-1">Início</span>
-                                                    <span>{format(parseISO(loan.start_at), "dd/MM/yy HH:mm")}</span>
+                                            <div className="flex gap-1 text-[10px] font-black bg-gray-50 rounded-xl p-2 border border-gray-100 justify-between items-center">
+                                                <div className="flex flex-col border-r border-gray-200 pr-2">
+                                                    <span className="text-gray-400 uppercase tracking-widest text-[7px] mb-0.5">Início</span>
+                                                    <span>{format(parseISO(loan.start_at), "dd/MM HH:mm")}</span>
                                                 </div>
                                                 <div className="flex flex-col pl-1">
-                                                    <span className="text-gray-400 uppercase tracking-widest text-[8px] mb-1">Término</span>
-                                                    <span>{format(parseISO(loan.end_at), "dd/MM/yy HH:mm")}</span>
+                                                    <span className="text-gray-400 uppercase tracking-widest text-[7px] mb-0.5">Término</span>
+                                                    <span>{format(parseISO(loan.end_at), "dd/MM HH:mm")}</span>
                                                 </div>
                                             </div>
 
-                                            {/* Smart Action Layout: Grid for Active, Flex/Compact for Inactive */}
-                                            <div className={clsx(
-                                                "gap-3 transition-all",
-                                                loan.status === 'active' ? "grid grid-cols-2" : "flex flex-col"
-                                            )}>
-                                                {/* Group 1: Documents */}
-                                                <div className={clsx("flex gap-2", loan.status !== 'active' && "flex-row")}>
+                                            {/* Smart Action Layout: Compact Flex Row */}
+                                            <div className="flex flex-wrap items-center justify-end gap-2 transition-all">
+
+                                                {/* Group 1: Documents & Upload */}
+                                                <div className="flex items-center gap-2">
                                                     <button
                                                         onClick={() => setModalInfo({ type: 'preview', loanData: loan })}
-                                                        className="flex-1 flex items-center justify-center gap-2 py-3 px-3 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95"
-                                                        title="Ver Termo para Impressão"
+                                                        className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white border border-gray-200 text-gray-600 hover:border-primary-500 hover:text-primary-600 font-bold text-[10px] uppercase tracking-wide rounded-xl shadow-sm transition-all active:scale-95"
+                                                        title="Ver Termo"
                                                     >
-                                                        <FileText className="h-4 w-4" /> {loan.status !== 'active' && "Termo"}
+                                                        <FileText className="h-3.5 w-3.5" /> {loan.status !== 'active' && "Termo"}
                                                     </button>
 
                                                     <div className="relative">
@@ -928,19 +970,16 @@ export function AdminLoans() {
                                                         <label
                                                             htmlFor={`upload-${loan.id}`}
                                                             className={clsx(
-                                                                "h-full py-3 px-3 flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer",
-                                                                uploadingLoanId === loan.id && 'opacity-50 cursor-not-allowed',
-                                                                loan.status !== 'active' && "aspect-square w-12" // Force square shape for icon-only button
+                                                                "h-9 w-9 flex items-center justify-center bg-white border border-gray-200 text-gray-500 hover:border-primary-500 hover:text-primary-600 rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer",
+                                                                uploadingLoanId === loan.id && 'opacity-50 cursor-not-allowed'
                                                             )}
-                                                            title="Anexar Imagem do Termo Assinado"
+                                                            title="Anexar Imagem"
                                                         >
                                                             {uploadingLoanId === loan.id ? (
-                                                                <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin text-primary-500" />
+                                                                <Loader2 className="h-4 w-4 animate-spin" />
                                                             ) : (
-                                                                <Upload className="h-4 w-4 md:h-5 md:w-5 text-primary-500" />
+                                                                <Upload className="h-4 w-4" />
                                                             )}
-                                                            {/* Show text only if active */}
-                                                            {loan.status === 'active' && (uploadingLoanId === loan.id ? 'Subindo...' : loan.manual_term_url ? 'Substituir' : 'Anexar')}
                                                         </label>
                                                     </div>
                                                 </div>
@@ -949,13 +988,10 @@ export function AdminLoans() {
                                                 {loan.manual_term_url && (
                                                     <button
                                                         onClick={() => handleViewManualTerm(loan.manual_term_url!)}
-                                                        className={clsx(
-                                                            "flex items-center justify-center gap-2 py-3 px-3 bg-indigo-50 border border-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95",
-                                                            loan.status === 'active' ? "col-span-2" : "w-full"
-                                                        )}
-                                                        title="Ver Termo Assinado Manualmente"
+                                                        className="flex items-center justify-center h-9 w-9 bg-indigo-50 border border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-xl shadow-sm transition-all active:scale-95"
+                                                        title="Ver Termo Assinado"
                                                     >
-                                                        <Eye className="h-4 w-4" /> Ver termo assinado
+                                                        <Eye className="h-4 w-4" />
                                                     </button>
                                                 )}
 
@@ -963,21 +999,21 @@ export function AdminLoans() {
                                                 {loan.status === 'active' && (
                                                     <button
                                                         onClick={() => setModalInfo({ type: 'return', loanData: loan })}
-                                                        className="flex items-center justify-center gap-2 py-3 px-3 bg-green-600 text-white hover:bg-green-700 font-black text-xs rounded-xl shadow-lg shadow-green-100 transition-all active:scale-95"
+                                                        className="flex items-center justify-center gap-1.5 py-2 px-3 bg-green-50 text-green-700 border border-green-200 hover:bg-green-600 hover:text-white hover:border-green-600 font-black text-[10px] uppercase tracking-wide rounded-xl transition-all active:scale-95"
                                                     >
-                                                        <CheckCircle2 className="h-4 w-4" /> Devolver
+                                                        <CheckCircle2 className="h-3.5 w-3.5" /> Devolver
                                                     </button>
                                                 )}
 
                                                 <button
                                                     onClick={() => setModalInfo({ type: 'delete', loanData: loan })}
                                                     className={clsx(
-                                                        "flex items-center justify-center p-3 bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95 border border-red-100 hover:border-red-600",
+                                                        "flex items-center justify-center h-9 w-9 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white border border-red-100 hover:border-red-500 rounded-xl transition-all active:scale-95",
                                                         loan.status !== 'active' && "w-full"
                                                     )}
                                                     title="Excluir Registro"
                                                 >
-                                                    {loan.status !== 'active' && <span className="mr-2 text-xs font-bold">Excluir Registro</span>}
+                                                    {loan.status !== 'active' && <span className="mr-2 text-xs font-bold">Excluir</span>}
                                                     <Trash2 className="h-4 w-4" />
                                                 </button>
                                             </div>
@@ -1052,8 +1088,8 @@ export function AdminLoans() {
                             Fechar
                         </button>
                         <button
-                            onClick={() => {
-                                if (modalInfo?.loanData) generatePDF(modalInfo.loanData, true);
+                            onClick={async () => {
+                                if (modalInfo?.loanData) await generatePDF(modalInfo.loanData, true);
                                 setModalInfo(null);
                             }}
                             className="flex-[2] py-4 bg-primary-600 text-white font-black rounded-2xl shadow-xl shadow-primary-200 hover:bg-primary-700 transition-all active:scale-95 flex items-center justify-center gap-2"
