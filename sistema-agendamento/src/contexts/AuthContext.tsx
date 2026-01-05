@@ -195,7 +195,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const signIn = async (inputIdentifier: string, password: string) => {
         const identifier = inputIdentifier.trim();
-        console.log('SignIn attempt:', identifier);
 
         try {
             // 1. Try Admin Login (Via Secure RPC)
@@ -213,7 +212,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (rpcResult && rpcResult.success) {
                 const adminData = rpcResult.admin;
-                console.log('Admin login successful via RPC');
 
                 // Generate a secure session token
                 const sessionToken = crypto.randomUUID();
@@ -253,7 +251,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
 
             // 2. Not an admin, try Teacher Login
-            console.log('Not an admin, attempting teacher login...');
 
             // Determine if identifier is likely an email
             const isEmail = identifier.includes('@');
