@@ -557,7 +557,7 @@ export function AdminLoans() {
                 </div>
 
                 <div style="margin-top: 40px; text-align: center; font-size: 10px; color: #555; border-top: 1px solid #ddd; padding-top: 8px;">
-                    Documento emitido em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")} <br/>
+                    Documento emitido em ${format(loan.created_at ? parseISO(loan.created_at) : new Date(), "dd/MM/yyyy 'às' HH:mm")} <br/>
                     <strong>ID: ${loan.id.slice(0, 8).toUpperCase()}</strong> | <span style="font-family: monospace;">HASH: ${shortHash}</span>
                 </div>
             </div>
