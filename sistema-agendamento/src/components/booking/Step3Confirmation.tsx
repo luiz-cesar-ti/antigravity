@@ -112,7 +112,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
 
                 if (recError) throw recError;
 
-                // 2. Generate bookings for the rest of the current month
+                // 3. Generate bookings for the rest of the current month
                 const today = new Date();
                 const year = today.getFullYear();
                 const month = today.getMonth();
@@ -198,7 +198,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
     };
 
     const handlePdfAction = async (action: 'download' | 'share') => {
-        const element = document.getElementById('term-preview-content');
+        const element = document.getElementById('term-document-pdf');
         if (!element) return;
 
         setIsGeneratingPdf(true);
