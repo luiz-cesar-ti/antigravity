@@ -20,7 +20,9 @@ import {
     TrendingUp,
     PieChart,
     Trophy,
-    Clock
+    Clock,
+    ShieldCheck,
+    Lock
 } from 'lucide-react';
 
 export function AdminHelp() {
@@ -180,7 +182,7 @@ export function AdminHelp() {
                                             <Search className="h-5 w-5" /> Localização em Tempo Real
                                         </h4>
                                         <p className="text-sm text-indigo-800 leading-relaxed">
-                                            Ao manter os horários atualizados por unidade, a coordenação consegue identificar instantaneamente onde o professor está lecionando (sala, laboratório ou ambiente externo). Isso elimina o tempo gasto procurando o docente pelo colégio.
+                                            Ao manter os horários atualizados por unidade, a Educação Digital consegue identificar instantaneamente onde o professor está lecionando (sala, laboratório ou ambiente externo). Isso elimina o tempo gasto procurando o docente pelo colégio.
                                         </p>
                                     </div>
 
@@ -189,17 +191,11 @@ export function AdminHelp() {
                                             <TrendingUp className="h-5 w-5" /> Agilidade no Suporte
                                         </h4>
                                         <p className="text-sm text-emerald-800 leading-relaxed">
-                                            Facilita a entrega e o recolhimento de equipamentos. Sabendo exatamente onde o recurso será utilizado conforme o horário de aula preenchido, a equipe de logística ganha eficiência e evita atrasos entre o início de uma aula e outra.
+                                            Facilita a entrega e o recolhimento de equipamentos. Sabendo exatamente onde o recurso será utilizado conforme o horário de aula preenchido, a Educação Digital ganha eficiência e evita atrasos entre o início de uma aula e outra.
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="bg-gray-50 p-6 rounded-3xl border border-gray-200">
-                                    <h4 className="font-bold text-gray-900 mb-2">Como preencher:</h4>
-                                    <p className="text-sm text-gray-600 leading-relaxed">
-                                        Acesse a gestão do professor e insira as grades de horário correspondentes às aulas ministradas naquela unidade. O sistema cruzará esses dados nos relatórios operacionais para facilitar a visão do administrador.
-                                    </p>
-                                </div>
                             </div>
                         </div>
                     </section>
@@ -288,25 +284,31 @@ export function AdminHelp() {
                                         </h3>
                                         <div className="space-y-4">
                                             <p className="text-sm text-rose-800 leading-relaxed">
-                                                Para garantir a segurança e a validade jurídica de cada operação, o sistema utiliza um mecanismo de <strong>Verificação Cruzada de IDs</strong>.
+                                                Para garantir a segurança e a validade jurídica de cada operação, o sistema utiliza um mecanismo triplo de <strong>Rastreabilidade e Integridade</strong>.
                                             </p>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                 <div className="bg-white p-4 rounded-xl border border-rose-200">
-                                                    <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest">No Documento (PDF)</span>
-                                                    <p className="text-sm font-bold text-gray-700 mt-1">
-                                                        No rodapé de todo termo gerado, existe um código identificador único (UUID).
+                                                    <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest">ID DO TERMO</span>
+                                                    <p className="text-xs font-bold text-gray-700 mt-1">
+                                                        Código UUID único impresso no rodapé, vinculado permanentemente ao registro no banco de dados.
                                                     </p>
                                                 </div>
                                                 <div className="bg-white p-4 rounded-xl border border-rose-200">
-                                                    <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest">No Sistema</span>
-                                                    <p className="text-sm font-bold text-gray-700 mt-1">
-                                                        Cada agendamento registrado no banco de dados possui exatamente esse mesmo código ID.
+                                                    <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest">VERSÃO DO TERMO</span>
+                                                    <p className="text-xs font-bold text-gray-700 mt-1">
+                                                        Identifica qual contrato legal estava vigente no exato momento da assinatura do professor.
+                                                    </p>
+                                                </div>
+                                                <div className="bg-white p-4 rounded-xl border border-rose-200">
+                                                    <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest">HASH SHA-256</span>
+                                                    <p className="text-xs font-bold text-gray-700 mt-1">
+                                                        Impressão digital matemática que prova que o conteúdo do termo jamais foi alterado após o aceite.
                                                     </p>
                                                 </div>
                                             </div>
-                                            <p className="text-sm font-medium text-rose-900 mt-2 bg-white/50 p-3 rounded-lg border border-rose-100 mb-6">
-                                                <CheckCircle2 className="h-4 w-4 inline mr-2 text-rose-600" />
-                                                Essa correspondência exata é o que comprova a <strong>originalidade</strong> do termo. Se o ID do papel não bater com o do sistema, o documento pode ter sido adulterado.
+                                            <p className="text-sm font-medium text-rose-900 mt-2 bg-white/50 p-3 rounded-lg border border-rose-100 mb-6 text-center">
+                                                <ShieldCheck className="h-4 w-4 inline mr-2 text-rose-600" />
+                                                <strong>Rodapé Centralizado:</strong> Todas estas informações são exibidas de forma clara e centralizada no final do PDF para facilitar auditorias rápidas ou verificações manuais de autenticidade.
                                             </p>
 
                                             <div className="border-t border-rose-200/50 pt-6">
@@ -340,7 +342,11 @@ export function AdminHelp() {
                                         <div className="p-6 bg-gray-50 rounded-xl border border-gray-100 h-full">
                                             <span className="text-xs font-black text-purple-600 bg-purple-100 px-2 py-1 rounded mb-3 inline-block">RECORRENTE</span>
                                             <h4 className="font-bold text-gray-800 text-lg mb-2">Termo Recorrente</h4>
-                                            <p className="text-sm text-gray-600 leading-relaxed">Função ativada pelo Admin. Permite ao professor agendar um dia fixo na semana. O termo assinado valida todas as datas agendadas para o mês vigente.</p>
+                                            <p className="text-sm text-gray-600 leading-relaxed mb-3">Válido para agendamentos semanais fixos. O termo assinado captura a "recorrência" no rodapé (ex: Toda Segunda-feira).</p>
+                                            <div className="flex items-center gap-2 text-xs font-bold text-purple-700 bg-purple-50 p-2 rounded-lg border border-purple-100">
+                                                <Lock className="h-3 w-3" />
+                                                Garante que o aceite original cubra toda a série de aulas do período.
+                                            </div>
                                         </div>
                                         <div className="p-6 bg-gray-50 rounded-xl border border-gray-100 h-full">
                                             <span className="text-xs font-black text-amber-600 bg-amber-100 px-2 py-1 rounded mb-3 inline-block">EMPRÉSTIMO</span>
@@ -797,24 +803,46 @@ export function AdminHelp() {
                                                 <Shield className="h-6 w-6 text-purple-600" />
                                             </div>
                                             <div>
-                                                <h4 className="text-lg font-bold text-gray-900 mb-2">3. Assinatura Digital (Hash SHA-256)</h4>
+                                                <h4 className="text-lg font-bold text-gray-900 mb-2">3. Hash de Autenticidade (SHA-256)</h4>
                                                 <p className="text-base text-gray-600 leading-relaxed mb-3">
-                                                    Para garantir que o Termo de Responsabilidade não seja alterado após a assinatura, o sistema utiliza a tecnologia <strong>SHA-256</strong>.
+                                                    Para garantir que o Termo não seja alterado, o sistema utiliza o algoritmo <strong>SHA-256</strong>.
                                                 </p>
                                                 <div className="bg-gray-50 border border-gray-100 p-4 rounded-xl mb-3">
-                                                    <p className="text-sm text-gray-500 italic mb-2">Como funciona:</p>
+                                                    <p className="text-sm text-gray-500 italic mb-2">Integridade Absoluta:</p>
                                                     <ul className="space-y-2">
                                                         <li className="flex items-start gap-2 text-sm text-gray-700">
                                                             <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-1.5 shrink-0"></div>
-                                                            <span>O sistema gera uma <strong>Impressão Digital</strong> única baseada no texto exato do termo.</span>
+                                                            <span>Gera uma <strong>Impressão Digital</strong> única baseada no texto exato e versão do termo.</span>
                                                         </li>
                                                         <li className="flex items-start gap-2 text-sm text-gray-700">
                                                             <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-1.5 shrink-0"></div>
-                                                            <span>Se uma única vírgula for alterada no termo, o código Hash muda completamente, invalidando a assinatura.</span>
+                                                            <span>Qualquer modificação pós-assinatura (até mesmo um espaço) invalida o código Hash impresso no PDF.</span>
                                                         </li>
-                                                        <li className="flex items-start gap-2 text-sm text-gray-700">
-                                                            <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-1.5 shrink-0"></div>
-                                                            <span>Este Hash é impresso no PDF e armazenado no banco de dados para auditoria perpétua.</span>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-2 bg-rose-50 rounded-lg">
+                                                <Lock className="h-6 w-6 text-rose-600" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-lg font-bold text-gray-900 mb-2">4. Imutabilidade Legal (Append-Only)</h4>
+                                                <p className="text-base text-gray-600 leading-relaxed mb-3">
+                                                    Diferente de sistemas comuns, o banco de dados de termos é <strong>blindado contra edições</strong>.
+                                                </p>
+                                                <div className="bg-rose-50/30 border border-rose-100 p-4 rounded-xl">
+                                                    <ul className="space-y-2">
+                                                        <li className="flex items-start gap-2 text-sm text-rose-900">
+                                                            <CheckCircle2 className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+                                                            <span><strong>Bloqueio de Edição:</strong> Uma vez que um termo é assinado, o sistema impede tecnicamente que administradores alterem o texto original.</span>
+                                                        </li>
+                                                        <li className="flex items-start gap-2 text-sm text-rose-900">
+                                                            <CheckCircle2 className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+                                                            <span><strong>Ciclo de Versões:</strong> Para mudar as regras, deve-se criar uma <em>Nova Versão</em>. As versões antigas permanecem intocadas para validar agendamentos passados.</span>
                                                         </li>
                                                     </ul>
                                                 </div>
