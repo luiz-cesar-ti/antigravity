@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import bcrypt from 'bcryptjs';
+
 import { supabase } from '../services/supabase';
 import type { AuthState, User, Admin, UserRole } from '../types';
 
@@ -198,101 +198,58 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('SignIn attempt:', identifier);
 
         try {
-            // 1. Try Admin Login (Direct Table Lookup)
-            // Use query returning array to avoid errors if 0 results
-            const { data: adminList, error: adminError } = await supabase
-                .from('admins')
-                .select('*')
-                .eq('username', identifier)
-                .limit(1);
+            // 1. Try Admin Login (Via Secure RPC)
+            const { data: rpcResult, error: rpcError } = await supabase.rpc('admin_login', {
+                p_username: identifier,
+                p_password: password
+            });
 
-            if (adminError) {
-                console.error('Admin lookup error:', adminError);
+            if (rpcError) {
+                console.error('RPC Login Error:', rpcError);
+                // Continue to teacher login if RPC fails technically or logic?
+                // If RPC error, we probably shouldn't assume it's not an admin if the error is "connection failed"?
+                // But for now, let's treat it as "maybe not an admin" or valid fail.
             }
 
-            if (adminList && adminList.length > 0) {
-                const adminData = adminList[0];
-                console.log('Admin user found, verifying password...');
+            if (rpcResult && rpcResult.success) {
+                const adminData = rpcResult.admin;
+                console.log('Admin login successful via RPC');
 
-                console.log('Admin user found, verifying password...');
+                // Generate a secure session token
+                const sessionToken = crypto.randomUUID();
+                const expiresAt = new Date();
+                expiresAt.setHours(expiresAt.getHours() + 24); // Token valid for 24h
 
-                // 1. Try bcrypt comparison strictly first
-                const isHashMatch = await bcrypt.compare(password, adminData.password_hash);
-                let isValid = isHashMatch;
-                let migrated = false;
-
-                // 2. If not a hash match, check for legacy plain text (Auto-Migration)
-                if (!isValid) {
-                    if (adminData.password_hash === password) {
-                        console.log('Detected legacy plain text password. Migrating to hash...');
-                        try {
-                            const newHash = await bcrypt.hash(password, 10);
-                            const { error: migrationError } = await supabase
-                                .from('admins')
-                                .update({ password_hash: newHash })
-                                .eq('id', adminData.id);
-
-                            if (!migrationError) {
-                                console.log('Password successfully migrated to hash.');
-                                isValid = true;
-                                migrated = true;
-                            } else {
-                                console.error('Failed to migrate password:', migrationError);
-                                // Allow login even if migration fails, but warn? No, just allow.
-                                isValid = true;
-                            }
-                        } catch (err) {
-                            console.error('Bcrypt migration error:', err);
-                            isValid = true; // Fallback to allow login
-                        }
-                    }
-                }
-
-                if (isValid) {
-                    console.log('Admin password match!');
-
-                    // Generate a secure session token
-                    const sessionToken = crypto.randomUUID();
-                    const expiresAt = new Date();
-                    expiresAt.setHours(expiresAt.getHours() + 24); // Token valid for 24h
-
-                    // Save session to database for RLS validation
-                    const { error: sessionError } = await supabase
-                        .from('admin_sessions')
-                        .insert({
-                            admin_id: adminData.id,
-                            token: sessionToken,
-                            expires_at: expiresAt.toISOString()
-                        });
-
-                    if (sessionError) {
-                        console.error('Error creating admin session:', sessionError);
-                        return { error: 'Erro ao iniciar sessão segura no servidor.' };
-                    }
-
-                    const adminUser = {
-                        ...adminData,
-                        role: (adminData.role as UserRole) || 'admin',
-                        session_token: sessionToken
-                    };
-
-                    localStorage.setItem('admin_session', JSON.stringify(adminUser));
-                    setState({
-                        user: adminUser,
-                        role: adminUser.role,
-                        isAuthenticated: true,
-                        isLoading: false,
+                // Save session to database for RLS validation
+                const { error: sessionError } = await supabase
+                    .from('admin_sessions')
+                    .insert({
+                        admin_id: adminData.id,
+                        token: sessionToken,
+                        expires_at: expiresAt.toISOString()
                     });
 
-                    if (migrated) {
-                        // Optional: notify or logging
-                        console.log('Session started with migrated credentials.');
-                    }
-                    return {};
-                } else {
-                    console.warn('Admin password mismatch');
-                    return { error: 'Credenciais inválidas (Senha incorreta para Administrador)' };
+                if (sessionError) {
+                    console.error('Error creating admin session:', sessionError);
+                    return { error: 'Erro ao iniciar sessão segura no servidor.' };
                 }
+
+                const adminUser = {
+                    ...adminData,
+                    role: (adminData.role as UserRole) || 'admin',
+                    session_token: sessionToken
+                };
+
+                localStorage.setItem('admin_session', JSON.stringify(adminUser));
+                setState({
+                    user: adminUser,
+                    role: adminUser.role,
+                    isAuthenticated: true,
+                    isLoading: false,
+                });
+                return {};
+            } else if (rpcResult && !rpcResult.success && rpcResult.message !== 'Usuário não encontrado') {
+                return { error: 'Credenciais inválidas (Senha incorreta para Administrador)' };
             }
 
             // 2. Not an admin, try Teacher Login
@@ -323,7 +280,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
 
             // 4. Perform Authentication
-            // Set loading state to prevent interaction
             setState(prev => ({ ...prev, isLoading: true }));
 
             const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
