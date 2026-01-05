@@ -298,7 +298,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
 
             {/* Traceability Footer */}
             {(getDisplayId() || data.term_hash || data.term_fingerprint || data.term_document?.term_fingerprint || data.term_document?.term_hash) && (
-                <div style={{ marginTop: '0.5rem', borderTop: '1px dashed #e5e7eb', paddingTop: '0.5rem' }}>
+                <div style={{ marginTop: '0.5rem', borderTop: '1px dashed #e5e7eb', paddingTop: '0.5rem', textAlign: 'center' }}>
                     {displayId && (
                         <p style={{ fontWeight: 'bold', fontSize: '10pt', color: '#111827', marginBottom: '4px' }}>
                             ID DO TERMO: #{displayId}
@@ -306,11 +306,11 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                     )}
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', fontSize: '7.5pt', color: '#6b7280' }}>
                         <span><strong style={{ fontWeight: 'bold' }}>VERSÃO DO TERMO:</strong> {data.version_tag || data.term_document?.version_tag || 'v1.0'}</span>
-                        <span><strong style={{ fontWeight: 'bold' }}>IMPRESSÃO DIGITAL (HASH):</strong> {(data.term_hash || data.term_fingerprint || data.term_document?.term_fingerprint || data.term_document?.term_hash)?.substring(0, 24)}...</span>
+                        <span><strong style={{ fontWeight: 'bold' }}>HASH DE AUTENTICIDADE (SHA-256):</strong> {(data.term_hash || data.term_fingerprint || data.term_document?.term_fingerprint || data.term_document?.term_hash)?.substring(0, 24)}...</span>
                     </div>
                 </div>
             )}
-            <p style={{ fontSize: '7.5pt', color: '#9ca3af', marginTop: '2px' }}>
+            <p style={{ fontSize: '7.5pt', color: '#9ca3af', marginTop: '2px', textAlign: 'center' }}>
                 Documento gerado eletronicamente pelo Sistema de Agendamentos Objetivo.
             </p>
         </div>
