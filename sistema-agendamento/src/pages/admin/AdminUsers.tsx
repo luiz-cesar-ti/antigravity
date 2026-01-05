@@ -3,7 +3,7 @@ import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { SCHOOL_UNITS } from '../../utils/constants';
 import type { User, Admin } from '../../types';
-import { Search, Mail, Building, Pencil, X, ToggleLeft, ToggleRight, AlertCircle, UserMinus, Check, Send, Repeat, ShieldCheck } from 'lucide-react';
+import { Search, Mail, Building, Pencil, X, ToggleLeft, ToggleRight, AlertCircle, UserMinus, Check, Send, Repeat, ShieldCheck, KeyRound, Shield } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { SuccessModal } from '../../components/SuccessModal';
 import { ConfirmModal } from '../../components/ConfirmModal';
@@ -55,8 +55,11 @@ export function AdminUsers() {
             let filteredData = data as User[];
 
             if (role === 'admin' && (user as Admin)?.unit) {
-                const adminUnit = (user as Admin).unit;
-                filteredData = filteredData.filter(u => u.units && u.units.includes(adminUnit));
+                const adminUser = user as Admin;
+                if (adminUser.role !== 'super_admin') {
+                    const adminUnit = adminUser.unit;
+                    filteredData = filteredData.filter(u => u.units && u.units.includes(adminUnit));
+                }
             }
 
             setUsers(filteredData);
@@ -64,8 +67,11 @@ export function AdminUsers() {
         setLoading(false);
     };
 
+
     useEffect(() => {
-        if (user?.id) fetchUsers();
+        if (user?.id) {
+            fetchUsers();
+        }
     }, [user?.id]);
 
     const handleEdit = (user: User) => {
@@ -216,7 +222,8 @@ export function AdminUsers() {
         (user.totvs_number?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     );
 
-    const isAdminWithUnit = role === 'admin' && !!(user as Admin)?.unit;
+
+    const isAdminWithUnit = role === 'admin' && !!(user as Admin)?.unit && (user as Admin).role !== 'super_admin';
 
     return (
         <div className="space-y-6">
@@ -226,7 +233,7 @@ export function AdminUsers() {
                     <p className="text-gray-500">
                         {isAdminWithUnit
                             ? `Professores da unidade ${(user as Admin).unit}`
-                            : 'Lista de professores cadastrados no sistema.'}
+                            : 'Gestão de usuários do sistema.'}
                     </p>
                 </div>
             </div>
@@ -251,7 +258,7 @@ export function AdminUsers() {
                     <ul className="divide-y divide-gray-200">
                         {filteredUsers.length === 0 ? (
                             <li className="px-6 py-12 text-center text-gray-500">
-                                Nenhum professor encontrado nesta unidade.
+                                Nenhum professor encontrado.
                             </li>
                         ) : (
                             filteredUsers.map((teacher) => (

@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { SCHOOL_UNITS } from '../../utils/constants';
+import { Building } from 'lucide-react';
 
 interface ScheduleGrid {
     headers: string[];
@@ -48,9 +50,11 @@ const SEGMENTS = [
 export function AdminSchedule() {
     const { user } = useAuth();
     const adminUnit = (user as any)?.unit;
+    const isSuperAdmin = (user as any)?.role === 'super_admin';
 
     const [selectedDay, setSelectedDay] = useState(DAYS_OF_WEEK[0]);
     const [selectedSegment, setSelectedSegment] = useState(SEGMENTS[0]);
+    const [targetUnit, setTargetUnit] = useState(adminUnit || SCHOOL_UNITS[0]);
     const [schedule, setSchedule] = useState<ClassSchedule | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -63,11 +67,17 @@ export function AdminSchedule() {
     const lastFetchParams = useRef("");
 
     useEffect(() => {
-        const params = `${adminUnit}-${selectedDay}-${selectedSegment}`;
+        if (adminUnit && !isSuperAdmin) {
+            setTargetUnit(adminUnit);
+        }
+    }, [adminUnit, isSuperAdmin]);
+
+    useEffect(() => {
+        const params = `${targetUnit}-${selectedDay}-${selectedSegment}`;
         if (params === lastFetchParams.current) return;
 
         lastFetchParams.current = params;
-        if (adminUnit) {
+        if (targetUnit) {
             fetchSchedule();
         } else {
             setIsLoading(false);
@@ -81,7 +91,7 @@ export function AdminSchedule() {
                 }
             });
         }
-    }, [adminUnit, selectedDay, selectedSegment]);
+    }, [targetUnit, selectedDay, selectedSegment]);
 
     const fetchSchedule = async () => {
         setIsLoading(true);
@@ -89,7 +99,7 @@ export function AdminSchedule() {
             const { data, error } = await supabase
                 .from('class_schedules')
                 .select('*')
-                .eq('unit', adminUnit)
+                .eq('unit', targetUnit)
                 .eq('day_of_week', selectedDay)
                 .eq('segment', selectedSegment)
                 .single();
@@ -105,7 +115,7 @@ export function AdminSchedule() {
                 }
             } else {
                 setSchedule({
-                    unit: adminUnit,
+                    unit: targetUnit,
                     day_of_week: selectedDay,
                     segment: selectedSegment,
                     schedule_data: {
@@ -135,7 +145,7 @@ export function AdminSchedule() {
                         ...schedule.schedule_data,
                         columnWidth: columnWidth
                     },
-                    unit: adminUnit,
+                    unit: targetUnit,
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'unit, day_of_week, segment' });
 
@@ -296,7 +306,7 @@ export function AdminSchedule() {
                         <span className="text-sm font-black uppercase tracking-widest italic">Gestão Escolar</span>
                     </div>
                     <h1 className="text-2xl md:text-4xl font-black text-gray-900 tracking-tight">Horário de Aulas</h1>
-                    <p className="text-gray-500 font-medium">Configure a grade de horários para a unidade {adminUnit}.</p>
+                    <p className="text-gray-500 font-medium">Configure a grade de horários para {isSuperAdmin ? 'a rede' : `a unidade ${adminUnit}`}.</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
@@ -325,6 +335,29 @@ export function AdminSchedule() {
                     />
                 </div>
             </div>
+
+            {/* Global Admin Unit Selector */}
+            {
+                isSuperAdmin && (
+                    <div className="bg-amber-50 p-6 rounded-[2rem] border border-amber-100 shadow-sm">
+                        <div className="flex flex-col md:flex-row items-center gap-4">
+                            <div className="flex items-center gap-2 text-amber-700">
+                                <Building className="h-5 w-5" />
+                                <span className="font-black uppercase tracking-widest text-sm">Visualizando Unidade:</span>
+                            </div>
+                            <select
+                                value={targetUnit}
+                                onChange={(e) => setTargetUnit(e.target.value)}
+                                className="flex-1 bg-white border-none py-3 px-6 rounded-xl font-bold text-gray-700 shadow-sm outline-none ring-0 w-full md:w-auto"
+                            >
+                                {SCHOOL_UNITS.map(unit => (
+                                    <option key={unit} value={unit}>{unit}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                )
+            }
 
             {/* Filters & View Controls */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -569,6 +602,6 @@ export function AdminSchedule() {
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
             `}</style>
-        </div>
+        </div >
     );
 }

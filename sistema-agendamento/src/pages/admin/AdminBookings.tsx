@@ -11,6 +11,8 @@ import {
 import { TermDocument } from '../../components/TermDocument';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
+import { SCHOOL_UNITS } from '../../utils/constants';
+import { Building } from 'lucide-react';
 
 export function AdminBookings() {
     const { user, role } = useAuth();
@@ -18,7 +20,17 @@ export function AdminBookings() {
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState('all'); // default to all to prevent items from "disappearing" automatically
     const [searchTerm, setSearchTerm] = useState('');
+    const [targetUnit, setTargetUnit] = useState((user as Admin)?.unit || SCHOOL_UNITS[0]);
     const [pdfData, setPdfData] = useState<any>(null);
+
+    const isSuperAdmin = (user as Admin)?.role === 'super_admin';
+    const adminUnit = (user as Admin)?.unit;
+
+    useEffect(() => {
+        if (adminUnit && !isSuperAdmin) {
+            setTargetUnit(adminUnit);
+        }
+    }, [adminUnit, isSuperAdmin]);
 
     // Date range filters
     const [startDate, setStartDate] = useState('');
@@ -47,13 +59,21 @@ export function AdminBookings() {
             `);
 
         if (role === 'admin') {
-            const unit = (user as Admin).unit;
-            if (unit === 'Matriz') {
-                // Matriz admin sees all bookings
-            } else if (unit) {
-                query = query.eq('unit', unit);
+            if (isSuperAdmin) {
+                // Super admin uses targetUnit filter
+                if (targetUnit) {
+                    query = query.eq('unit', targetUnit);
+                }
             } else {
-                query = query.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
+                // Regular admin logic
+                const unit = (user as Admin).unit;
+                if (unit === 'Matriz') {
+                    // Matriz admin sees all bookings
+                } else if (unit) {
+                    query = query.eq('unit', unit);
+                } else {
+                    query = query.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
+                }
             }
         }
 
@@ -140,7 +160,7 @@ export function AdminBookings() {
         return () => {
             subscription.unsubscribe();
         };
-    }, [user?.id, (user as Admin)?.unit, startDate, endDate, statusFilter, periodFilter, recurringFilter]);
+    }, [user?.id, (user as Admin)?.unit, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit]);
 
     const handleDeleteBooking = async () => {
         if (!deleteModal.bookingId) return;

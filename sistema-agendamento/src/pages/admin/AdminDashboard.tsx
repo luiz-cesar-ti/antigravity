@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Monitor, Users, TrendingUp, Trophy, Filter, X } from 'lucide-react';
+import { Calendar, Monitor, Users, TrendingUp, Trophy, Filter, X, Building } from 'lucide-react';
 import { format, parseISO, startOfWeek, startOfMonth, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '../../services/supabase';
@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { clsx } from 'clsx';
 
 import type { Admin } from '../../types';
+import { SCHOOL_UNITS } from '../../utils/constants';
 import {
     XAxis,
     YAxis,
@@ -29,6 +30,11 @@ export function AdminDashboard() {
     const [customStartDate, setCustomStartDate] = useState('');
     const [customEndDate, setCustomEndDate] = useState('');
     const [donutShift, setDonutShift] = useState<'all' | 'morning' | 'afternoon'>('all');
+
+    // Super Admin - Unit Filter Logic
+    const isSuperAdmin = adminUser?.role === 'super_admin';
+    const [targetUnit, setTargetUnit] = useState<string>(isSuperAdmin ? 'Matriz' : (adminUser?.unit || ''));
+
     const [selectedTeacher, setSelectedTeacher] = useState<any | null>(null);
     const [teacherBookings, setTeacherBookings] = useState<any[]>([]);
     const [teacherStats, setTeacherStats] = useState<any>({ equipmentUsage: [], weeklyTrend: [] });
@@ -60,8 +66,11 @@ export function AdminDashboard() {
                 .eq('user_id', teacherId)
                 .neq('status', 'cancelled_by_user');
 
-            // Apply unit filter for teacher details if admin is not Matriz
-            if (adminUser.unit && adminUser.unit !== 'Matriz') {
+            // Apply unit filter for teacher details
+            if (isSuperAdmin && targetUnit !== 'Matriz') {
+                detailQuery = detailQuery.eq('unit', targetUnit);
+            } else if (!isSuperAdmin && adminUser.unit && adminUser.unit !== 'Matriz') {
+                // Determine security context: if not super admin, enforce own unit
                 detailQuery = detailQuery.eq('unit', adminUser.unit);
             }
 
@@ -115,7 +124,9 @@ export function AdminDashboard() {
                 .or(`full_name.ilike.%${query}%,totvs_number.ilike.%${query}%`)
                 .limit(5);
 
-            if (adminUser.unit && adminUser.unit !== 'Matriz') {
+            if (isSuperAdmin && targetUnit !== 'Matriz') {
+                userQuery = userQuery.contains('units', [targetUnit]);
+            } else if (!isSuperAdmin && adminUser.unit && adminUser.unit !== 'Matriz') {
                 userQuery = userQuery.contains('units', [adminUser.unit]);
             }
 
@@ -197,25 +208,42 @@ export function AdminDashboard() {
                 }
 
                 // Apply Strict Filtering Logic
-                const unit = adminUser.unit;
-                const isMatriz = unit === 'Matriz';
+                // If Super Admin, use targetUnit. If 'Matriz', show all (or global logic).
+                // Actually 'Matriz' usually means "Global" in this context or headquarters.
+                // However, bookings usually HAVE a unit.
 
-                if (!isMatriz) {
-                    if (unit) {
-                        // Nomal Unit Admin: Filter by their unit
-                        activeBookingsQuery = activeBookingsQuery.eq('unit', unit);
-                        completedBookingsQuery = completedBookingsQuery.eq('unit', unit);
-                        totalEquipmentQuery = totalEquipmentQuery.eq('unit', unit);
-                        totalTeachersQuery = totalTeachersQuery.contains('units', [unit]);
-                        chartsQuery = chartsQuery.eq('unit', unit);
-                    } else {
-                        // Safety fallback: Admin without unit sees nothing (prevents leak)
+                // Logic Refined:
+                // 1. If Super Admin:
+                //    - If targetUnit is "Matriz" (or "GLOBAL" equivalent): Do we show ALL? Or Matriz specific?
+                //    - Let's assume standard behavior: Filter by targetUnit unless it implies "All".
+                //    - However, `SCHOOL_UNITS` usually contains "Matriz", "Pontal", etc.
+                //    - If the user selects "Matriz", they see "Matriz" data.
+
+                // 2. If Normal Admin:
+                //    - Enforce adminUser.unit.
+
+                const filterUnit = isSuperAdmin ? targetUnit : adminUser.unit;
+
+                // Specialized check: If we interpret "Matriz" as "ALL", we skip .eq('unit').
+                // But usually bookings belong to a specific unit. "Matriz" is a unit itself.
+                // So we always filter by `filterUnit` unless it's explicitly null/undefined which shouldn't happen for active filtering.
+
+                if (filterUnit) {
+                    activeBookingsQuery = activeBookingsQuery.eq('unit', filterUnit);
+                    completedBookingsQuery = completedBookingsQuery.eq('unit', filterUnit);
+                    totalEquipmentQuery = totalEquipmentQuery.eq('unit', filterUnit);
+                    // For teachers, they have an array of units. We check if array contains the unit.
+                    totalTeachersQuery = totalTeachersQuery.contains('units', [filterUnit]);
+                    chartsQuery = chartsQuery.eq('unit', filterUnit);
+                } else {
+                    // Safety fallback
+                    if (!isSuperAdmin) {
                         console.warn('Security Warning: Admin user detected without assigned unit. Access blocked.');
-                        activeBookingsQuery = activeBookingsQuery.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
-                        completedBookingsQuery = completedBookingsQuery.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
-                        totalEquipmentQuery = totalEquipmentQuery.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
-                        totalTeachersQuery = totalTeachersQuery.eq('id', '00000000-0000-0000-0000-000000000000');
-                        chartsQuery = chartsQuery.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
+                        activeBookingsQuery = activeBookingsQuery.eq('unit', 'RESTRICTED');
+                        completedBookingsQuery = completedBookingsQuery.eq('unit', 'RESTRICTED');
+                        totalEquipmentQuery = totalEquipmentQuery.eq('unit', 'RESTRICTED');
+                        totalTeachersQuery = totalTeachersQuery.eq('id', '0000');
+                        chartsQuery = chartsQuery.eq('unit', 'RESTRICTED');
                     }
                 }
 
@@ -302,7 +330,7 @@ export function AdminDashboard() {
         };
 
         fetchStats();
-    }, [period, adminUser?.unit, adminUser?.id, customStartDate, customEndDate, donutShift]);
+    }, [period, adminUser?.unit, adminUser?.id, customStartDate, customEndDate, donutShift, targetUnit, isSuperAdmin]);
 
     const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
@@ -324,12 +352,34 @@ export function AdminDashboard() {
                     <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-primary-50 to-white border border-primary-100 rounded-2xl shadow-sm">
                         <div className="h-2 w-2 rounded-full bg-primary-500 mr-3 animate-pulse"></div>
                         <p className="text-sm font-bold text-primary-900">
-                            Bem-Vindo, <span className="text-primary-600 uppercase tracking-wider">{adminUser?.unit || 'Objetivo Geral'}</span>
+                            Bem-Vindo, <span className="text-primary-600 uppercase tracking-wider">{isSuperAdmin ? 'Administrador Global' : (adminUser?.unit || 'Objetivo Geral')}</span>
                         </p>
                     </div>
                 </div>
 
                 <div className="flex flex-col lg:flex-row items-stretch lg:items-end gap-3 w-full lg:w-auto">
+                    {/* Unit Selector for Super Admin */}
+                    {isSuperAdmin && (
+                        <div className="relative group">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                                <Building className="h-4 w-4 text-primary-500" />
+                            </div>
+                            <select
+                                value={targetUnit}
+                                onChange={(e) => setTargetUnit(e.target.value)}
+                                className="pl-10 pr-8 py-3 bg-white border border-gray-100 text-gray-700 font-bold text-sm rounded-2xl shadow-sm hover:border-primary-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all appearance-none cursor-pointer outline-none min-w-[180px]"
+                            >
+                                {SCHOOL_UNITS.map(unit => (
+                                    <option key={unit} value={unit}>{unit}</option>
+                                ))}
+                            </select>
+                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                                <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
+                                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                </svg>
+                            </div>
+                        </div>
+                    )}
                     {/* Teacher Search Section */}
                     <div className="relative w-full lg:w-80">
                         <div className="relative">

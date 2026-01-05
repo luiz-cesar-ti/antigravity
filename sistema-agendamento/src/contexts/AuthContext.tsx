@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import bcrypt from 'bcryptjs';
 import { supabase } from '../services/supabase';
-import type { AuthState, User, Admin } from '../types';
+import type { AuthState, User, Admin, UserRole } from '../types';
 
 interface AuthContextType extends AuthState {
     signIn: (identifier: string, password: string) => Promise<{ error?: string }>;
@@ -82,7 +83,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         if (admin?.username) {
                             setState({
                                 user: admin as Admin,
-                                role: 'admin',
+                                role: (admin.role as UserRole) || 'admin',
                                 isAuthenticated: true,
                                 isLoading: false,
                             });
@@ -213,7 +214,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 const adminData = adminList[0];
                 console.log('Admin user found, verifying password...');
 
-                if (adminData.password_hash === password) {
+                console.log('Admin user found, verifying password...');
+
+                // 1. Try bcrypt comparison strictly first
+                const isHashMatch = await bcrypt.compare(password, adminData.password_hash);
+                let isValid = isHashMatch;
+                let migrated = false;
+
+                // 2. If not a hash match, check for legacy plain text (Auto-Migration)
+                if (!isValid) {
+                    if (adminData.password_hash === password) {
+                        console.log('Detected legacy plain text password. Migrating to hash...');
+                        try {
+                            const newHash = await bcrypt.hash(password, 10);
+                            const { error: migrationError } = await supabase
+                                .from('admins')
+                                .update({ password_hash: newHash })
+                                .eq('id', adminData.id);
+
+                            if (!migrationError) {
+                                console.log('Password successfully migrated to hash.');
+                                isValid = true;
+                                migrated = true;
+                            } else {
+                                console.error('Failed to migrate password:', migrationError);
+                                // Allow login even if migration fails, but warn? No, just allow.
+                                isValid = true;
+                            }
+                        } catch (err) {
+                            console.error('Bcrypt migration error:', err);
+                            isValid = true; // Fallback to allow login
+                        }
+                    }
+                }
+
+                if (isValid) {
                     console.log('Admin password match!');
 
                     // Generate a secure session token
@@ -237,22 +272,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
                     const adminUser = {
                         ...adminData,
-                        role: 'admin' as const,
+                        role: (adminData.role as UserRole) || 'admin',
                         session_token: sessionToken
                     };
 
                     localStorage.setItem('admin_session', JSON.stringify(adminUser));
                     setState({
                         user: adminUser,
-                        role: 'admin',
+                        role: adminUser.role,
                         isAuthenticated: true,
                         isLoading: false,
                     });
+
+                    if (migrated) {
+                        // Optional: notify or logging
+                        console.log('Session started with migrated credentials.');
+                    }
                     return {};
                 } else {
                     console.warn('Admin password mismatch');
-                    // Return valid credential error if it's an admin username but wrong password
-                    // DO NOT fall through to teacher login if we found an admin username
                     return { error: 'Credenciais inválidas (Senha incorreta para Administrador)' };
                 }
             }

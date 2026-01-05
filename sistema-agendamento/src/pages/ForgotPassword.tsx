@@ -17,18 +17,23 @@ export function ForgotPassword() {
         setMessage('');
 
         try {
-            // 1. Validar se o par TOTVS + Email existe no banco
-            const { data: users, error: userError } = await supabase
-                .from('users')
-                .select('id')
-                .eq('totvs_number', totvs)
-                .eq('email', email)
-                .single();
+            // Special case for Global Admin
+            const isGlobalAdmin = email === 'atendimentotecnico.saovicente@objetivoportal.com.br';
 
-            if (userError || !users) {
-                setError('Dados não conferem. Verifique o Número TOTVS e o Email informados.');
-                setLoading(false);
-                return;
+            if (!isGlobalAdmin) {
+                // 1. Validar se o par TOTVS + Email existe no banco SOMENTE se não for Global Admin
+                const { data: users, error: userError } = await supabase
+                    .from('users')
+                    .select('id')
+                    .eq('totvs_number', totvs)
+                    .eq('email', email)
+                    .single();
+
+                if (userError || !users) {
+                    setError('Dados não conferem. Verifique o Número TOTVS e o Email informados.');
+                    setLoading(false);
+                    return;
+                }
             }
 
             // 2. Enviar email de recuperação via Supabase Auth
@@ -94,11 +99,10 @@ export function ForgotPassword() {
                                     id="totvs"
                                     name="totvs"
                                     type="text"
-                                    required
                                     value={totvs}
                                     onChange={(e) => setTotvs(e.target.value)}
                                     className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 px-3 border"
-                                    placeholder="Ex: 123456"
+                                    placeholder="Ex: 123456 (Opcional para Admin)"
                                 />
                             </div>
                         </div>

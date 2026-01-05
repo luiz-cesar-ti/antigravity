@@ -16,7 +16,7 @@ export function RootRedirect() {
         return <Navigate to="/login" replace />;
     }
 
-    if (user?.role === 'admin') {
+    if (user?.role === 'admin' || user?.role === 'super_admin') {
         return <Navigate to="/admin" replace />;
     }
 

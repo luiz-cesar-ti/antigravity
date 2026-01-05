@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LayoutDashboard, Calendar, Monitor, Users, Settings, LogOut, Menu, X, ClipboardCheck, BookOpen, Clock } from 'lucide-react';
+import { LayoutDashboard, Calendar, Monitor, Users, Settings, LogOut, Menu, X, ClipboardCheck, BookOpen, Clock, UserCog } from 'lucide-react';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import { NotificationBell } from './NotificationBell';
 
@@ -130,6 +130,18 @@ export function AdminLayout() {
                                     <span>Manual do Admin</span>
                                 </Link>
                             </li>
+                            {adminUser?.role === 'super_admin' && (
+                                <li>
+                                    <Link
+                                        to="/admin/manage-admins"
+                                        onClick={() => setIsSidebarOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/manage-admins')}`}
+                                    >
+                                        <UserCog className="w-5 h-5" />
+                                        <span>Administradores</span>
+                                    </Link>
+                                </li>
+                            )}
                             <li>
                                 <Link
                                     to="/admin/settings"

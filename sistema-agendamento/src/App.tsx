@@ -21,6 +21,7 @@ import { AdminSchedule } from './pages/admin/AdminSchedule';
 import { AdminLoans } from './pages/admin/AdminLoans';
 import { AdminNotifications } from './pages/admin/AdminNotifications';
 import { AdminHelp } from './pages/admin/AdminHelp';
+import { AdminManageAdmins } from './pages/admin/AdminManageAdmins';
 import { NotFound } from './pages/NotFound';
 
 import { ScrollToTop } from './components/ScrollToTop';
@@ -61,6 +62,7 @@ function App() {
               <Route path="settings" element={<AdminSettings />} />
               <Route path="schedule" element={<AdminSchedule />} />
               <Route path="notifications" element={<AdminNotifications />} />
+              <Route path="manage-admins" element={<AdminManageAdmins />} />
               <Route path="about" element={<AdminHelp />} />
             </Route>
           </Route>

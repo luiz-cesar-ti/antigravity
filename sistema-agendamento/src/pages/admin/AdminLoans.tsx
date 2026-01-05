@@ -101,8 +101,7 @@ export function AdminLoans() {
         end_time: '',
         equipment_id: '',
         quantity: 1,
-        asset_numbers: [''], // Multiple asset numbers
-        cpf: ''
+        asset_numbers: [''] // Multiple asset numbers
     });
 
     const fetchLoans = async () => {
@@ -258,7 +257,6 @@ export function AdminLoans() {
                     equipment_id: formData.equipment_id,
                     quantity: formData.quantity,
                     asset_number: formData.asset_numbers.join(', '),
-                    cpf: formData.cpf,
                     unit: adminUser.unit,
                     status: 'active'
                 }])
@@ -290,8 +288,7 @@ export function AdminLoans() {
                 end_time: format(new Date(), 'HH:mm'),
                 equipment_id: '',
                 quantity: 1,
-                asset_numbers: [''],
-                cpf: ''
+                asset_numbers: ['']
             });
 
             // Open Preview Modal
@@ -699,17 +696,6 @@ export function AdminLoans() {
                             )}
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CPF (Opcional)</label>
-                            <input
-                                type="text"
-                                name="cpf"
-                                value={formData.cpf}
-                                onChange={handleInputChange}
-                                className="block w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary-100 focus:bg-white rounded-2xl text-sm font-bold transition-all outline-none"
-                                placeholder="Vazio ou opcional"
-                            />
-                        </div>
 
                         <button
                             type="submit"
@@ -809,10 +795,7 @@ export function AdminLoans() {
                                             </div>
                                         </div>
 
-                                        <div className={clsx(
-                                            "flex flex-col gap-4 shrink-0 transition-all duration-300",
-                                            loan.status === 'active' ? "min-w-[320px] md:min-w-[400px]" : "min-w-[200px] md:min-w-[250px]"
-                                        )}>
+                                        <div className="flex flex-col gap-4 shrink-0 transition-all duration-300 min-w-[200px] md:min-w-[250px]">
                                             <div className="flex gap-1 text-[10px] font-black bg-gray-50 rounded-xl p-2 border border-gray-100 justify-between items-center">
                                                 <div className="flex flex-col border-r border-gray-200 pr-2">
                                                     <span className="text-gray-400 uppercase tracking-widest text-[7px] mb-0.5">Início</span>

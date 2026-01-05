@@ -20,11 +20,15 @@ export function ProtectedRoute({ allowedRole }: ProtectedRouteProps) {
         return <Navigate to="/login" replace />;
     }
 
-    if (allowedRole && role !== allowedRole) {
-        // Redirect to correct dashboard based on actual role
-        if (role === 'admin') return <Navigate to="/admin" replace />;
-        if (role === 'teacher') return <Navigate to="/teacher" replace />;
-        return <Navigate to="/login" replace />;
+    if (allowedRole) {
+        const isAllowed = role === allowedRole || (allowedRole === 'admin' && role === 'super_admin');
+
+        if (!isAllowed) {
+            // Redirect to correct dashboard based on actual role
+            if (role === 'admin' || role === 'super_admin') return <Navigate to="/admin" replace />;
+            if (role === 'teacher') return <Navigate to="/teacher" replace />;
+            return <Navigate to="/login" replace />;
+        }
     }
 
     return <Outlet />;

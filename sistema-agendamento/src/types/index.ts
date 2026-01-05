@@ -18,7 +18,7 @@ export interface Admin {
     id: string;
     username: string;
     unit: string;
-    role: 'admin';
+    role: 'admin' | 'super_admin';
     session_token?: string;
 }
 
@@ -106,7 +106,7 @@ export interface EquipmentLoan {
     equipment?: Equipment;
 }
 
-export type UserRole = 'teacher' | 'admin';
+export type UserRole = 'teacher' | 'admin' | 'super_admin';
 
 export interface AuthState {
     user: User | Admin | null;
