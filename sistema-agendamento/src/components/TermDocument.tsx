@@ -31,6 +31,8 @@ interface TermData {
     isRecurring?: boolean;
     day_of_week?: number;
     dayOfWeek?: number;
+    term_hash?: string;
+    version_tag?: string;
 }
 
 interface TermDocumentProps {
@@ -294,21 +296,28 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
             </div>
 
             {/* Traceability Footer */}
-            {displayId && (
-                <div style={{
-                    marginTop: '1.5rem',
-                    paddingTop: '0.5rem',
-                    borderTop: '1px dashed #e5e7eb',
-                    textAlign: 'center'
-                }}>
-                    <p style={{ fontWeight: 'bold', fontSize: '10pt', color: '#111827' }}>
+            <div style={{
+                marginTop: '1.5rem',
+                paddingTop: '0.5rem',
+                borderTop: '1px dashed #e5e7eb',
+                textAlign: 'center'
+            }}>
+                {displayId && (
+                    <p style={{ fontWeight: 'bold', fontSize: '10pt', color: '#111827', marginBottom: '4px' }}>
                         ID DO TERMO: #{displayId}
                     </p>
-                    <p style={{ fontSize: '7.5pt', color: '#9ca3af', marginTop: '2px' }}>
-                        Documento gerado eletronicamente pelo Sistema de Agendamentos Objetivo.
-                    </p>
-                </div>
-            )}
+                )}
+                {(data.term_hash || data.term_document?.term_fingerprint) && (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', fontSize: '7.5pt', color: '#6b7280', marginBottom: '2px' }}>
+                        <span><strong style={{ fontWeight: 'bold' }}>VERSÃO:</strong> {data.version_tag || data.term_document?.version_tag || 'v1.0'}</span>
+                        <span><strong style={{ fontWeight: 'bold' }}>HASH:</strong> {(data.term_hash || data.term_document?.term_fingerprint)?.substring(0, 16)}...</span>
+                    </div>
+                )}
+                <p style={{ fontSize: '7.5pt', color: '#9ca3af', marginTop: '2px' }}>
+                    Documento gerado eletronicamente pelo Sistema de Agendamentos Objetivo.
+                </p>
+            </div>
+
         </div >
     );
 };

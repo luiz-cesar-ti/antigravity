@@ -19,6 +19,7 @@ export interface Admin {
     username: string;
     unit: string;
     role: 'admin';
+    session_token?: string;
 }
 
 export interface Equipment {
@@ -50,6 +51,7 @@ export interface Booking {
     display_id?: string;
     is_recurring?: boolean;
     recurring_id?: string;
+    term_hash?: string;
     created_at: string;
     updated_at: string;
 

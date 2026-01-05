@@ -17,6 +17,7 @@ import { AdminBookings } from './pages/admin/AdminBookings';
 import { AdminEquipment } from './pages/admin/AdminEquipment';
 import { AdminUsers } from './pages/admin/AdminUsers';
 import { AdminSettings } from './pages/admin/AdminSettings';
+import { AdminSchedule } from './pages/admin/AdminSchedule';
 import { AdminLoans } from './pages/admin/AdminLoans';
 import { AdminNotifications } from './pages/admin/AdminNotifications';
 import { AdminHelp } from './pages/admin/AdminHelp';
@@ -58,6 +59,7 @@ function App() {
               <Route path="users" element={<AdminUsers />} />
               <Route path="emprestimos" element={<AdminLoans />} />
               <Route path="settings" element={<AdminSettings />} />
+              <Route path="schedule" element={<AdminSchedule />} />
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="about" element={<AdminHelp />} />
             </Route>

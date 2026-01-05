@@ -586,9 +586,16 @@ export function TeacherBookings() {
                                                     </div>
                                                 )}
                                                 {first.display_id && (
-                                                    <span className="text-[10px] font-black text-indigo-600 italic mt-0.5">
-                                                        ID TERMO #{first.display_id}
-                                                    </span>
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="text-[10px] font-black text-indigo-600 italic mt-0.5">
+                                                            ID TERMO #{first.display_id}
+                                                        </span>
+                                                        {first.term_hash && (
+                                                            <span className="text-[8px] text-gray-400 font-black italic">
+                                                                HASH: {first.term_hash.substring(0, 8)}...
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>

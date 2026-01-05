@@ -19,7 +19,8 @@ import {
     Bell,
     TrendingUp,
     PieChart,
-    Trophy
+    Trophy,
+    Clock
 } from 'lucide-react';
 
 export function AdminHelp() {
@@ -34,6 +35,7 @@ export function AdminHelp() {
         { id: 'users', title: 'Usuários', icon: Users },
         { id: 'loans', title: 'Empréstimos', icon: ClipboardCheck },
         { id: 'notifications', title: 'Notificações', icon: Bell },
+        { id: 'schedules', title: 'Horário de Aulas', icon: Clock },
         { id: 'settings', title: 'Configurações', icon: Settings },
         { id: 'security', title: 'Segurança e LGPD', icon: Shield },
     ];
@@ -151,6 +153,52 @@ export function AdminHelp() {
                                             Ranking dos professores que mais utilizam os recursos da unidade no período selecionado.
                                         </p>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Horário de Aulas - NEW SECTION */}
+                    <section id="schedules" className="scroll-mt-8">
+                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-blue-500 to-indigo-700 p-8 text-white">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
+                                        <Clock className="h-8 w-8" />
+                                    </div>
+                                    <h2 className="text-2xl font-black">Horário de Aulas e Logística</h2>
+                                </div>
+                            </div>
+                            <div className="p-8 space-y-6">
+                                <p className="text-gray-600 leading-relaxed text-lg text-center md:text-left">
+                                    O preenchimento do <strong>Horário de Aulas</strong> pelo administrador é uma ferramenta estratégica de gestão que vai além do simples registro.
+                                </p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="p-6 bg-indigo-50 rounded-3xl border border-indigo-100">
+                                        <h4 className="font-bold text-indigo-900 mb-3 flex items-center gap-2">
+                                            <Search className="h-5 w-5" /> Localização em Tempo Real
+                                        </h4>
+                                        <p className="text-sm text-indigo-800 leading-relaxed">
+                                            Ao manter os horários atualizados por unidade, a coordenação consegue identificar instantaneamente onde o professor está lecionando (sala, laboratório ou ambiente externo). Isso elimina o tempo gasto procurando o docente pelo colégio.
+                                        </p>
+                                    </div>
+
+                                    <div className="p-6 bg-emerald-50 rounded-3xl border border-emerald-100">
+                                        <h4 className="font-bold text-emerald-900 mb-3 flex items-center gap-2">
+                                            <TrendingUp className="h-5 w-5" /> Agilidade no Suporte
+                                        </h4>
+                                        <p className="text-sm text-emerald-800 leading-relaxed">
+                                            Facilita a entrega e o recolhimento de equipamentos. Sabendo exatamente onde o recurso será utilizado conforme o horário de aula preenchido, a equipe de logística ganha eficiência e evita atrasos entre o início de uma aula e outra.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gray-50 p-6 rounded-3xl border border-gray-200">
+                                    <h4 className="font-bold text-gray-900 mb-2">Como preencher:</h4>
+                                    <p className="text-sm text-gray-600 leading-relaxed">
+                                        Acesse a gestão do professor e insira as grades de horário correspondentes às aulas ministradas naquela unidade. O sistema cruzará esses dados nos relatórios operacionais para facilitar a visão do administrador.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -733,10 +781,10 @@ export function AdminHelp() {
                                             </div>
                                             <div>
                                                 <h4 className="text-lg font-bold text-gray-900 mb-2">2. Histórico Operacional</h4>
-                                                <p className="text-sm text-gray-600 leading-relaxed">
+                                                <p className="text-base text-gray-600 leading-relaxed">
                                                     O sistema mantém o histórico completo de agendamentos ativos, realizados e cancelados para consulta.
                                                 </p>
-                                                <p className="text-xs text-gray-500 mt-2 italic bg-gray-50 p-2 rounded border border-gray-200">
+                                                <p className="text-sm text-gray-500 mt-2 italic bg-gray-50 p-2 rounded border border-gray-200">
                                                     Nota: Para garantir o "Direito ao Esquecimento" (outro pilar da LGPD), agendamentos antigos podem ser excluídos permanentemente pela administração, removendo seus vestígios do banco de dados quando não forem mais necessários.
                                                 </p>
                                             </div>
@@ -749,19 +797,71 @@ export function AdminHelp() {
                                                 <Shield className="h-6 w-6 text-purple-600" />
                                             </div>
                                             <div>
-                                                <h4 className="text-lg font-bold text-gray-900 mb-2">3. Segurança da Informação</h4>
+                                                <h4 className="text-lg font-bold text-gray-900 mb-2">3. Assinatura Digital (Hash SHA-256)</h4>
+                                                <p className="text-base text-gray-600 leading-relaxed mb-3">
+                                                    Para garantir que o Termo de Responsabilidade não seja alterado após a assinatura, o sistema utiliza a tecnologia <strong>SHA-256</strong>.
+                                                </p>
+                                                <div className="bg-gray-50 border border-gray-100 p-4 rounded-xl mb-3">
+                                                    <p className="text-sm text-gray-500 italic mb-2">Como funciona:</p>
+                                                    <ul className="space-y-2">
+                                                        <li className="flex items-start gap-2 text-sm text-gray-700">
+                                                            <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-1.5 shrink-0"></div>
+                                                            <span>O sistema gera uma <strong>Impressão Digital</strong> única baseada no texto exato do termo.</span>
+                                                        </li>
+                                                        <li className="flex items-start gap-2 text-sm text-gray-700">
+                                                            <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-1.5 shrink-0"></div>
+                                                            <span>Se uma única vírgula for alterada no termo, o código Hash muda completamente, invalidando a assinatura.</span>
+                                                        </li>
+                                                        <li className="flex items-start gap-2 text-sm text-gray-700">
+                                                            <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-1.5 shrink-0"></div>
+                                                            <span>Este Hash é impresso no PDF e armazenado no banco de dados para auditoria perpétua.</span>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-2 bg-emerald-50 rounded-lg">
+                                                <Users className="h-6 w-6 text-emerald-600" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-lg font-bold text-gray-900 mb-2">4. Segurança de Contas (Admin e Professor)</h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                                        <h5 className="font-bold text-gray-800 text-sm mb-2 uppercase tracking-wider">Acesso Admin</h5>
+                                                        <p className="text-sm text-gray-600 leading-relaxed">
+                                                            Protegido por <strong>Tokens de Sessão Temporários</strong> criados via RLS (Row Level Security). O acesso é restrito à unidade do administrador, impedindo que dados de outras escolas sejam visualizados.
+                                                        </p>
+                                                    </div>
+                                                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                                        <h5 className="font-bold text-gray-800 text-sm mb-2 uppercase tracking-wider">Acesso Professor</h5>
+                                                        <p className="text-sm text-gray-600 leading-relaxed">
+                                                            Autenticação via <strong>E-mail Institucional Obrigatório</strong>. O professor só acessa as unidades onde possui vínculo ativo confirmado pela coordenação.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-2 bg-blue-50 rounded-lg">
+                                                <CheckCircle2 className="h-6 w-6 text-blue-600" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-lg font-bold text-gray-900 mb-2">5. Infraestrutura e HTTPS</h4>
                                                 <ul className="space-y-3 text-sm text-gray-600">
                                                     <li className="flex items-center gap-2">
                                                         <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-                                                        <span><strong>Criptografia:</strong> Tráfego de dados 100% via HTTPS/SSL.</span>
+                                                        <span><strong>Criptografia:</strong> Tráfego de dados 100% criptografado via HTTPS/SSL.</span>
                                                     </li>
                                                     <li className="flex items-start gap-2">
                                                         <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                                                        <span><strong>Controle Rígido (RLS):</strong> O banco de dados bloqueia nativamente acessos não autorizados. Dados sensíveis (como Matrícula) são visíveis estritamente para a administração.</span>
-                                                    </li>
-                                                    <li className="flex items-start gap-2">
-                                                        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                                                        <span><strong>Infraestrutura de Nuvem:</strong> O sistema é hospedado em plataforma global que fornece proteção contra ataques (DDoS) e certificações de segurança corporativa.</span>
+                                                        <span><strong>Nuvem Corporativa:</strong> Hospedado em infraestrutura de alta disponibilidade com proteção DDoS.</span>
                                                     </li>
                                                 </ul>
                                             </div>

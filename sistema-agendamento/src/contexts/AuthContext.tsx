@@ -215,7 +215,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
                 if (adminData.password_hash === password) {
                     console.log('Admin password match!');
-                    const adminUser = adminData as Admin;
+
+                    // Generate a secure session token
+                    const sessionToken = crypto.randomUUID();
+                    const expiresAt = new Date();
+                    expiresAt.setHours(expiresAt.getHours() + 24); // Token valid for 24h
+
+                    // Save session to database for RLS validation
+                    const { error: sessionError } = await supabase
+                        .from('admin_sessions')
+                        .insert({
+                            admin_id: adminData.id,
+                            token: sessionToken,
+                            expires_at: expiresAt.toISOString()
+                        });
+
+                    if (sessionError) {
+                        console.error('Error creating admin session:', sessionError);
+                        return { error: 'Erro ao iniciar sessão segura no servidor.' };
+                    }
+
+                    const adminUser = {
+                        ...adminData,
+                        role: 'admin' as const,
+                        session_token: sessionToken
+                    };
+
                     localStorage.setItem('admin_session', JSON.stringify(adminUser));
                     setState({
                         user: adminUser,
@@ -313,6 +338,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const signOut = async () => {
+        const adminSession = localStorage.getItem('admin_session');
+        if (adminSession) {
+            try {
+                const admin = JSON.parse(adminSession);
+                if (admin.session_token) {
+                    // Remove session from DB
+                    await supabase
+                        .from('admin_sessions')
+                        .delete()
+                        .eq('token', admin.session_token);
+                }
+            } catch (e) {
+                console.error('Error during admin logout session cleanup:', e);
+            }
+        }
+
         localStorage.removeItem('admin_session');
         await supabase.auth.signOut();
         setState({ user: null, role: null, isAuthenticated: false, isLoading: false });

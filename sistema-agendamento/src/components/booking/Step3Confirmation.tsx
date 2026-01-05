@@ -25,6 +25,7 @@ import { TermDocument } from '../TermDocument';
 import { clsx } from 'clsx';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
+import { generateHash } from '../../utils/hash';
 
 interface Step3Props {
     data: BookingData;
@@ -62,6 +63,17 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
         try {
             const displayId = data.displayId || Math.floor(100000 + Math.random() * 900000).toString();
 
+            // 1. Fetch current legal term for hashing (Unified for all flows)
+            const { data: latestTerm } = await supabase
+                .from('legal_terms')
+                .select('content, version_tag')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            const termFingerprint = latestTerm ? await generateHash(latestTerm.content) : null;
+            const versionTag = latestTerm?.version_tag || 'v1.0';
+
             const termDocument = {
                 userName: data.full_name,
                 userTotvs: data.totvs_number,
@@ -75,7 +87,9 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                 userAgent: navigator.userAgent,
                 displayId,
                 isRecurring: data.isRecurring,
-                dayOfWeek: data.dayOfWeek
+                dayOfWeek: data.dayOfWeek,
+                term_fingerprint: termFingerprint,
+                version_tag: versionTag
             };
 
             if (data.isRecurring) {
@@ -126,7 +140,8 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                                 term_document: { ...termDocument, date: dateStr },
                                 display_id: displayId,
                                 is_recurring: true,
-                                recurring_id: recurring.id
+                                recurring_id: recurring.id,
+                                term_hash: termFingerprint
                             });
                         });
                     }
@@ -136,10 +151,11 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                     const { error: batchError } = await supabase
                         .from('bookings')
                         .insert(bookingsToInsert);
+
                     if (batchError) throw batchError;
                 }
             } else {
-                // 1. Insert into main Bookings Table (Normal Flow)
+                // 2. Insert into main Bookings Table (Normal Flow)
                 const bookingsToInsert = data.equipments.map(eq => ({
                     user_id: user?.id,
                     unit: data.unit,
@@ -153,18 +169,17 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                     status: 'active',
                     term_signed: true,
                     term_document: termDocument,
-                    display_id: displayId
+                    display_id: displayId,
+                    term_hash: termFingerprint
                 }));
 
-                const { data: createdBookings, error: insertError } = await supabase
+                const { error: insertError } = await supabase
                     .from('bookings')
-                    .insert(bookingsToInsert)
-                    .select();
+                    .insert(bookingsToInsert);
 
                 if (insertError) throw insertError;
-
-
             }
+
 
             // 3. Trigger Notification (Email + In-App)
             // Fire and forget to not block the UI

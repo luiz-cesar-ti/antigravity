@@ -586,6 +586,12 @@ export function AdminBookings() {
                                                                             <>
                                                                                 <span className="text-gray-300">-</span>
                                                                                 <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
+                                                                                {first.term_hash && (
+                                                                                    <>
+                                                                                        <span className="text-gray-300 ml-1">-</span>
+                                                                                        <span className="text-gray-500 font-black italic ml-1 text-[9px]">HASH: {first.term_hash.substring(0, 8)}...</span>
+                                                                                    </>
+                                                                                )}
                                                                             </>
                                                                         )}
                                                                     </div>
@@ -639,6 +645,12 @@ export function AdminBookings() {
                                                                                 <>
                                                                                     <span className="text-gray-400">-</span>
                                                                                     <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
+                                                                                    {first.term_hash && (
+                                                                                        <>
+                                                                                            <span className="text-gray-400 ml-1">-</span>
+                                                                                            <span className="text-gray-500 font-black italic ml-1 text-[9px]">HASH: {first.term_hash.substring(0, 8)}...</span>
+                                                                                        </>
+                                                                                    )}
                                                                                 </>
                                                                             )}
                                                                         </div>
@@ -707,7 +719,12 @@ export function AdminBookings() {
                                                                         </div>
                                                                     )}
                                                                     {first.display_id && (
-                                                                        <span className="text-[9px] text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <span className="text-[9px] text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
+                                                                            {first.term_hash && (
+                                                                                <span className="text-[8px] text-gray-400 font-black italic">({first.term_hash.substring(0, 8)})</span>
+                                                                            )}
+                                                                        </div>
                                                                     )}
                                                                 </div>
                                                             </div>
