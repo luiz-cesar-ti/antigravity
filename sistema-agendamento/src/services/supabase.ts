@@ -9,22 +9,61 @@ if (!supabaseUrl || !supabaseKey) {
 
 // Custom fetch to inject admin session token into headers
 const customFetch = (input: RequestInfo | URL, init?: RequestInit) => {
-    const adminSession = localStorage.getItem('admin_session');
-    if (adminSession) {
-        try {
-            const admin = JSON.parse(adminSession);
-            if (admin.session_token) {
-                const options = init || {};
-                options.headers = {
-                    ...(options.headers || {}),
-                    'x-admin-token': admin.session_token,
-                };
-            }
-        } catch (e) {
-            console.error('Error parsing admin_session for token injection:', e);
+    // Debug logging
+    // console.log('CustomFetch called', { inputType: input instanceof Request ? 'Request' : 'string' });
+
+    // 1. Safe access to admin token
+    let adminToken = '';
+    try {
+        const session = localStorage.getItem('admin_session');
+        if (session) {
+            const admin = JSON.parse(session);
+            adminToken = admin.session_token || '';
+        }
+    } catch (e) { }
+
+    // 2. Prepare headers container
+    const headers = new Headers();
+
+    // 3. Copy headers from Input (if it's a Request)
+    if (input instanceof Request) {
+        input.headers.forEach((value, key) => {
+            headers.set(key, value);
+        });
+    }
+
+    // 4. Copy/Overwrite headers from Init
+    if (init?.headers) {
+        const initHeaders = new Headers(init.headers);
+        initHeaders.forEach((value, key) => {
+            headers.set(key, value);
+        });
+    }
+
+    // 5. CRITICAL: Force the apikey
+    if (supabaseKey) {
+        const cleanKey = supabaseKey.trim();
+        // Always force apikey
+        headers.set('apikey', cleanKey);
+
+        // Ensure Authorization
+        if (!headers.has('Authorization')) {
+            headers.set('Authorization', `Bearer ${cleanKey}`);
         }
     }
-    return fetch(input, init);
+
+    // 6. Inject Admin Token
+    if (adminToken) {
+        headers.set('x-admin-token', adminToken);
+    }
+
+    // Debug final headers
+    // console.log('Final Headers:', Object.fromEntries(headers.entries()));
+
+    // 7. Execute fetch
+    // Note: When passing 'headers' in options, it overrides input's headers.
+    // Since we copied everything into 'headers' manually, this is safe.
+    return fetch(input, { ...init, headers });
 };
 
 export const supabase = createClient(
