@@ -307,10 +307,10 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                         ID DO TERMO: #{displayId}
                     </p>
                 )}
-                {(data.term_hash || data.term_document?.term_fingerprint) && (
+                {(data.term_hash || data.term_document?.term_fingerprint || data.term_document?.term_hash) && (
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', fontSize: '7.5pt', color: '#6b7280', marginBottom: '2px' }}>
-                        <span><strong style={{ fontWeight: 'bold' }}>VERSÃO:</strong> {data.version_tag || data.term_document?.version_tag || 'v1.0'}</span>
-                        <span><strong style={{ fontWeight: 'bold' }}>HASH:</strong> {(data.term_hash || data.term_document?.term_fingerprint)?.substring(0, 16)}...</span>
+                        <span><strong style={{ fontWeight: 'bold' }}>VERSÃO DO TERMO:</strong> {data.version_tag || data.term_document?.version_tag || 'v1.0'}</span>
+                        <span><strong style={{ fontWeight: 'bold' }}>IMPRESSÃO DIGITAL (HASH):</strong> {(data.term_hash || data.term_document?.term_fingerprint || data.term_document?.term_hash)?.substring(0, 16)}...</span>
                     </div>
                 )}
                 <p style={{ fontSize: '7.5pt', color: '#9ca3af', marginTop: '2px' }}>

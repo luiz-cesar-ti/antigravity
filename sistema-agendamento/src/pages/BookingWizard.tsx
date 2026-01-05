@@ -18,6 +18,9 @@ export type BookingData = {
     displayId?: string;
     isRecurring?: boolean;
     dayOfWeek?: number;
+    term_hash?: string;
+    version_tag?: string;
+    term_document?: any;
 };
 
 export function BookingWizard() {

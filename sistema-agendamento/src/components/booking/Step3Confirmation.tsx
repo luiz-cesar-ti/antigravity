@@ -363,8 +363,14 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
 
                     <div className="bg-gray-100 p-4 sm:p-8 overflow-y-auto flex-1 flex justify-center min-h-0">
                         <div className="bg-white shadow-none sm:shadow-2xl mx-auto" style={{ maxWidth: '210mm' }}>
-                            <div id="term-preview-content">
-                                <TermDocument data={data} />
+                            <div id="term-document-pdf" style={{ width: '210mm', minHeight: '297mm', padding: '20mm', backgroundColor: 'white' }}>
+                                <TermDocument
+                                    data={{
+                                        ...data,
+                                        term_hash: data.term_document?.term_fingerprint || data.term_hash,
+                                        version_tag: data.term_document?.version_tag || data.version_tag
+                                    }}
+                                />
                             </div>
                         </div>
                     </div>
