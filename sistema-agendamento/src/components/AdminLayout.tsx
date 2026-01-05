@@ -112,16 +112,6 @@ export function AdminLayout() {
                             </li>
                             <li>
                                 <Link
-                                    to="/admin/settings"
-                                    onClick={() => setIsSidebarOpen(false)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/settings')}`}
-                                >
-                                    <Settings className="w-5 h-5" />
-                                    <span>Configurações</span>
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
                                     to="/admin/schedule"
                                     onClick={() => setIsSidebarOpen(false)}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/schedule')}`}
@@ -138,6 +128,16 @@ export function AdminLayout() {
                                 >
                                     <BookOpen className="w-5 h-5" />
                                     <span>Manual do Admin</span>
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    to="/admin/settings"
+                                    onClick={() => setIsSidebarOpen(false)}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/settings')}`}
+                                >
+                                    <Settings className="w-5 h-5" />
+                                    <span>Configurações</span>
                                 </Link>
                             </li>
                         </ul>

@@ -11,8 +11,7 @@ import {
     CheckCircle2,
     FileSpreadsheet,
     Clock,
-    LayoutGrid,
-    Info
+    LayoutGrid
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,6 +19,7 @@ import { useAuth } from '../../contexts/AuthContext';
 interface ScheduleGrid {
     headers: string[];
     rows: string[][];
+    columnWidth?: number;
 }
 
 interface ClassSchedule {
@@ -53,11 +53,17 @@ export function AdminSchedule() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [columnWidth, setColumnWidth] = useState(150);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const lastFetchParams = useRef("");
+
     useEffect(() => {
-        setSchedule(null); // Clear immediately to avoid "ghost data" from previous day
+        const params = `${adminUnit}-${selectedDay}-${selectedSegment}`;
+        if (params === lastFetchParams.current) return;
+
+        lastFetchParams.current = params;
         if (adminUnit) {
             fetchSchedule();
         } else {
@@ -91,8 +97,10 @@ export function AdminSchedule() {
 
             if (data) {
                 setSchedule(data);
+                if (data.schedule_data?.columnWidth) {
+                    setColumnWidth(data.schedule_data.columnWidth);
+                }
             } else {
-                // Default empty grid
                 setSchedule({
                     unit: adminUnit,
                     day_of_week: selectedDay,
@@ -120,15 +128,20 @@ export function AdminSchedule() {
                 .from('class_schedules')
                 .upsert({
                     ...schedule,
+                    schedule_data: {
+                        ...schedule.schedule_data,
+                        columnWidth: columnWidth
+                    },
                     unit: adminUnit,
                     updated_at: new Date().toISOString()
-                });
+                }, { onConflict: 'unit, day_of_week, segment' });
 
             if (error) throw error;
 
             setMessage({ type: 'success', text: 'Horário salvo com sucesso!' });
             setTimeout(() => setMessage(null), 3000);
         } catch (error: any) {
+            console.error('Save error:', error);
             setMessage({ type: 'error', text: error.message || 'Erro ao salvar horário.' });
         } finally {
             setIsSaving(false);
@@ -225,8 +238,6 @@ export function AdminSchedule() {
         const roomsRow = ['', 'Sala 16', 'Sala 17', 'Sala 14'];
         const exampleRow = ['07:20 - 08:10', 'Rosane', 'D.Gatti', 'Felipe'];
         const csvContent = [headers, roomsRow, exampleRow].map(row => row.join(',')).join('\n');
-
-        // Add UTF-8 BOM for Excel compatibility (solves "strange letters" problem)
         const BOM = '\uFEFF';
         const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
@@ -243,23 +254,17 @@ export function AdminSchedule() {
         reader.onload = (e) => {
             const buffer = e.target?.result as ArrayBuffer;
             let text = '';
-
             try {
-                // Try decoding as UTF-8 first with error checking
                 const decoder = new TextDecoder('utf-8', { fatal: true });
                 text = decoder.decode(buffer);
             } catch (err) {
-                // Fallback to Windows-1252 (Standard for Brazilian Excel)
                 const decoder = new TextDecoder('windows-1252');
                 text = decoder.decode(buffer);
             }
 
             const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
             if (lines.length < 1) return;
-
-            // Simple parser: check for comma or semicolon
             const delimiter = lines[0].includes(';') ? ';' : ',';
-
             const headers = lines[0].split(delimiter).map(h => h.trim().replace(/^"|"$/g, ''));
             const rows = lines.slice(1).map(line =>
                 line.split(delimiter).map(cell => cell.trim().replace(/^"|"$/g, ''))
@@ -281,13 +286,13 @@ export function AdminSchedule() {
     return (
         <div className="max-w-7xl mx-auto space-y-8 pb-20 animate-in fade-in duration-500">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-white p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-gray-100">
                 <div className="space-y-2">
                     <div className="flex items-center gap-3 text-primary-600 mb-1">
-                        <Calendar className="h-6 w-6" />
+                        <Calendar className="h-5 w-5 md:h-6 md:w-6" />
                         <span className="text-sm font-black uppercase tracking-widest italic">Gestão Escolar</span>
                     </div>
-                    <h1 className="text-4xl font-black text-gray-900 tracking-tight">Horário de Aulas</h1>
+                    <h1 className="text-2xl md:text-4xl font-black text-gray-900 tracking-tight">Horário de Aulas</h1>
                     <p className="text-gray-500 font-medium">Configure a grade de horários para a unidade {adminUnit}.</p>
                 </div>
 
@@ -316,9 +321,9 @@ export function AdminSchedule() {
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-3">
+            {/* Filters & View Controls */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 space-y-3">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1">
                         <Clock className="h-3 w-3" /> Dia da Semana
                     </label>
@@ -338,9 +343,9 @@ export function AdminSchedule() {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-3">
+                <div className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 space-y-3">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1">
-                        <LayoutGrid className="h-3 w-3" /> Seguimento Escolar
+                        <LayoutGrid className="h-3 w-3" /> Seguimento
                     </label>
                     <div className="flex flex-wrap gap-2">
                         {SEGMENTS.map(seg => (
@@ -357,21 +362,38 @@ export function AdminSchedule() {
                         ))}
                     </div>
                 </div>
+
+                <div className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 space-y-3">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1">
+                        <LayoutGrid className="h-3 w-3" /> Largura das Colunas
+                    </label>
+                    <div className="flex items-center gap-4 pt-1">
+                        <input
+                            type="range"
+                            min="80"
+                            max="300"
+                            value={columnWidth}
+                            onChange={(e) => setColumnWidth(Number(e.target.value))}
+                            className="flex-1 h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                        />
+                        <span className="text-xs font-mono font-bold text-gray-600 w-12 text-right">{columnWidth}px</span>
+                    </div>
+                </div>
             </div>
 
-            {/* Main Content Area */}
+            {/* Table Area */}
             <div className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden relative min-h-[500px]">
-                {isLoading ? (
+                {isLoading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-10">
                         <div className="flex flex-col items-center gap-4">
                             <div className="h-12 w-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
-                            <span className="font-black text-xs text-primary-600 uppercase tracking-widest italic">Carregando Grade...</span>
+                            <span className="font-black text-xs text-primary-600 uppercase tracking-widest italic">Carregando...</span>
                         </div>
                     </div>
-                ) : null}
+                )}
 
-                <div className="p-8 space-y-6">
-                    <div className="flex items-center justify-between">
+                <div className="p-4 md:p-8 space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                             <div className="h-10 w-10 bg-indigo-50 rounded-2xl flex items-center justify-center border border-indigo-100">
                                 <FileSpreadsheet className="h-5 w-5 text-indigo-600" />
@@ -382,10 +404,9 @@ export function AdminSchedule() {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
                             {message && (
-                                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold animate-in slide-in-from-right duration-300 ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'
-                                    }`}>
+                                <div className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold animate-in slide-in-from-right ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
                                     {message.type === 'success' ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
                                     {message.text}
                                 </div>
@@ -393,7 +414,7 @@ export function AdminSchedule() {
                             <button
                                 onClick={handleSave}
                                 disabled={isSaving}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-primary-700 transition-all shadow-lg shadow-primary-200 active:scale-95 disabled:opacity-50"
+                                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-primary-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-primary-700 transition-all shadow-lg active:scale-95 disabled:opacity-50 w-full md:w-auto"
                             >
                                 <Save className="h-4 w-4" />
                                 {isSaving ? 'Salvando...' : 'Salvar Grade'}
@@ -401,46 +422,24 @@ export function AdminSchedule() {
                         </div>
                     </div>
 
-                    {/* Instructions Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top duration-500">
-                        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-start gap-3">
-                            <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-                            <div className="space-y-1">
-                                <p className="text-xs text-blue-800 font-black uppercase tracking-wider">Dica de Edição Manual</p>
-                                <p className="text-xs text-blue-700 leading-relaxed">
-                                    Use os botões <strong>+</strong> para adicionar turmas (colunas) ou horários (linhas). Digite o nome do professor e a sala em cada célula. Para excluir, passe o mouse sobre a célula e use o ícone de lixeira.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex items-start gap-3">
-                            <FileSpreadsheet className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                            <div className="space-y-1">
-                                <p className="text-xs text-amber-800 font-black uppercase tracking-wider">Como Preencher o CSV</p>
-                                <ul className="text-[11px] text-amber-700 list-disc ml-4 space-y-0.5">
-                                    <li><strong>Linha 1:</strong> Cabeçalhos das Turmas.</li>
-                                    <li><strong>Linha 2:</strong> Deixe o Horário vazio e coloque apenas as <strong>Salas</strong> (ex: Sala 16).</li>
-                                    <li><strong>Linhas Seguintes:</strong> Coloque o Horário na Coluna A e os <strong>Nomes dos Professores</strong> nas demais.</li>
-                                    <li><strong>Importante:</strong> Siga exatamente essa ordem para a grade ficar correta.</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Editable Table */}
                     <div className="overflow-x-auto pb-6 custom-scrollbar">
-                        <table className="w-full border-separate border-spacing-2">
+                        <table className="border-separate border-spacing-2" style={{ tableLayout: 'fixed', width: 'max-content' }}>
                             <thead>
                                 <tr>
                                     {schedule?.schedule_data.headers.map((header, i) => (
-                                        <th key={i} className="min-w-[150px] relative group">
+                                        <th
+                                            key={i}
+                                            className="relative group transition-all duration-200"
+                                            style={{ width: `${columnWidth}px`, minWidth: `${columnWidth}px` }}
+                                        >
                                             <div className="relative">
                                                 <input
                                                     type="text"
                                                     value={header}
                                                     onChange={(e) => updateHeader(i, e.target.value)}
-                                                    className={`w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-400 focus:bg-white rounded-2xl text-xs font-black text-center uppercase tracking-wider transition-all outline-none ${i === 0 ? 'text-indigo-600 font-black' : 'text-gray-700'}`}
-                                                    placeholder={i === 0 ? "Horário" : "Nome da Turma"}
+                                                    className={`w-full p-2 bg-gray-50 border-2 border-transparent focus:border-indigo-400 focus:bg-white rounded-2xl text-xs font-black text-center uppercase tracking-wider transition-all outline-none ${i === 0 ? 'text-indigo-600' : 'text-gray-700'}`}
+                                                    style={{ height: '60px' }}
+                                                    placeholder={i === 0 ? "Horário" : "Turma"}
                                                 />
                                                 {i > 0 && (
                                                     <button
@@ -453,14 +452,15 @@ export function AdminSchedule() {
                                             </div>
                                         </th>
                                     ))}
-                                    <th className="w-12">
-                                        <button
-                                            onClick={addColumn}
-                                            className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl border-2 border-indigo-100 hover:bg-indigo-100 transition-all active:scale-90"
-                                            title="Adicionar Turma"
-                                        >
-                                            <Plus className="h-5 w-5" />
-                                        </button>
+                                    <th className="w-16">
+                                        <div className="flex justify-center">
+                                            <button
+                                                onClick={addColumn}
+                                                className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl border-2 border-indigo-100 hover:bg-indigo-100 active:scale-90"
+                                            >
+                                                <Plus className="h-5 w-5" />
+                                            </button>
+                                        </div>
                                     </th>
                                 </tr>
                             </thead>
@@ -469,34 +469,57 @@ export function AdminSchedule() {
                                     <tr key={rowIndex} className="group">
                                         {row.map((cell, colIndex) => (
                                             <td key={colIndex}>
-                                                <div className="relative">
-                                                    <textarea
-                                                        value={cell}
-                                                        onChange={(e) => updateCell(rowIndex, colIndex, e.target.value)}
-                                                        rows={rowIndex === 0 ? 1 : 2}
-                                                        className={`w-full p-3 border-2 transition-all outline-none resize-none rounded-2xl text-[11px] 
-                                                            ${colIndex === 0
-                                                                ? 'text-center font-black bg-gray-50 border-gray-100 grayscale'
-                                                                : rowIndex === 0
-                                                                    ? 'bg-indigo-50 border-indigo-100 text-indigo-700 font-bold text-center placeholder:text-indigo-300'
-                                                                    : 'bg-white border-gray-100 focus:border-primary-400 text-gray-600 font-medium'
-                                                            }`}
-                                                        placeholder={colIndex === 0
-                                                            ? "Ex: 07:20 - 08:10"
-                                                            : rowIndex === 0
-                                                                ? "Sala..."
-                                                                : "Professor..."}
-                                                    />
+                                                <div className={`relative flex items-center justify-center transition-all border-2 rounded-2xl min-h-[60px]
+                                                    ${colIndex === 0
+                                                        ? 'bg-gray-50 border-gray-100'
+                                                        : rowIndex === 0
+                                                            ? 'bg-indigo-50 border-indigo-100'
+                                                            : 'bg-white border-gray-100'
+                                                    }`}
+                                                    style={{ width: `${columnWidth}px`, minWidth: `${columnWidth}px` }}
+                                                >
+                                                    {colIndex === 0 || rowIndex === 0 ? (
+                                                        <input
+                                                            type="text"
+                                                            value={cell}
+                                                            onChange={(e) => updateCell(rowIndex, colIndex, e.target.value)}
+                                                            className={`w-full bg-transparent border-none outline-none text-center px-1
+                                                                ${colIndex === 0
+                                                                    ? 'font-black text-gray-900 text-xs'
+                                                                    : 'text-indigo-700 font-bold text-xs placeholder:text-indigo-300'
+                                                                }
+                                                                ${colIndex === 0 && rowIndex === 0 ? 'opacity-0' : ''}`}
+                                                            placeholder={colIndex === 0 ? "00:00" : "Sala"}
+                                                            disabled={colIndex === 0 && rowIndex === 0}
+                                                            style={{ height: '60px' }}
+                                                        />
+                                                    ) : (
+                                                        <textarea
+                                                            value={cell}
+                                                            onChange={(e) => updateCell(rowIndex, colIndex, e.target.value)}
+                                                            className="w-full bg-transparent border-none outline-none resize-none text-center text-gray-600 font-medium text-[10px] leading-tight px-1 flex items-center justify-center"
+                                                            placeholder="Prof."
+                                                            style={{
+                                                                height: '60px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                paddingTop: '16px' // Fine-tuning for textarea vertical centering behavior in some browsers
+                                                            }}
+                                                        />
+                                                    )}
                                                 </div>
                                             </td>
                                         ))}
-                                        <td>
-                                            <button
-                                                onClick={() => removeRow(rowIndex)}
-                                                className="p-3 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all opacity-0 group-hover:opacity-100"
-                                            >
-                                                <Trash2 className="h-5 w-5" />
-                                            </button>
+                                        <td className="w-16">
+                                            <div className="flex justify-center">
+                                                <button
+                                                    onClick={() => removeRow(rowIndex)}
+                                                    className="p-3 text-red-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                                >
+                                                    <Trash2 className="h-5 w-5" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -506,10 +529,10 @@ export function AdminSchedule() {
                         <div className="flex justify-center mt-4">
                             <button
                                 onClick={addRow}
-                                className="flex items-center gap-2 px-8 py-3 bg-gray-50 text-gray-500 font-black text-xs uppercase tracking-widest rounded-2xl border-2 border-dashed border-gray-200 hover:border-primary-300 hover:text-primary-600 transition-all group active:scale-95"
+                                className="flex items-center gap-2 px-8 py-3 bg-gray-50 text-gray-400 font-black text-xs uppercase tracking-widest rounded-2xl border-2 border-dashed border-gray-200 hover:border-primary-300 hover:text-primary-600 transition-all active:scale-95"
                             >
-                                <Plus className="h-4 w-4 group-hover:rotate-90 transition-transform" />
-                                Adicionar Linha de Horário
+                                <Plus className="h-4 w-4" />
+                                Adicionar Linha
                             </button>
                         </div>
                     </div>
@@ -517,19 +540,10 @@ export function AdminSchedule() {
             </div>
 
             <style>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                    height: 8px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: #E5E7EB;
-                    border-radius: 10px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: #D1D5DB;
-                }
+                .custom-scrollbar::-webkit-scrollbar { height: 8px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
             `}</style>
         </div>
     );
