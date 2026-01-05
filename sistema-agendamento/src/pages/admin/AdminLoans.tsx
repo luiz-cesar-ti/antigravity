@@ -31,10 +31,8 @@ import { clsx } from 'clsx';
 import html2pdf from 'html2pdf.js';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
-import imageCompression from 'browser-image-compression';
-import { Loader2, Upload } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
-const BUCKET_NAME = 'manual-terms';
 
 // --- Custom Professional Modal Component ---
 const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }: any) => (
@@ -86,7 +84,6 @@ export function AdminLoans() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [uploadingLoanId, setUploadingLoanId] = useState<string | null>(null);
     const [loanHashes, setLoanHashes] = useState<Record<string, string>>({}); // Store calculated hashes
 
     // Modal States
@@ -339,20 +336,7 @@ export function AdminLoans() {
 
     const handleDeleteLoan = async (loan: EquipmentLoan) => {
         try {
-            // 1. Delete file from Storage if exists
-            if (loan.manual_term_url) {
-                const fileKey = loan.manual_term_url.split('/').pop();
-                if (fileKey) {
-                    const { error: storageError } = await supabase
-                        .storage
-                        .from(BUCKET_NAME)
-                        .remove([fileKey]);
-
-                    if (storageError) console.error('Error deleting file:', storageError);
-                }
-            }
-
-            // 2. If loan is active, restore inventory
+            // 1. If loan is active, restore inventory
             if (loan.status === 'active') {
                 const { data: eqData, error: eqFetchError } = await supabase
                     .from('equipment')
@@ -384,107 +368,6 @@ export function AdminLoans() {
         }
     };
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, loanId: string) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        // USER ORDER: Only images (png, jpg, jpeg)
-        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-        if (!allowedTypes.includes(file.type)) {
-            alert('Apenas imagens (PNG, JPG, JPEG) são permitidas.');
-            return;
-        }
-
-        setUploadingLoanId(loanId);
-
-        try {
-            // 1. Compress image (Max 1MB as per USER ORDER)
-            const options = {
-                maxSizeMB: 1,
-                maxWidthOrHeight: 1920,
-                useWebWorker: true,
-                fileType: file.type as any
-            };
-            const compressedFile = await imageCompression(file, options);
-
-            // 2. Upload to Supabase Storage
-            const fileExt = file.name.split('.').pop();
-            const fileName = `loan-term-${loanId}-${Date.now()}.${fileExt}`;
-
-            const { error: uploadError } = await supabase
-                .storage
-                .from(BUCKET_NAME)
-                .upload(fileName, compressedFile, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
-
-            if (uploadError) throw uploadError;
-
-            // 3. Update Database
-            const { error: updateError } = await supabase
-                .from('equipment_loans')
-                .update({ manual_term_url: fileName })
-                .eq('id', loanId);
-
-            if (updateError) throw updateError;
-
-            fetchLoans();
-            alert('Termo assinado enviado com sucesso!');
-        } catch (error: any) {
-            console.error('Upload error:', error);
-            alert(`Erro ao realizar upload: ${error.message || 'Erro desconhecido'}`);
-        } finally {
-            setUploadingLoanId(null);
-        }
-    };
-
-    const handleViewManualTerm = async (fileKey: string) => {
-        // Open window immediately to avoid popup blockers, especially on mobile
-        const newWindow = window.open('', '_blank');
-
-        // Optional: specific visual feedback in the new tab while loading
-        if (newWindow) {
-            newWindow.document.write(`
-                <html>
-                    <head><title>Carregando...</title></head>
-                    <body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #f9fafb;">
-                        <div style="text-align: center;">
-                            <div style="width: 40px; height: 40px; border: 3px solid #f3f4f6; border-top: 3px solid #4f46e5; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
-                            <p style="color: #6b7280;">Carregando documento seguro...</p>
-                            <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
-                        </div>
-                    </body>
-                </html>
-            `);
-        }
-
-        try {
-            // Extract filename if it's a full path, though we store filename
-            const cleanKey = fileKey.split('/').pop() || fileKey;
-
-            const { data, error } = await supabase
-                .storage
-                .from(BUCKET_NAME)
-                .createSignedUrl(cleanKey, 3600); // 1 hour
-
-            if (error) throw error;
-            if (data?.signedUrl) {
-                if (newWindow) {
-                    newWindow.location.href = data.signedUrl;
-                } else {
-                    // Fallback if window failed to open
-                    window.location.href = data.signedUrl;
-                }
-            } else {
-                throw new Error('URL assinada não retornada.');
-            }
-        } catch (error: any) {
-            console.error('Error generating signed URL:', error);
-            newWindow?.close();
-            setModalInfo({ type: 'error', message: 'Erro ao abrir o termo. Tente novamente.' });
-        }
-    };
 
     const generatePDF = async (loan: EquipmentLoan, download = true) => {
         // Generate a deterministic hash for the document
@@ -612,11 +495,7 @@ export function AdminLoans() {
                         <p className="text-gray-500 text-sm leading-relaxed">
                             Ao registrar um empréstimo, o sistema gerará automaticamente um <span className="text-gray-900 font-bold">Termo de Responsabilidade</span> personalizado para impressão.
                             <br /><br />
-                            Você poderá <span className="text-gray-900 font-bold">anexar o termo assinado</span> pelo usuário diretamente no card do empréstimo.
-                            <br /><br />
-                            <span className="text-amber-700 font-bold underline">Atenção:</span> A quantidade de itens emprestados será <span className="font-bold">removida temporariamente</span> do inventário geral. Ao excluir um registro de empréstimo, o termo assinado anexado também será <span className="text-red-600 font-bold">excluído permanentemente</span>.
-                            <br /><br />
-                            <span className="text-gray-900 font-bold">Formatos aceitos:</span> JPG e PNG. <span className="text-gray-600 italic">Prefira fotos claras e legíveis.</span>
+                            <span className="text-amber-700 font-bold underline">Atenção:</span> A quantidade de itens emprestados será <span className="font-bold">removida temporariamente</span> do inventário geral durante o período do empréstimo.
                         </p>
                     </div>
                 </div>
@@ -948,52 +827,14 @@ export function AdminLoans() {
                                             {/* Smart Action Layout: Compact Flex Row */}
                                             <div className="flex flex-wrap items-center justify-end gap-2 transition-all">
 
-                                                {/* Group 1: Documents & Upload */}
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        onClick={() => setModalInfo({ type: 'preview', loanData: loan })}
-                                                        className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white border border-gray-200 text-gray-600 hover:border-primary-500 hover:text-primary-600 font-bold text-[10px] uppercase tracking-wide rounded-xl shadow-sm transition-all active:scale-95"
-                                                        title="Ver Termo"
-                                                    >
-                                                        <FileText className="h-3.5 w-3.5" /> {loan.status !== 'active' && "Termo"}
-                                                    </button>
-
-                                                    <div className="relative">
-                                                        <input
-                                                            type="file"
-                                                            id={`upload-${loan.id}`}
-                                                            className="hidden"
-                                                            accept="image/png, image/jpeg, image/jpg"
-                                                            onChange={(e) => handleFileUpload(e, loan.id)}
-                                                            disabled={uploadingLoanId === loan.id}
-                                                        />
-                                                        <label
-                                                            htmlFor={`upload-${loan.id}`}
-                                                            className={clsx(
-                                                                "h-9 w-9 flex items-center justify-center bg-white border border-gray-200 text-gray-500 hover:border-primary-500 hover:text-primary-600 rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer",
-                                                                uploadingLoanId === loan.id && 'opacity-50 cursor-not-allowed'
-                                                            )}
-                                                            title="Anexar Imagem"
-                                                        >
-                                                            {uploadingLoanId === loan.id ? (
-                                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                                            ) : (
-                                                                <Upload className="h-4 w-4" />
-                                                            )}
-                                                        </label>
-                                                    </div>
-                                                </div>
-
-                                                {/* Viewing Signed Term */}
-                                                {loan.manual_term_url && (
-                                                    <button
-                                                        onClick={() => handleViewManualTerm(loan.manual_term_url!)}
-                                                        className="flex items-center justify-center h-9 w-9 bg-indigo-50 border border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-xl shadow-sm transition-all active:scale-95"
-                                                        title="Ver Termo Assinado"
-                                                    >
-                                                        <Eye className="h-4 w-4" />
-                                                    </button>
-                                                )}
+                                                {/* Group 1: Documents */}
+                                                <button
+                                                    onClick={() => setModalInfo({ type: 'preview', loanData: loan })}
+                                                    className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white border border-gray-200 text-gray-600 hover:border-primary-500 hover:text-primary-600 font-bold text-[10px] uppercase tracking-wide rounded-xl shadow-sm transition-all active:scale-95"
+                                                    title="Ver Termo"
+                                                >
+                                                    <FileText className="h-3.5 w-3.5" /> {loan.status !== 'active' && "Termo"}
+                                                </button>
 
                                                 {/* Group 2: Lifecycle Actions */}
                                                 {loan.status === 'active' && (
@@ -1007,13 +848,9 @@ export function AdminLoans() {
 
                                                 <button
                                                     onClick={() => setModalInfo({ type: 'delete', loanData: loan })}
-                                                    className={clsx(
-                                                        "flex items-center justify-center h-9 w-9 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white border border-red-100 hover:border-red-500 rounded-xl transition-all active:scale-95",
-                                                        loan.status !== 'active' && "w-full"
-                                                    )}
+                                                    className="flex items-center justify-center h-9 w-9 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white border border-red-100 hover:border-red-500 rounded-xl transition-all active:scale-95"
                                                     title="Excluir Registro"
                                                 >
-                                                    {loan.status !== 'active' && <span className="mr-2 text-xs font-bold">Excluir</span>}
                                                     <Trash2 className="h-4 w-4" />
                                                 </button>
                                             </div>

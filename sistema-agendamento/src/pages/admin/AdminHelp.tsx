@@ -618,7 +618,7 @@ export function AdminHelp() {
                                     </p>
                                 </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm">
                                         <div className="flex items-center gap-2 mb-3">
                                             <FileText className="h-5 w-5 text-amber-600" />
@@ -628,15 +628,8 @@ export function AdminHelp() {
                                     </div>
                                     <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm">
                                         <div className="flex items-center gap-2 mb-3">
-                                            <Upload className="h-5 w-5 text-amber-600" />
-                                            <h4 className="font-bold text-gray-900">2. Upload do termo assinado</h4>
-                                        </div>
-                                        <p className="text-xs text-gray-500">O Admin fotografa (JPG/PNG) o termo assinado e anexa ao registro digital para arquivamento.</p>
-                                    </div>
-                                    <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm">
-                                        <div className="flex items-center gap-2 mb-3">
                                             <AlertTriangle className="h-5 w-5 text-amber-600" />
-                                            <h4 className="font-bold text-gray-900">3. Baixa no Estoque</h4>
+                                            <h4 className="font-bold text-gray-900">2. Baixa no Estoque</h4>
                                         </div>
                                         <p className="text-xs text-gray-500">Itens emprestados são reduzidos no inventário. Ao devolver, o estoque é reposto automaticamente.</p>
                                     </div>
@@ -647,7 +640,7 @@ export function AdminHelp() {
                                     <div>
                                         <h4 className="font-bold text-amber-900 mb-1">Segurança de Dados e Exclusão</h4>
                                         <p className="text-sm text-amber-800">
-                                            O sistema não armazena CPF (preenchimento manual). Ao excluir um empréstimo, a imagem do termo assinado também é apagada permanentemente do servidor, garantindo privacidade total.
+                                            O sistema não armazena CPF (preenchimento manual). Ao excluir um empréstimo, o registro é apagado permanentemente do banco de dados, garantindo privacidade total.
                                         </p>
                                     </div>
                                 </div>
