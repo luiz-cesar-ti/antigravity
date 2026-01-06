@@ -58,7 +58,7 @@ export function AdminBookings() {
                 users (full_name, email) 
             `);
 
-        if (role === 'admin') {
+        if (role === 'admin' || role === 'super_admin') {
             if (isSuperAdmin) {
                 // Super admin uses targetUnit filter
                 if (targetUnit) {

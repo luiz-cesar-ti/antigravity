@@ -80,16 +80,20 @@ export function AdminLayout() {
                                     <span>Agendamentos</span>
                                 </Link>
                             </li>
-                            <li>
-                                <Link
-                                    to="/admin/equipment"
-                                    onClick={() => setIsSidebarOpen(false)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/equipment')}`}
-                                >
-                                    <Monitor className="w-5 h-5" />
-                                    <span>Equipamentos</span>
-                                </Link>
-                            </li>
+                            {adminUser?.role !== 'super_admin' && (
+                                <>
+                                    <li>
+                                        <Link
+                                            to="/admin/equipment"
+                                            onClick={() => setIsSidebarOpen(false)}
+                                            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/equipment')}`}
+                                        >
+                                            <Monitor className="w-5 h-5" />
+                                            <span>Equipamentos</span>
+                                        </Link>
+                                    </li>
+                                </>
+                            )}
                             <li>
                                 <Link
                                     to="/admin/users"
@@ -100,36 +104,40 @@ export function AdminLayout() {
                                     <span>Usuários</span>
                                 </Link>
                             </li>
-                            <li>
-                                <Link
-                                    to="/admin/emprestimos"
-                                    onClick={() => setIsSidebarOpen(false)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/emprestimos')}`}
-                                >
-                                    <ClipboardCheck className="w-5 h-5" />
-                                    <span>Empréstimos</span>
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    to="/admin/schedule"
-                                    onClick={() => setIsSidebarOpen(false)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/schedule')}`}
-                                >
-                                    <Clock className="w-5 h-5" />
-                                    <span>Horário de Aulas</span>
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    to="/admin/about"
-                                    onClick={() => setIsSidebarOpen(false)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/about')}`}
-                                >
-                                    <BookOpen className="w-5 h-5" />
-                                    <span>Manual do Admin</span>
-                                </Link>
-                            </li>
+                            {adminUser?.role !== 'super_admin' && (
+                                <>
+                                    <li>
+                                        <Link
+                                            to="/admin/emprestimos"
+                                            onClick={() => setIsSidebarOpen(false)}
+                                            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/emprestimos')}`}
+                                        >
+                                            <ClipboardCheck className="w-5 h-5" />
+                                            <span>Empréstimos</span>
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            to="/admin/schedule"
+                                            onClick={() => setIsSidebarOpen(false)}
+                                            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/schedule')}`}
+                                        >
+                                            <Clock className="w-5 h-5" />
+                                            <span>Horário de Aulas</span>
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            to="/admin/about"
+                                            onClick={() => setIsSidebarOpen(false)}
+                                            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/about')}`}
+                                        >
+                                            <BookOpen className="w-5 h-5" />
+                                            <span>Manual do Admin</span>
+                                        </Link>
+                                    </li>
+                                </>
+                            )}
                             {adminUser?.role === 'super_admin' && (
                                 <li>
                                     <Link
@@ -142,16 +150,18 @@ export function AdminLayout() {
                                     </Link>
                                 </li>
                             )}
-                            <li>
-                                <Link
-                                    to="/admin/settings"
-                                    onClick={() => setIsSidebarOpen(false)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/settings')}`}
-                                >
-                                    <Settings className="w-5 h-5" />
-                                    <span>Configurações</span>
-                                </Link>
-                            </li>
+                            {adminUser?.role !== 'super_admin' && (
+                                <li>
+                                    <Link
+                                        to="/admin/settings"
+                                        onClick={() => setIsSidebarOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/settings')}`}
+                                    >
+                                        <Settings className="w-5 h-5" />
+                                        <span>Configurações</span>
+                                    </Link>
+                                </li>
+                            )}
                         </ul>
                     </nav>
 
