@@ -246,37 +246,28 @@ export function AdminLoans() {
             const startStr = `${formData.start_date}T${formData.start_time}:00-03:00`;
             const endStr = `${formData.end_date}T${formData.end_time}:00-03:00`;
 
-            const { data: loanData, error: loanError } = await supabase
-                .from('equipment_loans')
-                .insert([{
-                    user_full_name: formData.user_full_name,
-                    user_role: formData.user_role,
-                    location: formData.location,
-                    start_at: startStr,
-                    end_at: endStr,
-                    equipment_id: formData.equipment_id,
-                    quantity: formData.quantity,
-                    asset_number: formData.asset_numbers.join(', '),
-                    unit: adminUser.unit,
-                    status: 'active'
-                }])
-                .select()
-                .single();
+            // Use RPC for Secure Creation
+            const { data: loanData, error: loanError } = await supabase.rpc('create_equipment_loan', {
+                p_admin_token: adminUser.session_token,
+                p_user_full_name: formData.user_full_name,
+                p_user_role: formData.user_role,
+                p_location: formData.location,
+                p_start_at: startStr,
+                p_end_at: endStr,
+                p_equipment_id: formData.equipment_id,
+                p_quantity: formData.quantity,
+                p_asset_number: formData.asset_numbers.join(', '),
+                p_unit: adminUser.unit
+            });
 
             if (loanError) throw loanError;
 
-            const selectedEq = equipmentList.find(e => e.id === formData.equipment_id);
-            if (!selectedEq) throw new Error('Equipamento não encontrado');
-
-            const { error: updateError } = await supabase
-                .from('equipment')
-                .update({ total_quantity: selectedEq.total_quantity - formData.quantity })
-                .eq('id', selectedEq.id);
-
-            if (updateError) throw updateError;
+            // Note: Total quantity is updated inside the RPC now.
 
             await fetchLoans();
             await fetchEquipment();
+
+            const selectedEq = equipmentList.find(e => e.id === formData.equipment_id);
 
             setFormData({
                 user_full_name: '',
@@ -296,7 +287,7 @@ export function AdminLoans() {
 
         } catch (error: any) {
             console.error('Loan error:', error);
-            setModalInfo({ type: 'error', message: `Erro ao processar empréstimo: ${error.message}` });
+            setModalInfo({ type: 'error', message: `Erro ao processar empréstimo. Verifique se você está logado como admin. (${error.message})` });
         } finally {
             setIsSubmitting(false);
         }
@@ -304,24 +295,12 @@ export function AdminLoans() {
 
     const handleReturn = async (loan: EquipmentLoan) => {
         try {
-            const { error: loanError } = await supabase
-                .from('equipment_loans')
-                .update({ status: 'returned', updated_at: new Date().toISOString() })
-                .eq('id', loan.id);
+            const { error: loanError } = await supabase.rpc('return_equipment_loan', {
+                p_admin_token: adminUser.session_token,
+                p_loan_id: loan.id
+            });
+
             if (loanError) throw loanError;
-
-            const { data: eqData, error: eqFetchError } = await supabase
-                .from('equipment')
-                .select('total_quantity, id')
-                .eq('id', loan.equipment_id)
-                .single();
-            if (eqFetchError) throw eqFetchError;
-
-            const { error: updateError } = await supabase
-                .from('equipment')
-                .update({ total_quantity: eqData.total_quantity + loan.quantity })
-                .eq('id', eqData.id);
-            if (updateError) throw updateError;
 
             await fetchLoans();
             await fetchEquipment();
@@ -333,27 +312,10 @@ export function AdminLoans() {
 
     const handleDeleteLoan = async (loan: EquipmentLoan) => {
         try {
-            // 1. If loan is active, restore inventory
-            if (loan.status === 'active') {
-                const { data: eqData, error: eqFetchError } = await supabase
-                    .from('equipment')
-                    .select('total_quantity, id')
-                    .eq('id', loan.equipment_id)
-                    .single();
-
-                if (!eqFetchError && eqData) {
-                    await supabase
-                        .from('equipment')
-                        .update({ total_quantity: (eqData.total_quantity || 0) + loan.quantity })
-                        .eq('id', eqData.id);
-                }
-            }
-
-            // 3. Delete from DB
-            const { error } = await supabase
-                .from('equipment_loans')
-                .delete()
-                .eq('id', loan.id);
+            const { error } = await supabase.rpc('delete_equipment_loan', {
+                p_admin_token: adminUser.session_token,
+                p_loan_id: loan.id
+            });
 
             if (error) throw error;
 
