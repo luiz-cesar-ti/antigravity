@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     ChevronRight,
     Search,
@@ -49,13 +49,44 @@ export function AdminHelp() {
     ];
 
     const scrollToSection = (id: string) => {
-        setActiveSection(id);
-        setIsMobileMenuOpen(false);
+        setIsMobileMenuOpen(false); // Close menu first
         const element = document.getElementById(id);
         if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Smooth scroll with offset for sticky header
+            const yOffset = -100;
+            const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+            // activeSection will be updated by the scroll listener
         }
     };
+
+    // Scroll Spy Effect
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollPosition = window.scrollY + 300; // Trigger point offset
+
+            // Find the section currently in view
+            for (const section of sections) {
+                const element = document.getElementById(section.id);
+                if (element) {
+                    const { offsetTop, offsetHeight } = element;
+                    if (
+                        scrollPosition >= offsetTop &&
+                        scrollPosition < offsetTop + offsetHeight
+                    ) {
+                        setActiveSection(section.id);
+                        break;
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        // Initial check
+        handleScroll();
+
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 pb-20 animate-in fade-in duration-500">
@@ -1037,21 +1068,21 @@ export function AdminHelp() {
                                 <button
                                     key={section.id}
                                     onClick={() => scrollToSection(section.id)}
-                                    className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-bold transition-all relative overflow-hidden group border active:scale-[0.98] ${activeSection === section.id
-                                        ? 'bg-gradient-to-r from-primary-50 to-white text-primary-700 border-l-4 border-l-primary-600 border-y-primary-100 border-r-primary-100 shadow-lg shadow-primary-100/50'
-                                        : 'text-gray-600 bg-white border-gray-50 hover:bg-gray-50 hover:border-gray-100'
+                                    className={`w-full flex items-center gap-4 px-4 py-4 rounded-xl text-sm font-bold transition-all relative overflow-hidden group border active:scale-[0.98] ${activeSection === section.id
+                                        ? 'bg-gradient-to-r from-blue-50 via-indigo-50 to-white text-indigo-700 border-l-4 border-l-indigo-600 border-y-indigo-100 border-r-indigo-100 shadow-xl shadow-indigo-100/50'
+                                        : 'text-gray-500 bg-white border-transparent hover:bg-gray-50 hover:text-gray-900'
                                         }`}
                                 >
                                     {activeSection === section.id && (
-                                        <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white/50 to-transparent pointer-events-none" />
+                                        <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white/80 to-transparent pointer-events-none" />
                                     )}
-                                    <div className={`p-3 rounded-xl transition-all duration-300 shrink-0 ${activeSection === section.id ? 'bg-primary-600/10 text-primary-600 shadow-inner' : 'bg-gray-100 text-gray-400 group-hover:bg-white group-hover:text-primary-500 group-hover:shadow-sm'}`}>
-                                        <section.icon className={`h-5 w-5 ${activeSection === section.id ? 'scale-110' : ''}`} />
+                                    <div className={`p-2.5 rounded-lg transition-all duration-300 shrink-0 ${activeSection === section.id ? 'bg-indigo-600 text-white shadow-md scale-110 ring-2 ring-indigo-200' : 'bg-gray-100 text-gray-400 group-hover:bg-white group-hover:text-indigo-600 peer'}`}>
+                                        <section.icon className="h-5 w-5" />
                                     </div>
-                                    <span className={`flex-1 text-left text-base ${activeSection === section.id ? 'font-extrabold tracking-tight' : 'font-semibold'}`}>{section.title}</span>
+                                    <span className={`flex-1 text-left text-base ${activeSection === section.id ? 'font-black tracking-tight text-indigo-900' : 'font-medium'}`}>{section.title}</span>
                                     {activeSection === section.id && (
                                         <div className="flex items-center gap-2">
-                                            <div className="h-2 w-2 rounded-full bg-primary-600 animate-pulse shadow-[0_0_12px_rgba(79,70,229,0.8)]" />
+                                            <div className="h-2 w-2 rounded-full bg-indigo-600 animate-pulse shadow-[0_0_10px_rgba(79,70,229,0.5)]" />
                                         </div>
                                     )}
                                 </button>
