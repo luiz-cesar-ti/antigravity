@@ -136,7 +136,7 @@ export function Login() {
                     </div>
 
                     {/* Card container with enhanced shadow and glass feel */}
-                    <div className="bg-white/80 backdrop-blur-md p-8 sm:p-10 rounded-[2.5rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border border-white/50">
+                    <div className="bg-white/80 backdrop-blur-md p-8 sm:p-10 rounded-[2.5rem] shadow-xl shadow-blue-900/10 border border-white/50">
                         <form className="space-y-6" onSubmit={handleSubmit}>
                             {error && (
                                 <div className="rounded-2xl bg-red-50 p-4 border border-red-100 animate-in shake duration-300">
@@ -172,7 +172,7 @@ export function Login() {
                                     />
                                 </div>
                                 {/* Refined Tip Box - Blue/Gray Theme */}
-                                <div className="mt-3 flex items-start p-3 bg-blue-50/80 rounded-xl border border-blue-100">
+                                <div className="mt-3 flex items-start p-3 bg-blue-50/80 rounded-xl border border-blue-100 shadow-sm">
                                     <span className="text-lg mr-2 filter drop-shadow-sm">💡</span>
                                     <p className="text-[11px] font-medium text-blue-900 leading-tight pt-1">
                                         O Número de usuário <span className="font-bold">TOTVS</span> está no seu crachá
