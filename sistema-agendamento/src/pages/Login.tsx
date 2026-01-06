@@ -113,34 +113,30 @@ export function Login() {
 
             </div>
 
-            {/* Right Side: Login Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 bg-gray-50/50">
+            {/* Right Side: Login Form - Mobile Enhanced Background */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-indigo-50 via-white to-blue-50 lg:bg-none lg:bg-gray-50/50">
                 <div className="max-w-md w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {/* Mobile Logo */}
-                    <div className="lg:hidden flex flex-col items-center mb-12">
+                    <div className="lg:hidden flex flex-col items-center mb-10">
                         <img
                             src="/logo-objetivo.png"
                             alt="Colégio Objetivo"
-                            className="h-16 w-auto mb-4"
+                            className="h-14 w-auto mb-6 drop-shadow-sm"
                         />
+                        <h2 className="text-xl font-bold text-gray-800 uppercase tracking-widest text-center">
+                            Sistema de<br />
+                            <span className="text-primary-700 text-3xl font-black">Agendamentos</span>
+                        </h2>
                     </div>
 
-                    <div className="mb-6 lg:mb-10 text-center">
-                        {/* Desktop View */}
-                        <h2 className="hidden lg:block text-4xl font-black text-gray-900 leading-tight tracking-tight mb-3">
+                    <div className="hidden lg:block mb-10 text-center">
+                        <h2 className="text-4xl font-black text-gray-900 leading-tight tracking-tight mb-3">
                             Bem-Vindo
                         </h2>
-
-                        {/* Mobile View */}
-                        <div className="lg:hidden text-center">
-                            <h2 className="text-2xl font-black text-gray-800 leading-tight tracking-tight uppercase">
-                                Sistema de<br />
-                                <span className="text-primary-600 text-3xl">Agendamentos</span>
-                            </h2>
-                        </div>
                     </div>
 
-                    <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-gray-100">
+                    {/* Card container with enhanced shadow and glass feel */}
+                    <div className="bg-white/80 backdrop-blur-md p-8 sm:p-10 rounded-[2.5rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border border-white/50">
                         <form className="space-y-6" onSubmit={handleSubmit}>
                             {error && (
                                 <div className="rounded-2xl bg-red-50 p-4 border border-red-100 animate-in shake duration-300">
@@ -156,7 +152,7 @@ export function Login() {
                             )}
 
                             <div className="space-y-2">
-                                <label htmlFor="identifier" className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                                <label htmlFor="identifier" className="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">
                                     Identificação
                                 </label>
                                 <div className="relative group">
@@ -169,15 +165,19 @@ export function Login() {
                                         type="text"
                                         autoComplete="username"
                                         required
-                                        className="block w-full pl-14 pr-5 py-4 bg-gray-50 border-2 border-transparent focus:border-primary-600 focus:bg-white rounded-2xl text-sm font-bold placeholder:text-gray-300 transition-all outline-none"
+                                        className="block w-full pl-14 pr-5 py-4 bg-gray-50/50 border border-gray-100 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 focus:bg-white rounded-2xl text-sm font-bold placeholder:text-gray-300 transition-all outline-none"
                                         placeholder="E-mail ou Número de usuário TOTVS"
                                         value={identifier}
                                         onChange={(e) => setIdentifier(e.target.value)}
                                     />
                                 </div>
-                                <p className="mt-2 text-[11px] font-bold text-primary-600 bg-primary-50 px-2 py-1 rounded inline-block ml-1">
-                                    💡 O Número de usuário TOTVS está no seu crachá
-                                </p>
+                                {/* Refined Tip Box - Blue/Gray Theme */}
+                                <div className="mt-3 flex items-start p-3 bg-blue-50/80 rounded-xl border border-blue-100">
+                                    <span className="text-lg mr-2 filter drop-shadow-sm">💡</span>
+                                    <p className="text-[11px] font-medium text-blue-900 leading-tight pt-1">
+                                        O Número de usuário <span className="font-bold">TOTVS</span> está no seu crachá
+                                    </p>
+                                </div>
                             </div>
 
                             <div className="space-y-2">
