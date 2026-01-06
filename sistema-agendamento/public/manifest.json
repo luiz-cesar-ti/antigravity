@@ -1,0 +1,19 @@
+{
+    "name": "Sistema de Agendamentos",
+    "short_name": "Agendamentos",
+    "description": "Sistema de Agendamento do Colégio Objetivo",
+    "theme_color": "#0047AB",
+    "background_color": "#0047AB",
+    "display": "standalone",
+    "orientation": "portrait",
+    "scope": "/",
+    "start_url": "/",
+    "icons": [
+        {
+            "src": "/pwa-icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
