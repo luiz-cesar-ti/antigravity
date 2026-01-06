@@ -955,21 +955,21 @@ export function AdminHelp() {
                                         Implementamos um sistema de <strong className="text-gray-800">Criptografia de Ponta</strong> para garantir que as credenciais jamais sejam expostas.
                                     </p>
 
-                                    <div className="bg-[#1e1b4b] p-8 rounded-[2rem] text-white border border-white/10 shadow-2xl relative overflow-hidden group mb-6">
-                                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
-                                            <Shield className="h-32 w-32" />
+                                    <div className="bg-gradient-to-br from-[#3b3b98] to-[#0b0b1a] p-8 rounded-[2rem] text-white border border-white/5 shadow-2xl relative overflow-hidden group mb-6">
+                                        <div className="absolute top-0 right-0 p-4 opacity-15 group-hover:opacity-25 transition-opacity pointer-events-none">
+                                            <Shield className="h-32 w-32 text-white/40" strokeWidth={1} />
                                         </div>
                                         <div className="relative z-10">
                                             <div className="flex items-center gap-4 mb-6">
-                                                <div className="p-3 bg-white/10 rounded-xl backdrop-blur-md border border-white/10">
-                                                    <Lock className="h-6 w-6 text-white" />
+                                                <div className="p-3 bg-white/5 rounded-xl backdrop-blur-md border border-white/10">
+                                                    <Lock className="h-6 w-6 text-indigo-300" />
                                                 </div>
-                                                <h3 className="text-xl md:text-2xl font-bold">Zero Exposição: Validação de Segurança Blindada</h3>
+                                                <h3 className="text-xl md:text-2xl font-black tracking-tight">Zero Exposição: Validação de Segurança Blindada</h3>
                                             </div>
-                                            <p className="text-indigo-200 text-sm leading-relaxed mb-6 italic">
-                                                Diferente de sistemas convencionais <span className="text-white not-italic">onde a senha é verificada pelo navegador, nossa arquitetura utiliza o conceito de Server-Side Validation.</span>
+                                            <p className="text-white text-sm leading-relaxed mb-6 font-bold">
+                                                Diferente de sistemas convencionais <span className="text-indigo-200 font-normal">onde a senha é verificada pelo navegador, nossa arquitetura utiliza o conceito de <i className="italic">Server-Side Validation</i>.</span>
                                             </p>
-                                            <div className="bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-sm text-xs text-indigo-100 italic leading-relaxed">
+                                            <div className="bg-black/20 border border-white/5 p-6 rounded-2xl backdrop-blur-sm text-xs text-indigo-100 italic leading-relaxed">
                                                 "A lógica de autenticação foi movida 100% para o servidor (RPC). O navegador do usuário nunca recebe códigos de segurança (hashes) e nunca processa a validação. O sistema apenas recebe um 'Sim' ou 'Não' do banco de dados, tornando impossível a interceptação ou manipulação de credenciais via rede."
                                             </div>
                                         </div>
