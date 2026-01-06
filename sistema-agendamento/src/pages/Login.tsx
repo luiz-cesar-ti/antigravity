@@ -118,10 +118,11 @@ export function Login() {
                 <div className="max-w-md w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {/* Mobile Logo */}
                     <div className="lg:hidden flex flex-col items-center mb-12">
-                        <div className="p-4 bg-primary-600 rounded-3xl shadow-xl shadow-primary-200 mb-4">
-                            <ShieldCheck className="h-8 w-8 text-white" />
-                        </div>
-                        <h1 className="text-2xl font-black text-gray-900 tracking-tight">Colégio Objetivo</h1>
+                        <img
+                            src="/logo-objetivo.png"
+                            alt="Colégio Objetivo"
+                            className="h-16 w-auto mb-4"
+                        />
                     </div>
 
                     <div className="mb-6 lg:mb-10 text-center">
