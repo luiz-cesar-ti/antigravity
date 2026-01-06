@@ -60,6 +60,7 @@ export function AdminDashboard() {
         bookingsByDay: [] as any[],
         popularEquipment: [] as any[],
         topTeachers: [] as any[],
+        bookingStatus: [] as any[],
     });
     const [loading, setLoading] = useState(true);
     const [teacherSearchQuery, setTeacherSearchQuery] = useState('');
@@ -208,10 +209,11 @@ export function AdminDashboard() {
                     .select(`
                         booking_date, 
                         start_time,
+                        status,
+                        is_recurring,
                         equipment(name),
                         users(id, full_name)
                     `)
-                    .neq('status', 'cancelled_by_user')
                     .gte('booking_date', queryStartDate);
 
                 if (queryEndDate) {
@@ -269,11 +271,15 @@ export function AdminDashboard() {
 
                 // Removed Manual Join logic for audit logs
 
+
                 const bookings = allBookings.data || [];
+
+                // Filter for existing charts (exclude cancelled)
+                const validBookings = bookings.filter((b: any) => b.status !== 'cancelled_by_user' && b.status !== 'cancelled');
 
                 // 1. Bookings by Day (AreaChart - Smoother)
                 const daysMap: Record<string, number> = {};
-                bookings.forEach((b: any) => {
+                validBookings.forEach((b: any) => {
                     const dateStr = b.booking_date;
                     daysMap[dateStr] = (daysMap[dateStr] || 0) + 1;
                 });
@@ -286,7 +292,7 @@ export function AdminDashboard() {
                     }));
 
                 // 2. Popular Equipment (Pie/Donut)
-                const filteredForDonut = bookings.filter((b: any) => {
+                const filteredForDonut = validBookings.filter((b: any) => {
                     if (donutShift === 'all') return true;
                     if (!b.start_time) return false;
                     const hour = parseInt(b.start_time.split(':')[0]);
@@ -300,14 +306,22 @@ export function AdminDashboard() {
                     const name = b.equipment?.name || 'Desconhecido';
                     equipmentMap[name] = (equipmentMap[name] || 0) + 1;
                 });
+                const totalPopularVal = Object.values(equipmentMap).reduce((a, b) => a + b, 0);
                 const popularEquipment = Object.keys(equipmentMap)
-                    .map(key => ({ name: key, value: equipmentMap[key] }))
+                    .map(key => {
+                        const val = equipmentMap[key];
+                        return {
+                            name: key,
+                            value: val,
+                            percent: totalPopularVal > 0 ? Math.round((val / totalPopularVal) * 100) : 0
+                        };
+                    })
                     .sort((a, b) => b.value - a.value)
                     .slice(0, 5);
 
                 // 3. Top Teachers (New Ranking)
                 const teacherMap: Record<string, { id: string, name: string, count: number }> = {};
-                bookings.forEach((b: any) => {
+                validBookings.forEach((b: any) => {
                     const userId = (b as any).users?.id;
                     const name = (b as any).users?.full_name || 'Desconhecido';
                     if (userId) {
@@ -321,6 +335,36 @@ export function AdminDashboard() {
                     .sort((a, b) => b.count - a.count)
                     .slice(0, 5);
 
+                // 4. Booking Status (New Chart)
+                const statusCounts = { active: 0, completed: 0, recurring: 0, excluded: 0 };
+                bookings.forEach((b: any) => {
+                    if (b.status === 'cancelled_by_user' || b.status === 'cancelled') {
+                        statusCounts.excluded++;
+                    } else if (b.status === 'encerrado') {
+                        statusCounts.completed++;
+                    } else if (b.status === 'active') {
+                        if (b.is_recurring) {
+                            statusCounts.recurring++;
+                        } else {
+                            statusCounts.active++;
+                        }
+                    }
+                });
+
+                const totalStatusVal = statusCounts.active + statusCounts.completed + statusCounts.recurring + statusCounts.excluded;
+
+                const bookingStatus = [
+                    { name: 'Ativo', value: statusCounts.active, color: '#16a34a' },     // Green 600
+                    { name: 'Concluído', value: statusCounts.completed, color: '#2563eb' }, // Blue 600
+                    { name: 'Recorrente', value: statusCounts.recurring, color: '#d97706' }, // Amber 600
+                    { name: 'Excluído', value: statusCounts.excluded, color: '#dc2626' }    // Red 600
+                ]
+                    .filter(i => i.value > 0)
+                    .map(item => ({
+                        ...item,
+                        percent: totalStatusVal > 0 ? Math.round((item.value / totalStatusVal) * 100) : 0
+                    }));
+
                 setStats({
                     activeBookings: bookingsRes.count || 0,
                     completedBookings: completedRes.count || 0,
@@ -330,7 +374,8 @@ export function AdminDashboard() {
                 setChartData({
                     bookingsByDay,
                     popularEquipment,
-                    topTeachers
+                    topTeachers,
+                    bookingStatus
                 });
 
             } catch (error) {
@@ -668,9 +713,9 @@ export function AdminDashboard() {
                                     data={chartData.popularEquipment}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={60}
+                                    innerRadius={70}
                                     outerRadius={85}
-                                    paddingAngle={5}
+                                    paddingAngle={4}
                                     dataKey="value"
                                     stroke="none"
                                 >
@@ -680,7 +725,7 @@ export function AdminDashboard() {
                                 </Pie>
                                 <Tooltip
                                     contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
-                                    formatter={(value: any) => [`${value} Agendamentos`, 'Quantidade']}
+                                    formatter={(value: any, name: any, props: any) => [`${value} (${props.payload.percent}%)`, 'Quantidade']}
                                 />
                             </PieChart>
                         </ResponsiveContainer>
@@ -694,22 +739,100 @@ export function AdminDashboard() {
                         )}
                     </div>
 
-                    {/* Custom Legend with Quantities */}
-                    <div className="mt-6 space-y-2">
-                        {chartData.popularEquipment.map((item, index) => (
-                            <div key={item.name} className="flex items-center justify-between group">
-                                <div className="flex items-center gap-2">
+                    {/* Custom Legend with Quantities and Percentages */}
+                    <div className="mt-6 space-y-3">
+                        {chartData.popularEquipment.map((item: any, index: number) => (
+                            <div key={item.name} className="flex items-center justify-between group p-2 hover:bg-gray-50 rounded-xl transition-colors">
+                                <div className="flex items-center gap-3">
                                     <div
-                                        className="h-2 w-2 rounded-full shrink-0"
+                                        className="h-2.5 w-2.5 rounded-full shrink-0 ring-2 ring-white shadow-sm"
                                         style={{ backgroundColor: COLORS[index % COLORS.length] }}
                                     />
-                                    <span className="text-sm font-bold text-gray-500 uppercase tracking-tight group-hover:text-gray-900 transition-colors">
+                                    <span className="text-sm font-bold text-gray-600 group-hover:text-gray-900 transition-colors">
                                         {item.name}
                                     </span>
                                 </div>
-                                <span className="text-[10px] font-black text-primary-600 bg-primary-50 px-2 py-0.5 rounded-lg group-hover:bg-primary-600 group-hover:text-white transition-all">
-                                    {item.value}
-                                </span>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs font-bold text-gray-400">
+                                        {item.percent}%
+                                    </span>
+                                    <span className="text-xs font-black text-gray-900 bg-white px-2 py-1 rounded-lg shadow-sm border border-gray-100 min-w-[40px] text-center">
+                                        {item.value}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* 4. Booking Status (Status Donut) */}
+                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 className="text-xl font-black text-gray-900">Status</h3>
+                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Panorama geral</p>
+                        </div>
+                        <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600">
+                            <Filter className="h-5 w-5" />
+                        </div>
+                    </div>
+
+                    <div className="h-72 w-full relative mt-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={chartData.bookingStatus}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={70}
+                                    outerRadius={85}
+                                    paddingAngle={4}
+                                    dataKey="value"
+                                    stroke="none"
+                                >
+                                    {chartData.bookingStatus.map((entry: any, index: number) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip
+                                    contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
+                                    formatter={(value: any, name: any, props: any) => [`${value} (${props.payload.percent}%)`, 'Quantidade']}
+                                />
+                            </PieChart>
+                        </ResponsiveContainer>
+                        {chartData.bookingStatus.length > 0 && (
+                            <div className="absolute top-[50%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                                <p className="text-3xl font-black text-gray-900 leading-none">
+                                    {chartData.bookingStatus.reduce((acc: any, curr: any) => acc + curr.value, 0)}
+                                </p>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">Total</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mt-6 space-y-3">
+                        {chartData.bookingStatus.map((item: any) => (
+                            <div key={item.name} className="flex items-center justify-between group p-2 hover:bg-gray-50 rounded-xl transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div
+                                        className="h-2.5 w-2.5 rounded-full shrink-0 ring-2 ring-white shadow-sm"
+                                        style={{ backgroundColor: item.color }}
+                                    />
+                                    <span className="text-sm font-bold text-gray-600 group-hover:text-gray-900 transition-colors">
+                                        {item.name}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs font-bold text-gray-400">
+                                        {item.percent}%
+                                    </span>
+                                    <span
+                                        className="text-xs font-black px-2 py-1 rounded-lg transition-all text-white shadow-sm min-w-[40px] text-center"
+                                        style={{ backgroundColor: item.color }}
+                                    >
+                                        {item.value}
+                                    </span>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -799,7 +922,7 @@ export function AdminDashboard() {
                                     onClick={() => setIsModalOpen(false)}
                                     className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 font-black text-xs uppercase tracking-widest rounded-xl transition-all"
                                 >
-                                    Fechar Relatório
+                                    Fechar Visualização
                                 </button>
                             </div>
                         </div>
@@ -809,3 +932,4 @@ export function AdminDashboard() {
         </div >
     );
 }
+
