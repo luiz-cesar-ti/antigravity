@@ -392,7 +392,7 @@ export function AdminBookings() {
         <div className="space-y-6">
             {/* Super Admin Unit Selector */}
             {isSuperAdmin && (
-                <div className="bg-white p-4 rounded-2xl border border-indigo-100 shadow-sm mb-6 flex items-center justify-between">
+                <div className="bg-white p-4 rounded-2xl border border-indigo-100 shadow-sm mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-indigo-50 rounded-xl">
                             <Building className="h-5 w-5 text-indigo-600" />
@@ -405,7 +405,7 @@ export function AdminBookings() {
                     <select
                         value={targetUnit}
                         onChange={(e) => setTargetUnit(e.target.value)}
-                        className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full sm:w-auto px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                         {SCHOOL_UNITS.map(unit => (
                             <option key={unit} value={unit}>{unit}</option>
