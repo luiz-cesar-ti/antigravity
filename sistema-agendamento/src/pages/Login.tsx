@@ -117,15 +117,15 @@ export function Login() {
             <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-indigo-50 via-white to-blue-50 lg:bg-none lg:bg-gray-50/50">
                 <div className="max-w-md w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {/* Mobile Logo */}
-                    <div className="lg:hidden flex flex-col items-center mb-10">
+                    <div className="lg:hidden flex flex-col items-center mb-8">
                         <img
                             src="/logo-objetivo.png"
                             alt="Colégio Objetivo"
-                            className="h-14 w-auto mb-6 drop-shadow-sm"
+                            className="h-32 w-auto mb-4 drop-shadow-md object-contain"
                         />
-                        <h2 className="text-xl font-bold text-gray-800 uppercase tracking-widest text-center">
+                        <h2 className="text-lg font-bold text-blue-900/80 uppercase tracking-widest text-center">
                             Sistema de<br />
-                            <span className="text-primary-700 text-3xl font-black">Agendamentos</span>
+                            <span className="text-primary-700 text-2xl font-black">Agendamentos</span>
                         </h2>
                     </div>
 
