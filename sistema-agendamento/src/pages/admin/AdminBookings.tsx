@@ -20,17 +20,25 @@ export function AdminBookings() {
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState('all'); // default to all to prevent items from "disappearing" automatically
     const [searchTerm, setSearchTerm] = useState('');
-    const [targetUnit, setTargetUnit] = useState((user as Admin)?.unit || SCHOOL_UNITS[0]);
+    const [targetUnit, setTargetUnit] = useState<string>(SCHOOL_UNITS[0]);
     const [pdfData, setPdfData] = useState<any>(null);
 
     const isSuperAdmin = (user as Admin)?.role === 'super_admin';
     const adminUnit = (user as Admin)?.unit;
 
     useEffect(() => {
-        if (adminUnit && !isSuperAdmin) {
-            setTargetUnit(adminUnit);
+        if (user) {
+            if (isSuperAdmin) {
+                // If super admin has a specific valid unit in profile, use it, otherwise keep São Vicente
+                const userUnit = (user as Admin)?.unit;
+                if (userUnit && SCHOOL_UNITS.includes(userUnit)) {
+                    setTargetUnit(userUnit);
+                }
+            } else if (adminUnit) {
+                setTargetUnit(adminUnit);
+            }
         }
-    }, [adminUnit, isSuperAdmin]);
+    }, [user?.id, adminUnit, isSuperAdmin]);
 
     // Date range filters
     const [startDate, setStartDate] = useState('');

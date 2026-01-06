@@ -33,7 +33,18 @@ export function AdminDashboard() {
 
     // Super Admin - Unit Filter Logic
     const isSuperAdmin = adminUser?.role === 'super_admin';
-    const [targetUnit, setTargetUnit] = useState<string>(isSuperAdmin ? 'Matriz' : (adminUser?.unit || ''));
+    const [targetUnit, setTargetUnit] = useState<string>(SCHOOL_UNITS[0]);
+
+    // Sync unit on initial load/session arrival
+    useEffect(() => {
+        if (adminUser) {
+            if (isSuperAdmin) {
+                // Keep default SCHOOL_UNITS[0] or current targetUnit
+            } else if (adminUser.unit) {
+                setTargetUnit(adminUser.unit);
+            }
+        }
+    }, [adminUser?.id, adminUser?.unit, isSuperAdmin]);
 
     const [selectedTeacher, setSelectedTeacher] = useState<any | null>(null);
     const [teacherBookings, setTeacherBookings] = useState<any[]>([]);
