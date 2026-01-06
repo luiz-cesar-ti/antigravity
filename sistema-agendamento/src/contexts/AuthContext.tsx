@@ -153,7 +153,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !session)) {
                 setState(prev => {
-                    if (prev.role === 'admin') return { ...prev, isLoading: false };
+                    if (prev.role === 'admin' || prev.role === 'super_admin') return { ...prev, isLoading: false };
                     if (prev.user === null && prev.isLoading === false) return prev;
                     return { user: null, role: null, isAuthenticated: false, isLoading: false };
                 });

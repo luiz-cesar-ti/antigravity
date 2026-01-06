@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Mail, Lock, AlertCircle, Check } from 'lucide-react';
+import { User, Mail, Lock, AlertCircle, Check, Info } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { SCHOOL_UNITS } from '../utils/constants';
 import { SuccessModal } from '../components/SuccessModal';
@@ -57,8 +57,9 @@ export function Register() {
             return;
         }
 
-        if (formData.password.length < 8) {
-            setError('A senha deve ter no mínimo 8 caracteres.');
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(formData.password)) {
+            setError('A senha deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais (@$!%*?&).');
             return;
         }
 
@@ -207,8 +208,35 @@ export function Register() {
                                         className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3"
                                         value={formData.password}
                                         onChange={handleInputChange}
-                                        placeholder="Mínimo 8 caracteres"
+                                        placeholder="Senha forte"
                                     />
+                                </div>
+                                <div className="mt-2 bg-blue-50 border border-blue-100 rounded-lg p-3">
+                                    <div className="flex gap-2 mb-2">
+                                        <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                                        <p className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Senha Segura (Obrigatório)</p>
+                                    </div>
+                                    <p className="text-[11px] text-blue-800 leading-relaxed">
+                                        Para sua segurança, a senha deve ter no mínimo <strong>8 caracteres</strong> e conter pelo menos:
+                                    </p>
+                                    <ul className="mt-1.5 grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] text-blue-700 font-medium">
+                                        <li className="flex items-center gap-1">
+                                            <div className="h-1 w-1 rounded-full bg-blue-400"></div>
+                                            Letra Maiúscula
+                                        </li>
+                                        <li className="flex items-center gap-1">
+                                            <div className="h-1 w-1 rounded-full bg-blue-400"></div>
+                                            Letra Minúscula
+                                        </li>
+                                        <li className="flex items-center gap-1">
+                                            <div className="h-1 w-1 rounded-full bg-blue-400"></div>
+                                            Um Número
+                                        </li>
+                                        <li className="flex items-center gap-1">
+                                            <div className="h-1 w-1 rounded-full bg-blue-400"></div>
+                                            Símbolo (@$!%...)
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
 

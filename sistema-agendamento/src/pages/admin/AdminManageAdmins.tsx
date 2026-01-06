@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
-import bcrypt from 'bcryptjs';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Search, Shield, KeyRound, AlertCircle, CheckCircle } from 'lucide-react';
 import type { Admin } from '../../types';
 
 export function AdminManageAdmins() {
-    const { user } = useAuth();
     const [admins, setAdmins] = useState<Admin[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -76,8 +74,9 @@ export function AdminManageAdmins() {
     const handleSubmitReset = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (newPassword.length < 6) {
-            setError('A senha deve ter pelo menos 6 caracteres.');
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(newPassword)) {
+            setError('A senha deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais (@$!%*?&).');
             return;
         }
 
@@ -104,13 +103,11 @@ export function AdminManageAdmins() {
                 throw new Error('Sessão inválida.');
             }
 
-            // Hash on client, Send to Secured RPC
-            const hash = await bcrypt.hash(newPassword, 10);
-
+            // Send plain text to Secured RPC (hashing happens on DB)
             const { error } = await supabase.rpc('reset_admin_password', {
                 p_admin_token: adminToken,
                 p_target_admin_id: resetModal.adminId,
-                p_new_password_hash: hash
+                p_new_password: newPassword
             });
 
             if (error) throw error;
@@ -310,6 +307,17 @@ export function AdminManageAdmins() {
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                 />
+                            </div>
+
+                            <div className="mt-2 text-[10px] space-y-1 text-gray-500 bg-gray-50 p-2 rounded border border-gray-100">
+                                <p className="font-bold text-gray-700">Requisitos obrigatórios:</p>
+                                <ul className="grid grid-cols-2 gap-x-2 list-disc list-inside">
+                                    <li>8+ caracteres</li>
+                                    <li>A-Z (Maiúsculo)</li>
+                                    <li>a-z (Minúsculo)</li>
+                                    <li>0-9 (Número)</li>
+                                    <li>Símbolo (@$!%...)</li>
+                                </ul>
                             </div>
 
                             <div className="pt-4 flex gap-3">

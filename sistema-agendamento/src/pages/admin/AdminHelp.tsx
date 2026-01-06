@@ -5,7 +5,6 @@ import {
     Info,
     Trash2,
     FileText,
-    Upload,
     CheckCircle2,
     AlertTriangle,
     Shield,
@@ -470,7 +469,9 @@ export function AdminHelp() {
                                                     <span className="font-bold text-gray-800">4. Senha Segura</span>
                                                     <span className="text-[10px] font-black text-gray-500 bg-gray-200 px-2 py-0.5 rounded">SEGURANÇA</span>
                                                 </div>
-                                                <p className="text-sm text-gray-600">Mínimo de <strong>8 dígitos</strong> requeridos.</p>
+                                                <p className="text-sm text-gray-600">
+                                                    Mínimo de <strong>8 caracteres</strong>. A senha deve conter obrigatoriamente letras <strong>maiúsculas, minúsculas, números e caracteres especiais</strong> (como @$!%*?&).
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
