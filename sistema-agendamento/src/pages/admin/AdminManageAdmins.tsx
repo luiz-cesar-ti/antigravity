@@ -16,46 +16,74 @@ export function AdminManageAdmins() {
     const fetchAdmins = async () => {
         setLoading(true);
         try {
-            const { data, error } = await supabase
-                .from('admins')
-                .select('*')
-                .order('username');
+            // Get session token safely
+            let adminToken = '';
+            try {
+                const session = localStorage.getItem('admin_session');
+                if (session) {
+                    const admin = JSON.parse(session);
+                    adminToken = admin.session_token || '';
+                }
+            } catch (e) {
+                console.error('Session parse error', e);
+            }
+
+            if (!adminToken) {
+                throw new Error('Sessão inválida. Faça login novamente.');
+            }
+
+            // Call Secure RPC
+            const { data, error } = await supabase.rpc('get_all_admins', {
+                p_admin_token: adminToken
+            });
 
             if (error) throw error;
+
+            // Map data if necessary or use directly
             setAdmins(data || []);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching admins:', error);
-            setError('Erro ao carregar lista de administradores.');
+            setError(`Erro ao carregar lista: ${error.message || 'Erro desconhecido'}`);
         } finally {
             setLoading(false);
         }
     };
 
     const handleResetAdminPassword = async (adminId: string, currentUsername: string) => {
-        // Default password format or prompt? 
-        // For security, let's set a standard temporary password or handle it via email if possible.
-        // However, the previous requirement was "reset password" which implies a direct action or email.
-        // Given the previous context, we'll assume a direct reset to a known temporary password OR a prompt.
-        // Let's use a prompt for the new password to be flexible.
-
         const newPassword = prompt(`Digite a nova senha para o admin ${currentUsername}:`);
         if (!newPassword) return;
 
         try {
+            // Get Admin Token Check
+            let adminToken = '';
+            try {
+                const session = localStorage.getItem('admin_session');
+                if (session) {
+                    const admin = JSON.parse(session);
+                    adminToken = admin.session_token || '';
+                }
+            } catch (e) { }
+
+            if (!adminToken) {
+                throw new Error('Sessão inválida.');
+            }
+
+            // Hash on client, Send to Secured RPC
             const hash = await bcrypt.hash(newPassword, 10);
 
-            const { error } = await supabase
-                .from('admins')
-                .update({ password_hash: hash })
-                .eq('id', adminId);
+            const { error } = await supabase.rpc('reset_admin_password', {
+                p_admin_token: adminToken,
+                p_target_admin_id: adminId,
+                p_new_password_hash: hash
+            });
 
             if (error) throw error;
 
             setResetSuccess(`Senha do admin ${currentUsername} atualizada com sucesso.`);
             setTimeout(() => setResetSuccess(''), 5000);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error resetting admin password:', err);
-            alert('Erro ao resetar senha.');
+            alert(`Erro ao resetar senha: ${err.message}`);
         }
     };
 

@@ -382,6 +382,30 @@ export function AdminBookings() {
 
     return (
         <div className="space-y-6">
+            {/* Super Admin Unit Selector */}
+            {isSuperAdmin && (
+                <div className="bg-white p-4 rounded-2xl border border-indigo-100 shadow-sm mb-6 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-50 rounded-xl">
+                            <Building className="h-5 w-5 text-indigo-600" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-black text-gray-900 uppercase tracking-wide">Visão Global</h2>
+                            <p className="text-xs text-gray-500 font-bold">Selecione uma unidade para gerenciar</p>
+                        </div>
+                    </div>
+                    <select
+                        value={targetUnit}
+                        onChange={(e) => setTargetUnit(e.target.value)}
+                        className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        {SCHOOL_UNITS.map(unit => (
+                            <option key={unit} value={unit}>{unit}</option>
+                        ))}
+                    </select>
+                </div>
+            )}
+
             <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
                 <div>
                     <h1 className="text-2xl font-black text-gray-900">Gerenciar Agendamentos <span className="text-primary-600 text-xs font-bold">(v2.2)</span></h1>
