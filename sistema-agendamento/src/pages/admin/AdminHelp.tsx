@@ -23,7 +23,8 @@ import {
     ShieldCheck,
     Lock,
     Menu,
-    X
+    X,
+    History as LucideHistory
 } from 'lucide-react';
 
 export function AdminHelp() {
@@ -54,10 +55,10 @@ export function AdminHelp() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto pb-20 animate-in fade-in duration-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 pb-20 animate-in fade-in duration-500">
             {/* Header */}
-            <div className="mb-12 text-center md:text-left">
-                <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-4">Manual do Administrador</h1>
+            <div className="mb-10 text-center md:text-left">
+                <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-4">Manual do Administrador</h1>
                 <p className="text-lg text-gray-600 max-w-3xl">
                     Guia completo de referência sobre todas as funcionalidades, regras de negócio e fluxos operacionais do Sistema de Agendamento.
                 </p>
@@ -92,23 +93,23 @@ export function AdminHelp() {
 
                     {/* Dashboard */}
                     <section id="dashboard" className="scroll-mt-8">
-                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-8 text-white">
+                        <div className="bg-white rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 md:p-8 text-white">
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
-                                        <Monitor className="h-8 w-8" />
+                                        <Monitor className="h-6 w-6 md:h-8 md:w-8" />
                                     </div>
-                                    <h2 className="text-2xl font-black">Dashboard</h2>
+                                    <h2 className="text-xl md:text-2xl font-black">Dashboard</h2>
                                 </div>
                             </div>
-                            <div className="p-8 space-y-6">
+                            <div className="p-5 md:p-8 space-y-6">
                                 <p className="text-gray-600 leading-relaxed">
                                     O Dashboard é a central de inteligência da sua unidade. Utilize os gráficos para entender o comportamento de uso e otimizar a distribuição de recursos.
                                 </p>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {/* Indicadores de Pico */}
-                                    <div className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm hover:border-blue-100 transition-all">
+                                    <div className="bg-white border border-gray-100 p-4 md:p-5 rounded-2xl md:rounded-3xl shadow-sm hover:border-blue-100 transition-all">
                                         <div className="flex items-center gap-3 mb-3">
                                             <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
                                                 <TrendingUp className="h-5 w-5" />
@@ -121,7 +122,7 @@ export function AdminHelp() {
                                     </div>
 
                                     {/* Mix de Utilização */}
-                                    <div className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm hover:border-green-100 transition-all">
+                                    <div className="bg-white border border-gray-100 p-4 md:p-5 rounded-2xl md:rounded-3xl shadow-sm hover:border-green-100 transition-all">
                                         <div className="flex items-center gap-3 mb-3">
                                             <div className="p-2 bg-green-50 text-green-600 rounded-xl">
                                                 <PieChart className="h-5 w-5" />
@@ -132,9 +133,8 @@ export function AdminHelp() {
                                             O gráfico de rosca revela quais equipamentos são essenciais. Agora com <strong>filtros por turno</strong> (07h-13h e 13h-18h) para análise por período.
                                         </p>
                                     </div>
-
                                     {/* Busca de Professores */}
-                                    <div className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm hover:border-purple-100 transition-all">
+                                    <div className="bg-white border border-gray-100 p-4 md:p-5 rounded-2xl md:rounded-3xl shadow-sm hover:border-purple-100 transition-all">
                                         <div className="flex items-center gap-3 mb-3">
                                             <div className="p-2 bg-purple-50 text-purple-600 rounded-xl">
                                                 <Users className="h-5 w-5" />
@@ -147,7 +147,7 @@ export function AdminHelp() {
                                     </div>
 
                                     {/* Top Rankings */}
-                                    <div className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm hover:border-amber-100 transition-all">
+                                    <div className="bg-white border border-gray-100 p-4 md:p-5 rounded-2xl md:rounded-3xl shadow-sm hover:border-amber-100 transition-all">
                                         <div className="flex items-center gap-3 mb-3">
                                             <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
                                                 <Trophy className="h-5 w-5" />
@@ -165,36 +165,36 @@ export function AdminHelp() {
 
                     {/* Horário de Aulas - NEW SECTION */}
                     <section id="schedules" className="scroll-mt-8">
-                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="bg-gradient-to-r from-blue-500 to-indigo-700 p-8 text-white">
+                        <div className="bg-white rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-blue-500 to-indigo-700 p-6 md:p-8 text-white">
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
-                                        <Clock className="h-8 w-8" />
+                                        <Clock className="h-6 w-6 md:h-8 md:w-8" />
                                     </div>
-                                    <h2 className="text-2xl font-black">Horário de Aulas</h2>
+                                    <h2 className="text-xl md:text-2xl font-black">Horário de Aulas</h2>
                                 </div>
                             </div>
-                            <div className="p-8 space-y-6">
+                            <div className="p-5 md:p-8 space-y-6">
                                 <p className="text-gray-600 leading-relaxed text-lg text-center md:text-left">
                                     O preenchimento do <strong>Horário de Aulas</strong> pelo administrador é uma ferramenta estratégica de gestão que vai além do simples registro.
                                 </p>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="p-6 bg-indigo-50 rounded-3xl border border-indigo-100">
-                                        <h4 className="font-bold text-indigo-900 mb-3 flex items-center gap-2">
+                                    <div className="p-5 md:p-6 bg-indigo-50 rounded-2xl md:rounded-3xl border border-indigo-100">
+                                        <h4 className="font-bold text-indigo-900 mb-2 flex items-center gap-2">
                                             <Search className="h-5 w-5" /> Localização em Tempo Real
                                         </h4>
                                         <p className="text-sm text-indigo-800 leading-relaxed">
-                                            Ao manter os horários atualizados por unidade, a Educação Digital consegue identificar instantaneamente onde o professor está lecionando (sala, laboratório ou ambiente externo). Isso elimina o tempo gasto procurando o docente pelo colégio.
+                                            Ao manter os horários atualizados por unidade, a Educação Digital consegue identificar instantaneamente onde o professor está lecionando (sala, laboratório ou ambiente externo).
                                         </p>
                                     </div>
 
-                                    <div className="p-6 bg-emerald-50 rounded-3xl border border-emerald-100">
-                                        <h4 className="font-bold text-emerald-900 mb-3 flex items-center gap-2">
+                                    <div className="p-5 md:p-6 bg-emerald-50 rounded-2xl md:rounded-3xl border border-emerald-100">
+                                        <h4 className="font-bold text-emerald-900 mb-2 flex items-center gap-2">
                                             <TrendingUp className="h-5 w-5" /> Agilidade no Suporte
                                         </h4>
                                         <p className="text-sm text-emerald-800 leading-relaxed">
-                                            Facilita a entrega e o recolhimento de equipamentos. Sabendo exatamente onde o recurso será utilizado conforme o horário de aula preenchido, a Educação Digital ganha eficiência e evita atrasos entre o início de uma aula e outra.
+                                            Facilita a entrega e o recolhimento de equipamentos. Sabendo exatamente onde o recurso será utilizado, a Educação Digital ganha eficiência e evita atrasos.
                                         </p>
                                     </div>
                                 </div>
@@ -205,36 +205,34 @@ export function AdminHelp() {
 
                     {/* Agendamentos */}
                     <section id="bookings" className="scroll-mt-8">
-                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 p-8 text-white">
+                        <div className="bg-white rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 p-6 md:p-8 text-white">
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
-                                        <Calendar className="h-8 w-8" />
+                                        <Calendar className="h-6 w-6 md:h-8 md:w-8" />
                                     </div>
-                                    <h2 className="text-2xl font-black">Gerenciamento de Agendamentos</h2>
+                                    <h2 className="text-xl md:text-2xl font-black">Gerenciamento de Agendamentos</h2>
                                 </div>
                             </div>
-                            <div className="p-8 space-y-8">
+                            <div className="p-5 md:p-8 space-y-8">
                                 <div>
                                     <h3 className="text-lg font-black text-gray-900 mb-4">Status do Card de Agendamento</h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                                         <div className="p-4 rounded-xl bg-green-50 border border-green-100">
-                                            <span className="text-sm font-black text-green-700 bg-green-100 px-2 py-1 rounded mb-2 inline-block">ATIVO</span>
-                                            <p className="text-sm text-green-800">Reserva válida e futura. O equipamento está reservado.</p>
+                                            <span className="text-[10px] md:text-sm font-black text-green-700 bg-green-100 px-2 py-1 rounded mb-2 inline-block">ATIVO</span>
+                                            <p className="text-xs md:text-sm text-green-800 leading-tight">Reserva válida e futura. Equipamento reservado.</p>
                                         </div>
                                         <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-                                            <span className="text-sm font-black text-blue-700 bg-blue-100 px-2 py-1 rounded mb-2 inline-block">CONCLUÍDO</span>
-                                            <p className="text-sm text-blue-800">Data/Hora já passaram. O sistema encerra automaticamente.</p>
+                                            <span className="text-[10px] md:text-sm font-black text-blue-700 bg-blue-100 px-2 py-1 rounded mb-2 inline-block">CONCLUÍDO</span>
+                                            <p className="text-xs md:text-sm text-blue-800 leading-tight">Data/Hora já passaram. Encerramento automático.</p>
                                         </div>
                                         <div className="p-4 rounded-xl bg-amber-50 border border-amber-100">
-                                            <span className="text-sm font-black text-amber-700 bg-amber-100 px-2 py-1 rounded mb-2 inline-block">Excluído pelo Professor</span>
-                                            <p className="text-sm text-amber-800">Professor excluiu da visão dele. Admin ainda vê o registro.</p>
+                                            <span className="text-[10px] md:text-sm font-black text-amber-700 bg-amber-100 px-2 py-1 rounded mb-2 inline-block">EXCLUÍDO PELO DOCENTE</span>
+                                            <p className="text-xs md:text-sm text-amber-800 leading-tight">Professor tirou da visão dele. Admin ainda vê.</p>
                                         </div>
                                         <div className="p-4 rounded-xl bg-purple-50 border border-purple-100">
-                                            <div className="flex items-center gap-1.5 mb-2">
-                                                <span className="text-sm font-black text-purple-700 bg-purple-100 px-2 py-1 rounded inline-block">RECORRENTE</span>
-                                            </div>
-                                            <p className="text-sm text-purple-800">Agendamento fixo semanal. O professor consegue criar vários agendamentos fixos até o final do mês corrente.</p>
+                                            <span className="text-[10px] md:text-sm font-black text-purple-700 bg-purple-100 px-2 py-1 rounded mb-2 inline-block">RECORRENTE</span>
+                                            <p className="text-xs md:text-sm text-purple-800 leading-tight">Fixo semanal. Criável até o final do mês corrente.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -243,17 +241,17 @@ export function AdminHelp() {
                                     <h3 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-2">
                                         <Trash2 className="h-5 w-5 text-red-500" /> Fluxo de Exclusão
                                     </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                                         <div>
-                                            <h4 className="font-bold text-gray-700 mb-2">Pelo Professor</h4>
-                                            <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-xl">
-                                                O professor realiza uma exclusão visual para organização pessoal. O agendamento some da lista dele para limpar a visão, mas permanece registrado no sistema. O administrador continua vendo esse registro marcado em amarelo para fins de histórico.
+                                            <h4 className="font-bold text-gray-700 mb-2 text-sm">Pelo Professor</h4>
+                                            <p className="text-xs md:text-sm text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-xl">
+                                                Exclusão visual para organização pessoal. Permanece registrado para o administrador (marcado em amarelo).
                                             </p>
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-gray-700 mb-2">Pelo Administrador</h4>
-                                            <p className="text-sm text-gray-600 leading-relaxed bg-red-50 p-4 rounded-xl text-red-900">
-                                                O administrador tem poder de <strong>"Exclusão Permanente"</strong> (Hard Delete). Ao excluir, o registro é apagado definitivamente do banco de dados, liberando o horário para novos agendamentos e removendo históricos.
+                                            <h4 className="font-bold text-gray-700 mb-2 text-sm">Pelo Administrador</h4>
+                                            <p className="text-xs md:text-sm text-red-900 leading-relaxed bg-red-50 p-4 rounded-xl">
+                                                <strong>"Exclusão Permanente"</strong>. O registro é apagado definitivamente, liberando o horário no estoque.
                                             </p>
                                         </div>
                                     </div>
@@ -266,16 +264,16 @@ export function AdminHelp() {
 
                     {/* Termos de Responsabilidade - NEW */}
                     <section id="terms" className="scroll-mt-8">
-                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="bg-gradient-to-r from-rose-600 to-rose-800 p-8 text-white">
+                        <div className="bg-white rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-rose-600 to-rose-800 p-6 md:p-8 text-white">
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
-                                        <FileText className="h-8 w-8" />
+                                        <FileText className="h-6 w-6 md:h-8 md:w-8" />
                                     </div>
-                                    <h2 className="text-2xl font-black">Termo de Responsabilidade</h2>
+                                    <h2 className="text-xl md:text-2xl font-black">Termo de Responsabilidade</h2>
                                 </div>
                             </div>
-                            <div className="p-8 space-y-8">
+                            <div className="p-5 md:p-8 space-y-8">
                                 <div>
                                     <p className="text-gray-600 leading-relaxed mb-6">
                                         Todo agendamento realizado no sistema gera automaticamente um <strong>Documento Jurídico Digital</strong> que vincula o professor aos equipamentos reservados.
@@ -289,23 +287,23 @@ export function AdminHelp() {
                                             <p className="text-sm text-rose-800 leading-relaxed">
                                                 Para garantir a segurança e a validade jurídica de cada operação, o sistema utiliza um mecanismo triplo de <strong>Rastreabilidade e Integridade</strong>.
                                             </p>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                                                 <div className="bg-white p-4 rounded-xl border border-rose-200">
                                                     <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest">ID DO TERMO</span>
-                                                    <p className="text-xs font-bold text-gray-700 mt-1">
-                                                        Código UUID único impresso no rodapé, vinculado permanentemente ao registro no banco de dados.
+                                                    <p className="text-xs font-bold text-gray-700 mt-1 leading-snug">
+                                                        Código UUID único impresso, vinculado permanentemente ao banco.
                                                     </p>
                                                 </div>
                                                 <div className="bg-white p-4 rounded-xl border border-rose-200">
                                                     <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest">VERSÃO DO TERMO</span>
-                                                    <p className="text-xs font-bold text-gray-700 mt-1">
-                                                        Identifica qual contrato legal estava vigente no exato momento da assinatura do professor.
+                                                    <p className="text-xs font-bold text-gray-700 mt-1 leading-snug">
+                                                        Identifica o contrato legal vigente no ato da assinatura.
                                                     </p>
                                                 </div>
                                                 <div className="bg-white p-4 rounded-xl border border-rose-200">
                                                     <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest">HASH SHA-256</span>
-                                                    <p className="text-xs font-bold text-gray-700 mt-1">
-                                                        Impressão digital matemática que prova que o conteúdo do termo jamais foi alterado após o aceite.
+                                                    <p className="text-xs font-bold text-gray-700 mt-1 leading-snug">
+                                                        Impressão digital matemática que prova a integridade do conteúdo.
                                                     </p>
                                                 </div>
                                             </div>
@@ -336,25 +334,25 @@ export function AdminHelp() {
 
                                 <div className="mb-6">
                                     <h3 className="text-lg font-black text-gray-900 mb-4">Tipos de Termo</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div className="p-6 bg-gray-50 rounded-xl border border-gray-100 h-full">
-                                            <span className="text-xs font-black text-blue-600 bg-blue-100 px-2 py-1 rounded mb-3 inline-block">PADRÃO</span>
-                                            <h4 className="font-bold text-gray-800 text-lg mb-2">Termo de Agendamento</h4>
-                                            <p className="text-sm text-gray-600 leading-relaxed">O termo padrão criado automaticamente para os agendamentos do dia a dia. Válido para reservas pontuais.</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                                        <div className="p-5 md:p-6 bg-gray-50 rounded-2xl border border-gray-100 h-full">
+                                            <span className="text-[10px] font-black text-blue-600 bg-blue-100 px-2 py-1 rounded mb-3 inline-block">PADRÃO</span>
+                                            <h4 className="font-bold text-gray-800 text-base md:text-lg mb-2">Termo de Agendamento</h4>
+                                            <p className="text-xs md:text-sm text-gray-600 leading-relaxed">Padrão automático para reservas pontuais.</p>
                                         </div>
-                                        <div className="p-6 bg-gray-50 rounded-xl border border-gray-100 h-full">
-                                            <span className="text-xs font-black text-purple-600 bg-purple-100 px-2 py-1 rounded mb-3 inline-block">RECORRENTE</span>
-                                            <h4 className="font-bold text-gray-800 text-lg mb-2">Termo Recorrente</h4>
-                                            <p className="text-sm text-gray-600 leading-relaxed mb-3">Válido para agendamentos semanais fixos. O termo assinado captura a "recorrência" no rodapé (ex: Toda Segunda-feira).</p>
-                                            <div className="flex items-center gap-2 text-xs font-bold text-purple-700 bg-purple-50 p-2 rounded-lg border border-purple-100">
+                                        <div className="p-5 md:p-6 bg-gray-50 rounded-2xl border border-gray-100 h-full">
+                                            <span className="text-[10px] font-black text-purple-600 bg-purple-100 px-2 py-1 rounded mb-3 inline-block">RECORRENTE</span>
+                                            <h4 className="font-bold text-gray-800 text-base md:text-lg mb-2">Termo Recorrente</h4>
+                                            <p className="text-xs md:text-sm text-gray-600 leading-relaxed mb-3">Fixo semanal. Captura a recorrência (ex: Toda Segunda).</p>
+                                            <div className="flex items-center gap-2 text-[10px] font-bold text-purple-700 bg-purple-50 p-2 rounded-lg border border-purple-100">
                                                 <Lock className="h-3 w-3" />
-                                                Garante que o aceite original cubra toda a série de aulas do período.
+                                                Cobre toda a série de aulas.
                                             </div>
                                         </div>
-                                        <div className="p-6 bg-gray-50 rounded-xl border border-gray-100 h-full">
-                                            <span className="text-xs font-black text-amber-600 bg-amber-100 px-2 py-1 rounded mb-3 inline-block">EMPRÉSTIMO</span>
-                                            <h4 className="font-bold text-gray-800 text-lg mb-2">Termo de Retirada</h4>
-                                            <p className="text-sm text-gray-600 leading-relaxed">Criado na seção "Empréstimos" para terceiros. Preenchido manualmente pelo solicitante e requer <strong>assinatura dupla</strong> (solicitante + responsável).</p>
+                                        <div className="p-5 md:p-6 bg-gray-50 rounded-2xl border border-gray-100 h-full">
+                                            <span className="text-[10px] font-black text-amber-600 bg-amber-100 px-2 py-1 rounded mb-3 inline-block">EMPRÉSTIMO</span>
+                                            <h4 className="font-bold text-gray-800 text-base md:text-lg mb-2">Termo de Retirada</h4>
+                                            <p className="text-xs md:text-sm text-gray-600 leading-relaxed">Para terceiros. Assinatura dupla necessária.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -384,16 +382,16 @@ export function AdminHelp() {
 
                     {/* Equipamentos */}
                     <section id="equipments" className="scroll-mt-8">
-                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="bg-gradient-to-r from-emerald-600 to-emerald-800 p-8 text-white">
+                        <div className="bg-white rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-emerald-600 to-emerald-800 p-6 md:p-8 text-white">
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
-                                        <Monitor className="h-8 w-8" />
+                                        <Monitor className="h-6 w-6 md:h-8 md:w-8" />
                                     </div>
-                                    <h2 className="text-2xl font-black">Cadastro de Equipamentos</h2>
+                                    <h2 className="text-xl md:text-2xl font-black">Cadastro de Equipamentos</h2>
                                 </div>
                             </div>
-                            <div className="p-8">
+                            <div className="p-5 md:p-8">
                                 <p className="text-gray-600 mb-6">
                                     Módulo para controle de inventário disponível para reserva.
                                 </p>
@@ -422,16 +420,16 @@ export function AdminHelp() {
 
                     {/* Cadastro de Professores - NEW */}
                     <section id="register" className="scroll-mt-8">
-                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="bg-gradient-to-r from-pink-600 to-pink-800 p-8 text-white">
+                        <div className="bg-white rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-pink-600 to-pink-800 p-6 md:p-8 text-white">
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
-                                        <UserPlus className="h-8 w-8" />
+                                        <UserPlus className="h-6 w-6 md:h-8 md:w-8" />
                                     </div>
-                                    <h2 className="text-2xl font-black">Cadastro de Professores</h2>
+                                    <h2 className="text-xl md:text-2xl font-black">Cadastro de Professores</h2>
                                 </div>
                             </div>
-                            <div className="p-8 space-y-8">
+                            <div className="p-5 md:p-8 space-y-8">
                                 <p className="text-gray-600 leading-relaxed text-lg">
                                     Para acessar o sistema e realizar agendamentos, todo professor deve realizar seu próprio cadastro através da tela pública de registro. O processo é rigoroso para garantir a segurança e a organização das unidades.
                                 </p>
@@ -440,41 +438,41 @@ export function AdminHelp() {
                                     <div className="space-y-6">
                                         <h3 className="text-lg font-black text-gray-900 border-l-4 border-pink-500 pl-3">Dados Obrigatórios</h3>
 
-                                        <div className="space-y-4">
-                                            <div className="bg-pink-50/50 p-4 rounded-xl border border-pink-100">
+                                        <div className="space-y-3 md:space-y-4">
+                                            <div className="bg-pink-50/50 p-4 rounded-2xl border border-pink-100">
                                                 <div className="flex justify-between items-start mb-1">
-                                                    <span className="font-bold text-gray-800">1. Número TOTVS</span>
-                                                    <span className="text-[10px] font-black text-pink-500 bg-pink-100 px-2 py-0.5 rounded">ID APENAS</span>
+                                                    <span className="font-bold text-gray-800 text-sm">1. Número TOTVS</span>
+                                                    <span className="text-[10px] font-black text-pink-500 bg-pink-100 px-2 py-0.5 rounded">ID</span>
                                                 </div>
-                                                <p className="text-sm text-gray-600">Identificador único do professor. Usado apenas para fins de cadastro e distinção.</p>
+                                                <p className="text-xs md:text-sm text-gray-600">Identificador único. Usado para cadastro e distinção.</p>
                                             </div>
 
-                                            <div className="bg-pink-50/50 p-4 rounded-xl border border-pink-100">
+                                            <div className="bg-pink-50/50 p-4 rounded-2xl border border-pink-100">
                                                 <div className="flex justify-between items-start mb-1">
-                                                    <span className="font-bold text-gray-800">2. E-mail Institucional</span>
-                                                    <span className="text-[10px] font-black text-red-500 bg-red-100 px-2 py-0.5 rounded">RESTRIÇÃO</span>
+                                                    <span className="font-bold text-gray-800 text-sm">2. E-mail Institucional</span>
+                                                    <span className="text-[10px] font-black text-red-500 bg-red-100 px-2 py-0.5 rounded">EMPRESA</span>
                                                 </div>
-                                                <p className="text-sm text-gray-600 mb-2">O sistema aceita <strong>exclusivamente</strong> e-mails com o domínio oficial:</p>
-                                                <code className="text-sm font-bold text-pink-600 bg-white px-2 py-1 rounded border border-pink-200 block text-center">
+                                                <p className="text-xs md:text-sm text-gray-600 mb-2">Aceita <strong>exclusivamente</strong> o domínio:</p>
+                                                <code className="text-xs font-bold text-pink-600 bg-white px-2 py-1 rounded border border-pink-200 block text-center">
                                                     @objetivoportal.com.br
                                                 </code>
                                             </div>
 
-                                            <div className="bg-pink-50/50 p-4 rounded-xl border border-pink-100">
+                                            <div className="bg-pink-50/50 p-4 rounded-2xl border border-pink-100">
                                                 <div className="flex justify-between items-start mb-1">
-                                                    <span className="font-bold text-gray-800">3. Confirmação de E-mail</span>
-                                                    <span className="text-[10px] font-black text-amber-500 bg-amber-100 px-2 py-0.5 rounded">OBRIGATÓRIO</span>
+                                                    <span className="font-bold text-gray-800 text-sm">3. Confirmação</span>
+                                                    <span className="text-[10px] font-black text-amber-500 bg-amber-100 px-2 py-0.5 rounded">LINK</span>
                                                 </div>
-                                                <p className="text-sm text-gray-600">Para a segurança do sistema e identificação real do professor, é necessário acessar a caixa de entrada do email institucional e clicar no link de confirmação enviado.</p>
+                                                <p className="text-xs md:text-sm text-gray-600">Necessário clicar no link enviado ao email institucional.</p>
                                             </div>
 
-                                            <div className="bg-pink-50/50 p-4 rounded-xl border border-pink-100">
+                                            <div className="bg-pink-50/50 p-4 rounded-2xl border border-pink-100">
                                                 <div className="flex justify-between items-start mb-1">
-                                                    <span className="font-bold text-gray-800">4. Senha Segura</span>
-                                                    <span className="text-[10px] font-black text-gray-500 bg-gray-200 px-2 py-0.5 rounded">SEGURANÇA</span>
+                                                    <span className="font-bold text-gray-800 text-sm">4. Senha Segura</span>
+                                                    <span className="text-[10px] font-black text-gray-500 bg-gray-200 px-2 py-0.5 rounded">8+ CARAC</span>
                                                 </div>
-                                                <p className="text-sm text-gray-600">
-                                                    Mínimo de <strong>8 caracteres</strong>. A senha deve conter obrigatoriamente letras <strong>maiúsculas, minúsculas, números e caracteres especiais</strong> (como @$!%*?&).
+                                                <p className="text-xs md:text-sm text-gray-600 leading-tight">
+                                                    Maiúsculas, minúsculas, números e símbolos (@$!%*?&).
                                                 </p>
                                             </div>
                                         </div>
@@ -518,16 +516,16 @@ export function AdminHelp() {
 
                     {/* Usuários */}
                     <section id="users" className="scroll-mt-8">
-                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-8 text-white">
+                        <div className="bg-white rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-6 md:p-8 text-white">
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
-                                        <Users className="h-8 w-8" />
+                                        <Users className="h-6 w-6 md:h-8 md:w-8" />
                                     </div>
-                                    <h2 className="text-2xl font-black">Gestão de Usuários</h2>
+                                    <h2 className="text-xl md:text-2xl font-black">Gestão de Usuários</h2>
                                 </div>
                             </div>
-                            <div className="p-8">
+                            <div className="p-5 md:p-8">
                                 <div className="flex flex-col md:flex-row gap-8">
                                     <div className="flex-1">
                                         <h3 className="text-lg font-black text-gray-900 mb-4">Funções do Administrador</h3>
@@ -558,27 +556,27 @@ export function AdminHelp() {
                                     </div>
                                     <div className="flex-1 bg-purple-50 p-6 rounded-2xl border border-purple-100">
                                         <h3 className="text-sm font-black text-purple-900 uppercase tracking-widest mb-4">Hierarquia</h3>
-                                        <ul className="space-y-4">
-                                            <li className="bg-white p-3 rounded-xl shadow-sm">
-                                                <span className="text-xs font-black text-purple-600 bg-purple-100 px-2 py-0.5 rounded">ADMIN</span>
-                                                <p className="text-xs text-gray-600 mt-1">Acesso total. Vê todos os agendamentos da sua unidade, gerencia usuários e estoque.</p>
-                                            </li>
-                                            <li className="bg-white p-3 rounded-xl shadow-sm">
-                                                <span className="text-xs font-black text-gray-600 bg-gray-100 px-2 py-0.5 rounded">PROFESSOR</span>
-                                                <p className="text-xs text-gray-600 mt-1">Acesso restrito. Vê apenas seus próprios agendamentos e disponibilidade de equipamentos.</p>
-                                            </li>
-                                        </ul>
+                                        <div className="space-y-3">
+                                            <div className="bg-purple-50 p-4 rounded-xl md:rounded-2xl border border-purple-100">
+                                                <h4 className="font-bold text-purple-900 text-sm mb-1 line-clamp-1">Administrator</h4>
+                                                <p className="text-[11px] md:text-sm text-purple-800 leading-tight">Acesso total à unidade: dashboards, agendamentos e inventário.</p>
+                                            </div>
+                                            <div className="bg-indigo-50 p-4 rounded-xl md:rounded-2xl border border-indigo-100">
+                                                <h4 className="font-bold text-indigo-900 text-sm mb-1 line-clamp-1">Super Admin</h4>
+                                                <p className="text-[11px] md:text-sm text-indigo-800 leading-tight">Visão global de todas as unidades e gestão de administradores.</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
                                 {/* Agendamento Recorrente - NEW BLOCK */}
-                                <div className="mt-8 bg-purple-50 border border-purple-100 rounded-2xl p-6">
+                                <div className="mt-8 bg-purple-50 border border-purple-100 rounded-2xl md:rounded-[2rem] p-5 md:p-6">
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="p-2 bg-white rounded-lg text-purple-600 shadow-sm"><Calendar className="h-5 w-5" /></div>
-                                        <h3 className="font-bold text-lg text-purple-900">Agendamento Recorrente</h3>
+                                        <h3 className="font-bold text-base md:text-lg text-purple-900">Agendamento Recorrente</h3>
                                     </div>
-                                    <p className="text-sm text-purple-900 mb-4 leading-relaxed">
-                                        O agendamento recorrente permite que um professor tenha um agendamento fixo toda semana (ex: Toda Quinta às 08:00).
+                                    <p className="text-xs md:text-sm text-purple-900 mb-4 leading-relaxed">
+                                        Permite que um professor tenha um agendamento fixo semanal (ex: Toda Quinta às 08:00).
                                     </p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="bg-white p-4 rounded-xl border border-purple-100">
@@ -606,16 +604,16 @@ export function AdminHelp() {
 
                     {/* Empréstimos */}
                     <section id="loans" className="scroll-mt-8">
-                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="bg-gradient-to-r from-amber-500 to-amber-700 p-8 text-white">
+                        <div className="bg-white rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-amber-500 to-amber-700 p-6 md:p-8 text-white">
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
-                                        <ClipboardCheck className="h-8 w-8" />
+                                        <ClipboardCheck className="h-6 w-6 md:h-8 md:w-8" />
                                     </div>
-                                    <h2 className="text-2xl font-black">Central de Empréstimos</h2>
+                                    <h2 className="text-xl md:text-2xl font-black">Central de Empréstimos</h2>
                                 </div>
                             </div>
-                            <div className="p-8 space-y-8">
+                            <div className="p-5 md:p-8 space-y-8">
                                 <div>
                                     <h3 className="text-lg font-black text-gray-900 mb-2">Propósito</h3>
                                     <p className="text-gray-600">
@@ -640,6 +638,22 @@ export function AdminHelp() {
                                     </div>
                                 </div>
 
+                                <div className="space-y-4">
+                                    <h4 className="font-bold text-gray-900 text-lg border-b pb-2">Etapas do Processo</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="p-4 md:p-6 bg-white border border-amber-100 rounded-2xl shadow-sm">
+                                            <div className="text-amber-500 font-black text-2xl mb-2">01</div>
+                                            <h5 className="font-bold text-gray-800 mb-2">Solicitação Externa</h5>
+                                            <p className="text-xs md:text-sm text-gray-600 leading-relaxed">Registro manual de empréstimos fora da grade de aulas padrão.</p>
+                                        </div>
+                                        <div className="p-4 md:p-6 bg-white border border-amber-100 rounded-2xl shadow-sm">
+                                            <div className="text-amber-500 font-black text-2xl mb-2">02</div>
+                                            <h5 className="font-bold text-gray-800 mb-2">Assinatura do Termo</h5>
+                                            <p className="text-xs md:text-sm text-gray-600 leading-relaxed">Impressão e assinatura física obrigatória para segurança jurídica.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="bg-amber-50 rounded-2xl p-6 border border-amber-100 flex items-start gap-4">
                                     <Info className="h-6 w-6 text-amber-600 shrink-0 mt-1" />
                                     <div>
@@ -655,36 +669,44 @@ export function AdminHelp() {
 
                     {/* Notificações - NEW */}
                     <section id="notifications" className="scroll-mt-8">
-                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="bg-gradient-to-r from-cyan-600 to-cyan-800 p-8 text-white">
+                        <div className="bg-white rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-cyan-600 to-cyan-800 p-6 md:p-8 text-white">
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
-                                        <Bell className="h-8 w-8" />
+                                        <Bell className="h-6 w-6 md:h-8 md:w-8" />
                                     </div>
-                                    <h2 className="text-2xl font-black">Sistema de Notificações</h2>
+                                    <h2 className="text-xl md:text-2xl font-black">Sistema de Notificações</h2>
                                 </div>
                             </div>
-                            <div className="p-8 space-y-8">
+                            <div className="p-5 md:p-8 space-y-8">
                                 <p className="text-gray-600 leading-relaxed text-lg">
                                     O sistema notifica os administradores instantaneamente sobre eventos importantes, como novos cadastros ou solicitações.
                                 </p>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div className="space-y-6">
-                                        <div className="bg-cyan-50 p-6 rounded-2xl border border-cyan-100">
-                                            <h3 className="font-bold text-cyan-900 mb-4 flex items-center gap-2">
-                                                <Bell className="h-5 w-5" /> Tipos de Alerta
-                                            </h3>
-                                            <ul className="space-y-3 text-sm text-cyan-800">
-                                                <li className="flex items-start gap-2">
-                                                    <div className="h-1.5 w-1.5 rounded-full bg-cyan-600 mt-2 shrink-0"></div>
-                                                    <span><strong>Novo Agendamento:</strong> Alerta imediato sobre reserva de equipamento na unidade.</span>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-3">
+                                            <h4 className="font-bold text-gray-900 text-sm md:text-base border-l-4 border-cyan-500 pl-3">Alertas em Tempo Real</h4>
+                                            <ul className="space-y-2">
+                                                <li className="flex items-center gap-2 text-xs md:text-sm text-gray-600 bg-gray-50 p-3 rounded-xl">
+                                                    <div className="h-1.5 w-1.5 rounded-full bg-cyan-500" /> Novos Pedidos de Cadastro
                                                 </li>
-                                                <li className="flex items-start gap-2">
-                                                    <div className="h-1.5 w-1.5 rounded-full bg-cyan-600 mt-2 shrink-0"></div>
-                                                    <span><strong>Novo Usuário:</strong> Quando um professor se cadastra na unidade.</span>
+                                                <li className="flex items-center gap-2 text-xs md:text-sm text-gray-600 bg-gray-50 p-3 rounded-xl">
+                                                    <div className="h-1.5 w-1.5 rounded-full bg-cyan-500" /> Agendamentos de Última Hora
+                                                </li>
+                                                <li className="flex items-center gap-2 text-xs md:text-sm text-gray-600 bg-gray-50 p-3 rounded-xl">
+                                                    <div className="h-1.5 w-1.5 rounded-full bg-cyan-500" /> Cancelamentos Críticos
                                                 </li>
                                             </ul>
+                                        </div>
+                                        <div className="bg-cyan-50 p-5 rounded-2xl md:rounded-3xl border border-cyan-100 self-start">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <LucideHistory className="h-5 w-5 text-cyan-600" />
+                                                <h4 className="font-bold text-cyan-900 text-sm md:text-base">Histórico de Atividade</h4>
+                                            </div>
+                                            <p className="text-[11px] md:text-sm text-cyan-800 leading-relaxed">
+                                                As notificações ficam salvas por <strong>24 horas</strong> para consulta rápida no menu superior.
+                                            </p>
                                         </div>
                                     </div>
 
@@ -713,16 +735,16 @@ export function AdminHelp() {
 
                     {/* Configurações */}
                     <section id="settings" className="scroll-mt-8">
-                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="bg-gradient-to-r from-gray-700 to-gray-900 p-8 text-white">
+                        <div className="bg-white rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-gray-700 to-gray-900 p-6 md:p-8 text-white">
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
-                                        <Settings className="h-8 w-8" />
+                                        <Settings className="h-6 w-6 md:h-8 md:w-8" />
                                     </div>
-                                    <h2 className="text-2xl font-black">Configurações do Sistema</h2>
+                                    <h2 className="text-xl md:text-2xl font-black">Configurações do Sistema</h2>
                                 </div>
                             </div>
-                            <div className="p-8">
+                            <div className="p-5 md:p-8">
                                 <p className="text-gray-600 mb-6">
                                     Área para personalização de parâmetros globais da unidade.
                                 </p>
@@ -744,16 +766,16 @@ export function AdminHelp() {
 
                     {/* Segurança e LGPD */}
                     <section id="security" className="scroll-mt-8">
-                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="bg-gradient-to-r from-emerald-700 to-teal-900 p-8 text-white">
+                        <div className="bg-white rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-emerald-700 to-teal-900 p-6 md:p-8 text-white">
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
-                                        <Shield className="h-8 w-8" />
+                                        <Shield className="h-6 w-6 md:h-8 md:w-8" />
                                     </div>
-                                    <h2 className="text-2xl font-black">Segurança e Proteção de Dados (LGPD)</h2>
+                                    <h2 className="text-xl md:text-2xl font-black">Segurança e Proteção de Dados (LGPD)</h2>
                                 </div>
                             </div>
-                            <div className="p-8 space-y-8">
+                            <div className="p-5 md:p-8 space-y-8">
                                 <p className="text-gray-600">
                                     O sistema utiliza arquitetura de segurança em camadas para garantir a integridade e privacidade dos dados, conforme a LGPD.
                                 </p>
@@ -805,7 +827,7 @@ export function AdminHelp() {
                                                 <p className="text-sm text-gray-600 leading-relaxed mb-4">
                                                     Implementamos um sistema de <strong>Criptografia de Ponta</strong> para garantir que as credenciais jamais sejam expostas.
                                                 </p>
-                                                <div className="mb-6 bg-gradient-to-br from-indigo-900 to-primary-900 p-6 rounded-3xl border border-white/10 shadow-xl relative overflow-hidden group">
+                                                <div className="mb-6 bg-gradient-to-br from-indigo-900 to-primary-900 p-5 md:p-6 rounded-2xl md:rounded-[2rem] border border-white/10 shadow-xl relative overflow-hidden group">
                                                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                                         <Shield className="h-24 w-24 text-white" />
                                                     </div>
@@ -814,7 +836,7 @@ export function AdminHelp() {
                                                             <div className="p-2 bg-white/10 rounded-xl backdrop-blur-md border border-white/20">
                                                                 <Lock className="h-6 w-6 text-primary-300" />
                                                             </div>
-                                                            <h5 className="text-xl font-black text-white tracking-tight">Zero Exposição: Validação de Segurança Blindada</h5>
+                                                            <h5 className="text-lg md:text-xl font-black text-white tracking-tight">Zero Exposição: Validação de Segurança Blindada</h5>
                                                         </div>
                                                         <p className="text-primary-100 text-base leading-relaxed mb-4">
                                                             <strong>Diferente de sistemas convencionais</strong> onde a senha é verificada pelo navegador, nossa arquitetura utiliza o conceito de <em>Server-Side Validation</em>.
