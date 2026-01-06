@@ -944,7 +944,7 @@ export function AdminHelp() {
                                 </div>
 
                                 {/* 3. Arquitetura de Blindagem de Senhas */}
-                                <div className="bg-white border border-gray-200 p-6 rounded-[2rem] shadow-sm">
+                                <div className="bg-white border border-gray-200 p-4 md:p-6 rounded-[2rem] shadow-sm">
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="bg-purple-50 p-2 rounded-lg text-purple-600">
                                             <Shield className="h-6 w-6" />
@@ -955,7 +955,7 @@ export function AdminHelp() {
                                         Implementamos um sistema de <strong className="text-gray-800">Criptografia de Ponta</strong> para garantir que as credenciais jamais sejam expostas.
                                     </p>
 
-                                    <div className="bg-gradient-to-br from-[#3b3b98] to-[#0b0b1a] p-5 md:p-8 rounded-[2rem] text-white border border-white/5 shadow-2xl relative overflow-hidden group mb-6">
+                                    <div className="bg-gradient-to-br from-[#3b3b98] to-[#0b0b1a] -mx-4 md:mx-0 p-5 md:p-8 rounded-[2rem] text-white border border-white/5 shadow-2xl relative overflow-hidden group mb-6">
                                         <div className="absolute top-0 right-0 p-4 opacity-15 group-hover:opacity-25 transition-opacity pointer-events-none">
                                             <Shield className="h-32 w-32 text-white/40" strokeWidth={1} />
                                         </div>
