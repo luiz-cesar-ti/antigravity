@@ -279,6 +279,15 @@ export function AdminManageAdmins() {
                         </div>
 
                         <form onSubmit={handleSubmitReset} className="p-6 space-y-4">
+                            {error && (
+                                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg animate-in slide-in-from-top-2">
+                                    <div className="flex">
+                                        <AlertCircle className="h-5 w-5 text-red-500" />
+                                        <p className="ml-3 text-sm text-red-700 font-bold">{error}</p>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="space-y-1">
                                 <label className="block text-xs font-black text-gray-500 uppercase tracking-wider">Nova Senha</label>
                                 <input

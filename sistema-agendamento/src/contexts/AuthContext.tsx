@@ -12,11 +12,32 @@ interface AuthContextType extends AuthState {
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [state, setState] = useState<AuthState>({
-        user: null,
-        role: null,
-        isAuthenticated: false,
-        isLoading: true,
+    const [state, setState] = useState<AuthState>(() => {
+        // Synchronous check for admin session to prevent race conditions
+        try {
+            const adminSession = localStorage.getItem('admin_session');
+            if (adminSession) {
+                const admin = JSON.parse(adminSession);
+                if (admin?.username) {
+                    return {
+                        user: admin as Admin,
+                        role: (admin.role as UserRole) || 'admin',
+                        isAuthenticated: true,
+                        isLoading: false, // Start as loaded if we have admin
+                    };
+                }
+            }
+        } catch (e) {
+            console.error('Auth Init Error', e);
+            localStorage.removeItem('admin_session');
+        }
+
+        return {
+            user: null,
+            role: null,
+            isAuthenticated: false,
+            isLoading: true,
+        };
     });
 
     // Refs to track current state for the persistent onAuthStateChange listener
