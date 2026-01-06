@@ -50,14 +50,18 @@ export function AdminHelp() {
 
     const scrollToSection = (id: string) => {
         setIsMobileMenuOpen(false); // Close menu first
-        const element = document.getElementById(id);
-        if (element) {
-            // Smooth scroll with offset for sticky header
-            const yOffset = -100;
-            const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-            window.scrollTo({ top: y, behavior: 'smooth' });
-            // activeSection will be updated by the scroll listener
-        }
+
+        // Wait for exit animation to finish before scrolling
+        setTimeout(() => {
+            const element = document.getElementById(id);
+            if (element) {
+                // Smooth scroll with offset for sticky header
+                const yOffset = -100;
+                const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                window.scrollTo({ top: y, behavior: 'smooth' });
+                // activeSection will be updated by the scroll listener
+            }
+        }, 300);
     };
 
     // Scroll Spy Effect
@@ -1049,51 +1053,52 @@ export function AdminHelp() {
             {isMobileMenuOpen && (
                 <>
                     <div
-                        className="lg:hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-40 transition-opacity animate-in fade-in"
+                        className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-md z-40 transition-opacity animate-in fade-in duration-300"
                         onClick={() => setIsMobileMenuOpen(false)}
                     />
-                    <div className="lg:hidden fixed bottom-6 left-4 right-4 z-50 bg-white rounded-[2rem] shadow-2xl flex flex-col max-h-[70vh] animate-in slide-in-from-bottom duration-300 overflow-hidden ring-1 ring-black/5">
-                        <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/80 backdrop-blur-sm sticky top-0 z-10">
+                    <div className="lg:hidden fixed bottom-6 left-4 right-4 z-50 bg-[#0f172a] rounded-[2rem] shadow-2xl flex flex-col max-h-[75vh] animate-in slide-in-from-bottom duration-300 overflow-hidden ring-1 ring-white/10">
+                        {/* Dark Header */}
+                        <div className="flex justify-between items-center p-6 border-b border-white/5 bg-[#0f172a]/95 backdrop-blur-md sticky top-0 z-10">
                             <div className="flex flex-col">
-                                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Navegação</h3>
-                                <p className="text-[10px] text-gray-500 font-medium tracking-tight">Toque para ir ao tópico</p>
+                                <h3 className="text-xs font-black text-indigo-400 uppercase tracking-widest">Índice do Manual</h3>
+                                <p className="text-[10px] text-slate-400 font-medium tracking-tight mt-0.5">Selecione para navegar</p>
                             </div>
-                            <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-400 p-2 hover:bg-gray-100 rounded-full transition-colors active:scale-95">
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="text-slate-400 p-2 hover:bg-white/5 rounded-full transition-colors active:scale-95">
                                 <X className="h-5 w-5" />
                             </button>
                         </div>
 
-                        <nav className="flex-1 overflow-y-auto p-4 space-y-2 bg-white scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                        {/* Dark Content */}
+                        <nav className="flex-1 overflow-y-auto p-4 space-y-2 bg-[#0f172a] scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
                             {sections.map((section) => (
                                 <button
                                     key={section.id}
                                     onClick={() => scrollToSection(section.id)}
-                                    className={`w-full flex items-center gap-4 px-4 py-4 rounded-xl text-sm font-bold transition-all relative overflow-hidden group border active:scale-[0.98] ${activeSection === section.id
-                                        ? 'bg-gradient-to-r from-blue-50 via-indigo-50 to-white text-indigo-700 border-l-4 border-l-indigo-600 border-y-indigo-100 border-r-indigo-100 shadow-xl shadow-indigo-100/50'
-                                        : 'text-gray-500 bg-white border-transparent hover:bg-gray-50 hover:text-gray-900'
+                                    className={`w-full flex items-center gap-4 px-4 py-4 rounded-xl text-sm font-bold transition-all relative overflow-hidden group active:scale-[0.98] border ${activeSection === section.id
+                                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-900 text-white border-indigo-500 shadow-lg shadow-indigo-900/50'
+                                        : 'bg-slate-800/40 text-slate-400 border-white/5 hover:bg-slate-800 hover:text-indigo-300'
                                         }`}
                                 >
-                                    {activeSection === section.id && (
-                                        <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white/80 to-transparent pointer-events-none" />
-                                    )}
-                                    <div className={`p-2.5 rounded-lg transition-all duration-300 shrink-0 ${activeSection === section.id ? 'bg-indigo-600 text-white shadow-md scale-110 ring-2 ring-indigo-200' : 'bg-gray-100 text-gray-400 group-hover:bg-white group-hover:text-indigo-600 peer'}`}>
+                                    <div className={`p-2.5 rounded-lg transition-all duration-300 shrink-0 ${activeSection === section.id ? 'bg-white/20 text-white shadow-inner scale-110' : 'bg-black/20 text-slate-500 group-hover:text-indigo-400'}`}>
                                         <section.icon className="h-5 w-5" />
                                     </div>
-                                    <span className={`flex-1 text-left text-base ${activeSection === section.id ? 'font-black tracking-tight text-indigo-900' : 'font-medium'}`}>{section.title}</span>
+                                    <span className={`flex-1 text-left text-base ${activeSection === section.id ? 'font-bold tracking-tight text-white' : 'font-medium'}`}>{section.title}</span>
+
                                     {activeSection === section.id && (
                                         <div className="flex items-center gap-2">
-                                            <div className="h-2 w-2 rounded-full bg-indigo-600 animate-pulse shadow-[0_0_10px_rgba(79,70,229,0.5)]" />
+                                            <div className="h-2 w-2 rounded-full bg-indigo-300 animate-pulse shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
                                         </div>
                                     )}
                                 </button>
                             ))}
-                            <div className="h-4" /> {/* Spacer for bottom scroll */}
+                            <div className="h-6" /> {/* Spacer */}
                         </nav>
 
-                        <div className="p-4 bg-gray-50 border-t border-gray-100 sticky bottom-0 z-10">
+                        {/* Dark Footer */}
+                        <div className="p-4 bg-[#0f172a] border-t border-white/5 sticky bottom-0 z-10">
                             <button
                                 onClick={() => setIsMobileMenuOpen(false)}
-                                className="w-full py-4 bg-white border border-gray-200 text-gray-400 font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-gray-100 hover:text-gray-600 transition-all active:scale-95 shadow-sm"
+                                className="w-full py-4 bg-slate-800 border border-white/5 text-slate-400 font-black rounded-xl text-[10px] uppercase tracking-widest hover:bg-slate-700 hover:text-white transition-all active:scale-95 shadow-sm"
                             >
                                 Fechar Menu
                             </button>
