@@ -49,9 +49,45 @@ export function AdminManageAdmins() {
         }
     };
 
-    const handleResetAdminPassword = async (adminId: string, currentUsername: string) => {
-        const newPassword = prompt(`Digite a nova senha para o admin ${currentUsername}:`);
-        if (!newPassword) return;
+    // State for Password Reset Modal
+    const [resetModal, setResetModal] = useState<{ isOpen: boolean; adminId: string; adminName: string }>({
+        isOpen: false,
+        adminId: '',
+        adminName: ''
+    });
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [isResetting, setIsResetting] = useState(false);
+
+    // Close Modal Handler
+    const handleCloseModal = () => {
+        setResetModal({ isOpen: false, adminId: '', adminName: '' });
+        setNewPassword('');
+        setConfirmPassword('');
+        setError('');
+    };
+
+    // Open Modal Handler
+    const handleOpenResetModal = (adminId: string, username: string) => {
+        setResetModal({ isOpen: true, adminId, adminName: username });
+    };
+
+    // Submit Handler
+    const handleSubmitReset = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (newPassword.length < 6) {
+            setError('A senha deve ter pelo menos 6 caracteres.');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            setError('As senhas não coincidem.');
+            return;
+        }
+
+        setIsResetting(true);
+        setError('');
 
         try {
             // Get Admin Token Check
@@ -73,17 +109,20 @@ export function AdminManageAdmins() {
 
             const { error } = await supabase.rpc('reset_admin_password', {
                 p_admin_token: adminToken,
-                p_target_admin_id: adminId,
+                p_target_admin_id: resetModal.adminId,
                 p_new_password_hash: hash
             });
 
             if (error) throw error;
 
-            setResetSuccess(`Senha do admin ${currentUsername} atualizada com sucesso.`);
+            setResetSuccess(`Senha de ${resetModal.adminName} atualizada!`);
             setTimeout(() => setResetSuccess(''), 5000);
+            handleCloseModal();
         } catch (err: any) {
             console.error('Error resetting admin password:', err);
-            alert(`Erro ao resetar senha: ${err.message}`);
+            setError(`Erro ao resetar: ${err.message}`);
+        } finally {
+            setIsResetting(false);
         }
     };
 
@@ -210,7 +249,7 @@ export function AdminManageAdmins() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <button
-                                                onClick={() => handleResetAdminPassword(admin.id, admin.username)}
+                                                onClick={() => handleOpenResetModal(admin.id, admin.username)}
                                                 className="text-primary-600 hover:text-primary-900 bg-primary-50 hover:bg-primary-100 p-2 rounded-lg transition-colors group"
                                                 title="Redefinir Senha"
                                             >
@@ -224,6 +263,70 @@ export function AdminManageAdmins() {
                     </table>
                 </div>
             </div>
+
+            {/* Password Reset Modal */}
+            {resetModal.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="bg-primary-600 px-6 py-4 flex items-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-lg">
+                                <KeyRound className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-black text-white">Redefinir Senha</h3>
+                                <p className="text-primary-100 text-xs font-bold">Admin: {resetModal.adminName}</p>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleSubmitReset} className="p-6 space-y-4">
+                            <div className="space-y-1">
+                                <label className="block text-xs font-black text-gray-500 uppercase tracking-wider">Nova Senha</label>
+                                <input
+                                    type="password"
+                                    required
+                                    className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all font-bold"
+                                    placeholder="Digite a nova senha"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="block text-xs font-black text-gray-500 uppercase tracking-wider">Confirmar Senha</label>
+                                <input
+                                    type="password"
+                                    required
+                                    className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all font-bold"
+                                    placeholder="Confirme a nova senha"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="pt-4 flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={handleCloseModal}
+                                    className="flex-1 px-4 py-3 bg-gray-50 text-gray-700 font-bold rounded-xl hover:bg-gray-100 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isResetting}
+                                    className="flex-1 px-4 py-3 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 transition-colors shadow-lg hover:shadow-xl shadow-primary-200 disabled:opacity-70 flex items-center justify-center gap-2"
+                                >
+                                    {isResetting ? (
+                                        <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    ) : (
+                                        'Confirmar Alteração'
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
