@@ -113,20 +113,30 @@ export function Login() {
 
             </div>
 
-            {/* Right Side: Login Form - Mobile Enhanced Background */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-indigo-50 via-white to-blue-50 lg:bg-none lg:bg-gray-50/50">
+            {/* Right Side: Login Form - Mobile Enhanced Background (Darker/Richer) */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-b from-[#0047AB] via-[#003380] to-[#00215E] lg:bg-none lg:bg-gray-50/50">
                 <div className="max-w-md w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {/* Mobile Logo */}
                     <div className="lg:hidden flex flex-col items-center mb-8">
-                        <img
-                            src="/logo-objetivo.png"
-                            alt="Colégio Objetivo"
-                            className="h-32 w-auto mb-4 drop-shadow-md object-contain"
-                        />
-                        <h2 className="text-lg font-bold text-blue-900/80 uppercase tracking-widest text-center">
-                            Sistema de<br />
-                            <span className="text-primary-700 text-2xl font-black">Agendamentos</span>
-                        </h2>
+                        <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm mb-6 border border-white/10 shadow-lg">
+                            <img
+                                src="/logo-objetivo.png"
+                                alt="Colégio Objetivo"
+                                className="h-28 w-auto drop-shadow-md object-contain filter brightness-125 saturate-150"
+                            />
+                        </div>
+
+                        {/* Styled System Title */}
+                        <div className="text-center">
+                            <h2 className="text-sm font-bold text-blue-200 uppercase tracking-[0.2em] mb-1 opacity-90">
+                                Bem-vindo ao
+                            </h2>
+                            <h1 className="text-3xl font-black text-white tracking-tight leading-none drop-shadow-md">
+                                SISTEMA DE<br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-500">AGENDAMENTOS</span>
+                            </h1>
+                            <div className="mt-2 w-16 h-1 bg-yellow-400 rounded-full mx-auto opacity-80"></div>
+                        </div>
                     </div>
 
                     <div className="hidden lg:block mb-10 text-center">
