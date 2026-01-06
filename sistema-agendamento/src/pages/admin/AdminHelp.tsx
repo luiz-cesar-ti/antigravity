@@ -21,11 +21,14 @@ import {
     Trophy,
     Clock,
     ShieldCheck,
-    Lock
+    Lock,
+    Menu,
+    X
 } from 'lucide-react';
 
 export function AdminHelp() {
     const [activeSection, setActiveSection] = useState('intro');
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const sections = [
         { id: 'dashboard', title: 'Dashboard', icon: LayoutDashboard },
@@ -43,6 +46,7 @@ export function AdminHelp() {
 
     const scrollToSection = (id: string) => {
         setActiveSection(id);
+        setIsMobileMenuOpen(false);
         const element = document.getElementById(id);
         if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -796,75 +800,82 @@ export function AdminHelp() {
                                             <div className="p-2 bg-purple-50 rounded-lg">
                                                 <Shield className="h-6 w-6 text-purple-600" />
                                             </div>
-                                            <div>
-                                                <h4 className="text-lg font-bold text-gray-900 mb-2">3. Hash de Autenticidade (SHA-256)</h4>
-                                                <p className="text-base text-gray-600 leading-relaxed mb-3">
-                                                    Para garantir que o Termo não seja alterado, o sistema utiliza o algoritmo <strong>SHA-256</strong>.
+                                            <div className="flex-1">
+                                                <h4 className="text-lg font-bold text-gray-900 mb-2">3. Arquitetura de Blindagem de Senhas</h4>
+                                                <p className="text-sm text-gray-600 leading-relaxed mb-4">
+                                                    Implementamos um sistema de <strong>Criptografia de Ponta</strong> para garantir que as credenciais jamais sejam expostas.
                                                 </p>
-                                                <div className="bg-gray-50 border border-gray-100 p-4 rounded-xl mb-3">
-                                                    <p className="text-sm text-gray-500 italic mb-2">Integridade Absoluta:</p>
-                                                    <ul className="space-y-2">
-                                                        <li className="flex items-start gap-2 text-sm text-gray-700">
-                                                            <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-1.5 shrink-0"></div>
-                                                            <span>Gera uma <strong>Impressão Digital</strong> única baseada no texto exato e versão do termo.</span>
-                                                        </li>
-                                                        <li className="flex items-start gap-2 text-sm text-gray-700">
-                                                            <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-1.5 shrink-0"></div>
-                                                            <span>Qualquer modificação pós-assinatura (até mesmo um espaço) invalida o código Hash impresso no PDF.</span>
-                                                        </li>
-                                                    </ul>
+                                                <div className="mb-6 bg-gradient-to-br from-indigo-900 to-primary-900 p-6 rounded-3xl border border-white/10 shadow-xl relative overflow-hidden group">
+                                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                                        <Shield className="h-24 w-24 text-white" />
+                                                    </div>
+                                                    <div className="relative z-10">
+                                                        <div className="flex items-center gap-3 mb-4">
+                                                            <div className="p-2 bg-white/10 rounded-xl backdrop-blur-md border border-white/20">
+                                                                <Lock className="h-6 w-6 text-primary-300" />
+                                                            </div>
+                                                            <h5 className="text-xl font-black text-white tracking-tight">Zero Exposição: Validação de Segurança Blindada</h5>
+                                                        </div>
+                                                        <p className="text-primary-100 text-base leading-relaxed mb-4">
+                                                            <strong>Diferente de sistemas convencionais</strong> onde a senha é verificada pelo navegador, nossa arquitetura utiliza o conceito de <em>Server-Side Validation</em>.
+                                                        </p>
+                                                        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+                                                            <p className="text-sm text-white/90 leading-relaxed italic">
+                                                                "A lógica de autenticação foi movida 100% para o servidor (RPC). O navegador do usuário nunca recebe códigos de segurança (hashes) e nunca processa a validação. O sistema apenas recebe um 'Sim' ou 'Não' do banco de dados, tornando impossível a interceptação ou manipulação de credenciais via rede."
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-fr">
+                                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col justify-between">
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <Lock className="h-4 w-4 text-purple-500" />
+                                                                <span className="text-sm font-black text-gray-700 uppercase tracking-wider">Hashing no Servidor</span>
+                                                            </div>
+                                                            <p className="text-sm text-gray-600 leading-relaxed">
+                                                                As senhas nunca são armazenadas em texto puro. O sistema utiliza algoritmos de <strong>Hash (Bcrypt/Crypt)</strong> diretamente no banco de dados. Nem os administradores globais conseguem visualizar a senha de um usuário.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col justify-between">
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                                                                <span className="text-sm font-black text-gray-700 uppercase tracking-wider">Políticas de Alta Complexidade</span>
+                                                            </div>
+                                                            <p className="text-sm text-gray-600 leading-relaxed">
+                                                                Exigência rigorosa de 8+ caracteres, mesclando Maiúsculas, Minúsculas, Números e Símbolos, impedindo o uso de senhas fracas ou previsíveis.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col justify-between md:col-span-2">
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <Settings className="h-4 w-4 text-blue-500" />
+                                                                <span className="text-sm font-black text-gray-700 uppercase tracking-wider">Funções de Banco Seguras (RPCs)</span>
+                                                            </div>
+                                                            <p className="text-sm text-gray-600 leading-relaxed">
+                                                                Operações sensíveis como login e troca de senha ocorrem via <strong>Remote Procedure Calls (RPCs)</strong> isoladas, que validam permissões de cargo e tokens de sessão antes de qualquer alteração no banco.
+                                                            </p>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-2xl">
                                         <div className="flex items-start gap-4">
-                                            <div className="p-2 bg-rose-50 rounded-lg">
-                                                <Lock className="h-6 w-6 text-rose-600" />
+                                            <div className="p-2 bg-white rounded-lg text-emerald-600 shadow-sm">
+                                                <Info className="h-6 w-6" />
                                             </div>
                                             <div>
-                                                <h4 className="text-lg font-bold text-gray-900 mb-2">4. Imutabilidade Legal (Append-Only)</h4>
-                                                <p className="text-base text-gray-600 leading-relaxed mb-3">
-                                                    Diferente de sistemas comuns, o banco de dados de termos é <strong>blindado contra edições</strong>.
+                                                <h4 className="text-lg font-bold text-emerald-900 mb-2">Conformidade LGPD: Privacidade por Design</h4>
+                                                <p className="text-sm text-emerald-800 leading-relaxed">
+                                                    O sistema foi construído sob o princípio de <strong>Minimização de Dados</strong>. Coletamos apenas o essencial (Nome, E-mail, TOTVS) e garantimos o controle total do usuário sobre seus dados (exclusão de conta e limpeza de históricos). O uso de <strong>Tokens de Sessão Temporários (24h)</strong> garante que acessos não autorizados sejam bloqueados automaticamente em caso de esquecimento de logoff.
                                                 </p>
-                                                <div className="bg-rose-50/30 border border-rose-100 p-4 rounded-xl">
-                                                    <ul className="space-y-2">
-                                                        <li className="flex items-start gap-2 text-sm text-rose-900">
-                                                            <CheckCircle2 className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
-                                                            <span><strong>Bloqueio de Edição:</strong> Uma vez que um termo é assinado, o sistema impede tecnicamente que administradores alterem o texto original.</span>
-                                                        </li>
-                                                        <li className="flex items-start gap-2 text-sm text-rose-900">
-                                                            <CheckCircle2 className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
-                                                            <span><strong>Ciclo de Versões:</strong> Para mudar as regras, deve-se criar uma <em>Nova Versão</em>. As versões antigas permanecem intocadas para validar agendamentos passados.</span>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                                        <div className="flex items-start gap-4">
-                                            <div className="p-2 bg-emerald-50 rounded-lg">
-                                                <Users className="h-6 w-6 text-emerald-600" />
-                                            </div>
-                                            <div>
-                                                <h4 className="text-lg font-bold text-gray-900 mb-2">4. Segurança de Contas (Admin e Professor)</h4>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                                        <h5 className="font-bold text-gray-800 text-sm mb-2 uppercase tracking-wider">Acesso Admin</h5>
-                                                        <p className="text-sm text-gray-600 leading-relaxed">
-                                                            Protegido por <strong>Tokens de Sessão Temporários</strong> criados via RLS (Row Level Security). O acesso é restrito à unidade do administrador, impedindo que dados de outras escolas sejam visualizados.
-                                                        </p>
-                                                    </div>
-                                                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                                        <h5 className="font-bold text-gray-800 text-sm mb-2 uppercase tracking-wider">Acesso Professor</h5>
-                                                        <p className="text-sm text-gray-600 leading-relaxed">
-                                                            Autenticação via <strong>E-mail Institucional Obrigatório</strong>. O professor só acessa as unidades onde possui vínculo ativo confirmado pela coordenação.
-                                                        </p>
-                                                    </div>
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -875,15 +886,15 @@ export function AdminHelp() {
                                                 <CheckCircle2 className="h-6 w-6 text-blue-600" />
                                             </div>
                                             <div>
-                                                <h4 className="text-lg font-bold text-gray-900 mb-2">5. Infraestrutura e HTTPS</h4>
+                                                <h4 className="text-lg font-bold text-gray-900 mb-2">4. Infraestrutura e HTTPS</h4>
                                                 <ul className="space-y-3 text-sm text-gray-600">
                                                     <li className="flex items-center gap-2">
                                                         <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-                                                        <span><strong>Criptografia:</strong> Tráfego de dados 100% criptografado via HTTPS/SSL.</span>
+                                                        <span><strong>Criptografia em Trânsito:</strong> Todo o tráfego de dados é 100% criptografado via HTTPS/SSL, impedindo a interceptação de informações.</span>
                                                     </li>
                                                     <li className="flex items-start gap-2">
                                                         <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                                                        <span><strong>Nuvem Corporativa:</strong> Hospedado em infraestrutura de alta disponibilidade com proteção DDoS.</span>
+                                                        <span><strong>Nuvem Corporativa:</strong> Hospedado em infraestrutura Supabase (AWS/Postgres) com redundância e proteção contra ataques de negação de serviço (DDoS).</span>
                                                     </li>
                                                 </ul>
                                             </div>
@@ -893,13 +904,57 @@ export function AdminHelp() {
                             </div>
                         </div>
                     </section>
+                </main>
+            </div>
 
-                </div>
-            </div >
+            {/* Mobile Navigation FAB */}
+            <div className="lg:hidden fixed bottom-6 right-6 z-50">
+                <button
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    className="flex items-center gap-2 bg-primary-600 text-white px-5 py-4 rounded-3xl shadow-2xl hover:bg-primary-700 transition-all active:scale-95 border-2 border-primary-500/50 backdrop-blur-sm"
+                >
+                    {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                    <span className="font-bold text-sm tracking-wide">Índice</span>
+                </button>
+            </div>
+
+            {/* Mobile Navigation Menu Overlay */}
+            {isMobileMenuOpen && (
+                <>
+                    <div
+                        className="lg:hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-40 transition-opacity animate-in fade-in"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    />
+                    <div className="lg:hidden fixed bottom-24 right-6 left-6 z-50 bg-white rounded-[2.5rem] border border-gray-100 shadow-2xl p-6 animate-in slide-in-from-bottom duration-300">
+                        <div className="flex justify-between items-center mb-6 px-2">
+                            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Navegação Rápida</h3>
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-400 p-2 hover:bg-gray-100 rounded-full transition-colors">
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <nav className="grid grid-cols-2 gap-2">
+                            {sections.map((section) => (
+                                <button
+                                    key={section.id}
+                                    onClick={() => scrollToSection(section.id)}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all border ${activeSection === section.id
+                                        ? 'bg-primary-50 text-primary-700 border-primary-200 shadow-sm'
+                                        : 'text-gray-600 hover:bg-gray-50 border-transparent'
+                                        }`}
+                                >
+                                    <section.icon className={`h-4 w-4 ${activeSection === section.id ? 'text-primary-600' : 'text-gray-400'}`} />
+                                    <span className="truncate">{section.title}</span>
+                                </button>
+                            ))}
+                        </nav>
+                    </div>
+                </>
+            )}
 
             <div className="mt-20 text-center border-t border-gray-100 pt-10">
                 <p className="text-gray-400 text-sm font-medium"></p>
             </div>
-        </div >
+        </div>
     );
 }
+
