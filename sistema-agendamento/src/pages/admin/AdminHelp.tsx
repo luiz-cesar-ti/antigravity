@@ -955,7 +955,7 @@ export function AdminHelp() {
                                         Implementamos um sistema de <strong className="text-gray-800">Criptografia de Ponta</strong> para garantir que as credenciais jamais sejam expostas.
                                     </p>
 
-                                    <div className="bg-gradient-to-br from-[#3b3b98] to-[#0b0b1a] p-8 rounded-[2rem] text-white border border-white/5 shadow-2xl relative overflow-hidden group mb-6">
+                                    <div className="bg-gradient-to-br from-[#3b3b98] to-[#0b0b1a] p-5 md:p-8 rounded-[2rem] text-white border border-white/5 shadow-2xl relative overflow-hidden group mb-6">
                                         <div className="absolute top-0 right-0 p-4 opacity-15 group-hover:opacity-25 transition-opacity pointer-events-none">
                                             <Shield className="h-32 w-32 text-white/40" strokeWidth={1} />
                                         </div>
