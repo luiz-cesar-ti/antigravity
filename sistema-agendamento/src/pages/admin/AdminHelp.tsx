@@ -904,7 +904,7 @@ export function AdminHelp() {
                             </div>
                         </div>
                     </section>
-                </main>
+                </div>
             </div>
 
             {/* Mobile Navigation FAB */}
