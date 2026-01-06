@@ -54,12 +54,18 @@ export function AdminHelp() {
         // Wait for exit animation to finish before scrolling
         setTimeout(() => {
             const element = document.getElementById(id);
+            const container = document.getElementById('admin-main-content');
+
             if (element) {
-                // Smooth scroll with offset for sticky header
                 const yOffset = -100;
-                const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                window.scrollTo({ top: y, behavior: 'smooth' });
-                // activeSection will be updated by the scroll listener
+
+                if (container) {
+                    const topPos = element.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop + yOffset;
+                    container.scrollTo({ top: topPos, behavior: 'smooth' });
+                } else {
+                    const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                }
             }
         }, 300);
     };
@@ -67,13 +73,15 @@ export function AdminHelp() {
     // Scroll Spy Effect
     useEffect(() => {
         const handleScroll = () => {
-            const scrollPosition = window.scrollY + 300; // Trigger point offset
+            const container = document.getElementById('admin-main-content');
+            const scrollPosition = (container ? container.scrollTop : window.scrollY) + 300;
 
             // Find the section currently in view
             for (const section of sections) {
                 const element = document.getElementById(section.id);
                 if (element) {
                     const { offsetTop, offsetHeight } = element;
+                    // If inside reference container, offsetTop is relative to it
                     if (
                         scrollPosition >= offsetTop &&
                         scrollPosition < offsetTop + offsetHeight
@@ -85,11 +93,14 @@ export function AdminHelp() {
             }
         };
 
-        window.addEventListener('scroll', handleScroll);
+        const container = document.getElementById('admin-main-content');
+        const target = container || window;
+        target.addEventListener('scroll', handleScroll);
+
         // Initial check
         handleScroll();
 
-        return () => window.removeEventListener('scroll', handleScroll);
+        return () => target.removeEventListener('scroll', handleScroll);
     }, []);
 
     return (
