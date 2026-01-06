@@ -1037,21 +1037,21 @@ export function AdminHelp() {
                                 <button
                                     key={section.id}
                                     onClick={() => scrollToSection(section.id)}
-                                    className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-bold transition-all relative overflow-hidden group border ${activeSection === section.id
-                                        ? 'bg-primary-50 text-primary-700 border-primary-100'
+                                    className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-bold transition-all relative overflow-hidden group border active:scale-[0.98] ${activeSection === section.id
+                                        ? 'bg-gradient-to-r from-primary-50 to-white text-primary-700 border-l-4 border-l-primary-600 border-y-primary-100 border-r-primary-100 shadow-lg shadow-primary-100/50'
                                         : 'text-gray-600 bg-white border-gray-50 hover:bg-gray-50 hover:border-gray-100'
                                         }`}
                                 >
                                     {activeSection === section.id && (
-                                        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary-600" />
+                                        <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white/50 to-transparent pointer-events-none" />
                                     )}
-                                    <div className={`p-3 rounded-xl transition-colors shrink-0 ${activeSection === section.id ? 'bg-white shadow-sm' : 'bg-gray-100 group-hover:bg-white'}`}>
-                                        <section.icon className={`h-5 w-5 ${activeSection === section.id ? 'text-primary-600' : 'text-gray-400'}`} />
+                                    <div className={`p-3 rounded-xl transition-all duration-300 shrink-0 ${activeSection === section.id ? 'bg-primary-600/10 text-primary-600 shadow-inner' : 'bg-gray-100 text-gray-400 group-hover:bg-white group-hover:text-primary-500 group-hover:shadow-sm'}`}>
+                                        <section.icon className={`h-5 w-5 ${activeSection === section.id ? 'scale-110' : ''}`} />
                                     </div>
-                                    <span className="flex-1 text-left text-base">{section.title}</span>
+                                    <span className={`flex-1 text-left text-base ${activeSection === section.id ? 'font-extrabold tracking-tight' : 'font-semibold'}`}>{section.title}</span>
                                     {activeSection === section.id && (
                                         <div className="flex items-center gap-2">
-                                            <div className="h-2 w-2 rounded-full bg-primary-600 animate-pulse shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
+                                            <div className="h-2 w-2 rounded-full bg-primary-600 animate-pulse shadow-[0_0_12px_rgba(79,70,229,0.8)]" />
                                         </div>
                                     )}
                                 </button>
