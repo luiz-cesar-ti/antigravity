@@ -764,78 +764,118 @@ export function AdminBookings() {
                                                     )}
                                                 </div>
 
-                                                {/* --- MOBILE LAYOUT --- */}
-                                                <div className="lg:hidden">
-                                                    <div className="flex items-start justify-between mb-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="h-10 w-10 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0 border border-indigo-100">
-                                                                {isMulti ? <Users className="h-5 w-5 text-indigo-600" /> : getEquipmentIcon(first.equipment?.name)}
-                                                            </div>
-                                                            <div>
-                                                                <h3 className="text-sm font-black text-gray-900 line-clamp-1">
-                                                                    {isMulti ? 'Multi-Equipamentos' : first.equipment?.name}
+                                                {/* --- MOBILE LAYOUT (Redesigned per new ScreenShot) --- */}
+                                                <div className="lg:hidden flex flex-col gap-4">
+                                                    {/* 1. Header: User Info & Status */}
+                                                    <div className="flex gap-4">
+                                                        <div className="h-12 w-12 rounded-full bg-indigo-50 flex items-center justify-center shrink-0 border border-indigo-100 mt-1">
+                                                            <Users className="h-6 w-6 text-indigo-600" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center flex-wrap gap-2 mb-1">
+                                                                <h3 className="text-base font-black text-gray-900 leading-tight">
+                                                                    {(first as any).users?.full_name}
                                                                 </h3>
-                                                                <p className="text-[10px] text-gray-500 font-bold uppercase">
-                                                                    {(first as any).users?.full_name?.split(' ')[0]}
+                                                                {getStatusBadge(first)}
+                                                            </div>
+                                                            <div className="flex flex-col gap-0.5">
+                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate">
+                                                                    {(first as any).users?.email}
                                                                 </p>
+                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                                                    - {(first as any).users?.unit || first.unit} -
+                                                                </p>
+                                                                {first.display_id && (
+                                                                    <p className="text-[10px] font-black text-indigo-600 italic tracking-wider">
+                                                                        ID TERMO #{first.display_id}
+                                                                    </p>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                        {getStatusBadge(first)}
                                                     </div>
 
-                                                    {/* Mobile Items List */}
-                                                    <div className="space-y-2 mb-4">
+                                                    {/* 2. Actions Row (Right Aligned) */}
+                                                    <div className="flex justify-end gap-2">
+                                                        {first.term_document && (
+                                                            <button
+                                                                onClick={() => handleOpenTermModal(first)}
+                                                                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 shadow-sm rounded-xl text-gray-700 font-bold text-[10px] uppercase tracking-wider active:scale-95 transition-all"
+                                                            >
+                                                                <FileText className="h-4 w-4 text-primary-600" />
+                                                                Termo
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            onClick={() => setDeleteModal({ isOpen: true, bookingId: first.id })}
+                                                            className="flex items-center justify-center h-9 w-9 bg-red-50 text-red-500 border border-red-100 rounded-xl shadow-sm active:scale-95 transition-all"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* 3. Items Grid */}
+                                                    <div className="grid grid-cols-2 gap-3">
                                                         {(isMulti ? group : [first]).map((b) => (
-                                                            <div key={b.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-100">
-                                                                <div className="flex items-center gap-2 min-w-0">
-                                                                    {isMulti && <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0"></div>}
-                                                                    <div className="min-w-0">
-                                                                        <span className="text-xs text-gray-700 font-medium block truncate">{b.equipment?.name}</span>
-                                                                        <span className="text-[10px] text-gray-500 font-bold uppercase block">{b.equipment?.brand} {b.equipment?.model}</span>
-                                                                    </div>
+                                                            <div key={b.id} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-2xl shadow-sm">
+                                                                <div className="h-9 w-9 bg-white rounded-xl border border-gray-100 flex items-center justify-center shrink-0">
+                                                                    {getEquipmentIcon(b.equipment?.name, "h-5 w-5 text-primary-600")}
                                                                 </div>
-                                                                {isMulti && (
-                                                                    <button
-                                                                        onClick={() => setDeleteModal({ isOpen: true, bookingId: b.id })}
-                                                                        className="p-1 text-gray-400 hover:text-red-500"
-                                                                    >
-                                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                                    </button>
-                                                                )}
+                                                                <div className="min-w-0">
+                                                                    <p className="text-xs font-bold text-gray-900 truncate leading-tight mb-1">
+                                                                        {b.equipment?.name}
+                                                                    </p>
+                                                                    <span className="inline-flex px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[8px] font-black uppercase rounded border border-indigo-100 italic">
+                                                                        # {b.quantity} UNIDADE{b.quantity > 1 ? 'S' : ''}
+                                                                    </span>
+                                                                </div>
                                                             </div>
                                                         ))}
                                                     </div>
 
-                                                    <div className="grid grid-cols-2 gap-2 mb-4">
-                                                        <div className="p-2 bg-gray-50 rounded-lg">
-                                                            <p className="text-[9px] text-gray-400 font-black uppercase">Data</p>
-                                                            <p className="text-xs font-bold text-gray-700">{format(parseISO(first.booking_date), "dd/MM")}</p>
+                                                    {/* 4. Footer Info Grid */}
+                                                    <div className="grid grid-cols-2 gap-y-4 gap-x-2 pt-4 border-t border-gray-50">
+                                                        {/* Professor */}
+                                                        <div>
+                                                            <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Professor</p>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Users className="h-3 w-3 text-gray-300" />
+                                                                <span className="text-xs font-medium text-gray-600 truncate">
+                                                                    {(first as any).users?.full_name}
+                                                                </span>
+                                                            </div>
                                                         </div>
-                                                        <div className="p-2 bg-gray-50 rounded-lg">
-                                                            <p className="text-[9px] text-gray-400 font-black uppercase">Horário</p>
-                                                            <p className="text-xs font-bold text-gray-700">{first.start_time.slice(0, 5)}-{first.end_time.slice(0, 5)}</p>
-                                                        </div>
-                                                    </div>
 
-                                                    <div className="flex gap-2">
-                                                        {first.term_document && (
-                                                            <button
-                                                                onClick={() => handleOpenTermModal(first)}
-                                                                className="flex-1 flex items-center justify-center gap-2 py-2 bg-white border border-gray-200 text-gray-700 font-bold text-[10px] rounded-lg shadow-sm uppercase"
-                                                            >
-                                                                <FileText className="h-3.5 w-3.5" />
-                                                                Termo
-                                                            </button>
-                                                        )}
-                                                        {!isMulti && (
-                                                            <button
-                                                                onClick={() => setDeleteModal({ isOpen: true, bookingId: first.id })}
-                                                                className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 text-red-600 font-bold text-[10px] rounded-lg border border-red-100 uppercase"
-                                                            >
-                                                                <Trash2 className="h-3.5 w-3.5" />
-                                                                Excluir
-                                                            </button>
-                                                        )}
+                                                        {/* Especificação */}
+                                                        <div>
+                                                            <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Especificação</p>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Monitor className="h-3 w-3 text-gray-300" />
+                                                                <span className="text-xs font-bold text-indigo-600 truncate">
+                                                                    {isMulti ? `Múltiplos Itens (${group.length})` : (first.equipment?.brand || 'Padrão')}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Sala/Local */}
+                                                        <div>
+                                                            <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Sala/Local</p>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <MapPin className="h-3 w-3 text-gray-300" />
+                                                                <span className="text-xs font-medium text-gray-600 truncate">
+                                                                    {first.local}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Agendado Para */}
+                                                        <div>
+                                                            <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Agendado Para</p>
+                                                            <div className="w-full text-right sm:text-left">
+                                                                <span className="text-xs font-bold text-gray-600">
+                                                                    {format(parseISO(first.booking_date), "dd/MM/yy")} • {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
+                                                                </span>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
