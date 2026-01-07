@@ -19,10 +19,12 @@ export function TeacherBookings() {
     const [pdfData, setPdfData] = useState<Booking | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bookingId: string | null; recurringId?: string | null }>({
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bookingId: string | null; recurringId?: string | null; displayId?: string | null; bookingDate?: string | null }>({
         isOpen: false,
         bookingId: null,
-        recurringId: null
+        recurringId: null,
+        displayId: null,
+        bookingDate: null
     });
     // const [deleting, setDeleting] = useState(false); // Unused
 
@@ -240,10 +242,17 @@ export function TeacherBookings() {
         const { error } = await supabase
             .from('bookings')
             .update({ status: 'cancelled_by_user' })
-            .eq('id', deleteModal.bookingId);
+            .match(
+                deleteModal.displayId && deleteModal.bookingDate
+                    ? {
+                        display_id: deleteModal.displayId,
+                        booking_date: deleteModal.bookingDate
+                    }
+                    : { id: deleteModal.bookingId }
+            );
 
         if (!error) {
-            setDeleteModal({ isOpen: false, bookingId: null });
+            setDeleteModal({ isOpen: false, bookingId: null, displayId: null, bookingDate: null });
             fetchBookings();
         } else {
             console.error('Delete error:', error);
@@ -591,7 +600,9 @@ export function TeacherBookings() {
                                                 onClick={() => setDeleteModal({
                                                     isOpen: true,
                                                     bookingId: first.id,
-                                                    recurringId: first.recurring_id
+                                                    recurringId: first.recurring_id,
+                                                    displayId: first.display_id,
+                                                    bookingDate: first.booking_date
                                                 })}
                                                 className="flex items-center justify-center py-3 px-4 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-black text-[10px] rounded-xl transition-all active:scale-95 group/btn border border-red-100 uppercase tracking-wider"
                                             >

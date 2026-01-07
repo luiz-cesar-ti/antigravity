@@ -59,7 +59,7 @@ export function Login() {
         const { error: signInError } = await signIn(identifier, password);
 
         if (signInError) {
-            setError('Credenciais inválidas. Verifique seu login e senha.');
+            setError(signInError || 'Credenciais inválidas. Verifique seu login e senha.');
             setIsSubmitting(false);
         } else {
             if (rememberMe) {

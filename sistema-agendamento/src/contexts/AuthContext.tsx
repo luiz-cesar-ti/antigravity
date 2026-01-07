@@ -262,18 +262,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const isEmail = identifier.includes('@');
             let emailToUse = identifier;
 
-            // 3. If NOT email (TOTVS number), we MUST look it up first
+            // 3. If NOT email (TOTVS number), we MUST look it up first (Using Secure RPC due to RLS)
             if (!isEmail) {
+                console.log('Login: Buscando usuário por TOTVS:', identifier);
                 const { data: userProfile, error: lookupError } = await supabase
-                    .from('users')
-                    .select('email, active')
-                    .eq('totvs_number', identifier)
-                    .single();
+                    .rpc('get_user_email_by_totvs', { p_totvs_number: identifier })
+                    .single() as { data: { email: string; active: boolean } | null, error: any };
 
                 if (lookupError || !userProfile) {
-                    console.warn('TOTVS lookup failed:', lookupError);
+                    console.error('Login: TOTVS lookup failed:', lookupError);
                     return { error: 'Usuário não encontrado. Se você é um professor, verifique seu número TOTVS.' };
                 }
+
+                console.log('Login: Usuário encontrado via TOTVS:', userProfile);
 
                 if (userProfile.active === false) {
                     return { error: 'Sua conta foi desativada. Entre em contato com a administração.' };
@@ -283,6 +284,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
 
             // 4. Perform Authentication
+            console.log('Login: Tentando autenticação com email:', emailToUse);
             setState(prev => ({ ...prev, isLoading: true }));
 
             const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -291,10 +293,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
 
             if (authError) {
+                console.error('Login: Supabase Auth erro:', authError);
                 setState(prev => ({ ...prev, isLoading: false }));
-                console.error('Supabase Auth error:', authError);
                 if (authError.message === 'Invalid login credentials') {
-                    return { error: 'Credenciais inválidas. Verifique sua senha.' };
+                    return { error: 'Senha incorreta.' };
                 }
                 if (authError.message.includes('Email not confirmed')) {
                     return { error: 'Email não confirmado. Verifique sua caixa de entrada.' };
