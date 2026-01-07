@@ -88,10 +88,6 @@ export function RoomBookingV2() {
     const fetchMyBookings = async () => {
         if (!user) return;
         try {
-            // Get start of today to show all today's bookings (even past ones)
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
             const { data, error } = await supabase
                 .from('room_bookings')
                 .select(`
@@ -101,16 +97,38 @@ export function RoomBookingV2() {
                         unit
                     )
                 `)
-                .eq('user_id', user.id)
-                .gte('start_ts', today.toISOString())
-                .order('start_ts', { ascending: true });
+                .eq('user_id', user.id); // Fetch ALL bookings, not just future ones
 
             if (error) {
                 console.error('Error fetching my bookings:', error);
                 return;
             }
 
-            if (data) setMyBookings(data);
+            if (data) {
+                const now = new Date();
+                // Sorting: Future (Agendado) first, then Past (Encerrado)
+                // Within Future: Ascending date (nearest first)
+                // Within Past: Descending date (most recent past first)
+                const sorted = data.sort((a, b) => {
+                    const dateA = new Date(a.end_ts);
+                    const dateB = new Date(b.end_ts);
+                    const isPastA = dateA < now;
+                    const isPastB = dateB < now;
+
+                    if (isPastA !== isPastB) {
+                        return isPastA ? 1 : -1; // Future before Past
+                    }
+
+                    if (!isPastA) {
+                        // Both Future: Ascending
+                        return new Date(a.start_ts).getTime() - new Date(b.start_ts).getTime();
+                    } else {
+                        // Both Past: Descending
+                        return new Date(b.start_ts).getTime() - new Date(a.start_ts).getTime();
+                    }
+                });
+                setMyBookings(sorted);
+            }
         } catch (err) {
             console.error('Unexpected error fetching my bookings:', err);
         }
@@ -505,31 +523,36 @@ export function RoomBookingV2() {
                                             </div>
                                         </div>
 
-                                        {!isPast && (
-                                            <button
-                                                onClick={async () => {
-                                                    if (confirm('Tem certeza que deseja cancelar este agendamento?')) {
-                                                        try {
-                                                            const { error } = await supabase
-                                                                .from('room_bookings')
-                                                                .delete()
-                                                                .eq('id', booking.id);
+                                        <button
+                                            onClick={async () => {
+                                                const message = isPast
+                                                    ? 'Tem certeza que deseja excluir este agendamento do histórico?'
+                                                    : 'Tem certeza que deseja cancelar este agendamento?';
 
-                                                            if (error) throw error;
-                                                            triggerFeedback('success', 'Agendamento cancelado com sucesso.');
-                                                            fetchMyBookings();
-                                                        } catch (err) {
-                                                            console.error('Erro ao cancelar:', err);
-                                                            triggerFeedback('error', 'Erro ao cancelar agendamento.');
-                                                        }
+                                                if (confirm(message)) {
+                                                    try {
+                                                        const { error } = await supabase
+                                                            .from('room_bookings')
+                                                            .delete()
+                                                            .eq('id', booking.id);
+
+                                                        if (error) throw error;
+                                                        triggerFeedback('success', isPast ? 'Agendamento excluído.' : 'Agendamento cancelado com sucesso.');
+                                                        fetchMyBookings();
+                                                    } catch (err) {
+                                                        console.error('Erro ao cancelar:', err);
+                                                        triggerFeedback('error', 'Erro ao processar solicitação.');
                                                     }
-                                                }}
-                                                className="mt-5 w-full py-2.5 text-xs font-bold text-red-600 border border-red-100 bg-red-50 rounded-xl hover:bg-red-100 hover:border-red-200 transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                                CANCELAR AGENDAMENTO
-                                            </button>
-                                        )}
+                                                }
+                                            }}
+                                            className={`mt-5 w-full py-2.5 text-xs font-bold border rounded-xl transition-all flex items-center justify-center gap-2 ${isPast
+                                                    ? 'text-gray-500 border-gray-200 bg-gray-50 hover:bg-gray-100'
+                                                    : 'text-red-600 border-red-100 bg-red-50 hover:bg-red-100 hover:border-red-200'
+                                                }`}
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            {isPast ? 'EXCLUIR AGENDAMENTO' : 'CANCELAR AGENDAMENTO'}
+                                        </button>
                                     </div>
                                 </div>
                             );
