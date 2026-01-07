@@ -242,7 +242,7 @@ export function AdminBookings() {
     const getStatusBadge = (booking: Booking) => {
         if (booking.status === 'cancelled_by_user') {
             return (
-                <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+                <span className="px-2 py-0.5 inline-flex text-[8px] items-center leading-3 font-bold uppercase tracking-wider rounded-full bg-amber-100 text-amber-700 border border-amber-200">
                     Excluído pelo Professor
                 </span>
             );
@@ -752,7 +752,7 @@ export function AdminBookings() {
                                                                     <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Especificação</span>
                                                                     <div className="flex items-center gap-2">
                                                                         <span className="text-xs font-bold text-indigo-600 truncate">
-                                                                            Múltiplos Itens [{group.length}]
+                                                                            Múltiplos Itens
                                                                         </span>
                                                                     </div>
                                                                 </div>
@@ -793,54 +793,35 @@ export function AdminBookings() {
                                                             <Users className="h-6 w-6 text-indigo-600" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center flex-wrap gap-2 mb-1">
-                                                                <h3 className="text-base font-black text-gray-900 leading-tight">
-                                                                    {(first as any).users?.full_name}
-                                                                </h3>
-                                                                {getStatusBadge(first)}
-                                                            </div>
+                                                            <h3 className="text-base font-black text-gray-900 leading-tight mb-0.5">
+                                                                {(first as any).users?.full_name}
+                                                            </h3>
+
                                                             <div className="flex flex-col gap-0.5">
                                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate">
                                                                     {(first as any).users?.email}
                                                                 </p>
-                                                                {/* Unit Removed */}
-                                                                {first.display_id && (
-                                                                    <div className="flex flex-col gap-0.5 mt-0.5">
-                                                                        <p className="text-[10px] font-black text-indigo-600 italic tracking-wider">
+
+                                                                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                                    {first.display_id && (
+                                                                        <span className="text-[10px] font-black text-indigo-600 italic tracking-wider">
                                                                             ID TERMO #{first.display_id}
-                                                                        </p>
-                                                                        {first.term_hash && (
-                                                                            <p className="text-[9px] font-bold text-gray-400 italic">
-                                                                                HASH: {first.term_hash.substring(0, 8)}...
-                                                                            </p>
-                                                                        )}
-                                                                    </div>
+                                                                        </span>
+                                                                    )}
+                                                                    {getStatusBadge(first)}
+                                                                </div>
+
+                                                                {first.term_hash && (
+                                                                    <p className="text-[9px] font-bold text-gray-400 italic mt-0.5">
+                                                                        HASH: {first.term_hash.substring(0, 8)}...
+                                                                    </p>
                                                                 )}
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    {/* 2. Actions Row (Right Aligned) */}
-                                                    <div className="flex justify-end gap-2">
-                                                        {first.term_document && (
-                                                            <button
-                                                                onClick={() => handleOpenTermModal(first)}
-                                                                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 shadow-sm rounded-xl text-gray-700 font-bold text-[10px] uppercase tracking-wider active:scale-95 transition-all"
-                                                            >
-                                                                <FileText className="h-4 w-4 text-primary-600" />
-                                                                Termo
-                                                            </button>
-                                                        )}
-                                                        <button
-                                                            onClick={() => setDeleteModal({ isOpen: true, bookingIds: isMulti ? group.map(b => b.id) : [first.id] })}
-                                                            className="flex items-center justify-center h-9 w-9 bg-red-50 text-red-500 border border-red-100 rounded-xl shadow-sm active:scale-95 transition-all"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </button>
-                                                    </div>
-
-                                                    {/* 3. Items Grid */}
-                                                    <div className="grid grid-cols-2 gap-3">
+                                                    {/* 2. Items Grid */}
+                                                    <div className="grid grid-cols-2 gap-3 mb-4">
                                                         {(isMulti ? group : [first]).map((b) => (
                                                             <div key={b.id} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-2xl shadow-sm">
                                                                 <div className="h-9 w-9 bg-white rounded-xl border border-gray-100 flex items-center justify-center shrink-0">
@@ -856,6 +837,25 @@ export function AdminBookings() {
                                                                 </div>
                                                             </div>
                                                         ))}
+                                                    </div>
+
+                                                    {/* 3. Actions Row (Wide Buttons) */}
+                                                    <div className="flex gap-2">
+                                                        {first.term_document && (
+                                                            <button
+                                                                onClick={() => handleOpenTermModal(first)}
+                                                                className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-gray-200 shadow-sm rounded-xl text-gray-700 font-bold text-[10px] uppercase tracking-wider active:scale-95 transition-all"
+                                                            >
+                                                                <FileText className="h-4 w-4 text-primary-600" />
+                                                                Termo
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            onClick={() => setDeleteModal({ isOpen: true, bookingIds: isMulti ? group.map(b => b.id) : [first.id] })}
+                                                            className="flex items-center justify-center h-12 w-12 bg-red-50 text-red-500 border border-red-100 rounded-xl shadow-sm active:scale-95 transition-all"
+                                                        >
+                                                            <Trash2 className="h-5 w-5" />
+                                                        </button>
                                                     </div>
 
                                                     {/* 4. Footer Info Grid */}
@@ -877,7 +877,7 @@ export function AdminBookings() {
                                                             <div className="flex items-center gap-1.5">
                                                                 <Monitor className="h-3 w-3 text-gray-300" />
                                                                 <span className="text-xs font-bold text-indigo-600 truncate">
-                                                                    {isMulti ? `Múltiplos Itens (${group.length})` : (first.equipment?.brand || 'Padrão')}
+                                                                    {isMulti ? 'Múltiplos Itens' : `${first.equipment?.brand || ''} ${first.equipment?.model || ''}`.trim() || 'Padrão'}
                                                                 </span>
                                                             </div>
                                                         </div>
