@@ -35,32 +35,25 @@ export interface Equipment {
 
 export interface Room {
     id: string;
-    unit: string;
     name: string;
+    unit: string;
+    capacity: number;
     description?: string;
-    min_time: string;
-    max_time: string;
-    created_at: string;
-    available_days?: number[]; // 0=Sun, 1=Mon...
-    start_date?: string;
-    end_date?: string;
+    min_time?: string; // "07:00:00"
+    max_time?: string; // "22:00:00"
+    available_days?: number[]; // [1, 2, 3, 4, 5]
     is_active?: boolean;
+    created_at: string;
 }
 
 export interface RoomBooking {
     id: string;
     room_id: string;
     user_id: string;
-    unit: string;
-    booking_date: string;
-    start_time: string;
-    end_time: string;
-    status: 'active' | 'cancelled' | 'cancelled_by_user' | 'encerrado';
+    start_ts: string; // ISO String
+    end_ts: string;   // ISO String
+    status: 'confirmed' | 'cancelled';
     created_at: string;
-    is_recurring?: boolean;
-    recurring_id?: string;
-    term_hash?: string;
-    display_id?: string;
 
     // Joins
     room?: Room;

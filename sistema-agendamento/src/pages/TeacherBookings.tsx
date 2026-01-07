@@ -475,48 +475,59 @@ export function TeacherBookings() {
                                                             {icon}
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <h3 className="font-bold text-gray-900 group-hover:text-primary-900 transition-colors duration-200 truncate leading-tight">
-                                                                {isMulti ? 'Multi-Equipamentos' : first.equipment?.name}
-                                                            </h3>
+                                                            <div className="flex items-center gap-2 mb-0.5">
+                                                                <h3 className="font-bold text-gray-900 group-hover:text-primary-900 transition-colors duration-200 truncate leading-tight">
+                                                                    {isMulti ? 'Multi-Equipamentos' : first.equipment?.name}
+                                                                </h3>
+                                                                <span className="text-[9px] font-black text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded-md border border-primary-100 shrink-0">
+                                                                    #{first.id.split('-')[0].toUpperCase()}
+                                                                </span>
+                                                            </div>
                                                             <div className="flex flex-col mt-0.5">
-                                                                <p className={`text-[10px] font-bold uppercase truncate text-primary-600`}>
+                                                                <p className={`text-[10px] font-bold uppercase truncate text-gray-500`}>
                                                                     {isMulti ? `${group.length} itens no termo` : `${first.equipment?.brand || ''} ${first.equipment?.model || ''}`}
                                                                 </p>
+                                                                {!isMulti && (
+                                                                    <p className="text-[10px] font-black text-blue-600 uppercase mt-0.5">
+                                                                        Quantidade: {first.quantity} {first.quantity > 1 ? 'unidades' : 'unidade'}
+                                                                    </p>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex flex-col items-end gap-1 ml-3 shrink-0">
-                                                    <span className={`
-                                                    px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-tighter
-                                                    ${first.status === 'active' && !isExpired ? 'bg-green-50 text-green-700 border-green-100' :
-                                                            isEffectivelyClosed ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                                                'bg-red-50 text-red-700 border-red-100'}
-                                                `}>
-                                                        {first.status === 'active' && !isExpired ? 'Reservado' :
-                                                            isEffectivelyClosed ? 'Concluído' : 'Cancelado'}
-                                                    </span>
-                                                    {first.is_recurring && (
-                                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-tight rounded-lg border border-amber-100 italic">
-                                                            <Repeat className="h-3 w-3" />
-                                                            Recorrente
-                                                        </div>
-                                                    )}
+                                                <div className="flex flex-col items-end gap-1.5 ml-3 shrink-0">
+                                                    <div className="flex items-center gap-1.5">
+                                                        {first.is_recurring && (
+                                                            <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-black uppercase tracking-tight rounded-full border border-amber-100 italic transition-colors group-hover:bg-amber-100">
+                                                                <Repeat className="h-2.5 w-2.5" />
+                                                                Recorrente
+                                                            </div>
+                                                        )}
+                                                        <span className={`
+                                                            px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-tighter
+                                                            ${first.status === 'active' && !isExpired ? 'bg-green-50 text-green-700 border-green-100' :
+                                                                isEffectivelyClosed ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                                    'bg-red-50 text-red-700 border-red-100'}
+                                                        `}>
+                                                            {first.status === 'active' && !isExpired ? 'Reservado' :
+                                                                isEffectivelyClosed ? 'Concluído' : 'Cancelado'}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
 
                                             {isMulti && (
-                                                <div className="space-y-1 mb-4 pr-1">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                                                     {group.map((b: Booking) => (
-                                                        <div key={b.id} className="flex items-center gap-2 p-1.5 bg-gray-50/50 rounded-xl border border-transparent group-hover:border-indigo-100 transition-all">
-                                                            <div className="h-6 w-6 bg-white rounded-lg flex items-center justify-center shrink-0 border border-gray-100 shadow-sm">
-                                                                {getEquipmentIcon(b.equipment?.name, "h-3 w-3")}
+                                                        <div key={b.id} className="flex items-center gap-3 p-2 bg-gray-50/50 rounded-2xl border border-gray-100 group-hover:border-primary-200 transition-all">
+                                                            <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shrink-0 border-2 border-primary-500 shadow-sm transition-transform group-hover:scale-105">
+                                                                {getEquipmentIcon(b.equipment?.name, "h-6 w-6 text-primary-600")}
                                                             </div>
                                                             <div className="min-w-0 flex-1">
                                                                 <p className="text-[10px] font-black text-gray-900 truncate leading-tight tracking-tight">{b.equipment?.name}</p>
-                                                                {/* Added Quantity Display */}
-                                                                <p className="text-[9px] text-gray-500 truncate font-bold uppercase">Qtd: {b.quantity}</p>
+                                                                <p className="text-[9px] text-blue-600 truncate font-bold uppercase">Qtd: {b.quantity} {b.quantity > 1 ? 'unidades' : 'unidade'}</p>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -551,6 +562,15 @@ export function TeacherBookings() {
                                                             {first.start_time.slice(0, 5)}-{first.end_time.slice(0, 5)}
                                                         </div>
                                                     </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Código Hash</span>
+                                                    <span className="text-[9px] font-mono font-bold text-gray-400 truncate max-w-[120px]">
+                                                        {first.id}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>

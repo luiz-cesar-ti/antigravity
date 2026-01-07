@@ -55,6 +55,7 @@ export function AdminSettings() {
                 unit: adminUser.unit,
                 min_advance_time_enabled: settings.min_advance_time_enabled,
                 min_advance_time_hours: settings.min_advance_time_hours,
+                room_booking_enabled: settings.room_booking_enabled,
                 updated_at: new Date().toISOString()
             };
 
@@ -120,6 +121,27 @@ export function AdminSettings() {
                 <form onSubmit={handleSave} className="bg-white shadow rounded-lg p-6 border border-gray-100">
 
                     <div className="space-y-6">
+                        <div className="flex items-start pb-6 border-b border-gray-200">
+                            <div className="flex items-center h-5">
+                                <input
+                                    id="room_booking_enabled"
+                                    name="room_booking_enabled"
+                                    type="checkbox"
+                                    checked={settings.room_booking_enabled || false}
+                                    onChange={(e) => setSettings({ ...settings, room_booking_enabled: e.target.checked })}
+                                    className="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300 rounded"
+                                />
+                            </div>
+                            <div className="ml-3 text-sm">
+                                <label htmlFor="room_booking_enabled" className="font-medium text-gray-700">
+                                    Habilitar Agendamento de Salas
+                                </label>
+                                <p className="text-gray-500">
+                                    Se habilitado, os professores desta unidade verão a opção "Salas" no menu e poderão realizar agendamentos.
+                                </p>
+                            </div>
+                        </div>
+
                         <div className="flex items-start">
                             <div className="flex items-center h-5">
                                 <input

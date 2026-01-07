@@ -1,13 +1,39 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, Home, Calendar, Menu, X, BookOpen } from 'lucide-react';
+import { supabase } from '../services/supabase';
+import { LogOut, Home, Calendar, Menu, X, BookOpen, MapPin } from 'lucide-react';
 
 export function TeacherLayout() {
     const { signOut, user } = useAuth();
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isRoomsEnabled, setIsRoomsEnabled] = useState(false);
 
+    useEffect(() => {
+        const checkSettings = async () => {
+            if (!user) return;
+
+            // Cast to User to access units, assuming Admin doesn't use this layout primarily 
+            // or shares the 'units' property structure if needed. 
+            // But TeacherLayout is for teachers.
+            const teacher = user as any;
+            if (!teacher.units || teacher.units.length === 0) return;
+
+            const { data } = await supabase
+                .from('settings')
+                .select('room_booking_enabled')
+                .in('unit', teacher.units);
+
+            if (data && data.some(s => s.room_booking_enabled)) {
+                setIsRoomsEnabled(true);
+            } else {
+                setIsRoomsEnabled(false);
+            }
+        };
+        checkSettings();
+    }, [user]);
 
     const handleSignOut = async () => {
         await signOut();
@@ -38,6 +64,12 @@ export function TeacherLayout() {
                             <Link to="/teacher/my-bookings" className="hover:text-primary-200 px-3 py-2 text-sm font-medium flex items-center gap-2">
                                 <Calendar className="w-4 h-4" /> Agendamentos
                             </Link>
+
+                            {isRoomsEnabled && (
+                                <Link to="/teacher/rooms-v2" className="hover:text-primary-200 px-3 py-2 text-sm font-medium flex items-center gap-2">
+                                    <MapPin className="w-4 h-4" /> Salas
+                                </Link>
+                            )}
 
 
                             <Link to="/teacher/about" className="hover:text-primary-200 px-3 py-2 text-sm font-medium flex items-center gap-2">

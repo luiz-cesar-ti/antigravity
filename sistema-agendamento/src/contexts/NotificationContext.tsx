@@ -73,7 +73,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     event: '*',
                     schema: 'public',
                     table: 'notifications',
-                    filter: "recipient_role=eq.admin" // Filter only by role server-side to avoid syntax errors
+                    filter: adminUnit ? `unit=eq.${adminUnit}` : "recipient_role=eq.admin"
                 },
                 (payload) => {
                     console.log('Notification Realtime Event:', payload);

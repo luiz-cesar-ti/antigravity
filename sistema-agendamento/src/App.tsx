@@ -7,7 +7,6 @@ import { ForgotPassword } from './pages/ForgotPassword';
 import { UpdatePassword } from './pages/UpdatePassword';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
-
 import { TeacherLayout } from './components/TeacherLayout';
 import { AdminLayout } from './components/AdminLayout';
 import { BookingWizard } from './pages/BookingWizard';
@@ -24,6 +23,11 @@ import { AdminHelp } from './pages/admin/AdminHelp';
 import { NotFound } from './pages/NotFound';
 import { ScrollToTop } from './components/ScrollToTop';
 import { RootRedirect } from './components/RootRedirect';
+
+// New Imports
+import { AdminRooms } from './pages/admin/AdminRooms';
+import { RoomBookingV2 } from './pages/RoomBookingV2';
+import { AdminNotifications } from './pages/admin/AdminNotifications';
 
 function App() {
   return (
@@ -45,12 +49,14 @@ function App() {
                 <Route index element={<Navigate to="/admin/dashboard" replace />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="bookings" element={<AdminBookings />} />
+                <Route path="rooms" element={<AdminRooms />} />
                 <Route path="equipment" element={<AdminEquipment />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="loans" element={<AdminLoans />} />
                 <Route path="schedule" element={<AdminSchedule />} />
                 <Route path="manual" element={<AdminHelp />} />
                 <Route path="settings" element={<AdminSettings />} />
+                <Route path="notifications" element={<AdminNotifications />} />
               </Route>
             </Route>
 
@@ -59,6 +65,7 @@ function App() {
               <Route element={<TeacherLayout />}>
                 <Route path="/teacher" element={<Navigate to="/teacher/equipment" replace />} />
                 <Route path="/teacher/equipment" element={<BookingWizard />} />
+                <Route path="/teacher/rooms-v2" element={<RoomBookingV2 />} />
                 <Route path="/teacher/my-bookings" element={<TeacherBookings />} />
                 <Route path="/teacher/about" element={<TeacherAbout />} />
               </Route>

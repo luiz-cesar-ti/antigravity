@@ -219,38 +219,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         try {
             // 1. Try Admin Login (Via Secure RPC)
-            const { data: rpcResult, error: rpcError } = await supabase.rpc('admin_login', {
+            // Uses new secure function that handles session creation server-side
+            const { data: rpcResult, error: rpcError } = await supabase.rpc('admin_login_secure', {
                 p_username: identifier,
                 p_password: password
             });
 
             if (rpcError) {
                 console.error('RPC Login Error:', rpcError);
-                // Continue to teacher login if RPC fails technically or logic?
-                // If RPC error, we probably shouldn't assume it's not an admin if the error is "connection failed"?
-                // But for now, let's treat it as "maybe not an admin" or valid fail.
+                // Continue to teacher login if RPC fails
             }
 
             if (rpcResult && rpcResult.success) {
                 const adminData = rpcResult.admin;
+                const sessionToken = rpcResult.session_token;
 
-                // Generate a secure session token
-                const sessionToken = crypto.randomUUID();
-                const expiresAt = new Date();
-                expiresAt.setHours(expiresAt.getHours() + 24); // Token valid for 24h
-
-                // Save session to database for RLS validation
-                const { error: sessionError } = await supabase
-                    .from('admin_sessions')
-                    .insert({
-                        admin_id: adminData.id,
-                        token: sessionToken,
-                        expires_at: expiresAt.toISOString()
-                    });
-
-                if (sessionError) {
-                    console.error('Error creating admin session:', sessionError);
-                    return { error: 'Erro ao iniciar sessão segura no servidor.' };
+                if (!sessionToken) {
+                    return { error: 'Erro de protocolo: Token de sessão não recebido.' };
                 }
 
                 const adminUser = {
