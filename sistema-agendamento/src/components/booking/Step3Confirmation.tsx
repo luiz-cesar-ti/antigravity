@@ -63,10 +63,11 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
         try {
             const displayId = data.displayId || Math.floor(100000 + Math.random() * 900000).toString();
 
-            // 1. Fetch current legal term for hashing (Unified for all flows)
+            // 1. Fetch current legal term for hashing (Specific to Booking)
             const { data: latestTerm } = await supabase
                 .from('legal_terms')
                 .select('content, version_tag')
+                .eq('type', 'booking') // Filter by Booking type
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .single();
