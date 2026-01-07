@@ -62,15 +62,15 @@ export function Login() {
             setError('Credenciais inválidas. Verifique seu login e senha.');
             setIsSubmitting(false);
         } else {
-            // Handle remember me
             if (rememberMe) {
                 localStorage.setItem('remembered_identifier', identifier);
             } else {
                 localStorage.removeItem('remembered_identifier');
             }
-            navigate('/');
+            navigate('/', { replace: true });
         }
-    };
+    }
+
 
     return (
         <div className="min-h-screen bg-white flex overflow-hidden">

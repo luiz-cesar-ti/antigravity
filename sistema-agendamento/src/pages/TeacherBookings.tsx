@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
-    Calendar, Clock, MapPin, Monitor, Trash2, AlertTriangle, History,
+    Calendar, Clock, MapPin, Monitor, Trash2, History, AlertTriangle,
     Laptop, Projector, Speaker, Camera, Mic, Smartphone, Share2, Tv, Plug, FileText, Download, X, Repeat, Filter, ChevronDown, Search
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import type { Booking } from '../types';
+import type { Booking, User } from '../types';
 import { format, parseISO } from 'date-fns';
 import { TermDocument } from '../components/TermDocument';
 // @ts-ignore
@@ -13,6 +13,7 @@ import html2pdf from 'html2pdf.js';
 
 export function TeacherBookings() {
     const { user } = useAuth();
+    const currentUser = user as User;
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
     const [pdfData, setPdfData] = useState<Booking | null>(null);
@@ -23,7 +24,7 @@ export function TeacherBookings() {
         bookingId: null,
         recurringId: null
     });
-    const [deleting, setDeleting] = useState(false);
+    // const [deleting, setDeleting] = useState(false); // Unused
 
     // Filters State
     const [startDate, setStartDate] = useState('');
@@ -39,14 +40,14 @@ export function TeacherBookings() {
         setModalOpen(true);
     };
 
-    // Unified PDF download/share action inside modal
     const handlePdfAction = async (action: 'download' | 'share') => {
         const element = document.getElementById('teacher-term-doc-inner');
         if (!element || !pdfData) return;
 
         setIsGeneratingPdf(true);
 
-        const safeName = (pdfData.term_document?.userName || 'Professor').replace(/[^a-zA-Z0-9]/g, '_');
+        const userName = pdfData.term_document?.userName || currentUser?.full_name || 'Professor';
+        const safeName = userName.replace(/[^a-zA-Z0-9]/g, '_');
         const fileName = `TERMO_${safeName}_${new Date().toISOString().split('T')[0]}.pdf`;
 
         const opt = {
@@ -62,7 +63,6 @@ export function TeacherBookings() {
                         el.style.width = '210mm';
                         el.style.maxWidth = 'none';
                         el.style.margin = '0 auto';
-                        // Ensure parent wrapper in clone doesn't constrain it
                         if (el.parentElement) {
                             el.parentElement.style.width = '210mm';
                             el.parentElement.style.maxWidth = 'none';
@@ -95,7 +95,7 @@ export function TeacherBookings() {
             }
         } catch (e) {
             console.error('PDF Error:', e);
-            alert('Erro ao processar o arquivo. Tente novamente.');
+            alert('Erro ao processar o arquivo.');
         } finally {
             setIsGeneratingPdf(false);
         }
@@ -122,7 +122,6 @@ export function TeacherBookings() {
                             Baixar PDF
                         </button>
 
-                        {/* Share Mobile */}
                         <button
                             onClick={() => handlePdfAction('share')}
                             disabled={isGeneratingPdf}
@@ -172,8 +171,6 @@ export function TeacherBookings() {
         return <Monitor className={baseClass} />;
     };
 
-
-
     const fetchBookings = async () => {
         if (!user) return;
 
@@ -190,76 +187,56 @@ export function TeacherBookings() {
 
         if (startDate) query = query.gte('booking_date', startDate);
         if (endDate) query = query.lte('booking_date', endDate);
+        if (statusFilter !== 'all') query = query.eq('status', statusFilter);
 
-        if (statusFilter !== 'all') {
-            query = query.eq('status', statusFilter);
-        }
+        if (recurringFilter === 'recurring') query = query.eq('is_recurring', true);
+        else if (recurringFilter === 'normal') query = query.eq('is_recurring', false);
 
-        if (recurringFilter === 'recurring') {
-            query = query.eq('is_recurring', true);
-        } else if (recurringFilter === 'normal') {
-            query = query.eq('is_recurring', false);
-        }
-
-        // Periods logic (approximate)
-        if (periodFilter === 'morning') {
-            query = query.gte('start_time', '07:00').lte('start_time', '12:00');
-        } else if (periodFilter === 'afternoon') {
-            query = query.gte('start_time', '12:01').lte('start_time', '18:00');
-        } else if (periodFilter === 'night') {
-            query = query.gte('start_time', '18:01').lte('start_time', '23:59');
-        }
+        if (periodFilter === 'morning') query = query.gte('start_time', '07:00').lte('start_time', '12:00');
+        else if (periodFilter === 'afternoon') query = query.gte('start_time', '12:01').lte('start_time', '18:00');
+        else if (periodFilter === 'night') query = query.gte('start_time', '18:01').lte('start_time', '23:59');
 
         const { data, error } = await query
             .order('booking_date', { ascending: true })
             .order('start_time', { ascending: true });
 
         if (!error && data) {
-            const fetchedBookings = data as Booking[];
+            setBookings(data as Booking[]);
 
-            // Sync status to 'encerrado' for expired ones
+            // Auto expire locally
             const now = new Date();
-            const expiredIds = fetchedBookings
-                .filter(b => {
+            const expiredIds = data
+                .filter((b: any) => {
                     if (b.status !== 'active' || !b.booking_date || !b.end_time) return false;
                     const bDate = b.booking_date;
                     const bTime = b.end_time.length === 5 ? `${b.end_time}:00` : b.end_time;
                     try {
                         const expiration = parseISO(`${bDate}T${bTime}`);
                         return !isNaN(expiration.getTime()) && now > expiration;
-                    } catch (e) {
-                        return false;
-                    }
+                    } catch (e) { return false; }
                 })
-                .map(b => b.id);
+                .map((b: any) => b.id);
 
             if (expiredIds.length > 0) {
-                await supabase
-                    .from('bookings')
-                    .update({ status: 'encerrado' })
-                    .in('id', expiredIds);
-
-                // Update local status as well to avoid a second fetch
-                fetchedBookings.forEach(b => {
-                    if (expiredIds.includes(b.id)) b.status = 'encerrado';
-                });
+                supabase.from('bookings').update({ status: 'encerrado' }).in('id', expiredIds);
             }
-
-            setBookings(fetchedBookings);
         }
         setLoading(false);
     };
 
     useEffect(() => {
         fetchBookings();
+        const bookingsSub = supabase
+            .channel('teacher_bookings_changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `user_id=eq.${user?.id}` }, () => fetchBookings())
+            .subscribe();
+        return () => { bookingsSub.unsubscribe(); };
     }, [user?.id, startDate, endDate, periodFilter, statusFilter, recurringFilter]);
 
     const handleDelete = async () => {
         if (!deleteModal.bookingId) return;
+        // setDeleting(true);
 
-        setDeleting(true);
-
-        // Always soft delete (update status) to keep history for admin
         const { error } = await supabase
             .from('bookings')
             .update({ status: 'cancelled_by_user' })
@@ -272,52 +249,40 @@ export function TeacherBookings() {
             console.error('Delete error:', error);
             alert('Erro ao excluir agendamento.');
         }
-        setDeleting(false);
+        // setDeleting(false);
     };
 
-    const handleDeleteSeries = async () => {
-        if (!deleteModal.recurringId) return;
-
-        const confirmAll = window.confirm("Isso irá cancelar TODAS as ocorrências futuras deste agendamento fixo. Deseja continuar?");
-        if (!confirmAll) return;
-
-        setDeleting(true);
-        try {
-            // 1. Deactivate the rule
-            const { error: ruleError } = await supabase
-                .from('recurring_bookings')
-                .update({ is_active: false })
-                .eq('id', deleteModal.recurringId);
-
-            if (ruleError) throw ruleError;
-
-            // 2. Cancel all future instances
-            const today = new Date().toISOString().split('T')[0];
-            const { error: bookingsError } = await supabase
-                .from('bookings')
-                .update({ status: 'cancelled_by_user' })
-                .eq('recurring_id', deleteModal.recurringId)
-                .gte('booking_date', today);
-
-            if (bookingsError) throw bookingsError;
-
-            setDeleteModal({ isOpen: false, bookingId: null, recurringId: null });
-            fetchBookings();
-            alert('Agendamento fixo e todas as ocorrências futuras foram canceladas.');
-        } catch (error) {
-            console.error('Series delete error:', error);
-            alert('Erro ao cancelar a série de agendamentos.');
-        } finally {
-            setDeleting(false);
-        }
-    };
-
-    const filteredBookings = bookings.filter(b => {
+    const filteredList = bookings.filter(b => {
         const searchLower = searchTerm.toLowerCase();
         const equipmentName = b.equipment?.name?.toLowerCase() || '';
         const local = b.local.toLowerCase();
         return equipmentName.includes(searchLower) || local.includes(searchLower);
     });
+
+    const transformLocal = (localCode: string, unit: string) => {
+        if (!localCode) return 'Local não definido';
+        try {
+            const unitMap: Record<string, string> = {
+                'S01': 'Sala 01', 'S02': 'Sala 02', 'S03': 'Sala 03', 'S04': 'Sala 04', 'S05': 'Sala 05',
+                'S06': 'Sala 06', 'S07': 'Sala 07', 'S08': 'Sala 08', 'S09': 'Sala 09', 'S10': 'Sala 10',
+                'S11': 'Sala 11', 'S12': 'Sala 12', 'S13': 'Sala 13', 'S14': 'Sala 14', 'S15': 'Sala 15',
+                'S16': 'Sala 16', 'S17': 'Sala 17', 'S18': 'Sala 18', 'S19': 'Sala 19', 'S20': 'Sala 20',
+                'LAB01': 'Lab. Informática 01', 'LAB02': 'Lab. Informática 02', 'AUD': 'Auditório',
+                'BIB': 'Biblioteca', 'QPD': 'Quadra Poliesportiva', 'PAT': 'Pátio', 'CAN': 'Cantina', 'DIR': 'Diretoria',
+                'SEC': 'Secretaria', 'SALPROF': 'Sala dos Professores', 'COORD': 'Coordenação'
+            };
+
+            // If it's a known code, return the full name
+            if (unitMap[localCode]) return unitMap[localCode];
+
+            // If unit is Matriz and local is just a number, format it
+            if (unit === 'Matriz' && /^\d+$/.test(localCode)) {
+                return `Sala ${localCode.padStart(2, '0')}`;
+            }
+
+            return localCode;
+        } catch (e) { return localCode; }
+    };
 
     if (loading) {
         return (
@@ -329,10 +294,10 @@ export function TeacherBookings() {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-black text-gray-900">Meus Agendamentos <span className="text-primary-600 text-xs font-bold">(v2.2)</span></h1>
+                    <h1 className="text-2xl font-black text-gray-900">Meus Agendamentos</h1>
                     <p className="text-sm text-gray-500 mt-1">Gerencie suas reservas e visualize termos assinados.</p>
                 </div>
 
@@ -341,7 +306,7 @@ export function TeacherBookings() {
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 font-bold" />
                         <input
                             type="text"
-                            placeholder="Buscar item ou local..."
+                            placeholder="Buscar equipamento ou local..."
                             className="w-full bg-white border border-gray-100 rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 shadow-sm outline-none transition-all"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -364,371 +329,294 @@ export function TeacherBookings() {
                 </div>
             </div>
 
-            {/* Filter Bar */}
-            {showFilters && (
-                <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data Início</label>
-                            <div className="relative">
-                                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 outline-none"
-                                />
+            {
+                showFilters && (
+                    <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data Início</label>
+                                <div className="relative">
+                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <input
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 outline-none"
+                                    />
+                                </div>
                             </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data Fim</label>
-                            <div className="relative">
-                                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <input
-                                    type="date"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 outline-none"
-                                />
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data Fim</label>
+                                <div className="relative">
+                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 outline-none"
+                                    />
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Período</label>
-                            <div className="relative">
-                                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <select
-                                    value={periodFilter}
-                                    onChange={(e) => setPeriodFilter(e.target.value as any)}
-                                    className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer outline-none"
-                                >
-                                    <option value="all">Todos Períodos</option>
-                                    <option value="morning">Manhã (07h-12h)</option>
-                                    <option value="afternoon">Tarde (12h-18h)</option>
-                                    <option value="night">Noite (18h-24h)</option>
-                                </select>
-                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Período</label>
+                                <div className="relative">
+                                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <select
+                                        value={periodFilter}
+                                        onChange={(e) => setPeriodFilter(e.target.value as any)}
+                                        className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer outline-none"
+                                    >
+                                        <option value="all">Todos Períodos</option>
+                                        <option value="morning">Manhã (07h-12h)</option>
+                                        <option value="afternoon">Tarde (12h-18h)</option>
+                                        <option value="night">Noite (18h-24h)</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Status</label>
-                            <div className="relative">
-                                <History className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <select
-                                    value={statusFilter}
-                                    onChange={(e) => setStatusFilter(e.target.value as any)}
-                                    className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer outline-none"
-                                >
-                                    <option value="all">Todos Status</option>
-                                    <option value="active">Agendados (Ativos)</option>
-                                    <option value="encerrado">Concluídos</option>
-                                </select>
-                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Status</label>
+                                <div className="relative">
+                                    <History className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <select
+                                        value={statusFilter}
+                                        onChange={(e) => setStatusFilter(e.target.value as any)}
+                                        className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer outline-none"
+                                    >
+                                        <option value="all">Todos Status</option>
+                                        <option value="active">Agendados (Ativos)</option>
+                                        <option value="encerrado">Concluídos</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                                </div>
                             </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tipo</label>
-                            <div className="relative">
-                                <Repeat className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <select
-                                    value={recurringFilter}
-                                    onChange={(e) => setRecurringFilter(e.target.value as any)}
-                                    className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer outline-none"
-                                >
-                                    <option value="all">Todos os Tipos</option>
-                                    <option value="normal">Agendamento Normal</option>
-                                    <option value="recurring">Agendamento Recorrente</option>
-                                </select>
-                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tipo</label>
+                                <div className="relative">
+                                    <Repeat className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <select
+                                        value={recurringFilter}
+                                        onChange={(e) => setRecurringFilter(e.target.value as any)}
+                                        className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer outline-none"
+                                    >
+                                        <option value="all">Todos os Tipos</option>
+                                        <option value="normal">Agendamento Normal</option>
+                                        <option value="recurring">Agendamento Recorrente</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                                </div>
                             </div>
                         </div>
                     </div>
+                )
+            }
 
-                    <div className="mt-4 pt-4 border-t border-gray-50 flex justify-end">
-                        <button
-                            onClick={() => {
-                                setStartDate('');
-                                setEndDate('');
-                                setPeriodFilter('all');
-                                setStatusFilter('all');
-                                setRecurringFilter('all');
-                                setSearchTerm('');
-                            }}
-                            className="text-[10px] font-black text-primary-600 uppercase tracking-widest hover:text-primary-700 transition-colors"
-                        >
-                            Limpar Filtros
-                        </button>
+            {
+                filteredList.length === 0 ? (
+                    <div className="text-center py-32 bg-white rounded-3xl shadow-sm border border-gray-100">
+                        <History className="mx-auto h-20 w-20 text-gray-100 mb-6" />
+                        <h3 className="text-xl font-black text-gray-900">
+                            {searchTerm || startDate || endDate || periodFilter !== 'all' || statusFilter !== 'all' || recurringFilter !== 'all'
+                                ? 'Nenhum agendamento encontrado'
+                                : 'Nenhum agendamento ativo'}
+                        </h3>
                     </div>
-                </div>
-            )}
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-start">
+                        {(() => {
+                            const grouped: Record<string, Booking[]> = {};
+                            const singles: Booking[] = [];
 
-            {filteredBookings.length === 0 ? (
-                <div className="text-center py-32 bg-white rounded-3xl shadow-sm border border-gray-100">
-                    <History className="mx-auto h-20 w-20 text-gray-100 mb-6" />
-                    <h3 className="text-xl font-black text-gray-900">
-                        {searchTerm || startDate || endDate || periodFilter !== 'all' || statusFilter !== 'all' || recurringFilter !== 'all'
-                            ? 'Nenhum agendamento encontrado'
-                            : 'Nenhum agendamento ativo'}
-                    </h3>
-                    <p className="mt-2 text-gray-500 text-sm max-w-xs mx-auto">
-                        Tente ajustar seus filtros ou busca para encontrar suas reservas.
-                    </p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-start">
-                    {(() => {
-                        // Group bookings by date and display_id to separate recurring dates
-                        const grouped: Record<string, Booking[]> = {};
-                        const singleBookings: Booking[] = [];
+                            filteredList.forEach((b: Booking) => {
+                                if (b.display_id) {
+                                    const groupKey = `${b.booking_date}_${b.display_id}`;
+                                    if (!grouped[groupKey]) grouped[groupKey] = [];
+                                    grouped[groupKey].push(b);
+                                } else {
+                                    singles.push(b);
+                                }
+                            });
 
-                        filteredBookings.forEach(b => {
-                            if (b.display_id) {
-                                // Include date in grouping key to separate recurring cards
-                                const groupKey = `${b.booking_date}_${b.display_id}`;
-                                if (!grouped[groupKey]) grouped[groupKey] = [];
-                                grouped[groupKey].push(b);
-                            } else {
-                                singleBookings.push(b);
-                            }
-                        });
+                            const groupKeys = Object.keys(grouped);
 
-                        // Get unique keys while maintaining order
-                        const groupKeys = Array.from(new Set(
-                            filteredBookings
-                                .filter(b => !!b.display_id)
-                                .map(b => `${b.booking_date}_${b.display_id}`)
-                        ));
+                            const renderList = [
+                                ...groupKeys.map(key => grouped[key]),
+                                ...singles.map(b => [b])
+                            ].sort((a, b) => {
+                                const dateA = a[0].booking_date + a[0].start_time;
+                                const dateB = b[0].booking_date + b[0].start_time;
+                                return dateA.localeCompare(dateB);
+                            });
 
-                        return [...groupKeys.map(key => grouped[key]), ...singleBookings.map(b => [b])].map((group) => {
-                            const first = group[0];
-                            const isMulti = group.length > 1;
+                            return renderList.map((group) => {
+                                const first = group[0];
+                                const isMulti = group.length > 1;
+                                const now = new Date();
+                                const bDate = first.booking_date || '';
+                                const bTime = (first.end_time && first.end_time.length === 5) ? `${first.end_time}:00` : (first.end_time || '00:00:00');
+                                let isExpired = false;
+                                try {
+                                    const bookingEnd = parseISO(`${bDate}T${bTime}`);
+                                    isExpired = !isNaN(bookingEnd.getTime()) && now > bookingEnd;
+                                } catch (e) { isExpired = false; }
+                                const isEffectivelyClosed = first.status === 'encerrado' || (first.status === 'active' && isExpired);
 
-                            const now = new Date();
-                            const bDate = first.booking_date || '';
-                            const bTime = (first.end_time && first.end_time.length === 5) ? `${first.end_time}:00` : (first.end_time || '00:00:00');
-                            let isExpired = false;
-                            try {
-                                const bookingEnd = parseISO(`${bDate}T${bTime}`);
-                                isExpired = !isNaN(bookingEnd.getTime()) && now > bookingEnd;
-                            } catch (e) {
-                                isExpired = false;
-                            }
-                            const isEffectivelyClosed = first.status === 'encerrado' || (first.status === 'active' && isExpired);
+                                const icon = getEquipmentIcon(first.equipment?.name, "h-6 w-6");
 
-                            return (
-                                <div key={first.display_id ? `${first.booking_date}_${first.display_id}` : first.id} className="group relative bg-white shadow-sm rounded-[2rem] p-5 md:p-6 border border-gray-100 hover:shadow-2xl hover:shadow-primary-100/30 transition-all duration-300 flex flex-col">
-                                    <div className="flex flex-col">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div className="flex-1 min-w-0">
-                                                {!isMulti ? (
-                                                    // Layout Original para Item Único
+                                return (
+                                    <div key={first.display_id ? `${first.booking_date}_${first.display_id}` : first.id} className="group relative bg-white shadow-sm rounded-[2rem] p-5 md:p-6 border border-gray-100 hover:shadow-2xl hover:shadow-primary-100/30 transition-all duration-300 flex flex-col">
+                                        <div className="flex flex-col">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex-1 min-w-0">
                                                     <div className="flex items-center space-x-3">
-                                                        <div className="h-12 w-12 bg-indigo-50 rounded-2xl flex items-center justify-center group-hover:bg-primary-50 transition-colors duration-200 shrink-0 ring-1 ring-gray-100 shadow-sm">
-                                                            {getEquipmentIcon(first.equipment?.name, "h-6 w-6")}
+                                                        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ring-1 ring-gray-100 shadow-sm bg-indigo-50 group-hover:bg-indigo-100 transition-colors duration-200`}>
+                                                            {icon}
                                                         </div>
                                                         <div className="min-w-0">
                                                             <h3 className="font-bold text-gray-900 group-hover:text-primary-900 transition-colors duration-200 truncate leading-tight">
-                                                                {first.equipment?.name}
+                                                                {isMulti ? 'Multi-Equipamentos' : first.equipment?.name}
                                                             </h3>
                                                             <div className="flex flex-col mt-0.5">
-                                                                <p className="text-[10px] text-primary-600 group-hover:text-primary-800 font-bold uppercase truncate">
-                                                                    {first.equipment?.brand} {first.equipment?.model}
+                                                                <p className={`text-[10px] font-bold uppercase truncate text-primary-600`}>
+                                                                    {isMulti ? `${group.length} itens no termo` : `${first.equipment?.brand || ''} ${first.equipment?.model || ''}`}
                                                                 </p>
-                                                                <span className="text-xs md:text-sm font-black text-blue-600 uppercase tracking-tight mt-1">
-                                                                    Quantidade {first.quantity}
-                                                                </span>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                ) : (
-                                                    // Novo Layout para Múltiplos Itens
-                                                    <div className="space-y-4">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <div className="p-1.5 bg-indigo-600 rounded-lg shadow-sm">
-                                                                <Monitor className="h-3 w-3 text-white" />
-                                                            </div>
-                                                            <span className="text-[10px] font-black text-indigo-700 uppercase tracking-tight">Multi-Equipamentos ({group.length})</span>
-                                                        </div>
-                                                        <div className="space-y-1 pr-1">
-                                                            {group.map((b) => (
-                                                                <div key={b.id} className="flex items-center gap-2 p-1.5 bg-gray-50/50 rounded-xl border border-transparent group-hover:border-indigo-100 transition-all">
-                                                                    <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shrink-0 border border-gray-100 shadow-sm">
-                                                                        {getEquipmentIcon(b.equipment?.name)}
-                                                                    </div>
-                                                                    <div className="min-w-0 flex-1">
-                                                                        <p className="text-[10px] font-black text-gray-900 truncate leading-tight tracking-tight">{b.equipment?.name}</p>
-                                                                        <p className="text-[9px] text-gray-500 truncate font-bold uppercase">{b.equipment?.brand} • <span className="text-blue-600 font-black">Quantidade {b.quantity}</span></p>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
+                                                </div>
 
-                                            <div className="flex flex-col items-end gap-1 ml-3 shrink-0">
-                                                <span className={`
+                                                <div className="flex flex-col items-end gap-1 ml-3 shrink-0">
+                                                    <span className={`
                                                     px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-tighter
                                                     ${first.status === 'active' && !isExpired ? 'bg-green-50 text-green-700 border-green-100' :
-                                                        isEffectivelyClosed ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                                            'bg-red-50 text-red-700 border-red-100'}
+                                                            isEffectivelyClosed ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                                'bg-red-50 text-red-700 border-red-100'}
                                                 `}>
-                                                    {first.status === 'active' && !isExpired ? 'Reservado' :
-                                                        isEffectivelyClosed ? 'Concluído' : 'Cancelado'}
-                                                </span>
-                                                {first.is_recurring && (
-                                                    <div className="flex items-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-tight rounded-lg border border-amber-100 italic">
-                                                        <Repeat className="h-3 w-3" />
-                                                        Recorrente
+                                                        {first.status === 'active' && !isExpired ? 'Reservado' :
+                                                            isEffectivelyClosed ? 'Concluído' : 'Cancelado'}
+                                                    </span>
+                                                    {first.is_recurring && (
+                                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-tight rounded-lg border border-amber-100 italic">
+                                                            <Repeat className="h-3 w-3" />
+                                                            Recorrente
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {isMulti && (
+                                                <div className="space-y-1 mb-4 pr-1">
+                                                    {group.map((b: Booking) => (
+                                                        <div key={b.id} className="flex items-center gap-2 p-1.5 bg-gray-50/50 rounded-xl border border-transparent group-hover:border-indigo-100 transition-all">
+                                                            <div className="h-6 w-6 bg-white rounded-lg flex items-center justify-center shrink-0 border border-gray-100 shadow-sm">
+                                                                {getEquipmentIcon(b.equipment?.name, "h-3 w-3")}
+                                                            </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-[10px] font-black text-gray-900 truncate leading-tight tracking-tight">{b.equipment?.name}</p>
+                                                                {/* Added Quantity Display */}
+                                                                <p className="text-[9px] text-gray-500 truncate font-bold uppercase">Qtd: {b.quantity}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            <div className="space-y-3 text-sm text-gray-600 mt-2">
+                                                <div className="flex items-center p-2.5 bg-gray-50/50 rounded-2xl border border-gray-50 group-hover:border-primary-100/50 transition-all">
+                                                    <div className="p-1.5 bg-white rounded-lg mr-3 shadow-sm shrink-0">
+                                                        <MapPin className="h-3.5 w-3.5 text-primary-600" />
                                                     </div>
-                                                )}
-                                                {first.display_id && (
-                                                    <div className="flex flex-col items-end">
-                                                        <span className="text-[10px] font-black text-indigo-600 italic mt-0.5">
-                                                            ID TERMO #{first.display_id}
+                                                    <div className="flex flex-col min-w-0">
+                                                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Localização</span>
+                                                        <span className="font-bold text-gray-700 text-xs truncate">
+                                                            {transformLocal(first.local, first.unit)}
                                                         </span>
-                                                        {first.term_hash && (
-                                                            <span className="text-[8px] text-gray-400 font-black italic">
-                                                                HASH: {first.term_hash.substring(0, 8)}...
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-3 text-sm text-gray-600 mt-4">
-                                            <div className="flex items-center p-2.5 bg-gray-50/50 rounded-2xl border border-gray-50 group-hover:border-primary-100/50 transition-all">
-                                                <div className="p-1.5 bg-white rounded-lg mr-3 shadow-sm shrink-0">
-                                                    <MapPin className="h-3.5 w-3.5 text-primary-600" />
-                                                </div>
-                                                <div className="flex flex-col min-w-0">
-                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Localização</span>
-                                                    <span className="font-bold text-gray-700 text-xs truncate">{first.local} • {first.unit}</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div className="flex flex-col p-2.5 bg-gray-50/50 rounded-2xl border border-gray-50 shrink-0">
-                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Data</span>
-                                                    <div className="flex items-center font-bold text-gray-700 text-xs">
-                                                        <Calendar className="h-3.5 w-3.5 mr-1.5 text-primary-600" />
-                                                        {format(parseISO(first.booking_date), "dd/MM/yy")}
                                                     </div>
                                                 </div>
-                                                <div className="flex flex-col p-2.5 bg-gray-50/50 rounded-2xl border border-gray-50 shrink-0">
-                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Horário</span>
-                                                    <div className="flex items-center font-bold text-gray-700 text-xs">
-                                                        <Clock className="h-3.5 w-3.5 mr-1.5 text-primary-600" />
-                                                        {first.start_time.slice(0, 5)}-{first.end_time.slice(0, 5)}
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="flex flex-col p-2.5 bg-gray-50/50 rounded-2xl border border-gray-50 shrink-0">
+                                                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Data</span>
+                                                        <div className="flex items-center font-bold text-gray-700 text-xs">
+                                                            <Calendar className="h-3.5 w-3.5 mr-1.5 text-primary-600" />
+                                                            {format(parseISO(first.booking_date), "dd/MM/yy")}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col p-2.5 bg-gray-50/50 rounded-2xl border border-gray-50 shrink-0">
+                                                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Horário</span>
+                                                        <div className="flex items-center font-bold text-gray-700 text-xs">
+                                                            <Clock className="h-3.5 w-3.5 mr-1.5 text-primary-600" />
+                                                            {first.start_time.slice(0, 5)}-{first.end_time.slice(0, 5)}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {first.observations && (
-                                            <div className="mt-4 p-3 bg-amber-50/50 rounded-xl border border-amber-100/30">
-                                                <p className="text-[10px] text-amber-800 font-medium italic leading-relaxed line-clamp-1">
-                                                    "{first.observations}"
-                                                </p>
-                                            </div>
-                                        )}
+                                        <div className="mt-6 grid gap-2 grid-cols-1 sm:grid-cols-2">
+                                            <button
+                                                onClick={() => handleOpenTermModal(first)}
+                                                className="flex items-center justify-center py-3 px-4 bg-white border border-gray-200 text-gray-700 hover:border-primary-200 hover:text-primary-600 font-bold text-[10px] rounded-xl transition-all active:scale-95 shadow-sm uppercase tracking-wider"
+                                            >
+                                                <FileText className="h-3.5 w-3.5 mr-1.5 text-primary-600" />
+                                                Termo
+                                            </button>
+
+                                            <button
+                                                onClick={() => setDeleteModal({
+                                                    isOpen: true,
+                                                    bookingId: first.id,
+                                                    recurringId: first.recurring_id
+                                                })}
+                                                className="flex items-center justify-center py-3 px-4 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-black text-[10px] rounded-xl transition-all active:scale-95 group/btn border border-red-100 uppercase tracking-wider"
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5 mr-1.5 group-hover/btn:scale-110 transition-transform" />
+                                                Excluir
+                                            </button>
+                                        </div>
                                     </div>
+                                );
+                            });
+                        })()
+                        }
+                    </div>
+                )
+            }
 
-                                    <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <button
-                                            onClick={() => handleOpenTermModal(first)}
-                                            className="flex items-center justify-center py-3 px-4 bg-white border border-gray-200 text-gray-700 hover:border-primary-200 hover:text-primary-600 font-bold text-[10px] rounded-xl transition-all active:scale-95 shadow-sm uppercase tracking-wider"
-                                        >
-                                            <FileText className="h-3.5 w-3.5 mr-1.5 text-primary-600" />
-                                            Termo
-                                        </button>
-
-                                        <button
-                                            onClick={() => setDeleteModal({
-                                                isOpen: true,
-                                                bookingId: first.id,
-                                                recurringId: first.recurring_id
-                                            })}
-                                            className="flex items-center justify-center py-3 px-4 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-black text-[10px] rounded-xl transition-all active:scale-95 group/btn border border-red-100 uppercase tracking-wider"
-                                        >
-                                            <Trash2 className="h-3.5 w-3.5 mr-1.5 group-hover/btn:scale-110 transition-transform" />
-                                            Excluir
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        });
-                    })()}
-                </div>
-            )}
-
-            {/* Modal de Visualização do Termo */}
             {modalOpen && <TermModal />}
 
-            {/* Teacher Delete Confirmation Modal */}
-            {deleteModal.isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div
-                        className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
-                        onClick={() => setDeleteModal({ isOpen: false, bookingId: null })}
-                    ></div>
-
-                    <div className="relative bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden transform transition-all animate-in zoom-in-95 duration-200">
-                        <div className="p-10">
-                            <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-orange-50 mb-8">
-                                <AlertTriangle className="h-10 w-10 text-orange-600" />
+            {
+                deleteModal.isOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onClick={() => setDeleteModal({ isOpen: false, bookingId: null })} />
+                        <div className="relative bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200">
+                            <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <AlertTriangle className="h-8 w-8 text-red-500" />
                             </div>
-
-                            <h3 className="text-2xl font-black text-gray-900 text-center mb-3">
-                                {bookings.find(b => b.id === deleteModal.bookingId)?.is_recurring
-                                    ? 'Excluir Ocorrência Fixa?'
-                                    : 'Excluir Agendamento?'
-                                }
-                            </h3>
-
-                            <p className="text-gray-500 text-center text-sm leading-relaxed mb-10 px-2">
-                                {bookings.find(b => b.id === deleteModal.bookingId)?.is_recurring
-                                    ? "Você está excluindo esta data específica do seu agendamento fixo. As outras semanas permanecem ativas."
-                                    : "Este agendamento será marcado como excluído e o equipamento ficará disponível se ainda estiver no período de uso."
-                                }
+                            <h3 className="text-xl font-black text-gray-900 text-center mb-2">Excluir Agendamento?</h3>
+                            <p className="text-sm text-gray-500 text-center mb-8 font-medium leading-relaxed">
+                                Tem certeza que deseja excluir esta reserva?
                             </p>
-
                             <div className="flex flex-col gap-3">
                                 <button
-                                    disabled={deleting}
                                     onClick={handleDelete}
-                                    className="w-full px-6 py-4 bg-red-600 hover:bg-red-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-red-200 transition-all active:scale-95 disabled:opacity-50"
+                                    className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 active:scale-95 transition-all text-sm uppercase tracking-wide"
                                 >
-                                    {deleting ? 'Processando...' : 'Confirmar Exclusão'}
+                                    Confirmar Exclusão
                                 </button>
-
-                                {deleteModal.recurringId && (
-                                    <button
-                                        disabled={deleting}
-                                        onClick={handleDeleteSeries}
-                                        className="w-full px-6 py-4 bg-orange-600 hover:bg-orange-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-orange-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                                    >
-                                        <Repeat className="h-4 w-4" />
-                                        Excluir SÉRIE Completa
-                                    </button>
-                                )}
-
                                 <button
-                                    disabled={deleting}
-                                    onClick={() => setDeleteModal({ isOpen: false, bookingId: null, recurringId: null })}
-                                    className="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-sm rounded-2xl transition-all disabled:opacity-50"
+                                    onClick={() => setDeleteModal({ isOpen: false, bookingId: null })}
+                                    className="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold rounded-xl active:scale-95 transition-all text-sm uppercase tracking-wide"
                                 >
                                     Cancelar
                                 </button>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
         </div>
     );
 }

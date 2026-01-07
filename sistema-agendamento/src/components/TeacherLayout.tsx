@@ -8,6 +8,7 @@ export function TeacherLayout() {
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+
     const handleSignOut = async () => {
         await signOut();
         navigate('/login');
@@ -34,9 +35,11 @@ export function TeacherLayout() {
                             <Link to="/teacher" className="hover:text-primary-200 px-3 py-2 text-sm font-medium flex items-center gap-2">
                                 <Home className="w-4 h-4" /> Início
                             </Link>
-                            <Link to="/teacher/bookings" className="hover:text-primary-200 px-3 py-2 text-sm font-medium flex items-center gap-2">
+                            <Link to="/teacher/my-bookings" className="hover:text-primary-200 px-3 py-2 text-sm font-medium flex items-center gap-2">
                                 <Calendar className="w-4 h-4" /> Agendamentos
                             </Link>
+
+
                             <Link to="/teacher/about" className="hover:text-primary-200 px-3 py-2 text-sm font-medium flex items-center gap-2">
                                 <BookOpen className="w-4 h-4" /> Sobre
                             </Link>
@@ -88,12 +91,14 @@ export function TeacherLayout() {
                             </Link>
 
                             <Link
-                                to="/teacher/bookings"
+                                to="/teacher/my-bookings"
                                 onClick={() => setIsMobileMenuOpen(false)}
                                 className="text-primary-100 hover:bg-primary-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium flex items-center gap-2"
                             >
                                 <Calendar className="w-5 h-5" /> Agendamentos
                             </Link>
+
+
 
                             <Link
                                 to="/teacher/about"

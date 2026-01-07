@@ -34,6 +34,7 @@ interface TermData {
     term_hash?: string;
     version_tag?: string;
     term_fingerprint?: string;
+    type?: 'equipment' | 'room';
 }
 
 interface TermDocumentProps {
@@ -113,7 +114,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
         return dates;
     };
 
-
+    const isRoom = data.type === 'room';
 
     return (
         <div id={id} style={{
@@ -153,7 +154,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
             <div style={{ textAlign: 'justify', marginBottom: '0.75rem' }}>
                 <p style={{ marginBottom: '0.5rem' }}>
                     Declaro que eu, <strong style={{ fontWeight: 'bold' }}>{getName()}</strong>, portador(a) do número de usuário TOTVS <strong style={{ fontWeight: 'bold' }}>{getTotvs()}</strong>,
-                    estou ciente e de acordo com as condições de uso do(s) equipamento(s) abaixo descrito(s),
+                    estou ciente e de acordo com as condições de uso {isRoom ? 'do espaço físico' : 'do(s) equipamento(s)'} abaixo descrito(s),
                     responsabilizando-me integralmente por sua utilização durante o período de agendamento.
                 </p>
             </div>
@@ -175,7 +176,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 }}>Dados do Agendamento</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem', fontSize: '9pt' }}>
                     <p><strong>Unidade:</strong> {getUnit()}</p>
-                    <p><strong>Local:</strong> {getLocal()}</p>
+                    <p><strong>{isRoom ? 'Sala/Espaço' : 'Local'}:</strong> {getLocal()}</p>
                     <p><strong>Dia de Uso:</strong> {getDate()}</p>
                     <p><strong>Horário:</strong> {getTime()}</p>
                 </div>
@@ -200,36 +201,38 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 )}
             </div>
 
-            <div style={{ marginBottom: '1rem' }}>
-                <h2 style={{
-                    fontWeight: 'bold',
-                    borderBottom: '1px solid #000000',
-                    marginBottom: '0.25rem',
-                    paddingBottom: '0.25rem',
-                    fontSize: '9pt',
-                    textTransform: 'uppercase'
-                }}>Equipamento(s) Reservado(s)</h2>
-                <ul style={{ listStyleType: 'disc', paddingLeft: '1.25rem', marginTop: '0.5rem' }}>
-                    {getEquipments().map((eq, idx) => (
-                        <li key={idx} style={{ marginBottom: '0.25rem' }}>
-                            <strong>{eq.name}</strong>
-                            {eq.brand ? ` (${eq.brand} ${eq.model || ''})` : ''}
-                            &nbsp;- {eq.quantity} unidade(s)
-                        </li>
-                    ))}
-                </ul>
-            </div>
+            {getEquipments().length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                    <h2 style={{
+                        fontWeight: 'bold',
+                        borderBottom: '1px solid #000000',
+                        marginBottom: '0.25rem',
+                        paddingBottom: '0.25rem',
+                        fontSize: '9pt',
+                        textTransform: 'uppercase'
+                    }}>Equipamento(s) Reservado(s)</h2>
+                    <ul style={{ listStyleType: 'disc', paddingLeft: '1.25rem', marginTop: '0.5rem' }}>
+                        {getEquipments().map((eq, idx) => (
+                            <li key={idx} style={{ marginBottom: '0.25rem' }}>
+                                <strong>{eq.name}</strong>
+                                {eq.brand ? ` (${eq.brand} ${eq.model || ''})` : ''}
+                                &nbsp;- {eq.quantity} unidade(s)
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
 
             <div style={{ marginBottom: '1rem', textAlign: 'justify', fontSize: '9pt' }}>
                 <h2 style={{ fontWeight: 'bold', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Compromissos e Responsabilidades</h2>
                 <p style={{ marginBottom: '0.25rem' }}>Ao aceitar este termo, comprometo-me a:</p>
                 <div style={{ paddingLeft: '0.5rem' }}>
                     {[
-                        "Utilizar o equipamento exclusivamente durante o período agendado e no local especificado.",
-                        "Zelar pela conservação e bom funcionamento do equipamento.",
+                        `Utilizar o ${isRoom ? 'espaço' : 'equipamento'} exclusivamente durante o período agendado e no local especificado.`,
+                        `Zelar pela conservação e bom funcionamento do ${isRoom ? 'espaço e seus itens' : 'equipamento'}.`,
                         "Comunicar imediatamente à equipe responsável qualquer defeito ou irregularidade constatada.",
-                        "Não emprestar ou transferir o equipamento a terceiros sem autorização prévia.",
-                        "Orientar adequadamente o uso do equipamento, quando utilizado por alunos, zelando por sua conservação e bom funcionamento."
+                        `Não emprestar ou transferir o ${isRoom ? 'espaço' : 'equipamento'} a terceiros sem autorização prévia.`,
+                        `Orientar adequadamente o uso do ${isRoom ? 'espaço' : 'equipamento'}, quando utilizado por alunos, zelando por sua conservação.`
                     ].map((item, index) => (
                         <div key={index} style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '0.2rem' }}>
                             <span style={{ minWidth: '15px', fontWeight: 'bold' }}>{index + 1}.</span>
@@ -247,7 +250,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
 
             <div style={{ marginBottom: '1rem', textAlign: 'justify', fontSize: '9pt' }}>
                 <p>
-                    Comprometo-me a devolver o(s) equipamento(s) nas mesmas condições em que os recebi.
+                    Comprometo-me a devolver {isRoom ? 'o espaço' : 'o(s) equipamento(s)'} nas mesmas condições em que {isRoom ? 'o recebi' : 'os recebi'}.
                     Estou ciente que qualquer dano ou extravio será de minha responsabilidade.
                 </p>
             </div>
@@ -262,7 +265,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 <h3 style={{ fontWeight: 'bold', marginBottom: '0' }}>TERMO DE CIÊNCIA</h3>
                 <p style={{ margin: 0 }}>
                     Estou ciente que a utilização inadequada pode resultar em medidas administrativas
-                    e que sou responsável pela segurança e integridade do equipamento.
+                    e que sou responsável pela segurança e integridade do {isRoom ? 'espaço' : 'equipamento'}.
                 </p>
             </div>
 

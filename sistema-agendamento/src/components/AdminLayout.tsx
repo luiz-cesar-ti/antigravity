@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LayoutDashboard, Calendar, Monitor, Users, Settings, LogOut, Menu, X, ClipboardCheck, BookOpen, Clock, UserCog } from 'lucide-react';
+import { LayoutDashboard, Calendar, Monitor, Users, Settings, LogOut, Menu, X, ClipboardCheck, BookOpen, Clock, UserCog, AlignLeft } from 'lucide-react';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import { NotificationBell } from './NotificationBell';
 
@@ -81,18 +81,16 @@ export function AdminLayout() {
                                 </Link>
                             </li>
                             {adminUser?.role !== 'super_admin' && (
-                                <>
-                                    <li>
-                                        <Link
-                                            to="/admin/equipment"
-                                            onClick={() => setIsSidebarOpen(false)}
-                                            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/equipment')}`}
-                                        >
-                                            <Monitor className="w-5 h-5" />
-                                            <span>Equipamentos</span>
-                                        </Link>
-                                    </li>
-                                </>
+                                <li>
+                                    <Link
+                                        to="/admin/equipment"
+                                        onClick={() => setIsSidebarOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/equipment')}`}
+                                    >
+                                        <Monitor className="w-5 h-5" />
+                                        <span>Equipamentos</span>
+                                    </Link>
+                                </li>
                             )}
                             <li>
                                 <Link
@@ -108,9 +106,9 @@ export function AdminLayout() {
                                 <>
                                     <li>
                                         <Link
-                                            to="/admin/emprestimos"
+                                            to="/admin/loans"
                                             onClick={() => setIsSidebarOpen(false)}
-                                            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/emprestimos')}`}
+                                            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/loans')}`}
                                         >
                                             <ClipboardCheck className="w-5 h-5" />
                                             <span>Empréstimos</span>
@@ -128,9 +126,9 @@ export function AdminLayout() {
                                     </li>
                                     <li>
                                         <Link
-                                            to="/admin/about"
+                                            to="/admin/manual"
                                             onClick={() => setIsSidebarOpen(false)}
-                                            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/about')}`}
+                                            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/manual')}`}
                                         >
                                             <BookOpen className="w-5 h-5" />
                                             <span>Manual do Admin</span>

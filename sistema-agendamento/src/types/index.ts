@@ -33,6 +33,40 @@ export interface Equipment {
     updated_at: string;
 }
 
+export interface Room {
+    id: string;
+    unit: string;
+    name: string;
+    description?: string;
+    min_time: string;
+    max_time: string;
+    created_at: string;
+    available_days?: number[]; // 0=Sun, 1=Mon...
+    start_date?: string;
+    end_date?: string;
+    is_active?: boolean;
+}
+
+export interface RoomBooking {
+    id: string;
+    room_id: string;
+    user_id: string;
+    unit: string;
+    booking_date: string;
+    start_time: string;
+    end_time: string;
+    status: 'active' | 'cancelled' | 'cancelled_by_user' | 'encerrado';
+    created_at: string;
+    is_recurring?: boolean;
+    recurring_id?: string;
+    term_hash?: string;
+    display_id?: string;
+
+    // Joins
+    room?: Room;
+    users?: User;
+}
+
 export interface Booking {
     id: string;
     user_id: string;
@@ -80,6 +114,7 @@ export interface Settings {
     unit: string;
     min_advance_time_enabled: boolean;
     min_advance_time_hours: number;
+    room_booking_enabled: boolean; // New field
     notification_email?: string;
     notification_email_enabled?: boolean;
     updated_at: string;
@@ -114,3 +149,22 @@ export interface AuthState {
     isAuthenticated: boolean;
     isLoading: boolean;
 }
+
+export type RoomBookingData = {
+    unit: string;
+    totvs_number: string;
+    full_name: string;
+    date: string;       // YYYY-MM-DD
+    startTime: string;  // HH:mm
+    endTime: string;    // HH:mm
+    roomId: string;
+    roomName: string;
+    isRecurring: boolean;
+    dayOfWeek?: number;
+    termAccepted: boolean;
+    displayId?: string;
+    term_hash?: string;
+    version_tag?: string;
+    term_document?: any;
+    observations?: string;
+};

@@ -4,21 +4,20 @@ import { useAuth } from '../../contexts/AuthContext';
 import type { Booking, Admin } from '../../types';
 import { format, parseISO } from 'date-fns';
 import {
-    Search, Calendar, Users, MapPin, FileText, Trash2, AlertTriangle,
+    Search, Calendar, Users, MapPin, FileText, Trash2,
     Monitor, Clock, Filter, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug, Repeat, ChevronDown, History,
-    Download, X, Share2
+    Download, X, Share2, Building
 } from 'lucide-react';
 import { TermDocument } from '../../components/TermDocument';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
 import { SCHOOL_UNITS } from '../../utils/constants';
-import { Building } from 'lucide-react';
 
 export function AdminBookings() {
     const { user, role } = useAuth();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
-    const [statusFilter, setStatusFilter] = useState('all'); // default to all to prevent items from "disappearing" automatically
+    const [statusFilter, setStatusFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [targetUnit, setTargetUnit] = useState<string>(SCHOOL_UNITS[0]);
     const [pdfData, setPdfData] = useState<any>(null);
@@ -29,7 +28,6 @@ export function AdminBookings() {
     useEffect(() => {
         if (user) {
             if (isSuperAdmin) {
-                // If super admin has a specific valid unit in profile, use it, otherwise keep São Vicente
                 const userUnit = (user as Admin)?.unit;
                 if (userUnit && SCHOOL_UNITS.includes(userUnit)) {
                     setTargetUnit(userUnit);
@@ -47,7 +45,6 @@ export function AdminBookings() {
     const [recurringFilter, setRecurringFilter] = useState<'recurring' | 'normal' | 'all'>('all');
     const [showFilters, setShowFilters] = useState(false);
 
-    // state for new custom modal
     const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bookingId: string | null }>({
         isOpen: false,
         bookingId: null
@@ -68,107 +65,40 @@ export function AdminBookings() {
 
         if (role === 'admin' || role === 'super_admin') {
             if (isSuperAdmin) {
-                // Super admin uses targetUnit filter
-                if (targetUnit) {
-                    query = query.eq('unit', targetUnit);
-                }
+                if (targetUnit) query = query.eq('unit', targetUnit);
             } else {
-                // Regular admin logic
                 const unit = (user as Admin).unit;
-                if (unit === 'Matriz') {
-                    // Matriz admin sees all bookings
-                } else if (unit) {
-                    query = query.eq('unit', unit);
-                } else {
-                    query = query.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
-                }
+                if (unit && unit !== 'Matriz') query = query.eq('unit', unit);
+                else if (!unit) query = query.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
             }
         }
 
         if (startDate) query = query.gte('booking_date', startDate);
         if (endDate) query = query.lte('booking_date', endDate);
+        if (recurringFilter === 'recurring') query = query.eq('is_recurring', true);
+        else if (recurringFilter === 'normal') query = query.eq('is_recurring', false);
 
-        // Status filtering moved to local filteredBookings to account for logical expiration (date/time)
-
-        if (recurringFilter === 'recurring') {
-            query = query.eq('is_recurring', true);
-        } else if (recurringFilter === 'normal') {
-            query = query.eq('is_recurring', false);
-        }
-
-        if (periodFilter === 'morning') {
-            query = query.gte('start_time', '07:00').lte('start_time', '12:00');
-        } else if (periodFilter === 'afternoon') {
-            query = query.gte('start_time', '12:01').lte('start_time', '18:00');
-        } else if (periodFilter === 'night') {
-            query = query.gte('start_time', '18:01').lte('start_time', '23:59');
-        }
+        if (periodFilter === 'morning') query = query.gte('start_time', '07:00').lte('start_time', '12:00');
+        else if (periodFilter === 'afternoon') query = query.gte('start_time', '12:01').lte('start_time', '18:00');
+        else if (periodFilter === 'night') query = query.gte('start_time', '18:01').lte('start_time', '23:59');
 
         const { data, error } = await query
             .order('booking_date', { ascending: true })
             .order('start_time', { ascending: true });
 
         if (!error && data) {
-            const fetchedBookings = data as any[];
-
-            // Sync status to 'encerrado' for expired ones
-            const now = new Date();
-            const expiredIds = fetchedBookings
-                .filter(b => {
-                    if (b.status !== 'active' || !b.booking_date || !b.end_time) return false;
-                    const bDate = b.booking_date;
-                    const bTime = b.end_time.length === 5 ? `${b.end_time}:00` : b.end_time;
-                    try {
-                        const expiration = parseISO(`${bDate}T${bTime}`);
-                        return !isNaN(expiration.getTime()) && now > expiration;
-                    } catch (e) {
-                        return false;
-                    }
-                })
-                .map(b => b.id);
-
-            if (expiredIds.length > 0) {
-                await supabase
-                    .from('bookings')
-                    .update({ status: 'encerrado' })
-                    .in('id', expiredIds);
-
-                // Update local status as well to avoid a second fetch
-                fetchedBookings.forEach(b => {
-                    if (expiredIds.includes(b.id)) b.status = 'encerrado';
-                });
-            }
-
-            setBookings(fetchedBookings);
+            setBookings(data as any[]);
         }
         setLoading(false);
     };
 
     useEffect(() => {
         fetchBookings();
-
-        // Realtime Subscription
-        const subscription = supabase
-            .channel('admin_bookings_channel')
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'bookings'
-                },
-                () => {
-                    // Optimized: Only fetch if necessary or just simple fetch for safety
-                    console.log('Booking update detected, refreshing list...');
-                    fetchBookings();
-                }
-            )
+        const subscription = supabase.channel('admin_bookings_channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => fetchBookings())
             .subscribe();
-
-        return () => {
-            subscription.unsubscribe();
-        };
-    }, [user?.id, (user as Admin)?.unit, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit]);
+        return () => { subscription.unsubscribe(); };
+    }, [user?.id, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit]);
 
     const handleDeleteBooking = async () => {
         if (!deleteModal.bookingId) return;
@@ -557,6 +487,7 @@ export function AdminBookings() {
                 </div>
             ) : (
                 <div className="bg-transparent space-y-4">
+                    {/* EQUIPMENT LIST */}
                     <ul className="space-y-4">
                         {filteredBookings.length === 0 ? (
                             <li className="px-6 py-24 text-center">
@@ -566,13 +497,11 @@ export function AdminBookings() {
                             </li>
                         ) : (
                             (() => {
-                                // Group bookings by date and display_id to separate recurring dates
                                 const grouped: Record<string, Booking[]> = {};
                                 const singleBookings: Booking[] = [];
 
                                 filteredBookings.forEach(b => {
                                     if (b.display_id) {
-                                        // Include date in grouping key to separate recurring cards
                                         const groupKey = `${b.booking_date}_${b.display_id}`;
                                         if (!grouped[groupKey]) grouped[groupKey] = [];
                                         grouped[groupKey].push(b);
@@ -581,7 +510,6 @@ export function AdminBookings() {
                                     }
                                 });
 
-                                // Get unique keys while maintaining order
                                 const groupKeys = Array.from(new Set(
                                     filteredBookings
                                         .filter(b => !!b.display_id)
@@ -595,112 +523,50 @@ export function AdminBookings() {
                                     return (
                                         <li key={first.display_id ? `${first.booking_date}_${first.display_id}` : first.id} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-lg transition-all overflow-hidden group">
                                             <div className="p-4 md:p-6 lg:p-7">
-
-                                                {/* --- DESKTOP LAYOUT (Preserved) --- */}
+                                                {/* --- DESKTOP LAYOUT --- */}
                                                 <div className="hidden lg:block">
                                                     {!isMulti ? (
-                                                        <div className="flex flex-row items-center justify-between gap-6 pb-6 mb-6 border-b border-gray-50/80">
-                                                            <div className="flex items-center gap-4 min-w-0 max-w-[30%]">
-                                                                <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-100 shadow-sm group-hover:border-indigo-100 transition-colors duration-300">
-                                                                    {getEquipmentIcon(first.equipment?.name)}
-                                                                </div>
-                                                                <div className="space-y-1 min-w-0">
-                                                                    <h3 className="text-lg font-black text-gray-900 tracking-tight leading-tight truncate">
-                                                                        {first.equipment?.name}
-                                                                    </h3>
-                                                                    <div className="inline-flex items-center px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[9px] font-black uppercase tracking-wider rounded border border-indigo-100 italic">
-                                                                        # {first.quantity} {first.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
+                                                        // Single Item Layout
+                                                        <div className="flex flex-col gap-6">
+                                                            {/* TOP ROW: Equipment Header & User Info */}
+                                                            <div className="flex flex-row items-center justify-between gap-6 pb-6 border-b border-gray-50/80">
+                                                                {/* LEFT: Equipment Info */}
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="h-11 w-11 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-100 shadow-sm group-hover:border-indigo-100 transition-colors duration-300">
+                                                                        {getEquipmentIcon(first.equipment?.name, "h-5 w-5 text-primary-600")}
                                                                     </div>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex-1 flex items-center gap-3 px-6 border-l border-gray-100">
-                                                                <div className="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0">
-                                                                    <Users className="h-5 w-5 text-indigo-600" />
-                                                                </div>
-                                                                <div className="flex flex-col min-w-0">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="font-bold text-gray-900 truncate">{(first as any).users?.full_name}</span>
-                                                                        <div className="flex items-center gap-2">
-                                                                            {getStatusBadge(first)}
-                                                                            {first.is_recurring && (
-                                                                                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-100 italic leading-4">
-                                                                                    <Repeat className="h-3 w-3" />
-                                                                                    Recorrente
-                                                                                </div>
-                                                                            )}
+                                                                    <div className="space-y-0.5">
+                                                                        <h3 className="text-base font-black text-gray-900 tracking-tight leading-tight">
+                                                                            {first.equipment?.name}
+                                                                        </h3>
+                                                                        <div className="inline-flex items-center px-2.5 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-wider rounded-md border border-indigo-100 italic">
+                                                                            # {first.quantity} {first.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
                                                                         </div>
                                                                     </div>
-                                                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5 text-xs text-gray-400 font-bold uppercase tracking-wider">
-                                                                        <span className="truncate">{(first as any).users?.email}</span>
-                                                                        <span className="text-gray-300">-</span>
-                                                                        <span className="text-gray-600 font-black">{first.unit}</span>
-                                                                        {first.display_id && (
-                                                                            <>
-                                                                                <span className="text-gray-300">-</span>
-                                                                                <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
-                                                                                {first.term_hash && (
-                                                                                    <>
-                                                                                        <span className="text-gray-300 ml-1">-</span>
-                                                                                        <span className="text-gray-500 font-black italic ml-1 text-[9px]">HASH: {first.term_hash.substring(0, 8)}...</span>
-                                                                                    </>
-                                                                                )}
-                                                                            </>
-                                                                        )}
-                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            <div className="flex items-center gap-2 shrink-0">
-                                                                {first.term_document && (
-                                                                    <button
-                                                                        onClick={() => handleOpenTermModal(first)}
-                                                                        className="flex items-center gap-2 h-10 px-4 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-[10px] rounded-xl shadow-sm transition-all active:scale-95 uppercase tracking-wider"
-                                                                    >
-                                                                        <FileText className="h-5 w-5 text-primary-500" />
-                                                                        Termo
-                                                                    </button>
-                                                                )}
-                                                                <button
-                                                                    onClick={() => setDeleteModal({ isOpen: true, bookingId: first.id })}
-                                                                    className="h-10 w-10 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95 border border-red-100 shadow-sm"
-                                                                >
-                                                                    <Trash2 className="h-5 w-5" />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="space-y-5">
-                                                            <div className="flex flex-row items-center justify-between gap-4 pb-4 border-b border-gray-50/80">
-                                                                <div className="flex items-center gap-4 min-w-0">
-                                                                    <div className="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0">
-                                                                        <Users className="h-5 w-5 text-indigo-600" />
+
+                                                                {/* CENTER: User Detailed Info */}
+                                                                <div className="flex-1 flex items-center gap-3 px-6 border-l border-r border-gray-50/80 mx-2">
+                                                                    <div className="h-8 w-8 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0">
+                                                                        <Users className="h-4 w-4 text-indigo-600" />
                                                                     </div>
                                                                     <div className="flex flex-col min-w-0">
-                                                                        <div className="flex flex-wrap items-center gap-2">
-                                                                            <span className="text-sm font-black text-gray-900 truncate leading-none">
-                                                                                {(first as any).users?.full_name}
-                                                                            </span>
-                                                                            <div className="flex items-center gap-2">
-                                                                                {getStatusBadge(first)}
-                                                                                {first.is_recurring && (
-                                                                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-100 italic leading-4">
-                                                                                        <Repeat className="h-3 w-3" />
-                                                                                        Recorrente
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
+                                                                        <div className="flex items-center gap-2 mb-1">
+                                                                            <span className="text-xs font-black text-gray-900">{(first as any).users?.full_name}</span>
+                                                                            {getStatusBadge(first)}
                                                                         </div>
-                                                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-xs text-gray-400 font-bold uppercase tracking-wider">
-                                                                            <span className="truncate">{(first as any).users?.email}</span>
-                                                                            <span className="text-gray-400">-</span>
+                                                                        <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                                                            <span className="truncate max-w-[200px]">{(first as any).users?.email}</span>
+                                                                            <span className="text-gray-300">•</span>
                                                                             <span className="text-gray-600 font-black">{first.unit}</span>
                                                                             {first.display_id && (
                                                                                 <>
-                                                                                    <span className="text-gray-400">-</span>
+                                                                                    <span className="text-gray-300">•</span>
                                                                                     <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
                                                                                     {first.term_hash && (
                                                                                         <>
-                                                                                            <span className="text-gray-400 ml-1">-</span>
-                                                                                            <span className="text-gray-500 font-black italic ml-1 text-[9px]">HASH: {first.term_hash.substring(0, 8)}...</span>
+                                                                                            <span className="text-gray-300 ml-1">-</span>
+                                                                                            <span className="text-gray-400 font-bold italic ml-1">HASH: {first.term_hash.substring(0, 8)}...</span>
                                                                                         </>
                                                                                     )}
                                                                                 </>
@@ -708,13 +574,15 @@ export function AdminBookings() {
                                                                         </div>
                                                                     </div>
                                                                 </div>
+
+                                                                {/* RIGHT: Actions */}
                                                                 <div className="flex items-center gap-2 shrink-0">
                                                                     {first.term_document && (
                                                                         <button
                                                                             onClick={() => handleOpenTermModal(first)}
                                                                             className="flex items-center gap-2 h-10 px-4 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-[10px] rounded-xl shadow-sm transition-all active:scale-95 uppercase tracking-wider"
                                                                         >
-                                                                            <FileText className="h-5 w-5 text-primary-500" />
+                                                                            <FileText className="h-4 w-4 text-primary-500" />
                                                                             Termo
                                                                         </button>
                                                                     )}
@@ -726,135 +594,248 @@ export function AdminBookings() {
                                                                     </button>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex flex-wrap items-center gap-4 pb-2 scrollbar-none">
-                                                                {group.map((b) => (
-                                                                    <div key={b.id} className="flex items-center gap-3 min-w-[140px] p-2 bg-gray-50/40 rounded-2xl border border-gray-100/60">
-                                                                        <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-100 shadow-sm">
-                                                                            {getEquipmentIcon(b.equipment?.name)}
+
+                                                            {/* BOTTOM ROW: Info Grid */}
+                                                            <div className="grid grid-cols-4 gap-4">
+                                                                {/* PROFESSOR */}
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Professor</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
+                                                                            <Users className="h-3 w-3 text-gray-400" />
                                                                         </div>
-                                                                        <div className="space-y-0.5 min-w-0">
-                                                                            <h4 className="text-xs font-black text-gray-900 tracking-tight leading-tight truncate">
-                                                                                {b.equipment?.name}
-                                                                            </h4>
-                                                                            <div className="inline-flex items-center px-1.5 py-0.5 bg-indigo-50 text-indigo-600 text-[8px] font-black uppercase tracking-wider rounded border border-indigo-100 italic">
-                                                                                # {b.quantity} {b.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
-                                                                            </div>
+                                                                        <span className="text-xs font-bold text-gray-600 truncate">{(first as any).users?.full_name}</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* ESPECIFICAÇÃO */}
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Especificação</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
+                                                                            <Monitor className="h-3 w-3 text-gray-400" />
+                                                                        </div>
+                                                                        <span className="text-xs font-bold text-gray-700 truncate">
+                                                                            {first.equipment?.brand ? `${first.equipment.brand} ${first.equipment.model || ''}` : 'Não especificado'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* SALA/LOCAL */}
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Sala/Local</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
+                                                                            <MapPin className="h-3 w-3 text-gray-400" />
+                                                                        </div>
+                                                                        <span className="text-xs font-bold text-gray-600 truncate">{first.local}</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* AGENDADO PARA */}
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Agendado Para</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
+                                                                            <Clock className="h-3 w-3 text-gray-400" />
+                                                                        </div>
+                                                                        <span className="text-xs font-bold text-gray-600">
+                                                                            {format(parseISO(first.booking_date), "dd/MM/yy")} • {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        // Multi Item Layout (Redesigned to match Single Item Structure)
+                                                        <div className="flex flex-col gap-3">
+                                                            {/* TOP ROW: User Info Header (Primary for Multi) */}
+                                                            <div className="flex flex-row items-center justify-between gap-6 pb-3 border-b border-gray-50/80">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="h-11 w-11 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0 border border-indigo-100">
+                                                                        <Users className="h-5 w-5 text-indigo-600" />
+                                                                    </div>
+                                                                    <div className="space-y-0.5">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <h3 className="text-base font-black text-gray-900 tracking-tight leading-tight">
+                                                                                {(first as any).users?.full_name}
+                                                                            </h3>
+                                                                            {getStatusBadge(first)}
+                                                                        </div>
+                                                                        <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                                                            <span className="truncate max-w-[200px]">{(first as any).users?.email}</span>
+                                                                            <span className="text-gray-300">•</span>
+                                                                            <span className="text-gray-600 font-black">{first.unit}</span>
+                                                                            {first.display_id && (
+                                                                                <>
+                                                                                    <span className="text-gray-300">•</span>
+                                                                                    <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
+                                                                                </>
+                                                                            )}
                                                                         </div>
                                                                     </div>
+                                                                </div>
+
+                                                                <div className="flex items-center gap-2 shrink-0">
+                                                                    {first.term_document && (
+                                                                        <button
+                                                                            onClick={() => handleOpenTermModal(first)}
+                                                                            className="flex items-center gap-2 h-10 px-4 bg-white border border-gray-200 text-gray-700 hover:border-primary-500 hover:text-primary-600 font-bold text-[10px] rounded-xl shadow-sm transition-all active:scale-95 uppercase tracking-wider"
+                                                                        >
+                                                                            <FileText className="h-4 w-4 text-primary-500" />
+                                                                            Termo
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Middle: Equipment Badges */}
+                                                            <div className="flex flex-wrap gap-4">
+                                                                {group.map((b) => (
+                                                                    <div key={b.id} className="flex items-center gap-4 p-3 pr-4 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-indigo-100 transition-all">
+                                                                        <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-100 shadow-sm">
+                                                                            {getEquipmentIcon(b.equipment?.name, "h-5 w-5 text-gray-700")}
+                                                                        </div>
+                                                                        <div className="flex flex-col gap-1 min-w-0">
+                                                                            <span className="text-xs font-black text-gray-900 leading-none truncate">{b.equipment?.name}</span>
+                                                                            <span className="inline-flex self-start items-center px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[8px] font-black uppercase rounded border border-indigo-100 tracking-wider italic">
+                                                                                # {b.quantity} {b.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
+                                                                            </span>
+                                                                        </div>
+                                                                        <button
+                                                                            onClick={() => setDeleteModal({ isOpen: true, bookingId: b.id })}
+                                                                            className="ml-1 h-6 w-6 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                                            title="Excluir item"
+                                                                        >
+                                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                                        </button>
+                                                                    </div>
                                                                 ))}
+                                                            </div>
+
+                                                            {/* BOTTOM ROW: Info Grid */}
+                                                            <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-50/80">
+                                                                {/* PROFESSOR */}
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Professor</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
+                                                                            <Users className="h-3 w-3 text-gray-400" />
+                                                                        </div>
+                                                                        <span className="text-xs font-bold text-gray-600 truncate">{(first as any).users?.full_name}</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* ESPECIFICAÇÃO */}
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Especificação</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-xs font-bold text-indigo-600 truncate">
+                                                                            Múltiplos Itens [{group.length}]
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* SALA/LOCAL */}
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Sala/Local</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
+                                                                            <MapPin className="h-3 w-3 text-gray-400" />
+                                                                        </div>
+                                                                        <span className="text-xs font-bold text-gray-600 truncate">{first.local}</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* AGENDADO PARA */}
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Agendado Para</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
+                                                                            <Clock className="h-3 w-3 text-gray-400" />
+                                                                        </div>
+                                                                        <span className="text-xs font-bold text-gray-600">
+                                                                            {format(parseISO(first.booking_date), "dd/MM/yy")} • {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     )}
                                                 </div>
 
-                                                {/* --- MOBILE LAYOUT (New Exclusive) --- */}
-                                                <div className="lg:hidden space-y-5">
-                                                    {/* Top Section: Professor Info + Actions */}
-                                                    <div className="flex justify-between items-start gap-3">
-                                                        <div className="flex gap-3 min-w-0 flex-1">
-                                                            <div className="h-10 w-10 min-w-[40px] rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0">
-                                                                <Users className="h-5 w-5 text-indigo-600" />
+                                                {/* --- MOBILE LAYOUT --- */}
+                                                <div className="lg:hidden">
+                                                    <div className="flex items-start justify-between mb-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="h-10 w-10 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0 border border-indigo-100">
+                                                                {isMulti ? <Users className="h-5 w-5 text-indigo-600" /> : getEquipmentIcon(first.equipment?.name)}
                                                             </div>
-                                                            <div className="min-w-0 flex-1">
-                                                                <h3 className="text-sm font-black text-gray-900 leading-tight truncate uppercase">
-                                                                    {(first as any).users?.full_name}
+                                                            <div>
+                                                                <h3 className="text-sm font-black text-gray-900 line-clamp-1">
+                                                                    {isMulti ? 'Multi-Equipamentos' : first.equipment?.name}
                                                                 </h3>
-                                                                <p className="text-[10px] text-gray-400 font-bold truncate lowercase mt-0.5">
-                                                                    {(first as any).users?.email}
+                                                                <p className="text-[10px] text-gray-500 font-bold uppercase">
+                                                                    {(first as any).users?.full_name?.split(' ')[0]}
                                                                 </p>
-                                                                <div className="flex flex-wrap items-center gap-2 mt-2">
-                                                                    {getStatusBadge(first)}
-                                                                    {first.is_recurring && (
-                                                                        <div className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[8px] font-black uppercase tracking-tight rounded-full border border-amber-100 italic">
-                                                                            <Repeat className="h-2 w-2" />
-                                                                            Recorrente
-                                                                        </div>
-                                                                    )}
-                                                                    {first.display_id && (
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <span className="text-[9px] text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
-                                                                            {first.term_hash && (
-                                                                                <span className="text-[8px] text-gray-400 font-black italic">({first.term_hash.substring(0, 8)})</span>
-                                                                            )}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
                                                             </div>
                                                         </div>
-                                                        <div className="flex flex-row gap-2 shrink-0">
-                                                            {first.term_document && (
-                                                                <button
-                                                                    onClick={() => handleOpenTermModal(first)}
-                                                                    className="p-2 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100 active:scale-95 transition-all shadow-sm flex items-center justify-center"
-                                                                    title="Ver Termo"
-                                                                >
-                                                                    <FileText className="h-4 w-4" />
-                                                                </button>
-                                                            )}
-                                                            <button
-                                                                onClick={() => setDeleteModal({ isOpen: true, bookingId: first.id })}
-                                                                className="p-2 bg-red-50 text-red-500 rounded-xl border border-red-100 active:scale-95 transition-all shadow-sm flex items-center justify-center"
-                                                                title="Excluir"
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </button>
-                                                        </div>
+                                                        {getStatusBadge(first)}
                                                     </div>
 
-                                                    {/* Center Section: All Equipments */}
-                                                    <div className="py-4 border-y border-gray-50 space-y-2">
-                                                        {group.map((b) => (
-                                                            <div key={b.id} className="flex items-center gap-3 p-2 bg-gray-50/50 rounded-2xl border border-gray-100/50">
-                                                                <div className="h-9 w-9 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-100 shadow-sm">
-                                                                    {getEquipmentIcon(b.equipment?.name, "h-5 w-5 text-primary-600")}
+                                                    {/* Mobile Items List */}
+                                                    <div className="space-y-2 mb-4">
+                                                        {(isMulti ? group : [first]).map((b) => (
+                                                            <div key={b.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-100">
+                                                                <div className="flex items-center gap-2 min-w-0">
+                                                                    {isMulti && <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0"></div>}
+                                                                    <div className="min-w-0">
+                                                                        <span className="text-xs text-gray-700 font-medium block truncate">{b.equipment?.name}</span>
+                                                                        <span className="text-[10px] text-gray-500 font-bold uppercase block">{b.equipment?.brand} {b.equipment?.model}</span>
+                                                                    </div>
                                                                 </div>
-                                                                <div className="min-w-0 flex-1">
-                                                                    <h4 className="text-[11px] font-black text-gray-900 truncate leading-tight">{b.equipment?.name}</h4>
-                                                                    <p className="text-[9px] text-blue-600 font-black uppercase tracking-tighter mt-0.5">
-                                                                        Quantidade: {b.quantity} Unidade (s)
-                                                                    </p>
-                                                                </div>
+                                                                {isMulti && (
+                                                                    <button
+                                                                        onClick={() => setDeleteModal({ isOpen: true, bookingId: b.id })}
+                                                                        className="p-1 text-gray-400 hover:text-red-500"
+                                                                    >
+                                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         ))}
                                                     </div>
-                                                </div>
 
-                                                {/* Common Footer Grid (Responsive) */}
-                                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-12 pt-4 lg:pt-4 lg:border-t border-gray-50/80">
-                                                    <div className="space-y-1 text-left">
-                                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] block">PROFESSOR</span>
-                                                        <div className="flex items-center gap-2 text-xs text-gray-500 font-bold truncate">
-                                                            <Users className="h-3.5 w-3.5 text-gray-300" />
-                                                            {(first as any).users?.full_name}
+                                                    <div className="grid grid-cols-2 gap-2 mb-4">
+                                                        <div className="p-2 bg-gray-50 rounded-lg">
+                                                            <p className="text-[9px] text-gray-400 font-black uppercase">Data</p>
+                                                            <p className="text-xs font-bold text-gray-700">{format(parseISO(first.booking_date), "dd/MM")}</p>
+                                                        </div>
+                                                        <div className="p-2 bg-gray-50 rounded-lg">
+                                                            <p className="text-[9px] text-gray-400 font-black uppercase">Horário</p>
+                                                            <p className="text-xs font-bold text-gray-700">{first.start_time.slice(0, 5)}-{first.end_time.slice(0, 5)}</p>
                                                         </div>
                                                     </div>
 
-                                                    <div className="space-y-1 text-left">
-                                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] block">ESPECIFICAÇÃO</span>
-                                                        <div className="flex items-center gap-2 text-xs text-gray-500 font-bold truncate">
-                                                            <Monitor className="h-3.5 w-3.5 text-gray-300" />
-                                                            {isMulti ? (
-                                                                <span className="text-indigo-600 font-black">Múltiplos Itens ({group.length})</span>
-                                                            ) : (
-                                                                <span className="truncate">{first.equipment?.brand || ''} {first.equipment?.model || ''}</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="space-y-1 text-left">
-                                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] block">SALA/LOCAL</span>
-                                                        <div className="flex items-center gap-2 text-xs text-gray-500 font-bold truncate">
-                                                            <MapPin className="h-3.5 w-3.5 text-gray-300" />
-                                                            {first.local}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="space-y-1 text-left">
-                                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] block">AGENDADO PARA</span>
-                                                        <div className="flex items-center gap-2 text-xs text-gray-500 font-bold truncate">
-                                                            <Clock className="h-3.5 w-3.5 text-gray-300" />
-                                                            {format(parseISO(first.booking_date), "dd/MM/yy")} • {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
-                                                        </div>
+                                                    <div className="flex gap-2">
+                                                        {first.term_document && (
+                                                            <button
+                                                                onClick={() => handleOpenTermModal(first)}
+                                                                className="flex-1 flex items-center justify-center gap-2 py-2 bg-white border border-gray-200 text-gray-700 font-bold text-[10px] rounded-lg shadow-sm uppercase"
+                                                            >
+                                                                <FileText className="h-3.5 w-3.5" />
+                                                                Termo
+                                                            </button>
+                                                        )}
+                                                        {!isMulti && (
+                                                            <button
+                                                                onClick={() => setDeleteModal({ isOpen: true, bookingId: first.id })}
+                                                                className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 text-red-600 font-bold text-[10px] rounded-lg border border-red-100 uppercase"
+                                                            >
+                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                                Excluir
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -862,53 +843,42 @@ export function AdminBookings() {
                                     );
                                 });
                             })()
-                        )}</ul >
-                </div >
+                        )}
+                    </ul>
+                </div>
             )}
 
-            {
-                deleteModal.isOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <div
-                            className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
-                            onClick={() => setDeleteModal({ isOpen: false, bookingId: null })}
-                        ></div>
-
-                        <div className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all animate-in zoom-in-95 duration-200">
-                            <div className="p-8">
-                                <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-50 mb-6">
-                                    <AlertTriangle className="h-10 w-10 text-red-600" />
-                                </div>
-
-                                <h3 className="text-2xl font-black text-gray-900 text-center mb-2">
-                                    Excluir Registro?
-                                </h3>
-
-                                <p className="text-gray-500 text-center text-sm leading-relaxed mb-8">
-                                    Esta ação é <span className="text-red-600 font-bold underline decoration-2">definitiva</span>. O termo assinado será removido e o histórico de agendamento deixará de existir.
-                                </p>
-
-                                <div className="flex flex-col gap-3">
-                                    <button
-                                        onClick={handleDeleteBooking}
-                                        className="w-full px-6 py-4 bg-red-600 hover:bg-red-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-red-200 transition-all active:scale-95"
-                                    >
-                                        Confirmar Exclusão Permanente
-                                    </button>
-                                    <button
-                                        onClick={() => setDeleteModal({ isOpen: false, bookingId: null })}
-                                        className="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-sm rounded-2xl transition-all"
-                                    >
-                                        Manter Registro
-                                    </button>
-                                </div>
-                            </div>
+            {/* DELETE MODAL */}
+            {deleteModal.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onClick={() => setDeleteModal({ isOpen: false, bookingId: null })} />
+                    <div className="relative bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <Trash2 className="h-8 w-8 text-red-500" />
+                        </div>
+                        <h3 className="text-xl font-black text-gray-900 text-center mb-2">Confirmar Exclusão?</h3>
+                        <p className="text-sm text-gray-500 text-center mb-8 font-medium leading-relaxed">
+                            Esta ação não pode ser desfeita. O agendamento será permanentemente removido.
+                        </p>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={handleDeleteBooking}
+                                className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 active:scale-95 transition-all text-sm uppercase tracking-wide"
+                            >
+                                Sim, Excluir
+                            </button>
+                            <button
+                                onClick={() => setDeleteModal({ isOpen: false, bookingId: null })}
+                                className="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold rounded-xl active:scale-95 transition-all text-sm uppercase tracking-wide"
+                            >
+                                Cancelar
+                            </button>
                         </div>
                     </div>
-                )
-            }
+                </div>
+            )}
 
             {modalOpen && <TermModal />}
-        </div >
+        </div>
     );
 }
