@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Room, RoomBooking, Admin } from '../../types';
-import { Plus, Trash2, Calendar, Clock, MapPin } from 'lucide-react';
+import { Plus, Trash2, Calendar, Clock, MapPin, Users, AlertCircle, X } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -14,6 +14,14 @@ export function AdminRooms() {
     const [rooms, setRooms] = useState<Room[]>([]);
     const [bookings, setBookings] = useState<RoomBooking[]>([]);
     const [loading, setLoading] = useState(true);
+    const [deleteModal, setDeleteModal] = useState<{
+        isOpen: boolean;
+        bookingId: string | null;
+        roomName?: string;
+    }>({
+        isOpen: false,
+        bookingId: null
+    });
 
     // Form State for New Room
     const [newRoom, setNewRoom] = useState({
@@ -72,7 +80,7 @@ export function AdminRooms() {
 
             // Fetch Bookings with Joins
             if (activeTab === 'bookings') {
-                const { data: bookingsData, error } = await supabase
+                const { data: bookingsData } = await supabase
                     .from('room_bookings')
                     .select(`
                         id,
@@ -163,27 +171,46 @@ export function AdminRooms() {
         }
     };
 
+    const handleDeleteBooking = async () => {
+        if (!deleteModal.bookingId) return;
+
+        try {
+            const { error } = await supabase
+                .from('room_bookings')
+                .delete()
+                .eq('id', deleteModal.bookingId);
+
+            if (error) throw error;
+
+            setDeleteModal({ isOpen: false, bookingId: null });
+            fetchData();
+        } catch (err: any) {
+            console.error(err);
+            alert('Erro ao cancelar agendamento: ' + (err.message || 'Erro desconhecido'));
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h1 className="text-2xl font-bold text-gray-900">Gestão de Salas</h1>
 
                 {/* Tabs */}
-                <div className="flex space-x-2 bg-gray-100 p-1 rounded-lg">
+                <div className="flex space-x-3 bg-gray-100/50 p-1.5 rounded-xl border border-gray-200 shadow-sm">
                     <button
                         onClick={() => setActiveTab('rooms')}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === 'rooms'
-                            ? 'bg-white text-primary-700 shadow'
-                            : 'text-gray-500 hover:text-gray-700'
+                        className={`px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-lg transition-all duration-300 ${activeTab === 'rooms'
+                            ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-200 scale-105'
+                            : 'text-gray-500 hover:text-indigo-600 hover:bg-white'
                             }`}
                     >
                         Gerenciar Salas
                     </button>
                     <button
                         onClick={() => setActiveTab('bookings')}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === 'bookings'
-                            ? 'bg-white text-primary-700 shadow'
-                            : 'text-gray-500 hover:text-gray-700'
+                        className={`px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-lg transition-all duration-300 ${activeTab === 'bookings'
+                            ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-200 scale-105'
+                            : 'text-gray-500 hover:text-emerald-600 hover:bg-white'
                             }`}
                     >
                         Ver Agendamentos
@@ -386,14 +413,13 @@ export function AdminRooms() {
                                 const isPast = new Date() > end;
                                 const isConfirmed = booking.status === 'confirmed';
 
-                                const durationHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
 
                                 return (
                                     <div key={booking.id} className={`group bg-white rounded-xl shadow-md border hover:shadow-xl transition-all duration-300 relative overflow-hidden flex flex-col ${isPast ? 'opacity-75 grayscale-[0.3]' : 'border-gray-200 hover:border-primary-200'}`}>
 
                                         {/* Colored Header */}
                                         <div className={`p-4 text-white flex justify-between items-start ${isConfirmed
-                                            ? 'bg-gradient-to-br from-indigo-600 to-blue-700'
+                                            ? (isPast ? 'bg-gradient-to-br from-indigo-500 to-blue-600' : 'bg-gradient-to-br from-emerald-500 to-teal-600')
                                             : 'bg-gradient-to-br from-red-500 to-rose-600'
                                             }`}>
                                             <div>
@@ -404,9 +430,10 @@ export function AdminRooms() {
                                                     {booking.room?.name}
                                                 </h3>
                                             </div>
-                                            <div className={`px-2 py-1 rounded text-[10px] font-black uppercase ${isConfirmed ? 'bg-white/20 text-white' : 'bg-white/20 text-white'
+                                            <div className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-white/20 shadow-sm ${!isConfirmed ? 'bg-black/20 text-white' :
+                                                isPast ? 'bg-indigo-700/40 text-white' : 'bg-emerald-700/40 text-white'
                                                 }`}>
-                                                {isConfirmed ? 'Confirmado' : 'Cancelado'}
+                                                {!isConfirmed ? 'Cancelado' : isPast ? 'Concluído' : 'Ativo'}
                                             </div>
                                         </div>
 
@@ -432,20 +459,28 @@ export function AdminRooms() {
 
                                             <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 text-white flex items-center justify-center text-xs font-bold shadow-sm">
-                                                        {booking.users?.full_name?.charAt(0) || '?'}
+                                                    <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 shadow-sm">
+                                                        <Users className="w-4 h-4" />
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-xs font-bold text-gray-700 truncate max-w-[120px]" title={booking.users?.full_name}>
-                                                            {booking.users?.full_name?.split(' ')[0] || 'Desconhecido'}
+                                                        <span className="text-xs font-bold text-gray-700 truncate max-w-[150px]" title={booking.users?.full_name}>
+                                                            {booking.users?.full_name || 'Desconhecido'}
                                                         </span>
-                                                        <span className="text-[10px] text-gray-400 font-medium">Professor</span>
+                                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Professor</span>
                                                     </div>
                                                 </div>
 
-                                                <div className="text-[10px] font-medium px-2 py-1 bg-gray-100 text-gray-500 rounded-full" title="Duração">
-                                                    ⏱️ {durationHours}h
-                                                </div>
+                                                <button
+                                                    onClick={() => setDeleteModal({
+                                                        isOpen: true,
+                                                        bookingId: booking.id,
+                                                        roomName: booking.room?.name
+                                                    })}
+                                                    className="h-10 w-10 flex items-center justify-center bg-red-50 text-red-500 border border-red-100 rounded-xl shadow-sm hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 active:scale-90 group/btn"
+                                                    title="Cancelar Agendamento"
+                                                >
+                                                    <Trash2 className="w-5 h-5 transition-transform group-hover/btn:rotate-12" />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -463,6 +498,60 @@ export function AdminRooms() {
                             <p className="text-gray-500 text-sm mt-1">Os agendamentos realizados pelos professores aparecerão aqui.</p>
                         </div>
                     )}
+                </div>
+            )}
+            {/* PROFESSIONAL DELETE MODAL */}
+            {deleteModal.isOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300"
+                        onClick={() => setDeleteModal({ isOpen: false, bookingId: null })}
+                    />
+
+                    {/* Modal Content */}
+                    <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
+                        {/* Status Bar */}
+                        <div className="h-2 w-full bg-red-500" />
+
+                        <div className="p-8">
+                            <div className="flex justify-between items-start mb-6">
+                                <div className="p-4 bg-red-50 rounded-2xl">
+                                    <AlertCircle className="w-8 h-8 text-red-500" />
+                                </div>
+                                <button
+                                    onClick={() => setDeleteModal({ isOpen: false, bookingId: null })}
+                                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                                >
+                                    <X className="w-6 h-6 text-gray-400" />
+                                </button>
+                            </div>
+
+                            <h3 className="text-2xl font-black text-gray-900 mb-2 leading-tight">
+                                Cancelar Agendamento?
+                            </h3>
+                            <p className="text-gray-500 text-sm leading-relaxed mb-8">
+                                Você está prestes a cancelar a reserva da sala <span className="font-bold text-gray-800">{deleteModal.roomName}</span>.
+                                Esta ação removerá o agendamento permanentemente e liberará o horário para outros professores.
+                            </p>
+
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <button
+                                    onClick={() => setDeleteModal({ isOpen: false, bookingId: null })}
+                                    className="flex-1 px-6 py-4 bg-gray-50 text-gray-600 font-bold rounded-2xl hover:bg-gray-100 transition-all active:scale-95 text-xs uppercase tracking-widest"
+                                >
+                                    Manter Reserva
+                                </button>
+                                <button
+                                    onClick={handleDeleteBooking}
+                                    className="flex-1 px-6 py-4 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 shadow-lg shadow-red-200 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Confirmar Cancelamento
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
