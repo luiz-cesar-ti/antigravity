@@ -130,6 +130,16 @@ export function TeacherLayout() {
                                 <Calendar className="w-5 h-5" /> Agendamentos
                             </Link>
 
+                            {isRoomsEnabled && (
+                                <Link
+                                    to="/teacher/rooms-v2"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="text-primary-100 hover:bg-primary-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium flex items-center gap-2"
+                                >
+                                    <MapPin className="w-5 h-5" /> Salas
+                                </Link>
+                            )}
+
 
 
                             <Link

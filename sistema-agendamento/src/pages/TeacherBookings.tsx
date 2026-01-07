@@ -479,9 +479,7 @@ export function TeacherBookings() {
                                                                 <h3 className="font-bold text-gray-900 group-hover:text-primary-900 transition-colors duration-200 truncate leading-tight">
                                                                     {isMulti ? 'Multi-Equipamentos' : first.equipment?.name}
                                                                 </h3>
-                                                                <span className="text-[9px] font-black text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded-md border border-primary-100 shrink-0">
-                                                                    #{first.id.split('-')[0].toUpperCase()}
-                                                                </span>
+
                                                             </div>
                                                             <div className="flex flex-col mt-0.5">
                                                                 <p className={`text-[10px] font-bold uppercase truncate text-gray-500`}>
@@ -565,11 +563,16 @@ export function TeacherBookings() {
                                                 </div>
                                             </div>
 
-                                            <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                                            <div className="mt-4 pt-4 border-t border-gray-100 flex items-end justify-between">
                                                 <div className="flex flex-col">
                                                     <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Código Hash</span>
-                                                    <span className="text-[9px] font-mono font-bold text-gray-400 truncate max-w-[120px]">
+                                                    <span className="text-[9px] font-mono font-bold text-gray-400 truncate max-w-[150px]">
                                                         {first.id}
+                                                    </span>
+                                                </div>
+                                                <div className="flex flex-col items-end">
+                                                    <span className="text-[9px] font-black text-primary-700 bg-primary-50 px-2 py-1 rounded-md border border-primary-100 scale-90 origin-right whitespace-nowrap">
+                                                        ID TERMO: {first.id.split('-')[0].toUpperCase()}
                                                     </span>
                                                 </div>
                                             </div>
