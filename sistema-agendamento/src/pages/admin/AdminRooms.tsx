@@ -172,15 +172,16 @@ export function AdminRooms() {
     };
 
     const handleDeleteBooking = async () => {
-        if (!deleteModal.bookingId) return;
+        if (!deleteModal.bookingId || !adminUser?.session_token) return;
 
         try {
-            const { error } = await supabase
-                .from('room_bookings')
-                .delete()
-                .eq('id', deleteModal.bookingId);
+            const { data, error } = await supabase.rpc('delete_room_booking_secure', {
+                p_booking_id: deleteModal.bookingId,
+                p_session_token: adminUser.session_token
+            });
 
             if (error) throw error;
+            if (!data.success) throw new Error(data.message);
 
             setDeleteModal({ isOpen: false, bookingId: null });
             fetchData();
@@ -195,12 +196,12 @@ export function AdminRooms() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h1 className="text-2xl font-bold text-gray-900">Gestão de Salas</h1>
 
-                {/* Tabs */}
-                <div className="flex space-x-3 bg-gray-100/50 p-1.5 rounded-xl border border-gray-200 shadow-sm">
+                {/* Tabs - Mobile Optimized */}
+                <div className="flex w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 space-x-3 bg-gray-100/50 p-1.5 rounded-xl border border-gray-200 shadow-sm scrollbar-hide">
                     <button
                         onClick={() => setActiveTab('rooms')}
-                        className={`px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-lg transition-all duration-300 ${activeTab === 'rooms'
-                            ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-200 scale-105'
+                        className={`flex-1 sm:flex-none whitespace-nowrap px-4 sm:px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-lg transition-all duration-300 ${activeTab === 'rooms'
+                            ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-200 scale-100 sm:scale-105'
                             : 'text-gray-500 hover:text-indigo-600 hover:bg-white'
                             }`}
                     >
@@ -208,8 +209,8 @@ export function AdminRooms() {
                     </button>
                     <button
                         onClick={() => setActiveTab('bookings')}
-                        className={`px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-lg transition-all duration-300 ${activeTab === 'bookings'
-                            ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-200 scale-105'
+                        className={`flex-1 sm:flex-none whitespace-nowrap px-4 sm:px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-lg transition-all duration-300 ${activeTab === 'bookings'
+                            ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-200 scale-100 sm:scale-105'
                             : 'text-gray-500 hover:text-emerald-600 hover:bg-white'
                             }`}
                     >
@@ -344,52 +345,90 @@ export function AdminRooms() {
                                     <p className="text-sm">Utilize o formulário ao lado para adicionar sua primeira sala.</p>
                                 </div>
                             ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Sala</th>
-                                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Unidade</th>
-                                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Horário</th>
-                                                <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Ações</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
-                                            {rooms.map(room => (
-                                                <tr key={room.id} className="hover:bg-blue-50/30 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <div className="text-sm font-bold text-gray-900">{room.name}</div>
-                                                        {room.description && (
-                                                            <div className="text-xs text-gray-500 mt-1 line-clamp-1">{room.description}</div>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                        <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-bold rounded-full border ${room.unit === 'P1'
+                                <div className="p-0">
+                                    {/* Desktop Table View */}
+                                    <div className="hidden md:block overflow-x-auto">
+                                        <table className="min-w-full divide-y divide-gray-200">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Sala</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Unidade</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Horário</th>
+                                                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white divide-y divide-gray-200">
+                                                {rooms.map(room => (
+                                                    <tr key={room.id} className="hover:bg-blue-50/30 transition-colors">
+                                                        <td className="px-6 py-4">
+                                                            <div className="text-sm font-bold text-gray-900">{room.name}</div>
+                                                            {room.description && (
+                                                                <div className="text-xs text-gray-500 mt-1 line-clamp-1">{room.description}</div>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                            <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-bold rounded-full border ${room.unit === 'P1'
+                                                                ? 'bg-blue-50 text-blue-700 border-blue-100'
+                                                                : 'bg-purple-50 text-purple-700 border-purple-100'
+                                                                }`}>
+                                                                {room.unit}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Clock className="w-3.5 h-3.5 text-gray-400" />
+                                                                {room.min_time?.slice(0, 5)} - {room.max_time?.slice(0, 5)}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                                            <button
+                                                                onClick={() => handleDeleteRoom(room.id)}
+                                                                className="text-gray-400 hover:text-red-600 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
+                                                                title="Excluir Sala"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {/* Mobile Card View */}
+                                    <div className="md:hidden divide-y divide-gray-100">
+                                        {rooms.map(room => (
+                                            <div key={room.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <h4 className="font-bold text-gray-900 text-sm">{room.name}</h4>
+                                                        <span className={`mt-1 px-2 py-0.5 inline-flex text-[10px] leading-4 font-bold rounded-full border ${room.unit === 'P1'
                                                             ? 'bg-blue-50 text-blue-700 border-blue-100'
                                                             : 'bg-purple-50 text-purple-700 border-purple-100'
                                                             }`}>
                                                             {room.unit}
                                                         </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <Clock className="w-3.5 h-3.5 text-gray-400" />
-                                                            {room.min_time?.slice(0, 5)} - {room.max_time?.slice(0, 5)}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                                        <button
-                                                            onClick={() => handleDeleteRoom(room.id)}
-                                                            className="text-gray-400 hover:text-red-600 transition-colors p-1.5 hover:bg-red-50 rounded-lg"
-                                                            title="Excluir Sala"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleDeleteRoom(room.id)}
+                                                        className="text-gray-400 hover:text-red-600 p-2 -mr-2"
+                                                        title="Excluir Sala"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+
+                                                {room.description && (
+                                                    <p className="text-xs text-gray-500 mb-2 line-clamp-2">{room.description}</p>
+                                                )}
+
+                                                <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 p-1.5 rounded w-fit">
+                                                    <Clock className="w-3.5 h-3.5 text-gray-400" />
+                                                    {room.min_time?.slice(0, 5)} - {room.max_time?.slice(0, 5)}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>
