@@ -393,7 +393,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 units: data.units,
                 terms_accepted: data.terms_accepted,
                 terms_accepted_at: data.terms_accepted ? new Date().toISOString() : null,
-                terms_version: 'v1.0' // Versão inicial dos termos
+                terms_version: data.terms_version || 'v1.0'
             });
 
         if (profileError) return { error: profileError.message };

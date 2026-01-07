@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Mail, Lock, AlertCircle, Check, Info } from 'lucide-react';
+import { User, Mail, Lock, AlertCircle, Check, Info, FileText, X, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../services/supabase';
 import { SCHOOL_UNITS } from '../utils/constants';
 import { SuccessModal } from '../components/SuccessModal';
 
@@ -20,6 +21,41 @@ export function Register() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
+    const [termVersion, setTermVersion] = useState('v1.0');
+    const [fullTermContent, setFullTermContent] = useState('');
+    const [showTermModal, setShowTermModal] = useState(false);
+    const [termError, setTermError] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    useEffect(() => {
+        const fetchTerms = async () => {
+            setTermError(null);
+            try {
+                const { data, error } = await supabase
+                    .from('legal_terms')
+                    .select('content, version_tag')
+                    .eq('type', 'registration')
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
+                if (error) throw error;
+
+                if (data) {
+                    setFullTermContent(data.content);
+                    setTermVersion(data.version_tag);
+                } else {
+                    setTermError('Nenhum termo encontrado.');
+                }
+            } catch (error: any) {
+                console.error('Error fetching terms:', error);
+                setTermError(error.message || 'Erro de conexão');
+            }
+        };
+
+        fetchTerms();
+    }, []);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -78,6 +114,7 @@ export function Register() {
             full_name: formData.full_name,
             units: formData.units,
             terms_accepted: acceptedTerms,
+            terms_version: termVersion,
         });
 
         if (signUpError) {
@@ -192,6 +229,35 @@ export function Register() {
                                 </div>
                             </div>
 
+                            {/* Password Security Tip - Moved Full Width */}
+                            <div className="sm:col-span-6 bg-blue-50 border border-blue-100 rounded-lg p-3">
+                                <div className="flex gap-2 mb-2">
+                                    <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                                    <p className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Senha Segura (Obrigatório)</p>
+                                </div>
+                                <p className="text-[11px] text-blue-800 leading-relaxed">
+                                    Para sua segurança, a senha deve ter no mínimo <strong>8 caracteres</strong> e conter pelo menos:
+                                </p>
+                                <ul className="mt-1.5 grid grid-cols-2 sm:grid-cols-4 gap-x-2 gap-y-1 text-[10px] text-blue-700 font-medium">
+                                    <li className="flex items-center gap-1">
+                                        <div className="h-1 w-1 rounded-full bg-blue-400"></div>
+                                        Letra Maiúscula
+                                    </li>
+                                    <li className="flex items-center gap-1">
+                                        <div className="h-1 w-1 rounded-full bg-blue-400"></div>
+                                        Letra Minúscula
+                                    </li>
+                                    <li className="flex items-center gap-1">
+                                        <div className="h-1 w-1 rounded-full bg-blue-400"></div>
+                                        Um Número
+                                    </li>
+                                    <li className="flex items-center gap-1">
+                                        <div className="h-1 w-1 rounded-full bg-blue-400"></div>
+                                        Símbolo (@$!%...)
+                                    </li>
+                                </ul>
+                            </div>
+
                             {/* Password */}
                             <div className="sm:col-span-3">
                                 <label className="block text-sm font-medium text-gray-700">
@@ -202,41 +268,21 @@ export function Register() {
                                         <Lock className="h-5 w-5 text-gray-400" />
                                     </div>
                                     <input
-                                        type="password"
+                                        type={showPassword ? 'text' : 'password'}
                                         name="password"
                                         required
-                                        className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3"
+                                        className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md p-3"
                                         value={formData.password}
                                         onChange={handleInputChange}
                                         placeholder="Senha forte"
                                     />
-                                </div>
-                                <div className="mt-2 bg-blue-50 border border-blue-100 rounded-lg p-3">
-                                    <div className="flex gap-2 mb-2">
-                                        <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                                        <p className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Senha Segura (Obrigatório)</p>
-                                    </div>
-                                    <p className="text-[11px] text-blue-800 leading-relaxed">
-                                        Para sua segurança, a senha deve ter no mínimo <strong>8 caracteres</strong> e conter pelo menos:
-                                    </p>
-                                    <ul className="mt-1.5 grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] text-blue-700 font-medium">
-                                        <li className="flex items-center gap-1">
-                                            <div className="h-1 w-1 rounded-full bg-blue-400"></div>
-                                            Letra Maiúscula
-                                        </li>
-                                        <li className="flex items-center gap-1">
-                                            <div className="h-1 w-1 rounded-full bg-blue-400"></div>
-                                            Letra Minúscula
-                                        </li>
-                                        <li className="flex items-center gap-1">
-                                            <div className="h-1 w-1 rounded-full bg-blue-400"></div>
-                                            Um Número
-                                        </li>
-                                        <li className="flex items-center gap-1">
-                                            <div className="h-1 w-1 rounded-full bg-blue-400"></div>
-                                            Símbolo (@$!%...)
-                                        </li>
-                                    </ul>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                    </button>
                                 </div>
                             </div>
 
@@ -250,13 +296,21 @@ export function Register() {
                                         <Lock className="h-5 w-5 text-gray-400" />
                                     </div>
                                     <input
-                                        type="password"
+                                        type={showConfirmPassword ? 'text' : 'password'}
                                         name="confirm_password"
                                         required
-                                        className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3"
+                                        className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md p-3"
                                         value={formData.confirm_password}
                                         onChange={handleInputChange}
+                                        placeholder="Confirme a senha"
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                    </button>
                                 </div>
                             </div>
 
@@ -302,16 +356,18 @@ export function Register() {
                                 <AlertCircle className="h-4 w-4 text-primary-600" />
                                 Termos de Uso e Privacidade
                             </h3>
-                            <div className="bg-white p-3 rounded-lg border border-gray-100 mb-4 h-32 overflow-y-auto text-xs text-gray-600 leading-relaxed shadow-inner">
-                                <p className="mb-2">
-                                    Declaro que li e aceito os termos. Estou ciente de que o sistema armazenará meu <strong>Nome</strong>, <strong>E-mail Institucional</strong> e <strong>Unidade</strong> para fins de identificação e acesso.
+                            <div className="bg-white p-4 rounded-lg border border-gray-100 mb-4 shadow-sm">
+                                <p className="text-xs text-gray-600 leading-relaxed mb-3">
+                                    Para criar sua conta, é necessário aceitar nossos termos de uso, que abrangem política de privacidade (LGPD), responsabilidade sobre equipamentos e segurança da conta.
                                 </p>
-                                <p className="mb-2">
-                                    Concordo que todas as minhas ações de agendamento e empréstimo gerarão <strong>registros digitais (logs)</strong> para segurança e auditoria.
-                                </p>
-                                <p>
-                                    Autorizo também o armazenamento de cópias digitais dos <strong>Termos de Responsabilidade</strong> assinados por mim, para fins de controle de patrimônio da instituição.
-                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowTermModal(true)}
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-primary-100 bg-primary-50 text-primary-700 text-xs font-bold rounded-lg hover:bg-primary-100 transition-colors uppercase"
+                                >
+                                    <FileText className="h-4 w-4" />
+                                    Ler Termos Completos
+                                </button>
                             </div>
 
                             <div className="flex items-start">
@@ -376,6 +432,104 @@ export function Register() {
                 message={`Um e-mail de confirmação foi enviado para ${formData.email}. Verifique sua caixa de entrada (e spam) para ativar sua conta e acessar o sistema.`}
                 type="email"
             />
+
+            {/* Term Modal */}
+            {showTermModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onClick={() => setShowTermModal(false)} />
+                    <div className="relative bg-white rounded-2xl w-full max-w-5xl h-[90vh] shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <FileText className="h-5 w-5 text-primary-600" />
+                                Termos de Uso do Sistema
+                            </h3>
+                            <button
+                                onClick={() => setShowTermModal(false)}
+                                className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        {/* Content - A4 Paper Container Wrapper */}
+                        <div className="flex-1 overflow-y-auto bg-gray-100/50 p-4 md:p-8">
+                            {/* A4 Paper */}
+                            <div className="bg-white shadow-xl mx-auto max-w-[210mm] min-h-[200mm] p-[10mm] text-black font-sans relative flex flex-col">
+                                {fullTermContent ? (
+                                    <>
+                                        {/* Header / Logo */}
+                                        <div className="text-center mb-6">
+                                            <img
+                                                src="/logo-objetivo.png"
+                                                alt="Colégio Objetivo"
+                                                className="h-20 object-contain mx-auto"
+                                            />
+                                        </div>
+
+                                        <h1 className="text-center font-bold text-lg uppercase mb-6 border-b border-gray-200 pb-4">
+                                            Política de Privacidade e Termos de Uso
+                                        </h1>
+
+                                        {/* Document Text */}
+                                        <div className="whitespace-pre-wrap text-base md:text-lg leading-loose text-justify text-gray-800 font-sans">
+                                            {fullTermContent}
+                                        </div>
+
+                                        {/* Digital Signature Placeholder (Visual only) */}
+                                        <div className="mt-12 pt-6 border-t border-gray-300 flex justify-between items-end text-[9pt] text-gray-500">
+                                            <div>
+                                                <p className="font-bold text-black uppercase mb-1">Documento Digital</p>
+                                                <p>Sistema de Agendamentos Objetivo</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p>Versão: {termVersion}</p>
+                                                <p>Data de Visualização: {new Date().toLocaleDateString('pt-BR')}</p>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center flex-1 h-full py-20 text-gray-400">
+                                        {termError ? (
+                                            <>
+                                                <AlertCircle className="h-10 w-10 text-red-300 mb-3" />
+                                                <p className="text-red-900 font-medium">{termError}</p>
+                                            </>
+                                        ) : (
+                                            <div className="flex flex-col items-center animate-pulse">
+                                                <div className="h-20 w-32 bg-gray-200 rounded-lg mb-4"></div>
+                                                <div className="h-4 w-48 bg-gray-200 rounded mb-2"></div>
+                                                <div className="h-4 w-32 bg-gray-200 rounded"></div>
+                                                <p className="mt-4 text-xs uppercase tracking-widest">Carregando Documento...</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-4 border-t border-gray-100 bg-white rounded-b-2xl flex justify-end gap-3 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                            <button
+                                onClick={() => setShowTermModal(false)}
+                                className="px-6 py-2.5 bg-white border-2 border-gray-200 rounded-xl text-gray-600 font-bold text-sm hover:bg-gray-50 hover:border-gray-300 transition-all"
+                            >
+                                Fechar
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setAcceptedTerms(true);
+                                    setShowTermModal(false);
+                                }}
+                                className="px-6 py-2.5 bg-primary-600 text-white rounded-xl font-bold text-sm hover:bg-primary-700 hover:shadow-lg hover:shadow-primary-600/20 transition-all flex items-center gap-2"
+                            >
+                                <Check className="h-4 w-4" />
+                                Li e Concordo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
