@@ -25,14 +25,15 @@ export function RoomBookingV2() {
     const [bookingLoading, setBookingLoading] = useState(false);
 
     // Feedback State
-    const [feedback, setFeedback] = useState<{ show: boolean; type: 'success' | 'error'; message: string }>({
+    // Feedback State
+    const [feedback, setFeedback] = useState<{ show: boolean; type: 'success' | 'error'; title?: string; message: string }>({
         show: false,
         type: 'success',
         message: ''
     });
 
-    const triggerFeedback = (type: 'success' | 'error', message: string) => {
-        setFeedback({ show: true, type, message });
+    const triggerFeedback = (type: 'success' | 'error', message: string, title?: string) => {
+        setFeedback({ show: true, type, message, title });
         setTimeout(() => setFeedback(prev => ({ ...prev, show: false })), 4000);
     };
 
@@ -195,7 +196,7 @@ export function RoomBookingV2() {
                     throw error;
                 }
             } else {
-                triggerFeedback('success', 'Reserva realizada com sucesso! Confira em "Meus Agendamentos".');
+                triggerFeedback('success', 'Reserva realizada com sucesso! Confira em "Meus Agendamentos".', 'Agendamento Confirmado');
                 handleCloseModal();
                 fetchMyBookings();
             }
@@ -537,7 +538,7 @@ export function RoomBookingV2() {
                                                             .eq('id', booking.id);
 
                                                         if (error) throw error;
-                                                        triggerFeedback('success', isPast ? 'Agendamento excluído.' : 'Agendamento cancelado com sucesso.');
+                                                        triggerFeedback('success', isPast ? 'Agendamento removido do seu histórico.' : 'Reserva cancelada com sucesso.', isPast ? 'Agendamento Excluído' : 'Cancelamento Confirmado');
                                                         fetchMyBookings();
                                                     } catch (err) {
                                                         console.error('Erro ao cancelar:', err);
@@ -569,22 +570,24 @@ export function RoomBookingV2() {
             {/* PROFESSIONAL FEEDBACK POPUP */}
             {feedback.show && (
                 <div className="fixed bottom-6 md:bottom-10 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:right-auto z-[100] animate-bounce-subtle">
-                    <div className={`flex items-center gap-3 px-5 md:px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md transition-all duration-500 scale-100 ${feedback.type === 'success'
-                        ? 'bg-green-50/90 border-green-200 text-green-800'
-                        : 'bg-red-50/90 border-red-200 text-red-800'
+                    <div className={`flex items-center gap-4 px-6 py-5 rounded-2xl shadow-2xl border backdrop-blur-md transition-all duration-500 scale-100 ${feedback.type === 'success'
+                        ? 'bg-white border-green-100 text-green-800'
+                        : 'bg-white border-red-100 text-red-800'
                         }`}>
-                        <div className={`p-2 rounded-full flex-shrink-0 ${feedback.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
-                            {feedback.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                        <div className={`p-3 rounded-full flex-shrink-0 shadow-sm ${feedback.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                            {feedback.type === 'success' ? <CheckCircle className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
                         </div>
-                        <div className="flex flex-col min-w-0">
-                            <span className="text-xs md:text-sm font-extrabold uppercase tracking-wider truncate">{feedback.type === 'success' ? 'Sucesso!' : 'Algo deu errado'}</span>
-                            <span className="text-[10px] md:text-xs font-medium opacity-90 line-clamp-2 md:line-clamp-none">{feedback.message}</span>
+                        <div className="flex flex-col min-w-0 mr-4">
+                            <span className="text-sm md:text-base font-black uppercase tracking-wide text-gray-800 mb-0.5">
+                                {feedback.title || (feedback.type === 'success' ? 'Sucesso!' : 'Algo deu errado')}
+                            </span>
+                            <span className="text-xs md:text-sm font-medium text-gray-500 leading-snug">{feedback.message}</span>
                         </div>
                         <button
                             onClick={() => setFeedback(prev => ({ ...prev, show: false }))}
-                            className="ml-auto md:ml-4 hover:opacity-100 opacity-50 transition-opacity p-1"
+                            className="ml-auto text-gray-400 hover:text-gray-600 transition-colors p-1"
                         >
-                            <X className="w-4 h-4" />
+                            <X className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
