@@ -342,62 +342,78 @@ export function RoomBookingV2() {
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="flex flex-col gap-6">
                                 {/* DATE PICKER */}
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Selecione a Data</label>
-                                    <input
-                                        type="date"
-                                        value={selectedDate}
-                                        min={format(new Date(), 'yyyy-MM-dd')}
-                                        onChange={(e) => setSelectedDate(e.target.value)}
-                                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-                                    />
+                                <div className="space-y-1.5">
+                                    <label className="block text-sm font-bold text-gray-700 md:ml-1 text-primary-900/40 uppercase tracking-widest text-[10px]">Agendamento para</label>
+                                    <div className="relative group">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-gray-400 group-focus-within:text-primary-500 transition-colors">
+                                            <Calendar className="w-4 h-4" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest hidden md:block border-r border-gray-200 pr-2 mr-1">Data</span>
+                                        </div>
+                                        <input
+                                            type="date"
+                                            value={selectedDate}
+                                            min={format(new Date(), 'yyyy-MM-dd')}
+                                            onChange={(e) => setSelectedDate(e.target.value)}
+                                            className="w-full pl-12 md:pl-28 pr-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-100 outline-none transition-all font-bold text-gray-700"
+                                        />
+                                        <div className="md:hidden absolute right-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-gray-300 uppercase tracking-tighter pointer-events-none">
+                                            Data
+                                        </div>
+                                    </div>
                                     {!isDayAvailable() && (
-                                        <p className="text-red-500 text-xs mt-2 font-medium bg-red-50 p-2 rounded border border-red-100">
-                                            ⚠️ Esta sala não funciona neste dia da semana.
+                                        <p className="text-red-500 text-[10px] mt-2 font-bold bg-red-50 p-2 rounded-xl border border-red-100 flex items-center gap-2 animate-pulse">
+                                            <AlertCircle className="w-3 h-3" />
+                                            Esta sala não funciona neste dia.
                                         </p>
                                     )}
                                 </div>
 
                                 {/* TIME INPUTS */}
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Definir Horário</label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs text-gray-500 mb-1">Início</label>
+                                    <label className="block text-sm font-bold text-gray-700 md:ml-1 text-primary-900/40 uppercase tracking-widest text-[10px]">Período</label>
+                                    <div className="flex flex-col md:flex-row gap-4">
+                                        {/* INICIO */}
+                                        <div className="relative flex-1 group">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-gray-400 group-focus-within:text-primary-500 transition-colors">
+                                                <Clock className="w-4 h-4" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest border-r border-gray-200 pr-2 mr-1">Horário</span>
+                                                <span className="text-[9px] font-bold text-gray-300 italic">Início</span>
+                                            </div>
                                             <input
                                                 type="time"
                                                 value={startTime}
                                                 onChange={(e) => setStartTime(e.target.value)}
-                                                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                                className="w-full pl-40 pr-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-100 outline-none transition-all font-bold text-gray-700"
                                             />
                                         </div>
-                                        <div>
-                                            <label className="block text-xs text-gray-500 mb-1">Término</label>
+
+                                        {/* TERMINO */}
+                                        <div className="relative flex-1 group">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-gray-400 group-focus-within:text-primary-500 transition-colors">
+                                                <Clock className="w-4 h-4" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest border-r border-gray-200 pr-2 mr-1">Horário</span>
+                                                <span className="text-[9px] font-bold text-gray-300 italic">Fim</span>
+                                            </div>
                                             <input
                                                 type="time"
                                                 value={endTime}
                                                 onChange={(e) => setEndTime(e.target.value)}
-                                                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                                className="w-full pl-40 pr-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-100 outline-none transition-all font-bold text-gray-700"
                                             />
                                         </div>
                                     </div>
 
                                     {/* Validation Feedback */}
                                     {startTime && endTime && (
-                                        <div className={`mt-4 p-3 rounded-lg text-sm font-medium flex items-center gap-2 ${getValidationMessage() ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'}`}>
+                                        <div className={`mt-4 p-3 rounded-2xl text-[10px] font-bold flex items-center gap-2 border transition-all duration-300 uppercase tracking-tight ${getValidationMessage() ? 'bg-red-50 text-red-700 border-red-100 shadow-sm' : 'bg-green-50 text-green-700 border-green-100 shadow-sm'}`}>
                                             {getValidationMessage() ? (
-                                                <>
-                                                    <AlertCircle className="w-4 h-4" />
-                                                    {getValidationMessage()}
-                                                </>
+                                                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                                             ) : (
-                                                <>
-                                                    <CheckCircle className="w-4 h-4" />
-                                                    Horário disponível
-                                                </>
+                                                <CheckCircle className="w-3.5 h-3.5 shrink-0" />
                                             )}
+                                            {getValidationMessage() || 'Período disponível para reserva'}
                                         </div>
                                     )}
                                 </div>
@@ -534,8 +550,8 @@ export function RoomBookingV2() {
             {feedback.show && (
                 <div className="fixed bottom-6 md:bottom-10 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:right-auto z-[100] animate-bounce-subtle">
                     <div className={`flex items-center gap-3 px-5 md:px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md transition-all duration-500 scale-100 ${feedback.type === 'success'
-                            ? 'bg-green-50/90 border-green-200 text-green-800'
-                            : 'bg-red-50/90 border-red-200 text-red-800'
+                        ? 'bg-green-50/90 border-green-200 text-green-800'
+                        : 'bg-red-50/90 border-red-200 text-red-800'
                         }`}>
                         <div className={`p-2 rounded-full flex-shrink-0 ${feedback.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
                             {feedback.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
