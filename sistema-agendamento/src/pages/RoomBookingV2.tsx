@@ -545,10 +545,7 @@ export function RoomBookingV2() {
                                                     }
                                                 }
                                             }}
-                                            className={`mt-5 w-full py-2.5 text-xs font-bold border rounded-xl transition-all flex items-center justify-center gap-2 ${isPast
-                                                    ? 'text-gray-500 border-gray-200 bg-gray-50 hover:bg-gray-100'
-                                                    : 'text-red-600 border-red-100 bg-red-50 hover:bg-red-100 hover:border-red-200'
-                                                }`}
+                                            className="mt-5 w-full py-2.5 text-xs font-bold text-red-600 border border-red-100 bg-red-50 rounded-xl hover:bg-red-100 hover:border-red-200 transition-all flex items-center justify-center gap-2"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                             {isPast ? 'EXCLUIR AGENDAMENTO' : 'CANCELAR AGENDAMENTO'}
