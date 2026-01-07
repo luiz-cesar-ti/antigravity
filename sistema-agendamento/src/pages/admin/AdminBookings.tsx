@@ -45,9 +45,9 @@ export function AdminBookings() {
     const [recurringFilter, setRecurringFilter] = useState<'recurring' | 'normal' | 'all'>('all');
     const [showFilters, setShowFilters] = useState(false);
 
-    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bookingId: string | null }>({
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bookingIds: string[] }>({
         isOpen: false,
-        bookingId: null
+        bookingIds: []
     });
 
     const fetchBookings = async () => {
@@ -101,19 +101,19 @@ export function AdminBookings() {
     }, [user?.id, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit]);
 
     const handleDeleteBooking = async () => {
-        if (!deleteModal.bookingId) return;
+        if (deleteModal.bookingIds.length === 0) return;
 
         const { error } = await supabase
             .from('bookings')
             .delete()
-            .eq('id', deleteModal.bookingId);
+            .in('id', deleteModal.bookingIds);
 
         if (!error) {
-            setDeleteModal({ isOpen: false, bookingId: null });
+            setDeleteModal({ isOpen: false, bookingIds: [] });
             fetchBookings();
         } else {
             console.error('Delete error:', error);
-            alert('Erro ao excluir agendamento.');
+            alert('Erro ao excluir agendamento(s).');
         }
     };
 
@@ -528,49 +528,65 @@ export function AdminBookings() {
                                                     {!isMulti ? (
                                                         // Single Item Layout
                                                         <div className="flex flex-col gap-6">
-                                                            {/* TOP ROW: Equipment Header & User Info */}
+                                                            {/* TOP ROW: Combined Equipment & User Info */}
                                                             <div className="flex flex-row items-center justify-between gap-6 pb-6 border-b border-gray-50/80">
-                                                                {/* LEFT: Equipment Info */}
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="h-11 w-11 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-100 shadow-sm group-hover:border-indigo-100 transition-colors duration-300">
-                                                                        {getEquipmentIcon(first.equipment?.name, "h-5 w-5 text-primary-600")}
-                                                                    </div>
-                                                                    <div className="space-y-0.5">
-                                                                        <h3 className="text-base font-black text-gray-900 tracking-tight leading-tight">
-                                                                            {first.equipment?.name}
-                                                                        </h3>
-                                                                        <div className="inline-flex items-center px-2.5 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-wider rounded-md border border-indigo-100 italic">
-                                                                            # {first.quantity} {first.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
+                                                                <div className="flex items-center">
+                                                                    {/* LEFT: Equipment Block */}
+                                                                    <div className="flex items-center gap-4">
+                                                                        <div className="h-14 w-14 bg-white rounded-2xl flex items-center justify-center shrink-0 border border-gray-100 shadow-sm group-hover:border-indigo-100 transition-colors duration-300">
+                                                                            {getEquipmentIcon(first.equipment?.name, "h-7 w-7 text-primary-600")}
                                                                         </div>
-                                                                    </div>
-                                                                </div>
 
-                                                                {/* CENTER: User Detailed Info */}
-                                                                <div className="flex-1 flex items-center gap-3 px-6 border-l border-r border-gray-50/80 mx-2">
-                                                                    <div className="h-8 w-8 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0">
-                                                                        <Users className="h-4 w-4 text-indigo-600" />
-                                                                    </div>
-                                                                    <div className="flex flex-col min-w-0">
-                                                                        <div className="flex items-center gap-2 mb-1">
-                                                                            <span className="text-xs font-black text-gray-900">{(first as any).users?.full_name}</span>
-                                                                            {getStatusBadge(first)}
+                                                                        <div className="flex flex-col gap-1.5">
+                                                                            <h3 className="text-xl font-black text-gray-900 tracking-tight leading-none">
+                                                                                {first.equipment?.name}
+                                                                            </h3>
+                                                                            <div className="inline-flex self-start items-center px-1.5 py-0.5 bg-indigo-50 text-indigo-600 text-[9px] font-black uppercase tracking-widest rounded border border-indigo-100 italic">
+                                                                                # {first.quantity} {first.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
+                                                                            </div>
                                                                         </div>
-                                                                        <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                                                                            <span className="truncate max-w-[200px]">{(first as any).users?.email}</span>
-                                                                            <span className="text-gray-300">•</span>
-                                                                            <span className="text-gray-600 font-black">{first.unit}</span>
-                                                                            {first.display_id && (
-                                                                                <>
-                                                                                    <span className="text-gray-300">•</span>
-                                                                                    <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
-                                                                                    {first.term_hash && (
-                                                                                        <>
-                                                                                            <span className="text-gray-300 ml-1">-</span>
-                                                                                            <span className="text-gray-400 font-bold italic ml-1">HASH: {first.term_hash.substring(0, 8)}...</span>
-                                                                                        </>
-                                                                                    )}
-                                                                                </>
-                                                                            )}
+                                                                    </div>
+
+                                                                    {/* Vertical Separator */}
+                                                                    <div className="h-10 w-px bg-gray-200 mx-8 shrink-0"></div>
+
+                                                                    {/* RIGHT: User & IDs Block */}
+                                                                    <div className="flex items-center gap-4">
+                                                                        {/* Larger Professor Icon */}
+                                                                        <div className="h-11 w-11 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-100">
+                                                                            <Users className="h-5 w-5 text-indigo-600" />
+                                                                        </div>
+
+                                                                        <div className="flex flex-col gap-1">
+                                                                            {/* Name + Status + ID/Hash Row */}
+                                                                            <div className="flex items-center gap-3">
+                                                                                <span className="text-lg font-black text-gray-900 tracking-tight">
+                                                                                    {(first as any).users?.full_name}
+                                                                                </span>
+                                                                                {getStatusBadge(first)}
+
+                                                                                {first.display_id && (
+                                                                                    <>
+                                                                                        <span className="text-gray-300 font-bold">•</span>
+                                                                                        <span className="text-[10px] font-black text-indigo-600 uppercase italic tracking-wider">
+                                                                                            ID TERMO #{first.display_id}
+                                                                                        </span>
+                                                                                        {first.term_hash && (
+                                                                                            <>
+                                                                                                <span className="text-gray-300 mx-1">-</span>
+                                                                                                <span className="text-[10px] font-bold text-gray-400 italic">
+                                                                                                    HASH: {first.term_hash.substring(0, 8)}...
+                                                                                                </span>
+                                                                                            </>
+                                                                                        )}
+                                                                                    </>
+                                                                                )}
+                                                                            </div>
+
+                                                                            {/* Email below name (Full display) */}
+                                                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                                                                {(first as any).users?.email}
+                                                                            </span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -587,7 +603,7 @@ export function AdminBookings() {
                                                                         </button>
                                                                     )}
                                                                     <button
-                                                                        onClick={() => setDeleteModal({ isOpen: true, bookingId: first.id })}
+                                                                        onClick={() => setDeleteModal({ isOpen: true, bookingIds: [first.id] })}
                                                                         className="h-10 w-10 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95 border border-red-100 shadow-sm"
                                                                     >
                                                                         <Trash2 className="h-5 w-5" />
@@ -664,12 +680,17 @@ export function AdminBookings() {
                                                                         </div>
                                                                         <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
                                                                             <span className="truncate max-w-[200px]">{(first as any).users?.email}</span>
-                                                                            <span className="text-gray-300">•</span>
-                                                                            <span className="text-gray-600 font-black">{first.unit}</span>
+
                                                                             {first.display_id && (
                                                                                 <>
                                                                                     <span className="text-gray-300">•</span>
                                                                                     <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
+                                                                                    {first.term_hash && (
+                                                                                        <>
+                                                                                            <span className="text-gray-300 ml-1">-</span>
+                                                                                            <span className="text-gray-400 font-bold italic ml-1">HASH: {first.term_hash.substring(0, 8)}...</span>
+                                                                                        </>
+                                                                                    )}
                                                                                 </>
                                                                             )}
                                                                         </div>
@@ -686,6 +707,13 @@ export function AdminBookings() {
                                                                             Termo
                                                                         </button>
                                                                     )}
+                                                                    <button
+                                                                        onClick={() => setDeleteModal({ isOpen: true, bookingIds: group.map(b => b.id) })}
+                                                                        className="h-10 w-10 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95 border border-red-100 shadow-sm"
+                                                                        title="Excluir agendamento completo"
+                                                                    >
+                                                                        <Trash2 className="h-5 w-5" />
+                                                                    </button>
                                                                 </div>
                                                             </div>
 
@@ -702,13 +730,6 @@ export function AdminBookings() {
                                                                                 # {b.quantity} {b.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
                                                                             </span>
                                                                         </div>
-                                                                        <button
-                                                                            onClick={() => setDeleteModal({ isOpen: true, bookingId: b.id })}
-                                                                            className="ml-1 h-6 w-6 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                                                            title="Excluir item"
-                                                                        >
-                                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                                        </button>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -782,13 +803,18 @@ export function AdminBookings() {
                                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate">
                                                                     {(first as any).users?.email}
                                                                 </p>
-                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                                                                    - {(first as any).users?.unit || first.unit} -
-                                                                </p>
+                                                                {/* Unit Removed */}
                                                                 {first.display_id && (
-                                                                    <p className="text-[10px] font-black text-indigo-600 italic tracking-wider">
-                                                                        ID TERMO #{first.display_id}
-                                                                    </p>
+                                                                    <div className="flex flex-col gap-0.5 mt-0.5">
+                                                                        <p className="text-[10px] font-black text-indigo-600 italic tracking-wider">
+                                                                            ID TERMO #{first.display_id}
+                                                                        </p>
+                                                                        {first.term_hash && (
+                                                                            <p className="text-[9px] font-bold text-gray-400 italic">
+                                                                                HASH: {first.term_hash.substring(0, 8)}...
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -806,7 +832,7 @@ export function AdminBookings() {
                                                             </button>
                                                         )}
                                                         <button
-                                                            onClick={() => setDeleteModal({ isOpen: true, bookingId: first.id })}
+                                                            onClick={() => setDeleteModal({ isOpen: true, bookingIds: isMulti ? group.map(b => b.id) : [first.id] })}
                                                             className="flex items-center justify-center h-9 w-9 bg-red-50 text-red-500 border border-red-100 rounded-xl shadow-sm active:scale-95 transition-all"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
@@ -891,7 +917,7 @@ export function AdminBookings() {
             {/* DELETE MODAL */}
             {deleteModal.isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onClick={() => setDeleteModal({ isOpen: false, bookingId: null })} />
+                    <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onClick={() => setDeleteModal({ isOpen: false, bookingIds: [] })} />
                     <div className="relative bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200">
                         <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
                             <Trash2 className="h-8 w-8 text-red-500" />
@@ -908,7 +934,7 @@ export function AdminBookings() {
                                 Sim, Excluir
                             </button>
                             <button
-                                onClick={() => setDeleteModal({ isOpen: false, bookingId: null })}
+                                onClick={() => setDeleteModal({ isOpen: false, bookingIds: [] })}
                                 className="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold rounded-xl active:scale-95 transition-all text-sm uppercase tracking-wide"
                             >
                                 Cancelar
