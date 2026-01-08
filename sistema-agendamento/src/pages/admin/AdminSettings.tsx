@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import type { Settings, Admin } from '../../types'; // Ensure Settings type exists and includes min_advance_time_hours
 import { useAuth } from '../../contexts/AuthContext';
-import { Save, Clock } from 'lucide-react';
+import { Save, Clock, KeyRound, AlertCircle, CheckCircle } from 'lucide-react';
 
 export function AdminSettings() {
     const { user } = useAuth();
@@ -15,6 +15,64 @@ export function AdminSettings() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    // Password Change State
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [changingPassword, setChangingPassword] = useState(false);
+
+    const handlePasswordChange = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setPasswordMessage(null);
+
+        // Validation
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            setPasswordMessage({ type: 'error', text: 'A nova senha e a confirmação não coincidem.' });
+            return;
+        }
+
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(passwordData.newPassword)) {
+            setPasswordMessage({ type: 'error', text: 'A senha deve ter 8+ caracteres, maiúscula, minúscula, número e símbolo.' });
+            return;
+        }
+
+        setChangingPassword(true);
+
+        try {
+            // Get session token safely
+            let adminToken = '';
+            try {
+                const session = localStorage.getItem('admin_session');
+                if (session) {
+                    const admin = JSON.parse(session);
+                    adminToken = admin.session_token || '';
+                }
+            } catch (e) { }
+
+            if (!adminToken) throw new Error('Sessão inválida.');
+
+            const { error } = await supabase.rpc('change_own_password', {
+                p_admin_token: adminToken,
+                p_current_password: passwordData.currentPassword,
+                p_new_password: passwordData.newPassword
+            });
+
+            if (error) throw error;
+
+            setPasswordMessage({ type: 'success', text: 'Senha alterada com sucesso!' });
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        } catch (err: any) {
+            console.error('Password change error:', err);
+            setPasswordMessage({ type: 'error', text: err.message || 'Erro ao alterar senha.' });
+        } finally {
+            setChangingPassword(false);
+        }
+    };
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -197,11 +255,83 @@ export function AdminSettings() {
                             className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
                         >
                             <Save className="h-4 w-4 mr-2" />
-                            {saving ? 'Salvando...' : 'Salvar Alterações'}
+                            {saving ? 'Salvando...' : 'Salvar Regras'}
                         </button>
                     </div>
                 </form>
             )}
+
+            {/* PASSWORD CHANGE SECTION */}
+            <div className="bg-white shadow rounded-lg p-6 border border-gray-100">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
+                    <div className="p-2 bg-primary-50 rounded-lg">
+                        <KeyRound className="h-6 w-6 text-primary-600" />
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-900">Alterar Minha Senha</h2>
+                        <p className="text-sm text-gray-500">Atualize sua credencial de acesso.</p>
+                    </div>
+                </div>
+
+                {passwordMessage && (
+                    <div className={`mb-4 p-4 rounded-md flex items-center gap-2 ${passwordMessage.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                        {passwordMessage.type === 'success' ? <CheckCircle className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
+                        <span className="font-medium text-sm">{passwordMessage.text}</span>
+                    </div>
+                )}
+
+                <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
+                    <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Senha Atual</label>
+                        <input
+                            type="password"
+                            required
+                            value={passwordData.currentPassword}
+                            onChange={e => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2.5 border"
+                            placeholder="Digite sua senha atual"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Nova Senha</label>
+                            <input
+                                type="password"
+                                required
+                                value={passwordData.newPassword}
+                                onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2.5 border"
+                                placeholder="Nova senha"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Confirmar</label>
+                            <input
+                                type="password"
+                                required
+                                value={passwordData.confirmPassword}
+                                onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2.5 border"
+                                placeholder="Repita a nova senha"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="text-[10px] text-gray-500 bg-gray-50 p-3 rounded border border-gray-200">
+                        <span className="font-bold block mb-1">Requisitos:</span>
+                        8+ caracteres, Letra Maiúscula, Letra Minúscula, Número e Símbolo (@$!%*?&).
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={changingPassword}
+                        className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-2.5 border border-transparent shadow-sm text-sm font-bold rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 transition-all"
+                    >
+                        {changingPassword ? 'Alterando...' : 'Alterar Senha'}
+                    </button>
+                </form>
+            </div>
         </div>
     );
 }

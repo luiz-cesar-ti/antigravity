@@ -37,6 +37,37 @@ export function RoomBookingV2() {
         setTimeout(() => setFeedback(prev => ({ ...prev, show: false })), 4000);
     };
 
+    // Delete Confirmation State
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{ isOpen: boolean; bookingId: string | null; isPast: boolean }>({
+        isOpen: false,
+        bookingId: null,
+        isPast: false
+    });
+
+    const handleConfirmDelete = async () => {
+        if (!deleteConfirmation.bookingId) return;
+
+        try {
+            const { error } = await supabase
+                .from('room_bookings')
+                .delete()
+                .eq('id', deleteConfirmation.bookingId);
+
+            if (error) throw error;
+
+            triggerFeedback(
+                'success',
+                deleteConfirmation.isPast ? 'Agendamento removido do seu histórico.' : 'Reserva cancelada com sucesso.',
+                deleteConfirmation.isPast ? 'Agendamento Excluído' : 'Cancelamento Confirmado'
+            );
+            fetchMyBookings();
+            setDeleteConfirmation({ isOpen: false, bookingId: null, isPast: false });
+        } catch (err) {
+            console.error('Erro ao cancelar:', err);
+            triggerFeedback('error', 'Erro ao processar solicitação.');
+        }
+    };
+
     // 1. Initial Load: Filter valid units for this teacher
     useEffect(() => {
         const loadUnitsAndRooms = async () => {
@@ -525,26 +556,13 @@ export function RoomBookingV2() {
                                         </div>
 
                                         <button
-                                            onClick={async () => {
-                                                const message = isPast
-                                                    ? 'Tem certeza que deseja excluir este agendamento do histórico?'
-                                                    : 'Tem certeza que deseja cancelar este agendamento?';
-
-                                                if (confirm(message)) {
-                                                    try {
-                                                        const { error } = await supabase
-                                                            .from('room_bookings')
-                                                            .delete()
-                                                            .eq('id', booking.id);
-
-                                                        if (error) throw error;
-                                                        triggerFeedback('success', isPast ? 'Agendamento removido do seu histórico.' : 'Reserva cancelada com sucesso.', isPast ? 'Agendamento Excluído' : 'Cancelamento Confirmado');
-                                                        fetchMyBookings();
-                                                    } catch (err) {
-                                                        console.error('Erro ao cancelar:', err);
-                                                        triggerFeedback('error', 'Erro ao processar solicitação.');
-                                                    }
-                                                }
+                                            onClick={() => {
+                                                const isPastBooking = new Date(booking.end_ts) < new Date();
+                                                setDeleteConfirmation({
+                                                    isOpen: true,
+                                                    bookingId: booking.id,
+                                                    isPast: isPastBooking
+                                                });
                                             }}
                                             className="mt-5 w-full py-2.5 text-xs font-bold text-red-600 border border-red-100 bg-red-50 rounded-xl hover:bg-red-100 hover:border-red-200 transition-all flex items-center justify-center gap-2"
                                         >
@@ -567,7 +585,43 @@ export function RoomBookingV2() {
                 )}
             </div>
 
-            {/* PROFESSIONAL FEEDBACK POPUP */}
+            {/* DELETE CONFIRMATION MODAL */}
+            {deleteConfirmation.isOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div
+                        className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
+                        onClick={() => setDeleteConfirmation({ isOpen: false, bookingId: null, isPast: false })}
+                    />
+                    <div className="relative bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <Trash2 className="h-8 w-8 text-red-500" />
+                        </div>
+                        <h3 className="text-xl font-black text-gray-900 text-center mb-2">
+                            {deleteConfirmation.isPast ? 'Excluir do Histórico?' : 'Cancelar Reserva?'}
+                        </h3>
+                        <p className="text-sm text-gray-500 text-center mb-8 font-medium leading-relaxed">
+                            {deleteConfirmation.isPast
+                                ? 'Isso removerá este registro do seu histórico. Esta ação não pode ser desfeita.'
+                                : 'Tem certeza que deseja cancelar esta reserva? O horário ficará disponível para outros professores.'}
+                        </p>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={handleConfirmDelete}
+                                className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 active:scale-95 transition-all text-sm uppercase tracking-wide"
+                            >
+                                {deleteConfirmation.isPast ? 'Confirmar Exclusão' : 'Confirmar Cancelamento'}
+                            </button>
+                            <button
+                                onClick={() => setDeleteConfirmation({ isOpen: false, bookingId: null, isPast: false })}
+                                className="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold rounded-xl active:scale-95 transition-all text-sm uppercase tracking-wide"
+                            >
+                                Voltar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {feedback.show && (
                 <div className="fixed bottom-6 md:bottom-10 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:right-auto z-[100] animate-bounce-subtle">
                     <div className={`flex items-center gap-4 px-6 py-5 rounded-2xl shadow-2xl border backdrop-blur-md transition-all duration-500 scale-100 ${feedback.type === 'success'

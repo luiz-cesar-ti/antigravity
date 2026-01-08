@@ -28,6 +28,7 @@ import { RootRedirect } from './components/RootRedirect';
 import { AdminRooms } from './pages/admin/AdminRooms';
 import { RoomBookingV2 } from './pages/RoomBookingV2';
 import { AdminNotifications } from './pages/admin/AdminNotifications';
+import { AdminManageAdmins } from './pages/admin/AdminManageAdmins';
 
 function App() {
   return (
@@ -57,6 +58,7 @@ function App() {
                 <Route path="manual" element={<AdminHelp />} />
                 <Route path="settings" element={<AdminSettings />} />
                 <Route path="notifications" element={<AdminNotifications />} />
+                <Route path="manage-admins" element={<AdminManageAdmins />} />
               </Route>
             </Route>
 
