@@ -124,11 +124,11 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
                 fontWeight: isTitle ? 'bold' : 'normal',
                 fontSize: isTitle ? '12pt' : '11pt',
                 textTransform: isTitle ? 'uppercase' : 'none',
-                marginTop: isTitle ? '1rem' : '0',
+                marginTop: isTitle ? '0.6rem' : '0',
                 paddingLeft: isListItem ? '1.5rem' : '0',
                 textIndent: isListItem ? '-1.5rem' : '0',
                 textAlign: 'justify',
-                lineHeight: '1.5'
+                lineHeight: '1.4'
             }}>
                 {isListItem && listMatch ? (
                     <>
@@ -142,14 +142,14 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
 
     const renderScienceTerm = (content?: string) => (
         <div style={{
-            marginTop: '1.5rem',
-            marginBottom: '1rem',
+            marginTop: '0.75rem',
+            marginBottom: '0.5rem',
             fontSize: '11pt',
             backgroundColor: '#f3f4f6',
-            padding: '1rem',
+            padding: '0.75rem',
             borderLeft: '4px solid #1f2937',
             borderRadius: '2px',
-            lineHeight: '1.5'
+            lineHeight: '1.4'
         }}>
             <strong style={{ fontWeight: 'bold', display: 'block', marginBottom: '4px', fontSize: '11pt' }}>
                 TERMO DE CIÊNCIA
@@ -175,15 +175,15 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
             boxSizing: 'border-box'
         }}>
             {/* Logo */}
-            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                <img src="/logo-objetivo.jpg" alt="Logo" crossOrigin="anonymous" style={{ maxHeight: '100px', margin: '0 auto', display: 'block' }} />
+            <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+                <img src="/logo-objetivo.jpg" alt="Logo" crossOrigin="anonymous" style={{ maxHeight: '80px', margin: '0 auto', display: 'block' }} />
             </div>
 
-            <h1 style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '12pt', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>
+            <h1 style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '12pt', textTransform: 'uppercase', margin: '0 0 0.25rem' }}>
                 Declaração de Responsabilidade e Termo de Uso
             </h1>
 
-            <div style={{ textAlign: 'justify', marginBottom: '0.75rem' }}>
+            <div style={{ textAlign: 'justify', marginBottom: '0.5rem' }}>
                 <p>
                     Declaro que eu, <strong style={{ fontWeight: 'bold' }}>{getName()}</strong>, portador(a) do número de usuário TOTVS <strong style={{ fontWeight: 'bold' }}>{getTotvs()}</strong>,
                     estou ciente e de acordo com as condições de uso {isRoom ? 'do espaço físico' : 'do(s) equipamento(s)'} abaixo descrito(s),
@@ -192,7 +192,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
             </div>
 
             {/* Booking Stats Box */}
-            <div style={{ marginBottom: '0.75rem', border: '1px solid #d1d5db', padding: '0.5rem 1rem', borderRadius: '0.25rem', backgroundColor: '#f9fafb' }}>
+            <div style={{ marginBottom: '0.5rem', border: '1px solid #d1d5db', padding: '0.4rem 0.75rem', borderRadius: '0.25rem', backgroundColor: '#f9fafb' }}>
                 <h2 style={{ fontWeight: 'bold', borderBottom: '1px solid #d1d5db', marginBottom: '0.25rem', fontSize: '11pt', textTransform: 'uppercase' }}>Dados do Agendamento</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem' }}>
                     <p><strong>Unidade:</strong> {getUnit()}</p>
@@ -201,11 +201,11 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
                     <p><strong>Horário:</strong> {getTime()}</p>
                 </div>
                 {getRecurringDates() && (
-                    <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed #d1d5db' }}>
-                        <p style={{ fontSize: '11pt', marginBottom: '6px', fontWeight: 'bold' }}>Datas agendadas para o mês atual:</p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <div style={{ marginTop: '0.4rem', paddingTop: '0.4rem', borderTop: '1px dashed #d1d5db' }}>
+                        <p style={{ fontSize: '10pt', marginBottom: '4px', fontWeight: 'bold' }}>Datas agendadas para o mês atual:</p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                             {getRecurringDates()?.map(d => (
-                                <span key={d} style={{ backgroundColor: '#fff', padding: '4px 10px', borderRadius: '6px', border: '1px solid #9ca3af', fontWeight: 'bold' }}>{d}</span>
+                                <span key={d} style={{ backgroundColor: '#fff', padding: '2px 8px', borderRadius: '4px', border: '1px solid #9ca3af', fontWeight: 'bold', fontSize: '10pt' }}>{d}</span>
                             ))}
                         </div>
                     </div>
@@ -213,8 +213,8 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
             </div>
 
             {getEquipments().length > 0 && (
-                <div style={{ marginBottom: '1rem' }}>
-                    <h2 style={{ fontWeight: 'bold', borderBottom: '1px solid #000', marginBottom: '0.25rem', fontSize: '11pt', textTransform: 'uppercase' }}>Equipamento(s) Reservado(s)</h2>
+                <div style={{ marginBottom: '0.75rem' }}>
+                    <h2 style={{ fontWeight: 'bold', borderBottom: '1px solid #000', marginBottom: '0.2rem', fontSize: '11pt', textTransform: 'uppercase' }}>Equipamento(s) Reservado(s)</h2>
                     <ul style={{ listStyleType: 'disc', paddingLeft: '1.25rem' }}>
                         {getEquipments().map((eq, i) => (
                             <li key={i}><strong>{eq.name}</strong>{eq.brand ? ` (${eq.brand} ${eq.model || ''})` : ''} - {eq.quantity} unidade(s)</li>
@@ -255,7 +255,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
             )}
 
             {/* Signature Area */}
-            <div style={{ marginTop: '3.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div style={{ width: '50%', textAlign: 'center' }}>
                     <div style={{ fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '10px' }}>{getName()}</div>
                     <div style={{ borderBottom: '1px solid #000' }}></div>
@@ -270,7 +270,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
 
             {/* Footer Traceability */}
             {(displayId || data.term_hash || data.term_fingerprint || data.term_document?.term_hash) && (
-                <div style={{ marginTop: '1.5rem', borderTop: '1px dashed #e5e7eb', paddingTop: '0.5rem', textAlign: 'center' }}>
+                <div style={{ marginTop: '0.75rem', borderTop: '1px dashed #e5e7eb', paddingTop: '0.4rem', textAlign: 'center' }}>
                     {displayId && <p style={{ fontWeight: 'bold', fontSize: '10pt', marginBottom: '4px' }}>ID DO TERMO: #{displayId}</p>}
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', fontSize: '7.5pt', color: '#6b7280' }}>
                         <span><strong style={{ fontWeight: 'bold' }}>VERSÃO:</strong> {data.version_tag || 'v2.0'}</span>
@@ -278,7 +278,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
                     </div>
                 </div>
             )}
-            <p style={{ fontSize: '7.5pt', color: '#9ca3af', marginTop: '4px', textAlign: 'center' }}>Documento gerado eletronicamente pelo Sistema de Agendamentos Objetivo.</p>
+            <p style={{ fontSize: '7pt', color: '#9ca3af', marginTop: '2px', textAlign: 'center' }}>Documento gerado eletronicamente pelo Sistema de Agendamentos Objetivo.</p>
         </div>
     );
 };
