@@ -171,11 +171,12 @@ export function Login() {
                                         onChange={(e) => setIdentifier(e.target.value)}
                                     />
                                 </div>
-                                {/* Refined Tip Box - Blue/Gray Theme */}
-                                <div className="mt-3 flex items-start p-3 bg-blue-50/80 rounded-xl border border-blue-100 shadow-sm">
-                                    <span className="text-lg mr-2 filter drop-shadow-sm">💡</span>
-                                    <p className="text-[11px] font-medium text-blue-900 leading-tight pt-1">
-                                        O Número de usuário <span className="font-bold">TOTVS</span> está no seu crachá
+
+                                {/* Refined Tip Box - Moved Back Below but kept Compact */}
+                                <div className="flex items-center gap-2 p-2 bg-blue-50/60 rounded-xl border border-blue-100/50 mt-1">
+                                    <span className="text-xs">💡</span>
+                                    <p className="text-[10px] font-bold text-blue-900/70 leading-tight">
+                                        O Número de usuário <span className="text-blue-900">TOTVS</span> está no seu crachá
                                     </p>
                                 </div>
                             </div>

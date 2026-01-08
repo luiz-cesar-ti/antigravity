@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { Search, Shield, KeyRound, AlertCircle, CheckCircle } from 'lucide-react';
+import { Search, Shield, KeyRound, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import type { Admin } from '../../types';
 
 export function AdminManageAdmins() {
@@ -55,6 +55,8 @@ export function AdminManageAdmins() {
     });
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
 
     // Close Modal Handler
@@ -62,6 +64,8 @@ export function AdminManageAdmins() {
         setResetModal({ isOpen: false, adminId: '', adminName: '' });
         setNewPassword('');
         setConfirmPassword('');
+        setShowNewPassword(false);
+        setShowConfirmPassword(false);
         setError('');
     };
 
@@ -287,26 +291,44 @@ export function AdminManageAdmins() {
 
                             <div className="space-y-1">
                                 <label className="block text-xs font-black text-gray-500 uppercase tracking-wider">Nova Senha</label>
-                                <input
-                                    type="password"
-                                    required
-                                    className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all font-bold"
-                                    placeholder="Digite a nova senha"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showNewPassword ? "text" : "password"}
+                                        required
+                                        className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all font-bold pr-12"
+                                        placeholder="Digite a nova senha"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNewPassword(!showNewPassword)}
+                                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-primary-600 transition-colors"
+                                    >
+                                        {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="space-y-1">
                                 <label className="block text-xs font-black text-gray-500 uppercase tracking-wider">Confirmar Senha</label>
-                                <input
-                                    type="password"
-                                    required
-                                    className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all font-bold"
-                                    placeholder="Confirme a nova senha"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        required
+                                        className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all font-bold pr-12"
+                                        placeholder="Confirme a nova senha"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-primary-600 transition-colors"
+                                    >
+                                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="mt-2 text-[10px] space-y-1 text-gray-500 bg-gray-50 p-2 rounded border border-gray-100">

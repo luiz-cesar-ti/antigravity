@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import type { Settings, Admin } from '../../types'; // Ensure Settings type exists and includes min_advance_time_hours
 import { useAuth } from '../../contexts/AuthContext';
-import { Save, Clock, KeyRound, AlertCircle, CheckCircle } from 'lucide-react';
+import { Save, Clock, KeyRound, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 export function AdminSettings() {
     const { user } = useAuth();
@@ -24,6 +24,9 @@ export function AdminSettings() {
     });
     const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [changingPassword, setChangingPassword] = useState(false);
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handlePasswordChange = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,6 +69,9 @@ export function AdminSettings() {
 
             setPasswordMessage({ type: 'success', text: 'Senha alterada com sucesso!' });
             setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            setShowCurrentPassword(false);
+            setShowNewPassword(false);
+            setShowConfirmPassword(false);
         } catch (err: any) {
             console.error('Password change error:', err);
             setPasswordMessage({ type: 'error', text: err.message || 'Erro ao alterar senha.' });
@@ -283,38 +289,65 @@ export function AdminSettings() {
                 <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
                     <div>
                         <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Senha Atual</label>
-                        <input
-                            type="password"
-                            required
-                            value={passwordData.currentPassword}
-                            onChange={e => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2.5 border"
-                            placeholder="Digite sua senha atual"
-                        />
+                        <div className="relative">
+                            <input
+                                type={showCurrentPassword ? "text" : "password"}
+                                required
+                                value={passwordData.currentPassword}
+                                onChange={e => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2.5 border pr-10"
+                                placeholder="Digite sua senha atual"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-primary-600 transition-colors"
+                            >
+                                {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Nova Senha</label>
-                            <input
-                                type="password"
-                                required
-                                value={passwordData.newPassword}
-                                onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2.5 border"
-                                placeholder="Nova senha"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showNewPassword ? "text" : "password"}
+                                    required
+                                    value={passwordData.newPassword}
+                                    onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2.5 border pr-10"
+                                    placeholder="Nova senha"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-primary-600 transition-colors"
+                                >
+                                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                            </div>
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Confirmar</label>
-                            <input
-                                type="password"
-                                required
-                                value={passwordData.confirmPassword}
-                                onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2.5 border"
-                                placeholder="Repita a nova senha"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    required
+                                    value={passwordData.confirmPassword}
+                                    onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2.5 border pr-10"
+                                    placeholder="Repita a nova senha"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-primary-600 transition-colors"
+                                >
+                                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                            </div>
                         </div>
                     </div>
 
