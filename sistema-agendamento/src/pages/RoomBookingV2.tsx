@@ -505,18 +505,18 @@ export function RoomBookingV2() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {myBookings.map((booking) => {
                             const isPast = new Date(booking.end_ts) < new Date();
-                            const status = isPast ? 'Encerrado' : 'Agendado';
+                            const status = isPast ? 'Concluído' : 'Agendado';
 
                             return (
                                 <div key={booking.id} className="bg-white rounded-xl shadow-md border border-gray-100 p-0 hover:shadow-xl transition-all relative overflow-hidden group">
                                     {/* Colored Top Bar */}
-                                    <div className={`h-1.5 w-full ${isPast ? 'bg-red-500' : 'bg-blue-600'}`} />
+                                    <div className={`h-1.5 w-full ${isPast ? 'bg-blue-600' : 'bg-emerald-500'}`} />
 
                                     <div className="p-5">
                                         <div className="flex justify-between items-start mb-4">
                                             <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide border ${isPast
-                                                ? 'bg-red-50 text-red-600 border-red-100'
-                                                : 'bg-blue-50 text-blue-600 border-blue-100'
+                                                ? 'bg-blue-50 text-blue-600 border-blue-100'
+                                                : 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                                 }`}>
                                                 {status}
                                             </span>
@@ -536,7 +536,7 @@ export function RoomBookingV2() {
 
                                         <div className="space-y-3 pt-4 border-t border-gray-100">
                                             <div className="flex items-center gap-3 text-sm text-gray-700">
-                                                <div className={`p-2 rounded-lg ${isPast ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
+                                                <div className={`p-2 rounded-lg ${isPast ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'}`}>
                                                     <Calendar className="w-4 h-4" />
                                                 </div>
                                                 <div className="flex flex-col">
@@ -547,7 +547,7 @@ export function RoomBookingV2() {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3 text-sm text-gray-700">
-                                                <div className={`p-2 rounded-lg ${isPast ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
+                                                <div className={`p-2 rounded-lg ${isPast ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'}`}>
                                                     <Clock className="w-4 h-4" />
                                                 </div>
                                                 <div className="flex flex-col">
