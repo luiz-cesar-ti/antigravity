@@ -85,16 +85,25 @@ export function AdminRooms() {
     const fetchData = async () => {
         setLoading(true);
         try {
+            const isSuperAdmin = adminUser?.role === 'super_admin';
+            const unit = adminUser?.unit;
+
             // Fetch Rooms
-            const { data: roomsData } = await supabase
+            let roomsQuery = supabase
                 .from('rooms')
                 .select('*')
                 .order('name');
+
+            if (!isSuperAdmin && unit) {
+                roomsQuery = roomsQuery.eq('unit', unit);
+            }
+
+            const { data: roomsData } = await roomsQuery;
             if (roomsData) setRooms(roomsData);
 
             // Fetch Bookings with Joins
             if (activeTab === 'bookings') {
-                const { data: bookingsData } = await supabase
+                let bookingsQuery = supabase
                     .from('room_bookings')
                     .select(`
                         id,
@@ -102,10 +111,15 @@ export function AdminRooms() {
                         end_ts,
                         status,
                         created_at,
-                        room:rooms(name, unit),
+                        room:rooms!inner(name, unit),
                         users(full_name)
-                    `)
-                    .order('start_ts', { ascending: false });
+                    `);
+
+                if (!isSuperAdmin && unit) {
+                    bookingsQuery = bookingsQuery.eq('room.unit', unit);
+                }
+
+                const { data: bookingsData } = await bookingsQuery.order('start_ts', { ascending: false });
 
                 if (bookingsData) {
                     setBookings(bookingsData as any);
