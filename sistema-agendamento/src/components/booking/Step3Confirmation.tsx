@@ -90,7 +90,8 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                 isRecurring: data.isRecurring,
                 dayOfWeek: data.dayOfWeek,
                 term_fingerprint: termFingerprint,
-                version_tag: versionTag
+                version_tag: versionTag,
+                content: latestTerm?.content
             };
 
             if (data.isRecurring) {
@@ -142,7 +143,8 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                                 display_id: displayId,
                                 is_recurring: true,
                                 recurring_id: recurring.id,
-                                term_hash: termFingerprint
+                                term_hash: termFingerprint,
+                                term_version: versionTag
                             });
                         });
                     }
@@ -156,7 +158,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                     if (batchError) throw batchError;
                 }
             } else {
-                // 2. Insert into main Bookings Table (Normal Flow)
+                // Normal insertion
                 const bookingsToInsert = data.equipments.map(eq => ({
                     user_id: user?.id,
                     unit: data.unit,
@@ -171,7 +173,8 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                     term_signed: true,
                     term_document: termDocument,
                     display_id: displayId,
-                    term_hash: termFingerprint
+                    term_hash: termFingerprint,
+                    term_version: versionTag
                 }));
 
                 const { error: insertError } = await supabase

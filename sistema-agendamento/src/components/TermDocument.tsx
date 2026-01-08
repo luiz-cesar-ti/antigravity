@@ -223,51 +223,69 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 </div>
             )}
 
-            <div style={{ marginBottom: '1rem', textAlign: 'justify', fontSize: '9pt' }}>
-                <h2 style={{ fontWeight: 'bold', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Compromissos e Responsabilidades</h2>
-                <p style={{ marginBottom: '0.25rem' }}>Ao aceitar este termo, comprometo-me a:</p>
-                <div style={{ paddingLeft: '0.5rem' }}>
-                    {[
-                        `Utilizar o ${isRoom ? 'espaço' : 'equipamento'} exclusivamente durante o período agendado e no local especificado.`,
-                        `Zelar pela conservação e bom funcionamento do ${isRoom ? 'espaço e seus itens' : 'equipamento'}.`,
-                        "Comunicar imediatamente à equipe responsável qualquer defeito ou irregularidade constatada.",
-                        `Não emprestar ou transferir o ${isRoom ? 'espaço' : 'equipamento'} a terceiros sem autorização prévia.`,
-                        `Orientar adequadamente o uso do ${isRoom ? 'espaço' : 'equipamento'}, quando utilizado por alunos, zelando por sua conservação.`
-                    ].map((item, index) => (
-                        <div key={index} style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '0.2rem' }}>
-                            <span style={{ minWidth: '15px', fontWeight: 'bold' }}>{index + 1}.</span>
-                            <span style={{ textAlign: 'justify' }}>{item}</span>
-                        </div>
-                    ))}
-                    {(data.isRecurring || data.term_document?.isRecurring) && (
-                        <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '0.2rem' }}>
-                            <span style={{ minWidth: '15px', fontWeight: 'bold' }}>6.</span>
-                            <span style={{ textAlign: 'justify' }}>Declaro ciência que este é um <strong style={{ fontWeight: 'bold' }}>Agendamento Fixo</strong> e concordo em assinar digitalmente todos os termos gerados automaticamente para cada ocorrência desta recorrência.</span>
-                        </div>
-                    )}
+            {/* Dynamic Content from DB or Hardcoded Fallback */}
+            {data.term_document?.content ? (
+                <div style={{
+                    marginBottom: '1rem',
+                    textAlign: 'justify',
+                    fontSize: '9pt',
+                    whiteSpace: 'pre-wrap',
+                    padding: '0.5rem',
+                    backgroundColor: '#fff',
+                    border: '1px solid #eee',
+                    borderRadius: '0.5rem'
+                }}>
+                    {data.term_document.content}
                 </div>
-            </div>
+            ) : (
+                <>
+                    <div style={{ marginBottom: '1rem', textAlign: 'justify', fontSize: '9pt' }}>
+                        <h2 style={{ fontWeight: 'bold', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Compromissos e Responsabilidades</h2>
+                        <p style={{ marginBottom: '0.25rem' }}>Ao aceitar este termo, comprometo-me a:</p>
+                        <div style={{ paddingLeft: '0.5rem' }}>
+                            {[
+                                `Utilizar o ${isRoom ? 'espaço' : 'equipamento'} exclusivamente durante o período agendado e no local especificado.`,
+                                `Zelar pela conservação e bom funcionamento do ${isRoom ? 'espaço e seus itens' : 'equipamento'}.`,
+                                "Comunicar imediatamente à equipe responsável qualquer defeito ou irregularidade constatada.",
+                                `Não emprestar ou transferir o ${isRoom ? 'espaço' : 'equipamento'} a terceiros sem autorização prévia.`,
+                                `Orientar adequadamente o uso do ${isRoom ? 'espaço' : 'equipamento'}, quando utilizado por alunos, zelando por sua conservação.`
+                            ].map((item, index) => (
+                                <div key={index} style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '0.2rem' }}>
+                                    <span style={{ minWidth: '15px', fontWeight: 'bold' }}>{index + 1}.</span>
+                                    <span style={{ textAlign: 'justify' }}>{item}</span>
+                                </div>
+                            ))}
+                            {(data.isRecurring || data.term_document?.isRecurring) && (
+                                <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '0.2rem' }}>
+                                    <span style={{ minWidth: '15px', fontWeight: 'bold' }}>6.</span>
+                                    <span style={{ textAlign: 'justify' }}>Declaro ciência que este é um <strong style={{ fontWeight: 'bold' }}>Agendamento Fixo</strong> e concordo em assinar digitalmente todos os termos gerados automaticamente para cada ocorrência desta recorrência.</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
 
-            <div style={{ marginBottom: '1rem', textAlign: 'justify', fontSize: '9pt' }}>
-                <p>
-                    Comprometo-me a devolver {isRoom ? 'o espaço' : 'o(s) equipamento(s)'} nas mesmas condições em que {isRoom ? 'o recebi' : 'os recebi'}.
-                    Estou ciente que qualquer dano ou extravio será de minha responsabilidade.
-                </p>
-            </div>
+                    <div style={{ marginBottom: '1rem', textAlign: 'justify', fontSize: '9pt' }}>
+                        <p>
+                            Comprometo-me a devolver {isRoom ? 'o espaço' : 'o(s) equipamento(s)'} nas mesmas condições em que {isRoom ? 'o recebi' : 'os recebi'}.
+                            Estou ciente que qualquer dano ou extravio será de minha responsabilidade.
+                        </p>
+                    </div>
 
-            <div style={{
-                marginBottom: '1rem',
-                fontSize: '9pt',
-                backgroundColor: '#f3f4f6',
-                padding: '0.5rem',
-                borderLeft: '4px solid #1f2937'
-            }}>
-                <h3 style={{ fontWeight: 'bold', marginBottom: '0' }}>TERMO DE CIÊNCIA</h3>
-                <p style={{ margin: 0 }}>
-                    Estou ciente que a utilização inadequada pode resultar em medidas administrativas
-                    e que sou responsável pela segurança e integridade do {isRoom ? 'espaço' : 'equipamento'}.
-                </p>
-            </div>
+                    <div style={{
+                        marginBottom: '1rem',
+                        fontSize: '9pt',
+                        backgroundColor: '#f3f4f6',
+                        padding: '0.5rem',
+                        borderLeft: '4px solid #1f2937'
+                    }}>
+                        <h3 style={{ fontWeight: 'bold', marginBottom: '0' }}>TERMO DE CIÊNCIA</h3>
+                        <p style={{ margin: 0 }}>
+                            Estou ciente que a utilização inadequada pode resultar em medidas administrativas
+                            e que sou responsável pela segurança e integridade do {isRoom ? 'espaço' : 'equipamento'}.
+                        </p>
+                    </div>
+                </>
+            )}
 
             <div style={{ marginTop: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div style={{ width: '50%' }}>
