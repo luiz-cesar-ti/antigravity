@@ -238,7 +238,22 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
             margin: 0,
             filename: fileName,
             image: { type: 'jpeg' as const, quality: 0.98 },
-            html2canvas: { scale: 2 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                onclone: (clonedDoc: any) => {
+                    const el = clonedDoc.getElementById('term-document-pdf');
+                    if (el) {
+                        el.style.width = '210mm';
+                        el.style.maxWidth = 'none';
+                        el.style.margin = '0 auto';
+                        if (el.parentElement) {
+                            el.parentElement.style.width = '210mm';
+                            el.parentElement.style.maxWidth = 'none';
+                        }
+                    }
+                }
+            },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
         };
 

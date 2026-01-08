@@ -255,11 +255,14 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                                     borderLeft: '4px solid #1f2937',
                                     borderRadius: '2px'
                                 }}>
-                                    <strong style={{ fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>TERMO DE CIÊNCIA</strong>
+                                    <strong style={{ fontWeight: 'bold', display: 'block', marginBottom: '4px', fontSize: '11pt' }}>TERMO DE CIÊNCIA</strong>
                                     {trimmedLine}
                                 </div>
                             );
                         }
+
+                        const isListItem = /^\d+\./.test(trimmedLine);
+                        const listMatch = trimmedLine.match(/^(\d+\.)(.*)/);
 
                         return (
                             <p key={i} style={{
@@ -267,9 +270,17 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                                 fontWeight: isTitle ? 'bold' : 'normal',
                                 fontSize: isTitle ? '12pt' : '11pt',
                                 textTransform: isTitle ? 'uppercase' : 'none',
-                                marginTop: isTitle ? '0.8rem' : '0'
+                                marginTop: isTitle ? '0.8rem' : '0',
+                                paddingLeft: isListItem ? '1.25rem' : '0',
+                                textIndent: isListItem ? '-1.25rem' : '0',
+                                textAlign: 'justify'
                             }}>
-                                {trimmedLine}
+                                {isListItem && listMatch ? (
+                                    <>
+                                        <strong style={{ fontWeight: 'bold' }}>{listMatch[1]}</strong>
+                                        {listMatch[2]}
+                                    </>
+                                ) : trimmedLine}
                             </p>
                         );
                     })}
@@ -279,24 +290,40 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                     <div style={{ marginBottom: '1rem', textAlign: 'justify', fontSize: '11pt', lineHeight: '1.5' }}>
                         <h2 style={{ fontWeight: 'bold', marginBottom: '0.25rem', textTransform: 'uppercase', fontSize: '12pt' }}>Compromissos e Responsabilidades</h2>
                         <p style={{ marginBottom: '0.25rem' }}>Ao aceitar este termo, comprometo-me a:</p>
-                        <div style={{ paddingLeft: '0.5rem' }}>
+                        <div style={{ marginTop: '0.5rem' }}>
                             {[
-                                `Utilizar o ${isRoom ? 'espaço' : 'equipamento'} exclusivamente durante o período agendado e no local especificado.`,
-                                `Zelar pela conservação e bom funcionamento do ${isRoom ? 'espaço e seus itens' : 'equipamento'}.`,
-                                "Comunicar imediatamente à equipe responsável qualquer defeito ou irregularidade constatada.",
-                                `Não emprestar ou transferir o ${isRoom ? 'espaço' : 'equipamento'} a terceiros sem autorização prévia.`,
-                                `Orientar adequadamente o uso do ${isRoom ? 'espaço' : 'equipamento'}, quando utilizado por alunos, zelando por sua conservação.`
-                            ].map((item, index) => (
-                                <div key={index} style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '0.2rem' }}>
-                                    <span style={{ minWidth: '15px', fontWeight: 'bold' }}>{index + 1}.</span>
-                                    <span style={{ textAlign: 'justify' }}>{item}</span>
-                                </div>
-                            ))}
+                                `1. Utilizar o ${isRoom ? 'espaço' : 'equipamento'} exclusivamente durante o período agendado e no local especificado.`,
+                                `2. Zelar pela conservação e bom funcionamento do ${isRoom ? 'espaço e seus itens' : 'equipamento'}.`,
+                                "3. Comunicar imediatamente à equipe responsável qualquer defeito ou irregularidade constatada.",
+                                `4. Não emprestar ou transferir o ${isRoom ? 'espaço' : 'equipamento'} a terceiros sem autorização prévia.`,
+                                `5. Orientar adequadamente o uso do ${isRoom ? 'espaço' : 'equipamento'}, quando utilizado por alunos, zelando por sua conservação.`
+                            ].map((item, index) => {
+                                const parts = item.match(/^(\d+\.)(.*)/);
+                                return (
+                                    <p key={index} style={{
+                                        marginBottom: '0.4rem',
+                                        paddingLeft: '1.25rem',
+                                        textIndent: '-1.25rem',
+                                        textAlign: 'justify'
+                                    }}>
+                                        {parts ? (
+                                            <>
+                                                <strong style={{ fontWeight: 'bold' }}>{parts[1]}</strong>
+                                                {parts[2]}
+                                            </>
+                                        ) : item}
+                                    </p>
+                                );
+                            })}
                             {(data.isRecurring || data.term_document?.isRecurring) && (
-                                <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '0.2rem' }}>
-                                    <span style={{ minWidth: '15px', fontWeight: 'bold' }}>6.</span>
-                                    <span style={{ textAlign: 'justify' }}>Declaro ciência que este é um <strong style={{ fontWeight: 'bold' }}>Agendamento Fixo</strong> e concordo em assinar digitalmente todos os termos gerados automaticamente para cada ocorrência desta recorrência.</span>
-                                </div>
+                                <p style={{
+                                    marginBottom: '0.4rem',
+                                    paddingLeft: '1.25rem',
+                                    textIndent: '-1.25rem',
+                                    textAlign: 'justify'
+                                }}>
+                                    <strong style={{ fontWeight: 'bold' }}>6.</strong> Declaro ciência que este é um <strong style={{ fontWeight: 'bold' }}>Agendamento Fixo</strong> e concordo em assinar digitalmente todos os termos gerados automaticamente para cada ocorrência desta recorrência.
+                                </p>
                             )}
                         </div>
                     </div>
@@ -309,7 +336,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                     </div>
 
                     <div style={{
-                        marginBottom: '1rem',
+                        marginTop: '0.75rem',
                         fontSize: '11pt',
                         backgroundColor: '#f3f4f6',
                         padding: '1rem',
