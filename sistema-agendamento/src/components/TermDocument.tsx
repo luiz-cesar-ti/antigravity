@@ -269,7 +269,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
             )}
 
             {/* Signature Area */}
-            <div style={{ marginTop: '2rem', marginBottom: '4rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div style={{ marginTop: isRecurring ? '2rem' : '1rem', marginBottom: isRecurring ? '4rem' : '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div style={{ width: '50%', textAlign: 'center' }}>
                     <div style={{ fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '10px' }}>{getName()}</div>
                     <div style={{ borderBottom: '1px solid #000' }}></div>
@@ -284,7 +284,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
 
             {/* Footer Traceability */}
             {(displayId || data.term_hash || data.term_fingerprint || data.term_document?.term_hash || data.term_document?.term_fingerprint) && (
-                <div style={{ marginTop: 'auto', borderTop: '1px dashed #e5e7eb', paddingTop: '0.5rem', textAlign: 'center' }}>
+                <div style={{ marginTop: isRecurring ? '1rem' : '0.5rem', borderTop: '1px dashed #e5e7eb', paddingTop: '0.5rem', textAlign: 'center' }}>
                     <p style={{ fontSize: '7.5pt', color: '#6b7280', fontWeight: 'normal' }}>
                         {displayId && <span style={{ color: '#000' }}><strong style={{ fontWeight: 'bold' }}>ID DO TERMO: #{displayId}</strong></span>}
                         <span style={{ margin: '0 8px' }}>|</span>

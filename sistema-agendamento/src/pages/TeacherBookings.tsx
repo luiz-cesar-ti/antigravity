@@ -491,7 +491,7 @@ export function TeacherBookings() {
 
                                                             </div>
                                                             <div className="flex flex-col mt-0.5">
-                                                                <p className={`text-[10px] font-bold uppercase truncate text-gray-500`}>
+                                                                <p className={`text-[10px] font-bold uppercase text-gray-500`}>
                                                                     {isMulti ? `${group.length} itens no termo` : `${first.equipment?.brand || ''} ${first.equipment?.model || ''}`}
                                                                 </p>
                                                                 {!isMulti && (
