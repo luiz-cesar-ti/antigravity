@@ -366,68 +366,66 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
     );
 
     const TermModal = () => (
-        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div className="flex items-center justify-center min-h-screen px-0 pt-0 pb-0 sm:px-4 sm:pt-4 sm:pb-20 text-center sm:block sm:p-0">
-                <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" aria-hidden="true" onClick={() => setModalOpen(false)}></div>
-                <div className="relative z-50 flex flex-col w-full h-[100dvh] sm:h-[85vh] sm:max-h-[85vh] sm:max-w-5xl bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:mx-auto sm:my-8">
-                    <div className="bg-white px-4 py-4 flex justify-between items-center border-b border-gray-100 shrink-0">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                            <div className="p-1.5 sm:p-2 bg-primary-50 rounded-lg shrink-0">
-                                <FileCheck className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
-                            </div>
-                            <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-tight">Termo</h3>
+        <div className="fixed inset-0 z-50 block sm:flex sm:items-center sm:justify-center p-0 sm:p-4 md:p-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onClick={() => setModalOpen(false)}></div>
+            <div className="relative z-50 flex flex-col w-full h-full sm:h-auto sm:max-w-5xl sm:max-h-[85vh] bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transition-all">
+                <div className="bg-white px-4 py-4 flex justify-between items-center border-b border-gray-100 shrink-0">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="p-1.5 sm:p-2 bg-primary-50 rounded-lg shrink-0">
+                            <FileCheck className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
                         </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={() => handlePdfAction('share')}
-                                disabled={isGeneratingPdf}
-                                className="inline-flex items-center px-3 py-2 border border-gray-200 text-xs font-bold rounded-xl text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-all disabled:opacity-50"
-                            >
-                                <Share2 className="h-4 w-4 mr-0 sm:mr-2 text-green-600" />
-                                <span className="hidden sm:inline">{isGeneratingPdf ? '...' : 'WhatsApp'}</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handlePdfAction('download')}
-                                disabled={isGeneratingPdf}
-                                className="inline-flex items-center px-3 py-2 border border-transparent text-xs font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all disabled:opacity-50"
-                            >
-                                <Download className="h-4 w-4 mr-0 sm:mr-2" />
-                                <span className="hidden sm:inline">{isGeneratingPdf ? '...' : 'Baixar PDF'}</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setModalOpen(false)}
-                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors ml-1"
-                            >
-                                <X className="h-6 w-6" />
-                            </button>
-                        </div>
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-tight">Termo</h3>
                     </div>
-
-                    <div className="bg-gray-50/50 p-4 sm:p-8 overflow-y-auto flex-1 flex justify-center min-h-0">
-                        <div className="term-doc-preview mx-auto">
-                            <TermDocument
-                                data={{
-                                    ...data,
-                                    term_hash: data.term_document?.term_fingerprint || data.term_hash,
-                                    version_tag: data.term_document?.version_tag || data.version_tag || 'v2.0'
-                                }}
-                            />
-                        </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => handlePdfAction('share')}
+                            disabled={isGeneratingPdf}
+                            className="inline-flex items-center px-3 py-2 border border-gray-200 text-xs font-bold rounded-xl text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-all disabled:opacity-50"
+                        >
+                            <Share2 className="h-4 w-4 mr-0 sm:mr-2 text-green-600" />
+                            <span className="hidden sm:inline">{isGeneratingPdf ? '...' : 'WhatsApp'}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handlePdfAction('download')}
+                            disabled={isGeneratingPdf}
+                            className="inline-flex items-center px-3 py-2 border border-transparent text-xs font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 shadow-md transition-all disabled:opacity-50"
+                        >
+                            <Download className="h-4 w-4 mr-0 sm:mr-2" />
+                            <span className="hidden sm:inline">{isGeneratingPdf ? '...' : 'Baixar PDF'}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setModalOpen(false)}
+                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors ml-1"
+                        >
+                            <X className="h-6 w-6" />
+                        </button>
                     </div>
                 </div>
 
-                <div className="bg-white px-6 py-4 border-t border-gray-100 flex justify-end shrink-0">
-                    <button
-                        type="button"
-                        className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-all"
-                        onClick={() => setModalOpen(false)}
-                    >
-                        Fechar Visualização
-                    </button>
+                <div className="bg-gray-50/50 p-4 sm:p-8 overflow-y-auto flex-1 flex justify-center min-h-0">
+                    <div className="term-doc-preview mx-auto">
+                        <TermDocument
+                            data={{
+                                ...data,
+                                term_hash: data.term_document?.term_fingerprint || data.term_hash,
+                                version_tag: data.term_document?.version_tag || data.version_tag || 'v2.0'
+                            }}
+                        />
+                    </div>
                 </div>
+            </div>
+
+            <div className="bg-white px-6 py-4 border-t border-gray-100 flex justify-end shrink-0">
+                <button
+                    type="button"
+                    className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-all"
+                    onClick={() => setModalOpen(false)}
+                >
+                    Fechar Visualização
+                </button>
             </div>
         </div>
     );
