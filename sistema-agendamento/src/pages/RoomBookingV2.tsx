@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import type { Room, User } from '../types';
+import type { Room, User, Settings } from '../types';
 import { Clock, ChevronRight, AlertCircle, MapPin, Trash2, Info, X, CheckCircle, Calendar } from 'lucide-react';
-import { format, parseISO, getDay } from 'date-fns';
+import { format, parseISO, getDay, differenceInHours } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { clsx } from 'clsx';
 
 export function RoomBookingV2() {
     const { user } = useAuth();
@@ -23,6 +24,9 @@ export function RoomBookingV2() {
     const [occupiedSlots, setOccupiedSlots] = useState<any[]>([]);
     const [myBookings, setMyBookings] = useState<any[]>([]);
     const [bookingLoading, setBookingLoading] = useState(false);
+
+    // Settings for room advance time validation
+    const [settings, setSettings] = useState<Settings | null>(null);
 
     // Feedback State
     // Feedback State
@@ -177,6 +181,31 @@ export function RoomBookingV2() {
         }
     }, [selectedRoom, selectedDate]);
 
+    // Fetch Settings for room advance time validation
+    useEffect(() => {
+        const fetchSettings = async () => {
+            if (!selectedRoom) return;
+
+            // Force fresh data by adding timestamp to bypass cache
+            const { data, error } = await supabase
+                .from('settings')
+                .select('*')
+                .eq('unit', selectedRoom.unit)
+                .single();
+
+            if (error) {
+                console.error('Error fetching settings:', error);
+                return;
+            }
+
+            if (data) {
+                console.log('Settings loaded:', data); // Debug log
+                setSettings(data);
+            }
+        };
+        fetchSettings();
+    }, [selectedRoom]);
+
     const fetchOccupancy = async () => {
         const dayStart = `${selectedDate}T00:00:00`;
         const dayEnd = `${selectedDate}T23:59:59`;
@@ -252,9 +281,14 @@ export function RoomBookingV2() {
             return `O horário deve estar entre ${roomMin} e ${roomMax}.`;
         }
 
-        // Overlap Check
-        const newStart = new Date(`${selectedDate}T${startTime}:00`);
-        const newEnd = new Date(`${selectedDate}T${endTime}:00`);
+        // Parse date and time components separately to ensure local timezone
+        const [year, month, day] = selectedDate.split('-').map(Number);
+        const [startHour, startMinute] = startTime.split(':').map(Number);
+        const [endHour, endMinute] = endTime.split(':').map(Number);
+
+        // Create Date objects in local timezone
+        const newStart = new Date(year, month - 1, day, startHour, startMinute, 0);
+        const newEnd = new Date(year, month - 1, day, endHour, endMinute, 0);
 
         const hasOverlap = occupiedSlots.some(booking => {
             const bStart = new Date(booking.start_ts);
@@ -264,9 +298,25 @@ export function RoomBookingV2() {
 
         if (hasOverlap) return "Este horário já está ocupado por outro agendamento.";
 
-        // Past time check
+        // Past time check - now both dates are in local timezone
         const now = new Date();
         if (newStart < now) return "Não é possível realizar agendamentos para horários que já passaram.";
+
+        // Minimum advance time check for rooms
+        console.log('Checking advance time:', {
+            enabled: settings?.room_min_advance_time_enabled,
+            hours: settings?.room_min_advance_time_hours,
+            settings: settings
+        });
+
+        if (settings?.room_min_advance_time_enabled) {
+            const hoursDiff = differenceInHours(newStart, now);
+            console.log('Hours difference:', hoursDiff, 'Required:', settings.room_min_advance_time_hours);
+
+            if (hoursDiff < settings.room_min_advance_time_hours) {
+                return `É necessário agendar salas com no mínimo ${settings.room_min_advance_time_hours} horas de antecedência.`;
+            }
+        }
 
         return null;
     };
@@ -318,16 +368,39 @@ export function RoomBookingV2() {
                             unitRooms[unit].map(room => (
                                 <button
                                     key={room.id}
-                                    onClick={() => handleRoomClick(room)}
-                                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-0 text-left hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden"
+                                    onClick={() => room.is_available !== false && handleRoomClick(room)}
+                                    disabled={room.is_available === false}
+                                    className={clsx(
+                                        "rounded-xl shadow-sm border p-0 text-left transition-all duration-300 group relative overflow-hidden",
+                                        room.is_available !== false
+                                            ? "bg-white border-gray-200 hover:shadow-xl hover:-translate-y-1"
+                                            : "bg-red-50/50 border-red-200 cursor-not-allowed"
+                                    )}
                                 >
-                                    <div className="h-2 w-full bg-gradient-to-r from-primary-500 to-indigo-600" />
+                                    <div className={clsx(
+                                        "h-2 w-full",
+                                        room.is_available !== false ? "bg-gradient-to-r from-primary-500 to-indigo-600" : "bg-red-600"
+                                    )} />
 
                                     <div className="p-6">
                                         <div className="flex justify-between items-start mb-4">
-                                            <div className="bg-primary-50 p-3 rounded-xl group-hover:bg-primary-600 group-hover:text-white transition-all duration-300 shadow-sm">
-                                                <MapPin className="w-7 h-7 text-primary-600 group-hover:text-white" />
+                                            <div className={clsx(
+                                                "p-3 rounded-xl transition-all duration-300 shadow-sm",
+                                                room.is_available !== false ? "bg-primary-50 group-hover:bg-primary-600" : "bg-red-50"
+                                            )}>
+                                                <MapPin className={clsx(
+                                                    "w-7 h-7 transition-colors",
+                                                    room.is_available !== false ? "text-primary-600 group-hover:text-white" : "text-red-600"
+                                                )} />
                                             </div>
+                                            <span className={clsx(
+                                                "px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
+                                                room.is_available !== false
+                                                    ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                                    : "bg-red-50 text-red-700 border-red-100"
+                                            )}>
+                                                {room.is_available !== false ? 'Disponível' : 'Indisponível'}
+                                            </span>
                                         </div>
 
                                         <h3 className="text-xl font-extrabold text-gray-900 mb-2 group-hover:text-primary-700 transition-colors">
@@ -351,11 +424,25 @@ export function RoomBookingV2() {
                                                 <Clock className="w-3.5 h-3.5 text-primary-500" />
                                                 <span>Horário: {room.min_time?.substring(0, 5)} às {room.max_time?.substring(0, 5)}</span>
                                             </div>
+                                            {settings?.room_min_advance_time_enabled && settings.room_min_advance_time_hours > 0 && (
+                                                <div className="flex items-center gap-2 text-xs font-semibold text-amber-700 bg-amber-50 -mx-3 -mb-3 mt-2 px-3 py-2 rounded-b-xl border-t border-amber-100">
+                                                    <AlertCircle className="w-3.5 h-3.5" />
+                                                    <span>Antecedência mínima: {settings.room_min_advance_time_hours} {settings.room_min_advance_time_hours === 1 ? 'hora' : 'horas'}</span>
+                                                </div>
+                                            )}
                                         </div>
 
-                                        <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between text-primary-600 font-bold text-sm">
-                                            <span className="group-hover:underline decoration-2 underline-offset-4 uppercase tracking-tight">Reservar Sala</span>
-                                            <div className="bg-primary-50 p-1.5 rounded-full group-hover:bg-primary-600 group-hover:text-white transition-all">
+                                        <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between font-bold text-sm">
+                                            <span className={clsx(
+                                                "uppercase tracking-tight",
+                                                room.is_available !== false ? "text-primary-600 group-hover:underline decoration-2 underline-offset-4" : "text-red-600"
+                                            )}>
+                                                {room.is_available !== false ? 'Reservar Sala' : 'Indisponível no momento'}
+                                            </span>
+                                            <div className={clsx(
+                                                "p-1.5 rounded-full transition-all",
+                                                room.is_available !== false ? "bg-primary-50 group-hover:bg-primary-600 group-hover:text-white" : "bg-red-50 text-red-400"
+                                            )}>
                                                 <ChevronRight className="w-4 h-4" />
                                             </div>
                                         </div>

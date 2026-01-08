@@ -37,12 +37,12 @@ export interface Room {
     id: string;
     name: string;
     unit: string;
-    capacity: number;
     description?: string;
     min_time?: string; // "07:00:00"
     max_time?: string; // "22:00:00"
     available_days?: number[]; // [1, 2, 3, 4, 5]
     is_active?: boolean;
+    is_available?: boolean;
     created_at: string;
 }
 
@@ -105,9 +105,11 @@ export interface RecurringBooking {
 export interface Settings {
     id: string;
     unit: string;
-    min_advance_time_enabled: boolean;
-    min_advance_time_hours: number;
-    room_booking_enabled: boolean; // New field
+    min_advance_time_enabled: boolean;        // For equipment bookings
+    min_advance_time_hours: number;           // For equipment bookings
+    room_min_advance_time_enabled: boolean;   // For room bookings
+    room_min_advance_time_hours: number;      // For room bookings
+    room_booking_enabled: boolean;
     notification_email?: string;
     notification_email_enabled?: boolean;
     updated_at: string;

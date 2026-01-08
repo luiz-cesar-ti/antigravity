@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 import type { RoomBookingData } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSettings } from '../../hooks/useSettings';
-import { differenceInHours, parseISO } from 'date-fns';
+import { differenceInHours } from 'date-fns';
 
 interface Step1Props {
     data: RoomBookingData;
@@ -53,7 +53,11 @@ export function Step1RoomBasicInfo({ data, updateData, onNext }: Step1Props) {
 
             // Prevent past dates and times
             const now = new Date();
-            const bookingStart = new Date(`${data.date}T${data.startTime}:00`);
+
+            // Parse date and time components separately to ensure local timezone
+            const [year, month, day] = data.date.split('-').map(Number);
+            const [startHour, startMinute] = data.startTime.split(':').map(Number);
+            const bookingStart = new Date(year, month - 1, day, startHour, startMinute, 0);
 
             if (bookingStart < now) {
                 setError('Não é possível realizar agendamentos para horários que já passaram.');
@@ -66,14 +70,16 @@ export function Step1RoomBasicInfo({ data, updateData, onNext }: Step1Props) {
             return false;
         }
 
-        // Minimum advance time validation
-        if (settings && settings.min_advance_time_enabled) {
+        // Minimum advance time validation for ROOMS (not equipment)
+        if (settings && settings.room_min_advance_time_enabled) {
             const now = new Date();
-            const bookingStart = parseISO(`${data.date}T${data.startTime}`);
+            const [year, month, day] = data.date.split('-').map(Number);
+            const [startHour, startMinute] = data.startTime.split(':').map(Number);
+            const bookingStart = new Date(year, month - 1, day, startHour, startMinute, 0);
             const hoursDiff = differenceInHours(bookingStart, now);
 
-            if (hoursDiff < settings.min_advance_time_hours) {
-                setError(`É necessário agendar com no mínimo ${settings.min_advance_time_hours} horas de antecedência. Por favor, escolha outro horário.`);
+            if (hoursDiff < settings.room_min_advance_time_hours) {
+                setError(`É necessário agendar salas com no mínimo ${settings.room_min_advance_time_hours} horas de antecedência. Por favor, escolha outro horário.`);
                 return false;
             }
         }

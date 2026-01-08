@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
-import { Users, Monitor, CheckCircle, Search, Filter } from 'lucide-react';
+import { Monitor, CheckCircle, Search, Filter } from 'lucide-react';
 import type { RoomBookingData } from '../../types';
 import { clsx } from 'clsx';
 import { format, parseISO } from 'date-fns';
@@ -15,9 +15,9 @@ interface Step2Props {
 interface Room {
     id: string;
     name: string;
-    capacity: number;
     resources: string[];
     unit: string;
+    is_available?: boolean;
 }
 
 export function Step2RoomSelection({ data, updateData, onNext, onPrev }: Step2Props) {
@@ -134,7 +134,7 @@ export function Step2RoomSelection({ data, updateData, onNext, onPrev }: Step2Pr
     );
 
     const handleSelect = (room: Room) => {
-        if (unavailableRoomIds.has(room.id)) return;
+        if (unavailableRoomIds.has(room.id) || room.is_available === false) return;
         updateData({
             roomId: room.id,
             roomName: room.name
@@ -179,19 +179,23 @@ export function Step2RoomSelection({ data, updateData, onNext, onPrev }: Step2Pr
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredRooms.map(room => {
                         const isSelected = data.roomId === room.id;
-                        const isUnavailable = unavailableRoomIds.has(room.id);
+                        const isOccupied = unavailableRoomIds.has(room.id);
+                        const isUnavailable = room.is_available === false;
+                        const isDisabled = isOccupied || isUnavailable;
 
                         return (
                             <div
                                 key={room.id}
-                                onClick={() => !isUnavailable && handleSelect(room)}
+                                onClick={() => !isDisabled && handleSelect(room)}
                                 className={clsx(
                                     "relative group p-4 rounded-2xl border-2 transition-all cursor-pointer overflow-hidden",
-                                    isUnavailable
+                                    isOccupied
                                         ? "bg-gray-50 border-gray-100 opacity-60 cursor-not-allowed"
-                                        : isSelected
-                                            ? "bg-primary-50/50 border-primary-600 ring-4 ring-primary-100/50 shadow-lg scale-[1.02]"
-                                            : "bg-white border-gray-100 hover:border-gray-200 hover:shadow-md"
+                                        : isUnavailable
+                                            ? "bg-red-50/50 border-red-200 cursor-not-allowed"
+                                            : isSelected
+                                                ? "bg-primary-50/50 border-primary-600 ring-4 ring-primary-100/50 shadow-lg scale-[1.02]"
+                                                : "bg-white border-gray-100 hover:border-gray-200 hover:shadow-md"
                                 )}
                             >
                                 <div className="flex justify-between items-start mb-3">
@@ -202,7 +206,8 @@ export function Step2RoomSelection({ data, updateData, onNext, onPrev }: Step2Pr
                                         <Monitor className="h-5 w-5" />
                                     </div>
                                     {isSelected && <CheckCircle className="h-6 w-6 text-primary-600 animate-in zoom-in-50" />}
-                                    {isUnavailable && <span className="px-2 py-1 bg-red-100 text-red-600 text-[10px] font-black uppercase tracking-wider rounded-lg">Ocupada</span>}
+                                    {isOccupied && <span className="px-2 py-1 bg-red-100 text-red-600 text-[10px] font-black uppercase tracking-wider rounded-lg">Ocupada</span>}
+                                    {isUnavailable && <span className="px-2 py-1 bg-red-50 text-red-500 text-[10px] font-black uppercase tracking-wider rounded-lg border border-red-100">Indisponível</span>}
                                 </div>
 
                                 <h3 className={clsx(
@@ -212,10 +217,6 @@ export function Step2RoomSelection({ data, updateData, onNext, onPrev }: Step2Pr
                                     {room.name}
                                 </h3>
 
-                                <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
-                                    <Users className="h-3.5 w-3.5" />
-                                    <span>Capacidade: {room.capacity || 'N/A'}</span>
-                                </div>
 
                                 {room.resources && room.resources.length > 0 && (
                                     <div className="flex flex-wrap gap-1.5">

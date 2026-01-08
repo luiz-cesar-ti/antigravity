@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import type { Room, RoomBooking, Admin } from '../../types';
-import { Plus, Trash2, Calendar, Clock, MapPin, Users, AlertCircle, X, Edit2, CheckCircle2 } from 'lucide-react';
+import type { Room, RoomBooking, Admin, Settings } from '../../types';
+import { Plus, Trash2, Calendar, Clock, MapPin, Users, AlertCircle, AlertTriangle, X, Edit2, CheckCircle2, Power } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -16,11 +16,13 @@ export function AdminRooms() {
     const [loading, setLoading] = useState(true);
     const [deleteModal, setDeleteModal] = useState<{
         isOpen: boolean;
-        bookingId: string | null;
+        type: 'booking' | 'room' | null;
+        id: string | null;
         roomName?: string;
     }>({
         isOpen: false,
-        bookingId: null
+        type: null,
+        id: null
     });
 
     const [successModal, setSuccessModal] = useState<{
@@ -39,7 +41,6 @@ export function AdminRooms() {
     const initialFormState = {
         name: '',
         unit: 'P1',
-        capacity: 40,
         description: '',
         min_time: '07:00',
         max_time: '22:00',
@@ -48,6 +49,12 @@ export function AdminRooms() {
     const [roomForm, setRoomForm] = useState(initialFormState);
 
     const [isCreating, setIsCreating] = useState(false);
+
+    // Room Advance Time Settings State
+    const [settings, setSettings] = useState<Settings | null>(null);
+    const [roomMinAdvanceEnabled, setRoomMinAdvanceEnabled] = useState(false);
+    const [roomMinAdvanceHours, setRoomMinAdvanceHours] = useState(0);
+    const [savingSettings, setSavingSettings] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -125,6 +132,21 @@ export function AdminRooms() {
                     setBookings(bookingsData as any);
                 }
             }
+
+            // Fetch Settings for room advance time configuration
+            if (unit) {
+                const { data: settingsData } = await supabase
+                    .from('settings')
+                    .select('*')
+                    .eq('unit', unit)
+                    .single();
+
+                if (settingsData) {
+                    setSettings(settingsData);
+                    setRoomMinAdvanceEnabled(settingsData.room_min_advance_time_enabled || false);
+                    setRoomMinAdvanceHours(settingsData.room_min_advance_time_hours || 0);
+                }
+            }
         } catch (err) {
             console.error('Error fetching data:', err);
         } finally {
@@ -144,7 +166,6 @@ export function AdminRooms() {
         setRoomForm({
             name: room.name,
             unit: room.unit,
-            capacity: room.capacity || 40,
             description: room.description || '',
             min_time: room.min_time || '07:00',
             max_time: room.max_time || '22:00',
@@ -176,7 +197,6 @@ export function AdminRooms() {
                 const { data, error } = await supabase.rpc('update_room_secure', {
                     p_room_id: editingRoom.id,
                     p_name: roomForm.name,
-                    p_capacity: roomForm.capacity,
                     p_description: roomForm.description,
                     p_min_time: roomForm.min_time,
                     p_max_time: roomForm.max_time,
@@ -197,7 +217,6 @@ export function AdminRooms() {
                 const { data, error } = await supabase.rpc('create_room_secure', {
                     p_name: roomForm.name,
                     p_unit: adminUser.unit,
-                    p_capacity: roomForm.capacity,
                     p_description: roomForm.description,
                     p_min_time: roomForm.min_time,
                     p_max_time: roomForm.max_time,
@@ -224,38 +243,101 @@ export function AdminRooms() {
         }
     };
 
-    const handleDeleteRoom = async (id: string) => {
-        if (!confirm('Tem certeza? Isso apagará todos os agendamentos desta sala.')) return;
-        try {
-            if (!adminUser?.session_token) throw new Error("Sessão de administrador inválida.");
+    const handleDeleteRoom = (room: Room) => {
+        setDeleteModal({
+            isOpen: true,
+            type: 'room',
+            id: room.id,
+            roomName: room.name
+        });
+    };
 
+    const confirmDeleteRoom = async () => {
+        if (!deleteModal.id || !adminUser?.session_token) return;
+
+        try {
             const { data, error } = await supabase.rpc('delete_room_secure', {
-                p_room_id: id,
+                p_room_id: deleteModal.id,
                 p_session_token: adminUser.session_token
             });
 
             if (error) throw error;
             if (!data.success) throw new Error(data.message || 'Erro ao deletar sala');
 
+            setDeleteModal({ isOpen: false, type: null, id: null });
+            setSuccessModal({
+                isOpen: true,
+                message: 'Sala removida com sucesso!'
+            });
             fetchData();
         } catch (err: any) {
             alert(err.message || 'Erro ao deletar sala.');
         }
     };
 
-    const handleDeleteBooking = async () => {
-        if (!deleteModal.bookingId || !adminUser?.session_token) return;
-
+    const handleToggleAvailability = async (roomId: string) => {
         try {
-            const { data, error } = await supabase.rpc('delete_room_booking_secure', {
-                p_booking_id: deleteModal.bookingId,
+            if (!adminUser?.session_token) throw new Error("Sessão inválida.");
+
+            const { data, error } = await supabase.rpc('toggle_room_availability_secure', {
+                p_room_id: roomId,
                 p_session_token: adminUser.session_token
             });
 
             if (error) throw error;
             if (!data.success) throw new Error(data.message);
 
-            setDeleteModal({ isOpen: false, bookingId: null });
+            fetchData();
+        } catch (err: any) {
+            console.error(err);
+            alert(err.message || 'Erro ao alternar disponibilidade.');
+        }
+    };
+
+    const handleSaveRoomAdvanceSettings = async () => {
+        if (!adminUser?.unit) return;
+
+        setSavingSettings(true);
+        try {
+            const { error } = await supabase
+                .from('settings')
+                .update({
+                    room_min_advance_time_enabled: roomMinAdvanceEnabled,
+                    room_min_advance_time_hours: roomMinAdvanceHours
+                })
+                .eq('unit', adminUser.unit);
+
+            if (error) throw error;
+
+            setSuccessModal({
+                isOpen: true,
+                message: 'Configurações de agendamento atualizadas com sucesso!'
+            });
+        } catch (err: any) {
+            console.error(err);
+            alert(err.message || 'Erro ao salvar configurações.');
+        } finally {
+            setSavingSettings(false);
+        }
+    };
+
+    const handleDeleteBooking = async () => {
+        if (!deleteModal.id || !adminUser?.session_token) return;
+
+        try {
+            const { data, error } = await supabase.rpc('delete_room_booking_secure', {
+                p_booking_id: deleteModal.id,
+                p_session_token: adminUser.session_token
+            });
+
+            if (error) throw error;
+            if (!data.success) throw new Error(data.message);
+
+            setDeleteModal({ isOpen: false, type: null, id: null });
+            setSuccessModal({
+                isOpen: true,
+                message: 'Agendamento cancelado com sucesso!'
+            });
             fetchData();
         } catch (err: any) {
             console.error(err);
@@ -293,202 +375,292 @@ export function AdminRooms() {
 
             {/* TAB: ROOMS (CRUD) */}
             {activeTab === 'rooms' && (
-                <div className="flex flex-col lg:flex-row gap-8">
-                    {/* Form */}
-                    <div className="w-full lg:w-1/3">
-                        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 sticky top-24">
-                            <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
-                                <div className="p-2 bg-primary-100 rounded-lg">
-                                    <Plus className="w-5 h-5 text-primary-600" />
-                                </div>
-                                Nova Sala
-                            </h2>
+                <div className="space-y-6">
+                    {/* Room Advance Time Settings Section */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                            <div className="p-2 bg-indigo-100 rounded-lg">
+                                <Clock className="w-5 h-5 text-indigo-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900">Configurações de Agendamento</h3>
+                        </div>
 
-                            <form onSubmit={handleSaveRoom} className="space-y-5">
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Nome da Sala</label>
+                        <div className="space-y-5">
+                            {/* Toggle */}
+                            <div className="flex items-start">
+                                <div className="flex items-center h-5">
                                     <input
-                                        type="text"
-                                        required
-                                        value={roomForm.name}
-                                        onChange={e => setRoomForm({ ...roomForm, name: e.target.value })}
-                                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2.5 transition-all"
-                                        placeholder="Ex: Laboratório de Informática 1"
+                                        id="room_min_advance_enabled"
+                                        type="checkbox"
+                                        checked={roomMinAdvanceEnabled}
+                                        onChange={(e) => setRoomMinAdvanceEnabled(e.target.checked)}
+                                        className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded cursor-pointer"
                                     />
                                 </div>
+                                <div className="ml-3 text-sm">
+                                    <label htmlFor="room_min_advance_enabled" className="font-medium text-gray-700 cursor-pointer">
+                                        Exigir Antecedência Mínima para Salas
+                                    </label>
+                                    <p className="text-gray-500 mt-1">
+                                        Se habilitado, professores precisarão agendar salas com antecedência mínima configurada.
+                                    </p>
+                                </div>
+                            </div>
 
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Descrição / Equipamentos</label>
-                                    <textarea
-                                        value={roomForm.description}
-                                        onChange={e => setRoomForm({ ...roomForm, description: e.target.value })}
-                                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2.5 transition-all"
-                                        rows={3}
-                                        placeholder="Ex: Projetor HDMI, Ar condicionado, 30 computadores..."
+                            {/* Hours Input */}
+                            <div className={`ml-7 transition-opacity duration-200 ${roomMinAdvanceEnabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
+                                <label htmlFor="room_advance_hours" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Horas de Antecedência
+                                </label>
+                                <div className="relative w-32">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Clock className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                        type="number"
+                                        id="room_advance_hours"
+                                        min="0"
+                                        max="720"
+                                        value={roomMinAdvanceHours}
+                                        onChange={(e) => setRoomMinAdvanceHours(parseInt(e.target.value) || 0)}
+                                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-2"
+                                        disabled={!roomMinAdvanceEnabled}
                                     />
-                                    <p className="mt-1 text-xs text-gray-500">Detalhes visíveis para o professor.</p>
                                 </div>
+                                <p className="mt-2 text-xs text-gray-500">
+                                    Ex: 2 horas = agendamento deve ser feito 2h antes do horário desejado
+                                </p>
+                            </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Abre às</label>
-                                        <div className="relative">
-                                            <input
-                                                type="time"
-                                                required
-                                                value={roomForm.min_time}
-                                                onChange={e => setRoomForm({ ...roomForm, min_time: e.target.value })}
-                                                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 pl-8 py-2.5"
-                                            />
-                                            <Clock className="w-4 h-4 text-gray-400 absolute left-2.5 top-3" />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Fecha às</label>
-                                        <div className="relative">
-                                            <input
-                                                type="time"
-                                                required
-                                                value={roomForm.max_time}
-                                                onChange={e => setRoomForm({ ...roomForm, max_time: e.target.value })}
-                                                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 pl-8 py-2.5"
-                                            />
-                                            <Clock className="w-4 h-4 text-gray-400 absolute left-2.5 top-3" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-3">Dias de Funcionamento</label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, idx) => {
-                                            const isSelected = roomForm.available_days.includes(idx);
-                                            return (
-                                                <button
-                                                    key={idx}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const current = [...roomForm.available_days];
-                                                        if (isSelected) {
-                                                            setRoomForm({ ...roomForm, available_days: current.filter(d => d !== idx) });
-                                                        } else {
-                                                            setRoomForm({ ...roomForm, available_days: [...current, idx].sort() });
-                                                        }
-                                                    }}
-                                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isSelected
-                                                        ? 'bg-primary-600 text-white shadow-md transform scale-105'
-                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                        }`}
-                                                >
-                                                    {day}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
+                            {/* Save Button - Always Enabled */}
+                            <div className="ml-7 mt-4">
                                 <button
-                                    type="submit"
-                                    disabled={isCreating}
-                                    className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-70 transition-all mt-4"
+                                    type="button"
+                                    onClick={handleSaveRoomAdvanceSettings}
+                                    disabled={savingSettings}
+                                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
-                                    {isCreating ? 'Salvando...' : 'Cadastrar Sala'}
+                                    {savingSettings ? 'Salvando...' : 'Salvar'}
                                 </button>
-                            </form>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Modern Grid List (Replaces Table) */}
-                    <div className="flex-1">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                                Salas Cadastradas
-                                <span className="bg-primary-100 text-primary-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
-                                    {rooms.length}
-                                </span>
-                            </h3>
-                        </div>
+                    {/* Existing Form and Room List */}
+                    <div className="flex flex-col lg:flex-row gap-8">
+                        {/* Form */}
+                        <div className="w-full lg:w-1/3">
+                            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 sticky top-24">
+                                <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
+                                    <div className="p-2 bg-primary-100 rounded-lg">
+                                        <Plus className="w-5 h-5 text-primary-600" />
+                                    </div>
+                                    Nova Sala
+                                </h2>
 
-                        {rooms.length === 0 ? (
-                            <div className="p-10 text-center bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col items-center">
-                                <div className="bg-gray-50 p-4 rounded-full mb-3">
-                                    <Calendar className="w-8 h-8 text-gray-400" />
-                                </div>
-                                <p className="text-lg font-medium text-gray-600">Nenhuma sala cadastrada</p>
-                                <p className="text-sm text-gray-400">Utilize o formulário ao lado para adicionar sua primeira sala.</p>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
-                                {rooms.map(room => (
-                                    <div key={room.id} className="group bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-primary-200 transition-all duration-300 relative overflow-hidden flex flex-col">
-                                        <div className={`h-1.5 w-full ${room.unit === 'P1' ? 'bg-blue-500' : 'bg-purple-500'}`} />
+                                <form onSubmit={handleSaveRoom} className="space-y-5">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Nome da Sala</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={roomForm.name}
+                                            onChange={e => setRoomForm({ ...roomForm, name: e.target.value })}
+                                            className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2.5 transition-all"
+                                            placeholder="Ex: Laboratório de Informática 1"
+                                        />
+                                    </div>
 
-                                        <div className="p-5 flex-1 flex flex-col">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <div>
-                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider mb-1.5 ${room.unit === 'P1' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'
-                                                        }`}>
-                                                        <MapPin className="w-3 h-3" />
-                                                        {room.unit}
-                                                    </span>
-                                                    <h4 className="font-bold text-gray-900 text-lg leading-tight">{room.name}</h4>
-                                                </div>
-                                            </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Descrição / Equipamentos</label>
+                                        <textarea
+                                            value={roomForm.description}
+                                            onChange={e => setRoomForm({ ...roomForm, description: e.target.value })}
+                                            className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2.5 transition-all"
+                                            rows={3}
+                                            placeholder="Ex: Projetor HDMI, Ar condicionado, 30 computadores..."
+                                        />
+                                        <p className="mt-1 text-xs text-gray-500">Detalhes visíveis para o professor.</p>
+                                    </div>
 
-                                            {room.description && (
-                                                <p className="text-xs text-gray-500 mb-4 line-clamp-2 leading-relaxed bg-gray-50 p-2 rounded-lg border border-gray-100">
-                                                    {room.description}
-                                                </p>
-                                            )}
-
-                                            <div className="mt-auto grid grid-cols-2 gap-2 text-xs">
-                                                <div className="flex items-center gap-2 text-gray-600 font-medium">
-                                                    <div className="w-6 h-6 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
-                                                        <Clock className="w-3.5 h-3.5" />
-                                                    </div>
-                                                    {room.min_time?.slice(0, 5)} - {room.max_time?.slice(0, 5)}
-                                                </div>
-                                                <div className="flex items-center gap-2 text-gray-600 font-medium">
-                                                    <div className="w-6 h-6 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
-                                                        <Calendar className="w-3.5 h-3.5" />
-                                                    </div>
-                                                    <div className="flex gap-0.5">
-                                                        {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map((day, idx) => (
-                                                            <span
-                                                                key={day}
-                                                                className={`text-[9px] w-4 h-4 flex items-center justify-center rounded-sm ${room.available_days?.includes(idx)
-                                                                    ? 'bg-emerald-100 text-emerald-700 font-bold'
-                                                                    : 'text-gray-300'
-                                                                    }`}
-                                                            >
-                                                                {day.charAt(0)}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Abre às</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="time"
+                                                    required
+                                                    value={roomForm.min_time}
+                                                    onChange={e => setRoomForm({ ...roomForm, min_time: e.target.value })}
+                                                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 pl-8 py-2.5"
+                                                />
+                                                <Clock className="w-4 h-4 text-gray-400 absolute left-2.5 top-3" />
                                             </div>
                                         </div>
-
-                                        <div className="flex border-t border-gray-100 divide-x divide-gray-100 bg-gray-50/50">
-                                            <button
-                                                onClick={() => openEditModal(room)}
-                                                className="flex-1 py-3 text-xs font-bold uppercase tracking-wider text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2"
-                                            >
-                                                <Edit2 className="w-3.5 h-3.5" />
-                                                Editar
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteRoom(room.id)}
-                                                className="flex-1 py-3 text-xs font-bold uppercase tracking-wider text-red-600 hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                                Excluir
-                                            </button>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Fecha às</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="time"
+                                                    required
+                                                    value={roomForm.max_time}
+                                                    onChange={e => setRoomForm({ ...roomForm, max_time: e.target.value })}
+                                                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 pl-8 py-2.5"
+                                                />
+                                                <Clock className="w-4 h-4 text-gray-400 absolute left-2.5 top-3" />
+                                            </div>
                                         </div>
                                     </div>
-                                ))}
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Dias de Funcionamento</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, idx) => {
+                                                const isSelected = roomForm.available_days.includes(idx);
+                                                return (
+                                                    <button
+                                                        key={idx}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const current = [...roomForm.available_days];
+                                                            if (isSelected) {
+                                                                setRoomForm({ ...roomForm, available_days: current.filter(d => d !== idx) });
+                                                            } else {
+                                                                setRoomForm({ ...roomForm, available_days: [...current, idx].sort() });
+                                                            }
+                                                        }}
+                                                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isSelected
+                                                            ? 'bg-primary-600 text-white shadow-md transform scale-105'
+                                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                            }`}
+                                                    >
+                                                        {day}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={isCreating}
+                                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-70 transition-all mt-4"
+                                    >
+                                        {isCreating ? 'Salvando...' : 'Cadastrar Sala'}
+                                    </button>
+                                </form>
                             </div>
-                        )}
+                        </div>
+
+                        {/* Modern Grid List (Replaces Table) */}
+                        <div className="flex-1">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                    Salas Cadastradas
+                                    <span className="bg-primary-100 text-primary-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                                        {rooms.length}
+                                    </span>
+                                </h3>
+                            </div>
+
+                            {rooms.length === 0 ? (
+                                <div className="p-10 text-center bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col items-center">
+                                    <div className="bg-gray-50 p-4 rounded-full mb-3">
+                                        <Calendar className="w-8 h-8 text-gray-400" />
+                                    </div>
+                                    <p className="text-lg font-medium text-gray-600">Nenhuma sala cadastrada</p>
+                                    <p className="text-sm text-gray-400">Utilize o formulário ao lado para adicionar sua primeira sala.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
+                                    {rooms.map(room => (
+                                        <div key={room.id} className="group bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-primary-200 transition-all duration-300 relative overflow-hidden flex flex-col">
+                                            <div className={`h-1.5 w-full ${room.unit === 'P1' ? 'bg-blue-500' : 'bg-purple-500'}`} />
+
+                                            <div className="p-5 flex-1 flex flex-col">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1.5">
+                                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${room.unit === 'P1' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'
+                                                                }`}>
+                                                                <MapPin className="w-3 h-3" />
+                                                                {room.unit}
+                                                            </span>
+                                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${room.is_available !== false ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                                                                }`}>
+                                                                {room.is_available !== false ? 'Disponível' : 'Indisponível'}
+                                                            </span>
+                                                        </div>
+                                                        <h4 className="font-bold text-gray-900 text-lg leading-tight">{room.name}</h4>
+                                                    </div>
+
+                                                    <button
+                                                        onClick={() => handleToggleAvailability(room.id)}
+                                                        className={`p-2 rounded-lg transition-all shadow-sm border ${room.is_available !== false
+                                                            ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white'
+                                                            : 'bg-red-50 text-red-600 border-red-100 hover:bg-red-600 hover:text-white'
+                                                            }`}
+                                                        title={room.is_available !== false ? 'Tornar Indisponível' : 'Tornar Disponível'}
+                                                    >
+                                                        <Power className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+
+                                                {room.description && (
+                                                    <p className="text-xs text-gray-500 mb-4 line-clamp-2 leading-relaxed bg-gray-50 p-2 rounded-lg border border-gray-100">
+                                                        {room.description}
+                                                    </p>
+                                                )}
+
+                                                <div className="mt-auto grid grid-cols-2 gap-2 text-xs">
+                                                    <div className="flex items-center gap-2 text-gray-600 font-medium">
+                                                        <div className="w-6 h-6 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                                                            <Clock className="w-3.5 h-3.5" />
+                                                        </div>
+                                                        {room.min_time?.slice(0, 5)} - {room.max_time?.slice(0, 5)}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-gray-600 font-medium">
+                                                        <div className="w-6 h-6 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                                                            <Calendar className="w-3.5 h-3.5" />
+                                                        </div>
+                                                        <div className="flex gap-0.5">
+                                                            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map((day, idx) => (
+                                                                <span
+                                                                    key={day}
+                                                                    className={`text-[9px] w-4 h-4 flex items-center justify-center rounded-sm ${room.available_days?.includes(idx)
+                                                                        ? 'bg-emerald-100 text-emerald-700 font-bold'
+                                                                        : 'text-gray-300'
+                                                                        }`}
+                                                                >
+                                                                    {day.charAt(0)}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex border-t border-gray-100 divide-x divide-gray-100 bg-gray-50/50">
+                                                <button
+                                                    onClick={() => openEditModal(room)}
+                                                    className="flex-1 py-3 text-xs font-bold uppercase tracking-wider text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    <Edit2 className="w-3.5 h-3.5" />
+                                                    Editar
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteRoom(room)}
+                                                    className="flex-1 py-3 text-xs font-bold uppercase tracking-wider text-red-600 hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                    Excluir
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
@@ -695,7 +867,8 @@ export function AdminRooms() {
                                                     <button
                                                         onClick={() => setDeleteModal({
                                                             isOpen: true,
-                                                            bookingId: booking.id,
+                                                            type: 'booking',
+                                                            id: booking.id,
                                                             roomName: booking.room?.name
                                                         })}
                                                         className="h-10 w-10 flex items-center justify-center bg-red-50 text-red-500 border border-red-100 rounded-xl shadow-sm hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 active:scale-90 group/btn"
@@ -723,62 +896,76 @@ export function AdminRooms() {
                     </div>
                 )}
 
-            {/* PROFESSIONAL DELETE MODAL */}
-            {
-                deleteModal.isOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-                        {/* Backdrop */}
-                        <div
-                            className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300"
-                            onClick={() => setDeleteModal({ isOpen: false, bookingId: null })}
-                        />
+            {deleteModal.isOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300"
+                        onClick={() => setDeleteModal({ isOpen: false, type: null, id: null })}
+                    />
 
-                        {/* Modal Content */}
-                        <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
-                            {/* Status Bar */}
-                            <div className="h-2 w-full bg-red-500" />
+                    {/* Modal Content */}
+                    <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
+                        {/* Status Bar */}
+                        <div className="h-2 w-full bg-red-500" />
 
-                            <div className="p-8">
-                                <div className="flex justify-between items-start mb-6">
-                                    <div className="p-4 bg-red-50 rounded-2xl">
-                                        <AlertCircle className="w-8 h-8 text-red-500" />
-                                    </div>
-                                    <button
-                                        onClick={() => setDeleteModal({ isOpen: false, bookingId: null })}
-                                        className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
-                                    >
-                                        <X className="w-6 h-6 text-gray-400" />
-                                    </button>
+                        <div className="p-8 text-center sm:text-left">
+                            <div className="flex flex-col sm:flex-row justify-between items-center sm:items-start mb-6 gap-4">
+                                <div className="p-4 bg-red-50 rounded-2xl">
+                                    <AlertCircle className="w-8 h-8 text-red-500" />
                                 </div>
+                                <button
+                                    onClick={() => setDeleteModal({ isOpen: false, type: null, id: null })}
+                                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors hidden sm:block"
+                                >
+                                    <X className="w-6 h-6 text-gray-400" />
+                                </button>
+                            </div>
 
-                                <h3 className="text-2xl font-black text-gray-900 mb-2 leading-tight">
-                                    Cancelar Agendamento?
-                                </h3>
-                                <p className="text-gray-500 text-sm leading-relaxed mb-8">
-                                    Você está prestes a cancelar a reserva da sala <span className="font-bold text-gray-800">{deleteModal.roomName}</span>.
-                                    Esta ação removerá o agendamento permanentemente e liberará o horário para outros professores.
-                                </p>
+                            <h3 className="text-2xl font-black text-gray-900 mb-2 leading-tight">
+                                {deleteModal.type === 'room' ? 'Excluir Sala Permanentemente?' : 'Cancelar Agendamento?'}
+                            </h3>
 
-                                <div className="flex flex-col sm:flex-row gap-3">
-                                    <button
-                                        onClick={() => setDeleteModal({ isOpen: false, bookingId: null })}
-                                        className="flex-1 px-6 py-4 bg-gray-50 text-gray-600 font-bold rounded-2xl hover:bg-gray-100 transition-all active:scale-95 text-xs uppercase tracking-widest"
-                                    >
-                                        Manter Reserva
-                                    </button>
-                                    <button
-                                        onClick={handleDeleteBooking}
-                                        className="flex-1 px-6 py-4 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 shadow-lg shadow-red-200 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center justify-center gap-2"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                        Confirmar Cancelamento
-                                    </button>
-                                </div>
+                            <div className="text-gray-500 text-sm leading-relaxed mb-8 space-y-4">
+                                {deleteModal.type === 'room' ? (
+                                    <>
+                                        <p>
+                                            Você está prestes a excluir a sala <span className="font-bold text-gray-800">{deleteModal.roomName}</span>.
+                                        </p>
+                                        <div className="bg-red-50 p-4 rounded-xl border border-red-100 text-red-800 text-xs font-medium flex gap-3 italic">
+                                            <AlertTriangle className="w-5 h-5 shrink-0 text-red-500" />
+                                            <p>
+                                                <strong>AVISO CRÍTICO:</strong> Esta ação é irreversível e removerá automaticamente <strong>todos os agendamentos</strong> vinculados a este espaço físico.
+                                            </p>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <p>
+                                        Você está prestes a cancelar a reserva da sala <span className="font-bold text-gray-800">{deleteModal.roomName}</span>.
+                                        Esta ação removerá o agendamento permanentemente e liberará o horário para outros professores.
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <button
+                                    onClick={() => setDeleteModal({ isOpen: false, type: null, id: null })}
+                                    className="flex-1 px-6 py-4 bg-gray-50 text-gray-600 font-bold rounded-2xl hover:bg-gray-100 transition-all active:scale-95 text-[10px] uppercase tracking-widest"
+                                >
+                                    {deleteModal.type === 'room' ? 'Manter Sala' : 'Manter Reserva'}
+                                </button>
+                                <button
+                                    onClick={deleteModal.type === 'room' ? confirmDeleteRoom : handleDeleteBooking}
+                                    className="flex-1 px-6 py-4 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 shadow-lg shadow-red-200 transition-all active:scale-95 text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Confirmar {deleteModal.type === 'room' ? 'Exclusão' : 'Cancelamento'}
+                                </button>
                             </div>
                         </div>
                     </div>
-                )
-            }
+                </div>
+            )}
 
             {/* SUCCESS MODAL */}
             {successModal.isOpen && (

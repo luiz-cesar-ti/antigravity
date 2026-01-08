@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import type { Booking, Admin } from '../../types';
 import { format, parseISO } from 'date-fns';
 import {
-    Search, Calendar, Users, MapPin, FileText, Trash2,
+    Search, Calendar, Users, MapPin, FileText, Trash2, AlertCircle,
     Monitor, Clock, Filter, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug, Repeat, ChevronDown, History,
     Download, X, Share2, Building
 } from 'lucide-react';
@@ -359,6 +359,16 @@ export function AdminBookings() {
                     </select>
                 </div>
             )}
+
+            {/* Information Banner */}
+            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex items-center gap-4 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="p-2 bg-amber-100 rounded-xl">
+                    <AlertCircle className="h-5 w-5 text-amber-600" />
+                </div>
+                <p className="text-xs sm:text-sm font-bold text-amber-800 leading-relaxed">
+                    Aviso: Os termos gerados em cada agendamento só devem ter o download realizado em caso de necessidade.
+                </p>
+            </div>
 
             <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
                 <div>
