@@ -128,7 +128,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
                 paddingLeft: isListItem ? '1.5rem' : '0',
                 textIndent: isListItem ? '-1.5rem' : '0',
                 textAlign: 'justify',
-                lineHeight: '1.4'
+                lineHeight: '1.5'
             }}>
                 {isListItem && listMatch ? (
                     <>
@@ -149,7 +149,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
             padding: '0.75rem',
             borderLeft: '4px solid #1f2937',
             borderRadius: '2px',
-            lineHeight: '1.4'
+            lineHeight: '1.5'
         }}>
             <strong style={{ fontWeight: 'bold', display: 'block', marginBottom: '4px', fontSize: '11pt' }}>
                 TERMO DE CIÊNCIA
@@ -163,8 +163,9 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
     return (
         <div id="term-doc-inner" style={{
             width: '210mm',
-            minHeight: '297mm',
-            padding: '30mm 20mm 20mm 30mm',
+            height: '296mm',
+            overflow: 'hidden',
+            padding: '15mm 20mm 20mm 30mm',
             margin: '0 auto',
             backgroundColor: '#ffffff',
             color: '#000000',
@@ -176,7 +177,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
         }}>
             {/* Logo */}
             <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
-                <img src="/logo-objetivo.jpg" alt="Logo" crossOrigin="anonymous" style={{ maxHeight: '80px', margin: '0 auto', display: 'block' }} />
+                <img src="/logo-objetivo.jpg" alt="Logo" crossOrigin="anonymous" style={{ maxHeight: '100px', margin: '0 auto', display: 'block' }} />
             </div>
 
             <h1 style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '12pt', textTransform: 'uppercase', margin: '0 0 0.25rem' }}>
@@ -214,7 +215,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
 
             {getEquipments().length > 0 && (
                 <div style={{ marginBottom: '0.75rem' }}>
-                    <h2 style={{ fontWeight: 'bold', borderBottom: '1px solid #000', marginBottom: '0.2rem', fontSize: '11pt', textTransform: 'uppercase' }}>Equipamento(s) Reservado(s)</h2>
+                    <h2 style={{ fontWeight: 'bold', borderBottom: '1px solid #000', marginBottom: '0.2rem', paddingBottom: '4px', fontSize: '11pt', textTransform: 'uppercase' }}>Equipamento(s) Reservado(s)</h2>
                     <ul style={{ listStyleType: 'disc', paddingLeft: '1.25rem' }}>
                         {getEquipments().map((eq, i) => (
                             <li key={i}><strong>{eq.name}</strong>{eq.brand ? ` (${eq.brand} ${eq.model || ''})` : ''} - {eq.quantity} unidade(s)</li>

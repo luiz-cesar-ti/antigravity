@@ -142,16 +142,22 @@ export function AdminBookings() {
         const opt = {
             margin: 0,
             filename: fileName,
-            image: { type: 'jpeg' as const, quality: 0.98 },
+            image: { type: 'jpeg' as const, quality: 1.0 },
             html2canvas: {
                 scale: 2,
+                dpi: 192,
+                letterRendering: true,
                 useCORS: true,
                 onclone: (clonedDoc: any) => {
                     const el = clonedDoc.getElementById('term-doc-inner');
                     if (el) {
                         el.style.width = '210mm';
+                        el.style.height = '296mm';
                         el.style.maxWidth = 'none';
                         el.style.margin = '0';
+                    }
+                    if (clonedDoc.defaultView) {
+                        clonedDoc.defaultView.devicePixelRatio = 1;
                     }
                 }
             },
