@@ -142,11 +142,11 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
 
     const renderScienceTerm = (content?: string) => (
         <div style={{
-            marginTop: '0.75rem',
+            marginTop: '0.5rem',
             marginBottom: '0.5rem',
             fontSize: '11pt',
             backgroundColor: '#f3f4f6',
-            padding: '0.75rem',
+            padding: '0.6rem',
             borderLeft: '4px solid #1f2937',
             borderRadius: '2px',
             lineHeight: '1.5'
@@ -194,7 +194,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
 
             {/* Booking Stats Box */}
             <div style={{ marginBottom: '0.5rem', border: '1px solid #d1d5db', padding: '0.4rem 0.75rem', borderRadius: '0.25rem', backgroundColor: '#f9fafb' }}>
-                <h2 style={{ fontWeight: 'bold', borderBottom: '1px solid #d1d5db', marginBottom: '0.25rem', fontSize: '11pt', textTransform: 'uppercase' }}>Dados do Agendamento</h2>
+                <h2 style={{ fontWeight: 'bold', borderBottom: '1px solid #d1d5db', marginBottom: '0.25rem', paddingBottom: '4px', fontSize: '11pt', textTransform: 'uppercase' }}>Dados do Agendamento</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem' }}>
                     <p><strong>Unidade:</strong> {getUnit()}</p>
                     <p><strong>{isRoom ? 'Sala/Espaço' : 'Local'}:</strong> {getLocal()}</p>
@@ -206,7 +206,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
                         <p style={{ fontSize: '10pt', marginBottom: '4px', fontWeight: 'bold' }}>Datas agendadas para o mês atual:</p>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                             {getRecurringDates()?.map(d => (
-                                <span key={d} style={{ backgroundColor: '#fff', padding: '2px 8px', borderRadius: '4px', border: '1px solid #9ca3af', fontWeight: 'bold', fontSize: '10pt' }}>{d}</span>
+                                <span key={d} style={{ backgroundColor: '#fff', padding: '2px 8px', borderRadius: '4px', border: '1px solid #9ca3af', fontWeight: 'bold', fontSize: '10pt', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '85px' }}>{d}</span>
                             ))}
                         </div>
                     </div>
@@ -270,12 +270,12 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
             </div>
 
             {/* Footer Traceability */}
-            {(displayId || data.term_hash || data.term_fingerprint || data.term_document?.term_hash) && (
+            {(displayId || data.term_hash || data.term_fingerprint || data.term_document?.term_hash || data.term_document?.term_fingerprint) && (
                 <div style={{ marginTop: '0.75rem', borderTop: '1px dashed #e5e7eb', paddingTop: '0.4rem', textAlign: 'center' }}>
                     {displayId && <p style={{ fontWeight: 'bold', fontSize: '10pt', marginBottom: '4px' }}>ID DO TERMO: #{displayId}</p>}
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', fontSize: '7.5pt', color: '#6b7280' }}>
-                        <span><strong style={{ fontWeight: 'bold' }}>VERSÃO:</strong> {data.version_tag || 'v2.0'}</span>
-                        <span><strong style={{ fontWeight: 'bold' }}>HASH:</strong> {(data.term_hash || data.term_fingerprint || data.term_document?.term_hash)?.substring(0, 24)}...</span>
+                        <span><strong style={{ fontWeight: 'bold' }}>VERSÃO:</strong> {data.version_tag || data.term_document?.version_tag || 'v2.0'}</span>
+                        <span><strong style={{ fontWeight: 'bold' }}>HASH:</strong> {(data.term_hash || data.term_fingerprint || data.term_document?.term_hash || data.term_document?.term_fingerprint)?.substring(0, 24)}...</span>
                     </div>
                 </div>
             )}
