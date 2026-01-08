@@ -42,14 +42,38 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
     const [error, setError] = useState('');
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
-    // Pre-generate ID for the preview
+    // Pre-generate ID for the preview and fetch latest term metadata
     useEffect(() => {
         if (!data.displayId) {
             updateData({
                 displayId: Math.floor(100000 + Math.random() * 900000).toString()
             });
         }
-    }, []);
+
+        // Fetch LATEST term metadata from DB for the preview
+        const fetchTermMetadata = async () => {
+            const { data: latestTerm } = await supabase
+                .from('legal_terms')
+                .select('content, version_tag')
+                .eq('type', data.isRecurring ? 'recurring' : 'booking')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (latestTerm) {
+                updateData({
+                    version_tag: latestTerm.version_tag,
+                    term_document: {
+                        ...data.term_document,
+                        content: latestTerm.content,
+                        version_tag: latestTerm.version_tag
+                    }
+                });
+            }
+        };
+
+        fetchTermMetadata();
+    }, [data.isRecurring]);
 
     const handleConfirm = async () => {
         if (!data.termAccepted) {
@@ -63,11 +87,11 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
         try {
             const displayId = data.displayId || Math.floor(100000 + Math.random() * 900000).toString();
 
-            // 1. Fetch current legal term for hashing (Specific to Booking)
+            // 1. Fetch current legal term for hashing (Determines type based on recurrence)
             const { data: latestTerm } = await supabase
                 .from('legal_terms')
                 .select('content, version_tag')
-                .eq('type', 'booking') // Filter by Booking type
+                .eq('type', data.isRecurring ? 'recurring' : 'booking') // Dynamic type
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .single();
@@ -367,12 +391,12 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
 
                     <div className="bg-gray-100 p-4 sm:p-8 overflow-y-auto flex-1 flex justify-center min-h-0">
                         <div className="bg-white shadow-none sm:shadow-2xl mx-auto" style={{ maxWidth: '210mm' }}>
-                            <div id="term-document-pdf" style={{ width: '210mm', minHeight: '297mm', padding: '20mm', backgroundColor: 'white' }}>
+                            <div id="term-document-pdf" style={{ width: '210mm', backgroundColor: 'white' }}>
                                 <TermDocument
                                     data={{
                                         ...data,
                                         term_hash: data.term_document?.term_fingerprint || data.term_hash,
-                                        version_tag: data.term_document?.version_tag || data.version_tag
+                                        version_tag: data.term_document?.version_tag || data.version_tag || 'v2.0'
                                     }}
                                 />
                             </div>

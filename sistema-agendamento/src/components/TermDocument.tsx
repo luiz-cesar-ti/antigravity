@@ -119,13 +119,13 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
     return (
         <div id={id} style={{
             width: '100%',
-            padding: '10mm',
+            padding: '30mm 20mm 20mm 30mm', // Strict ABNT Standard
             margin: '0 auto',
             backgroundColor: '#ffffff',
             color: '#000000',
             fontFamily: 'Arial, sans-serif',
             fontSize: '11pt',
-            lineHeight: '1.25',
+            lineHeight: '1.5',
             position: 'relative',
             boxSizing: 'border-box'
         }}>
@@ -143,10 +143,10 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 textAlign: 'center',
                 fontWeight: 'bold',
                 fontSize: '12pt',
-                marginBottom: '1rem',
+                marginBottom: '0.5rem',
                 textTransform: 'uppercase',
                 maxWidth: '90%',
-                margin: '0 auto 0.5rem'
+                margin: '0 auto 0.25rem'
             }}>
                 Declaração de Responsabilidade e Termo de Uso
             </h1>
@@ -160,9 +160,9 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
             </div>
 
             <div style={{
-                marginBottom: '1rem',
+                marginBottom: '0.75rem',
                 border: '1px solid #d1d5db',
-                padding: '0.75rem',
+                padding: '0.5rem 1rem',
                 borderRadius: '0.25rem',
                 backgroundColor: '#f9fafb'
             }}>
@@ -171,10 +171,10 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                     borderBottom: '1px solid #d1d5db',
                     marginBottom: '0.25rem',
                     paddingBottom: '0.25rem',
-                    fontSize: '9pt',
+                    fontSize: '11pt',
                     textTransform: 'uppercase'
                 }}>Dados do Agendamento</h2>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem', fontSize: '9pt' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem', fontSize: '11pt' }}>
                     <p><strong>Unidade:</strong> {getUnit()}</p>
                     <p><strong>{isRoom ? 'Sala/Espaço' : 'Local'}:</strong> {getLocal()}</p>
                     <p><strong>Dia de Uso:</strong> {getDate()}</p>
@@ -183,7 +183,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 {getRecurringDates() && (
                     <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed #d1d5db' }}>
                         {/* LOCKED LAYOUT: DO NOT CHANGE SPACING OR FONT SIZE OF RECURRING DATES. MUST FIT SINGLE PAGE. */}
-                        <p style={{ fontSize: '9pt', color: '#374151', marginBottom: '6px', fontWeight: 'bold' }}>Datas agendadas para o mês atual:</p>
+                        <p style={{ fontSize: '11pt', color: '#374151', marginBottom: '6px', fontWeight: 'bold' }}>Datas agendadas para o mês atual:</p>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
                             {getRecurringDates()?.map(date => (
                                 <span key={date} style={{
@@ -191,7 +191,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                                     padding: '4px 10px',
                                     borderRadius: '6px',
                                     border: '1px solid #9ca3af',
-                                    fontSize: '10pt',
+                                    fontSize: '11pt',
                                     fontWeight: 'bold',
                                     color: '#1f2937'
                                 }}>{date}</span>
@@ -208,7 +208,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                         borderBottom: '1px solid #000000',
                         marginBottom: '0.25rem',
                         paddingBottom: '0.25rem',
-                        fontSize: '9pt',
+                        fontSize: '11pt',
                         textTransform: 'uppercase'
                     }}>Equipamento(s) Reservado(s)</h2>
                     <ul style={{ listStyleType: 'disc', paddingLeft: '1.25rem', marginTop: '0.5rem' }}>
@@ -228,19 +228,56 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 <div style={{
                     marginBottom: '1rem',
                     textAlign: 'justify',
-                    fontSize: '9pt',
-                    whiteSpace: 'pre-wrap',
-                    padding: '0.5rem',
-                    backgroundColor: '#fff',
-                    border: '1px solid #eee',
-                    borderRadius: '0.5rem'
+                    fontSize: '11pt',
+                    lineHeight: '1.5',
+                    color: '#1f2937'
                 }}>
-                    {data.term_document.content}
+                    {data.term_document.content.split('\n').map((line: string, i: number) => {
+                        const trimmedLine = line.trim();
+                        if (!trimmedLine) return <div key={i} style={{ height: '0.5rem' }} />;
+
+                        // Detect titles (Uppercase lines)
+                        const isTitle = trimmedLine.length > 5 && trimmedLine === trimmedLine.toUpperCase() && !trimmedLine.includes('CIÊNCIA');
+
+                        // Handle "TERMO DE CIÊNCIA" block duplication fix
+                        const isScienceTitleOnly = trimmedLine === 'TERMO DE CIÊNCIA';
+                        const isScienceContent = trimmedLine.startsWith('Estou ciente que a utilização');
+
+                        if (isScienceTitleOnly) return null; // Skip line that is just the title to avoid duplication
+
+                        if (isScienceContent) {
+                            return (
+                                <div key={i} style={{
+                                    marginTop: '0.75rem',
+                                    fontSize: '11pt',
+                                    backgroundColor: '#f3f4f6',
+                                    padding: '1rem',
+                                    borderLeft: '4px solid #1f2937',
+                                    borderRadius: '2px'
+                                }}>
+                                    <strong style={{ fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>TERMO DE CIÊNCIA</strong>
+                                    {trimmedLine}
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <p key={i} style={{
+                                marginBottom: isTitle ? '0.3rem' : '0.5rem',
+                                fontWeight: isTitle ? 'bold' : 'normal',
+                                fontSize: isTitle ? '12pt' : '11pt',
+                                textTransform: isTitle ? 'uppercase' : 'none',
+                                marginTop: isTitle ? '0.8rem' : '0'
+                            }}>
+                                {trimmedLine}
+                            </p>
+                        );
+                    })}
                 </div>
             ) : (
                 <>
-                    <div style={{ marginBottom: '1rem', textAlign: 'justify', fontSize: '9pt' }}>
-                        <h2 style={{ fontWeight: 'bold', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Compromissos e Responsabilidades</h2>
+                    <div style={{ marginBottom: '1rem', textAlign: 'justify', fontSize: '11pt', lineHeight: '1.5' }}>
+                        <h2 style={{ fontWeight: 'bold', marginBottom: '0.25rem', textTransform: 'uppercase', fontSize: '12pt' }}>Compromissos e Responsabilidades</h2>
                         <p style={{ marginBottom: '0.25rem' }}>Ao aceitar este termo, comprometo-me a:</p>
                         <div style={{ paddingLeft: '0.5rem' }}>
                             {[
@@ -264,7 +301,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                         </div>
                     </div>
 
-                    <div style={{ marginBottom: '1rem', textAlign: 'justify', fontSize: '9pt' }}>
+                    <div style={{ marginBottom: '1rem', textAlign: 'justify', fontSize: '11pt', lineHeight: '1.5' }}>
                         <p>
                             Comprometo-me a devolver {isRoom ? 'o espaço' : 'o(s) equipamento(s)'} nas mesmas condições em que {isRoom ? 'o recebi' : 'os recebi'}.
                             Estou ciente que qualquer dano ou extravio será de minha responsabilidade.
@@ -273,13 +310,14 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
 
                     <div style={{
                         marginBottom: '1rem',
-                        fontSize: '9pt',
+                        fontSize: '11pt',
                         backgroundColor: '#f3f4f6',
-                        padding: '0.5rem',
-                        borderLeft: '4px solid #1f2937'
+                        padding: '1rem',
+                        borderLeft: '4px solid #1f2937',
+                        borderRadius: '2px'
                     }}>
-                        <h3 style={{ fontWeight: 'bold', marginBottom: '0' }}>TERMO DE CIÊNCIA</h3>
-                        <p style={{ margin: 0 }}>
+                        <strong style={{ fontWeight: 'bold', display: 'block', marginBottom: '4px', fontSize: '11pt' }}>TERMO DE CIÊNCIA</strong>
+                        <p style={{ margin: 0, fontSize: '11pt', lineHeight: '1.5' }}>
                             Estou ciente que a utilização inadequada pode resultar em medidas administrativas
                             e que sou responsável pela segurança e integridade do {isRoom ? 'espaço' : 'equipamento'}.
                         </p>
@@ -287,7 +325,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 </>
             )}
 
-            <div style={{ marginTop: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div style={{ width: '50%' }}>
                     <div style={{
                         width: '100%',
@@ -297,7 +335,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                         <div style={{
                             marginBottom: '10px', // Space between name and line
                             fontWeight: 'bold',
-                            fontSize: '10pt',
+                            fontSize: '11pt',
                             textTransform: 'uppercase'
                         }}>
                             {getName()}
@@ -326,8 +364,19 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                         </p>
                     )}
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', fontSize: '7.5pt', color: '#6b7280' }}>
-                        <span><strong style={{ fontWeight: 'bold' }}>VERSÃO DO TERMO:</strong> {data.version_tag || data.term_document?.version_tag || 'v1.0'}</span>
-                        <span><strong style={{ fontWeight: 'bold' }}>HASH DE AUTENTICIDADE (SHA-256):</strong> {(data.term_hash || data.term_fingerprint || data.term_document?.term_fingerprint || data.term_document?.term_hash)?.substring(0, 24)}...</span>
+                        <span>
+                            <strong style={{ fontWeight: 'bold' }}>VERSÃO DO TERMO:</strong> {
+                                data.version_tag ||
+                                data.term_document?.version_tag ||
+                                data.term_version ||
+                                'v1.0'
+                            }
+                        </span>
+                        <span>
+                            <strong style={{ fontWeight: 'bold' }}>HASH DE AUTENTICIDADE (SHA-256):</strong> {
+                                (data.term_hash || data.term_fingerprint || data.term_document?.term_fingerprint || data.term_document?.term_hash)?.substring(0, 24)
+                            }...
+                        </span>
                     </div>
                 </div>
             )}

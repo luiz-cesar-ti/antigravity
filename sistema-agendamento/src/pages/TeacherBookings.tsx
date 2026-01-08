@@ -143,7 +143,7 @@ export function TeacherBookings() {
 
                 <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-gray-50/50">
                     <div className="bg-white shadow-2xl mx-auto origin-top transition-transform" style={{ maxWidth: '210mm' }}>
-                        <div id="teacher-term-doc-inner">
+                        <div id="teacher-term-doc-inner" style={{ width: '210mm', backgroundColor: 'white' }}>
                             {pdfData && pdfData.term_document && (
                                 <TermDocument
                                     data={{
