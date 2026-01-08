@@ -185,8 +185,9 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
 
             <div style={{ textAlign: 'justify', marginBottom: '0.75rem' }}>
                 <p>
-                    Declaro que eu, <strong style={{ fontWeight: 'bold' }}>{getName()}</strong>, portador(a) do número TOTVS <strong style={{ fontWeight: 'bold' }}>{getTotvs()}</strong>,
-                    estou de acordo com as condições de uso {isRoom ? 'do espaço físico' : 'do(s) equipamento(s)'} abaixo descritos.
+                    Declaro que eu, <strong style={{ fontWeight: 'bold' }}>{getName()}</strong>, portador(a) do número de usuário TOTVS <strong style={{ fontWeight: 'bold' }}>{getTotvs()}</strong>,
+                    estou ciente e de acordo com as condições de uso {isRoom ? 'do espaço físico' : 'do(s) equipamento(s)'} abaixo descrito(s),
+                    responsabilizando-me integralmente por sua utilização durante o período de agendamento.
                 </p>
             </div>
 

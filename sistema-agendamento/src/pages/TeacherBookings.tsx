@@ -108,7 +108,7 @@ export function TeacherBookings() {
                         <div className="p-2 bg-primary-50 rounded-xl">
                             <FileText className="h-5 w-5 text-primary-600" />
                         </div>
-                        <h3 className="text-lg font-black text-gray-900">Visualizar Termo</h3>
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-tight">Termo</h3>
                     </div>
                     <div className="flex items-center gap-2">
                         <button
