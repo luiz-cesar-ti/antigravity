@@ -106,9 +106,9 @@ export function TeacherBookings() {
     };
 
     const TermModal = () => (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 md:p-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-50 block sm:flex sm:items-center sm:justify-center p-0 sm:p-4 md:p-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" onClick={() => setModalOpen(false)}></div>
-            <div className="relative z-50 flex flex-col w-full max-w-5xl h-full max-h-screen sm:max-h-[85vh] bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all">
+            <div className="relative z-50 flex flex-col w-full h-full sm:h-auto sm:max-w-5xl sm:max-h-[85vh] bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transition-all">
                 <div className="bg-white px-6 py-5 flex justify-between items-center border-b border-gray-100 shrink-0 transition-all">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-primary-50 rounded-xl">
