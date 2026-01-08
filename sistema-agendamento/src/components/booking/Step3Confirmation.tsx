@@ -400,7 +400,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                         </div>
                     </div>
 
-                    <div className="bg-gray-100 p-4 sm:p-8 overflow-y-auto flex-1 flex justify-center min-h-0">
+                    <div className="bg-gray-50/50 p-4 sm:p-8 overflow-y-auto flex-1 flex justify-center min-h-0">
                         <div className="term-doc-preview mx-auto">
                             <TermDocument
                                 data={{
