@@ -65,7 +65,6 @@ export function TeacherBookings() {
                     const el = clonedDoc.getElementById('term-doc-inner');
                     if (el) {
                         el.style.width = '210mm';
-                        el.style.height = '296mm';
                         el.style.maxWidth = 'none';
                         el.style.margin = '0';
                     }

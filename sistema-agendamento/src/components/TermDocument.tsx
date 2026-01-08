@@ -45,8 +45,12 @@ interface TermDocumentProps {
 // CRITICAL: This component's layout and content (especially responsibilities, signature, AND RECURRING DATES)
 // have been legally approved and must remain exact.
 // The signature date MUST use data.created_at to ensure immutability.
-// The layout MUST remain on a SINGLE PAGE A4.
+// The layout MUST remain on a SINGLE PAGE A4 (or clean flow for more content).
 // DO NOT MODIFY WITHOUT EXPLICIT PERMISSION.
+// ---------------------------------------------------------------------------
+// 🔒 LOCKED COMPONENT - FINAL VERSION - APPROVED 08/01/2026
+// Any changes to margins, padding, or logic WILL break the PDF generation alignment.
+// ---------------------------------------------------------------------------
 export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
     // Helper to extract data regardless of source (Wizard, DB Booking, or Term JSON)
     const getName = () => data.full_name || data.userName || data.term_document?.userName || data.term_document?.full_name || data.users?.full_name || '';
@@ -64,9 +68,11 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
     // Extract Traceability Data
     const displayId = data.display_id || data.displayId || data.term_document?.displayId || data.term_document?.display_id;
 
+    // Define isRecurring early to avoid scope issues
+    const isRecurring = !!(data.isRecurring || data.term_document?.isRecurring);
+
     const getDate = () => {
-        const isRecOrFixo = data.isRecurring || data.term_document?.isRecurring;
-        if (isRecOrFixo) {
+        if (isRecurring) {
             const dayNum = data.dayOfWeek ?? data.day_of_week ?? data.term_document?.dayOfWeek ?? data.term_document?.day_of_week;
             const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
             if (dayNum === undefined) {
@@ -94,9 +100,8 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
     };
 
     const getRecurringDates = () => {
-        const isRecOrFixo = data.isRecurring || data.term_document?.isRecurring;
         const dayNum = data.dayOfWeek ?? data.day_of_week ?? data.term_document?.dayOfWeek ?? data.term_document?.day_of_week;
-        if (!isRecOrFixo || dayNum === undefined) return null;
+        if (!isRecurring || dayNum === undefined) return null;
         const today = new Date();
         const year = today.getFullYear();
         const month = today.getMonth();
@@ -155,7 +160,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
                 TERMO DE CIÊNCIA
             </strong>
             <p style={{ margin: 0, fontSize: '11pt', lineHeight: '1.5' }}>
-                {content || `Estou ciente que a utilização inadequada pode resultar em medidas administrativas e que sou responsável pela segurança e integridade do ${isRoom ? 'espaço' : 'equipamento'}.`}
+                {content || `Estou ciente que a utilização inadequada pode resultar em medidas administrativas e que sou responsável pela segurança e integridade do ${isRoom ? 'espaço' : 'equipamento'} durante todo o período da recorrência.`}
             </p>
         </div>
     );
@@ -163,8 +168,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
     return (
         <div id="term-doc-inner" style={{
             width: '210mm',
-            height: '296mm',
-            overflow: 'hidden',
+            minHeight: '296mm',
             padding: '15mm 20mm 20mm 30mm',
             margin: '0 auto',
             backgroundColor: '#ffffff',
@@ -173,7 +177,9 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
             fontSize: '11pt',
             lineHeight: '1.5',
             position: 'relative',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column'
         }}>
             {/* Logo */}
             <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
@@ -194,7 +200,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
 
             {/* Booking Stats Box */}
             <div style={{ marginBottom: '0.5rem', border: '1px solid #d1d5db', padding: '0.4rem 0.75rem', borderRadius: '0.25rem', backgroundColor: '#f9fafb' }}>
-                <h2 style={{ fontWeight: 'bold', borderBottom: '1px solid #d1d5db', marginBottom: '0.25rem', paddingBottom: '4px', fontSize: '11pt', textTransform: 'uppercase' }}>Dados do Agendamento</h2>
+                <h2 style={{ fontWeight: 'bold', borderBottom: '1px solid #d1d5db', marginBottom: '0.25rem', paddingBottom: '8px', fontSize: '11pt', textTransform: 'uppercase' }}>Dados do Agendamento</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem' }}>
                     <p><strong>Unidade:</strong> {getUnit()}</p>
                     <p><strong>{isRoom ? 'Sala/Espaço' : 'Local'}:</strong> {getLocal()}</p>
@@ -204,11 +210,9 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
                 {getRecurringDates() && (
                     <div style={{ marginTop: '0.4rem', paddingTop: '0.4rem', borderTop: '1px dashed #d1d5db' }}>
                         <p style={{ fontSize: '10pt', marginBottom: '4px', fontWeight: 'bold' }}>Datas agendadas para o mês atual:</p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                            {getRecurringDates()?.map(d => (
-                                <span key={d} style={{ backgroundColor: '#fff', padding: '2px 8px', borderRadius: '4px', border: '1px solid #9ca3af', fontWeight: 'bold', fontSize: '10pt', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '85px' }}>{d}</span>
-                            ))}
-                        </div>
+                        <p style={{ fontSize: '11pt', fontWeight: 'bold', color: '#1f2937' }}>
+                            {getRecurringDates()?.join(' - ')}
+                        </p>
                     </div>
                 )}
             </div>
@@ -228,7 +232,14 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
                 <div style={{ marginBottom: '1rem', color: '#1f2937' }}>
                     {data.term_document.content.split('\n').map((line: string, i: number) => {
                         const trimmed = line.trim();
-                        if (trimmed.startsWith('Estou ciente que a utilização')) return renderScienceTerm(trimmed);
+                        if (trimmed.startsWith('Estou ciente que a utilização')) {
+                            // Using isRecurring here causes reference error if not defined in scope
+                            return (
+                                <div key={i} style={isRecurring ? { pageBreakBefore: 'always', paddingTop: '30mm' } : {}}>
+                                    {renderScienceTerm(trimmed)}
+                                </div>
+                            );
+                        }
                         if (trimmed === 'TERMO DE CIÊNCIA') return null;
                         return renderLine(line, i);
                     })}
@@ -243,20 +254,22 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
                     {renderLine(`4. Não emprestar ou transferir o ${isRoom ? 'espaço' : 'equipamento'} a terceiros sem autorização prévia.`, 'l4')}
                     {renderLine(`5. Orientar adequadamente o uso do ${isRoom ? 'espaço' : 'equipamento'}, quando utilizado por alunos, zelando por sua conservação.`, 'l5')}
 
-                    {(data.isRecurring || data.term_document?.isRecurring) &&
-                        renderLine('6. Declaro ciência que este é um Agendamento Fixo e concordo em assinar digitalmente todos os termos gerados automaticamente.', 'l6')
+                    {isRecurring &&
+                        renderLine('6. Declaro ciência que este é um AGENDAMENTO FIXO (RECORRENTE) e este termo de responsabilidade aplica-se a todas as ocorrências geradas automaticamente por esta reserva semanal.', 'l6')
                     }
 
                     <div style={{ marginTop: '1rem', textAlign: 'justify' }}>
-                        <p>Comprometo-me a devolver {isRoom ? 'o espaço' : 'o(s) equipamento(s)'} nas mesmas condições em que o(s) recebi.</p>
+                        <p>Comprometo-me a devolver o(s) equipamento(s) nas mesmas condições em que o(s) recebi. Estou ciente que qualquer dano ou extravio será de minha responsabilidade.</p>
                     </div>
 
-                    {renderScienceTerm()}
+                    <div style={isRecurring ? { pageBreakBefore: 'always', paddingTop: '30mm' } : {}}>
+                        {renderScienceTerm()}
+                    </div>
                 </div>
             )}
 
             {/* Signature Area */}
-            <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div style={{ marginTop: '2rem', marginBottom: '4rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div style={{ width: '50%', textAlign: 'center' }}>
                     <div style={{ fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '10px' }}>{getName()}</div>
                     <div style={{ borderBottom: '1px solid #000' }}></div>
@@ -271,15 +284,17 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
 
             {/* Footer Traceability */}
             {(displayId || data.term_hash || data.term_fingerprint || data.term_document?.term_hash || data.term_document?.term_fingerprint) && (
-                <div style={{ marginTop: '0.75rem', borderTop: '1px dashed #e5e7eb', paddingTop: '0.4rem', textAlign: 'center' }}>
-                    {displayId && <p style={{ fontWeight: 'bold', fontSize: '10pt', marginBottom: '4px' }}>ID DO TERMO: #{displayId}</p>}
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', fontSize: '7.5pt', color: '#6b7280' }}>
-                        <span><strong style={{ fontWeight: 'bold' }}>VERSÃO:</strong> {data.version_tag || data.term_document?.version_tag || 'v2.0'}</span>
-                        <span><strong style={{ fontWeight: 'bold' }}>HASH:</strong> {(data.term_hash || data.term_fingerprint || data.term_document?.term_hash || data.term_document?.term_fingerprint)?.substring(0, 24)}...</span>
-                    </div>
+                <div style={{ marginTop: 'auto', borderTop: '1px dashed #e5e7eb', paddingTop: '0.5rem', textAlign: 'center' }}>
+                    <p style={{ fontSize: '7.5pt', color: '#6b7280', fontWeight: 'normal' }}>
+                        {displayId && <span style={{ color: '#000' }}><strong style={{ fontWeight: 'bold' }}>ID DO TERMO: #{displayId}</strong></span>}
+                        <span style={{ margin: '0 8px' }}>|</span>
+                        <strong style={{ fontWeight: 'bold', color: '#000' }}>VERSÃO:</strong> {data.version_tag || data.term_document?.version_tag || 'v2.0'}
+                        <span style={{ margin: '0 8px' }}>|</span>
+                        <strong style={{ fontWeight: 'bold', color: '#000' }}>HASH:</strong> {(data.term_hash || data.term_fingerprint || data.term_document?.term_hash || data.term_document?.term_fingerprint)?.substring(0, 32)}...
+                    </p>
+                    <p style={{ fontSize: '7pt', color: '#9ca3af', marginTop: '4px' }}>Documento gerado eletronicamente pelo Sistema de Agendamentos Objetivo.</p>
                 </div>
             )}
-            <p style={{ fontSize: '7pt', color: '#9ca3af', marginTop: '2px', textAlign: 'center' }}>Documento gerado eletronicamente pelo Sistema de Agendamentos Objetivo.</p>
         </div>
     );
 };
