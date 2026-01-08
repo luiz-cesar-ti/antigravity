@@ -142,6 +142,7 @@ export function TeacherBookings() {
                         {pdfData && pdfData.term_document && (
                             <TermDocument
                                 data={{
+                                    ...pdfData,
                                     ...pdfData.term_document,
                                     created_at: pdfData.created_at
                                 }}

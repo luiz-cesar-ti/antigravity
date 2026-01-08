@@ -249,7 +249,8 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                         if (isScienceContent) {
                             return (
                                 <div key={i} style={{
-                                    marginTop: '0.75rem',
+                                    marginTop: '1.5rem',
+                                    marginBottom: '1rem',
                                     fontSize: '11pt',
                                     backgroundColor: '#f3f4f6',
                                     padding: '1rem',
@@ -267,11 +268,11 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
 
                         return (
                             <p key={i} style={{
-                                marginBottom: isTitle ? '0.3rem' : '0.5rem',
+                                marginBottom: isTitle ? '0.4rem' : '0.5rem',
                                 fontWeight: isTitle ? 'bold' : 'normal',
                                 fontSize: isTitle ? '12pt' : '11pt',
                                 textTransform: isTitle ? 'uppercase' : 'none',
-                                marginTop: isTitle ? '0.8rem' : '0',
+                                marginTop: isTitle ? '1rem' : '0',
                                 paddingLeft: isListItem ? '1.5rem' : '0',
                                 textIndent: isListItem ? '-1.5rem' : '0',
                                 textAlign: 'justify'
@@ -337,12 +338,13 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                     </div>
 
                     <div style={{
-                        marginTop: '0.75rem',
+                        marginTop: '1.5rem',
                         fontSize: '11pt',
                         backgroundColor: '#f3f4f6',
                         padding: '1rem',
                         borderLeft: '4px solid #1f2937',
-                        borderRadius: '2px'
+                        borderRadius: '2px',
+                        marginBottom: '1rem'
                     }}>
                         <strong style={{ fontWeight: 'bold', display: 'block', marginBottom: '4px', fontSize: '11pt' }}>TERMO DE CIÊNCIA</strong>
                         <p style={{ margin: 0, fontSize: '11pt', lineHeight: '1.5' }}>
@@ -353,7 +355,12 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                 </>
             )}
 
-            <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div style={{
+                marginTop: '3.5rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-end'
+            }}>
                 <div style={{ width: '50%' }}>
                     <div style={{
                         width: '100%',
