@@ -51,10 +51,12 @@ export function Step1RoomBasicInfo({ data, updateData, onNext }: Step1Props) {
                 return false;
             }
 
-            // Prevent past dates
-            const today = new Date().toISOString().split('T')[0];
-            if (data.date < today) {
-                setError('Não é possível agendar para datas passadas.');
+            // Prevent past dates and times
+            const now = new Date();
+            const bookingStart = new Date(`${data.date}T${data.startTime}:00`);
+
+            if (bookingStart < now) {
+                setError('Não é possível realizar agendamentos para horários que já passaram.');
                 return false;
             }
         }

@@ -264,6 +264,10 @@ export function RoomBookingV2() {
 
         if (hasOverlap) return "Este horário já está ocupado por outro agendamento.";
 
+        // Past time check
+        const now = new Date();
+        if (newStart < now) return "Não é possível realizar agendamentos para horários que já passaram.";
+
         return null;
     };
 
