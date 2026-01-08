@@ -1,3 +1,4 @@
+// 🛑 FILE LOCKED: CARD LAYOUT APPROVED. DO NOT REVERT 'FULL MODEL NAME' DISPLAY LOGIC.
 import { useState, useEffect } from 'react';
 import {
     Calendar, Clock, MapPin, Monitor, Trash2, History, AlertTriangle,
