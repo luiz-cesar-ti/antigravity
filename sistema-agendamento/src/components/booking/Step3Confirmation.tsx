@@ -390,28 +390,26 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                     </div>
 
                     <div className="bg-gray-100 p-4 sm:p-8 overflow-y-auto flex-1 flex justify-center min-h-0">
-                        <div className="bg-white shadow-none sm:shadow-2xl mx-auto" style={{ maxWidth: '210mm' }}>
-                            <div id="term-document-pdf" style={{ width: '210mm', backgroundColor: 'white' }}>
-                                <TermDocument
-                                    data={{
-                                        ...data,
-                                        term_hash: data.term_document?.term_fingerprint || data.term_hash,
-                                        version_tag: data.term_document?.version_tag || data.version_tag || 'v2.0'
-                                    }}
-                                />
-                            </div>
+                        <div className="term-doc-preview mx-auto" id="term-document-pdf">
+                            <TermDocument
+                                data={{
+                                    ...data,
+                                    term_hash: data.term_document?.term_fingerprint || data.term_hash,
+                                    version_tag: data.term_document?.version_tag || data.version_tag || 'v2.0'
+                                }}
+                            />
                         </div>
                     </div>
+                </div>
 
-                    <div className="bg-white px-6 py-4 border-t border-gray-100 flex justify-end shrink-0">
-                        <button
-                            type="button"
-                            className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-all"
-                            onClick={() => setModalOpen(false)}
-                        >
-                            Fechar Visualização
-                        </button>
-                    </div>
+                <div className="bg-white px-6 py-4 border-t border-gray-100 flex justify-end shrink-0">
+                    <button
+                        type="button"
+                        className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-all"
+                        onClick={() => setModalOpen(false)}
+                    >
+                        Fechar Visualização
+                    </button>
                 </div>
             </div>
         </div>

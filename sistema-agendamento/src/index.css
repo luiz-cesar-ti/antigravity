@@ -43,3 +43,42 @@ body {
 .animate-pulse-subtle {
   animation: pulse-subtle 2s infinite ease-in-out;
 }
+
+/* Legal Term Preview - Responsive Scaling */
+.term-doc-preview {
+  width: 210mm;
+  min-height: 297mm;
+  background-color: white;
+  transform-origin: top center;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+@media (max-width: 850px) {
+  .term-doc-preview {
+    zoom: 0.9;
+  }
+}
+
+@media (max-width: 768px) {
+  .term-doc-preview {
+    zoom: 0.8;
+  }
+}
+
+@media (max-width: 640px) {
+  .term-doc-preview {
+    zoom: 0.65;
+  }
+}
+
+@media (max-width: 480px) {
+  .term-doc-preview {
+    zoom: 0.45;
+  }
+}
+
+@media (max-width: 380px) {
+  .term-doc-preview {
+    zoom: 0.4;
+  }
+}
