@@ -226,7 +226,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
     };
 
     const handlePdfAction = async (action: 'download' | 'share') => {
-        const element = document.getElementById('term-document-pdf');
+        const element = document.getElementById('term-doc-inner');
         if (!element) return;
 
         setIsGeneratingPdf(true);
@@ -242,15 +242,11 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                 scale: 2,
                 useCORS: true,
                 onclone: (clonedDoc: any) => {
-                    const el = clonedDoc.getElementById('term-document-pdf');
+                    const el = clonedDoc.getElementById('term-doc-inner');
                     if (el) {
                         el.style.width = '210mm';
                         el.style.maxWidth = 'none';
-                        el.style.margin = '0 auto';
-                        if (el.parentElement) {
-                            el.parentElement.style.width = '210mm';
-                            el.parentElement.style.maxWidth = 'none';
-                        }
+                        el.style.margin = '0';
                     }
                 }
             },
@@ -405,7 +401,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                     </div>
 
                     <div className="bg-gray-100 p-4 sm:p-8 overflow-y-auto flex-1 flex justify-center min-h-0">
-                        <div className="term-doc-preview mx-auto" id="term-document-pdf">
+                        <div className="term-doc-preview mx-auto">
                             <TermDocument
                                 data={{
                                     ...data,

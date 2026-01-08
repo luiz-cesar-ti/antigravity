@@ -117,8 +117,9 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
     const isRoom = data.type === 'room';
 
     return (
-        <div id={id} style={{
-            width: '100%',
+        <div id="term-doc-inner" style={{
+            width: '210mm',
+            minHeight: '297mm',
             padding: '30mm 20mm 20mm 30mm', // Strict ABNT Standard
             margin: '0 auto',
             backgroundColor: '#ffffff',
@@ -271,13 +272,13 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                                 fontSize: isTitle ? '12pt' : '11pt',
                                 textTransform: isTitle ? 'uppercase' : 'none',
                                 marginTop: isTitle ? '0.8rem' : '0',
-                                paddingLeft: isListItem ? '1.25rem' : '0',
-                                textIndent: isListItem ? '-1.25rem' : '0',
+                                paddingLeft: isListItem ? '1.5rem' : '0',
+                                textIndent: isListItem ? '-1.5rem' : '0',
                                 textAlign: 'justify'
                             }}>
                                 {isListItem && listMatch ? (
                                     <>
-                                        <strong style={{ fontWeight: 'bold' }}>{listMatch[1]}</strong>
+                                        <strong style={{ fontWeight: 'bold', marginRight: '4px' }}>{listMatch[1]}</strong>
                                         {listMatch[2]}
                                     </>
                                 ) : trimmedLine}
@@ -302,13 +303,13 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                                 return (
                                     <p key={index} style={{
                                         marginBottom: '0.4rem',
-                                        paddingLeft: '1.25rem',
-                                        textIndent: '-1.25rem',
+                                        paddingLeft: '1.5rem',
+                                        textIndent: '-1.5rem',
                                         textAlign: 'justify'
                                     }}>
                                         {parts ? (
                                             <>
-                                                <strong style={{ fontWeight: 'bold' }}>{parts[1]}</strong>
+                                                <strong style={{ fontWeight: 'bold', marginRight: '4px' }}>{parts[1]}</strong>
                                                 {parts[2]}
                                             </>
                                         ) : item}
@@ -318,11 +319,11 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data, id }) => {
                             {(data.isRecurring || data.term_document?.isRecurring) && (
                                 <p style={{
                                     marginBottom: '0.4rem',
-                                    paddingLeft: '1.25rem',
-                                    textIndent: '-1.25rem',
+                                    paddingLeft: '1.5rem',
+                                    textIndent: '-1.5rem',
                                     textAlign: 'justify'
                                 }}>
-                                    <strong style={{ fontWeight: 'bold' }}>6.</strong> Declaro ciência que este é um <strong style={{ fontWeight: 'bold' }}>Agendamento Fixo</strong> e concordo em assinar digitalmente todos os termos gerados automaticamente para cada ocorrência desta recorrência.
+                                    <strong style={{ fontWeight: 'bold', marginRight: '4px' }}>6.</strong> Declaro ciência que este é um <strong style={{ fontWeight: 'bold' }}>Agendamento Fixo</strong> e concordo em assinar digitalmente todos os termos gerados automaticamente para cada ocorrência desta recorrência.
                                 </p>
                             )}
                         </div>

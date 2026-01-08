@@ -43,7 +43,7 @@ export function TeacherBookings() {
     };
 
     const handlePdfAction = async (action: 'download' | 'share') => {
-        const element = document.getElementById('teacher-term-doc-inner');
+        const element = document.getElementById('term-doc-inner');
         if (!element || !pdfData) return;
 
         setIsGeneratingPdf(true);
@@ -60,15 +60,11 @@ export function TeacherBookings() {
                 scale: 2,
                 useCORS: true,
                 onclone: (clonedDoc: any) => {
-                    const el = clonedDoc.getElementById('teacher-term-doc-inner');
+                    const el = clonedDoc.getElementById('term-doc-inner');
                     if (el) {
                         el.style.width = '210mm';
                         el.style.maxWidth = 'none';
-                        el.style.margin = '0 auto';
-                        if (el.parentElement) {
-                            el.parentElement.style.width = '210mm';
-                            el.parentElement.style.maxWidth = 'none';
-                        }
+                        el.style.margin = '0';
                     }
                 }
             },
@@ -142,7 +138,7 @@ export function TeacherBookings() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-gray-50/50">
-                    <div className="term-doc-preview mx-auto" id="teacher-term-doc-inner">
+                    <div className="term-doc-preview mx-auto">
                         {pdfData && pdfData.term_document && (
                             <TermDocument
                                 data={{
