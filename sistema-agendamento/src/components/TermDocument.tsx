@@ -1,3 +1,4 @@
+// 🛑 FILE LOCKED: DO NOT EDIT. THIS RENDER LOGIC IS CRITICAL FOR PDF ALIGNMENT.
 import React from 'react';
 
 // Interfaces to handle both fresh Wizard data and stored Admin/DB data
