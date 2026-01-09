@@ -197,12 +197,12 @@ w - 10 h - 10 rounded - xl flex items - center justify - center transition - all
                                 <button
                                     key={section.id}
                                     onClick={() => scrollToSection(section.id)}
-                                    className={`w - full flex items - center gap - 3 px - 4 py - 3 rounded - xl text - sm font - bold transition - all ${activeSection === section.id
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeSection === section.id
                                         ? 'bg-primary-50 text-primary-700 shadow-sm'
                                         : 'text-gray-600 hover:bg-gray-50'
-                                        } `}
+                                        }`}
                                 >
-                                    <section.icon className={`h - 4 w - 4 ${activeSection === section.id ? 'text-primary-600' : 'text-gray-400'} `} />
+                                    <section.icon className={`h-4 w-4 ${activeSection === section.id ? 'text-primary-600' : 'text-gray-400'}`} />
                                     {section.title}
                                     {activeSection === section.id && <ChevronRight className="h-4 w-4 ml-auto text-primary-400" />}
                                 </button>
