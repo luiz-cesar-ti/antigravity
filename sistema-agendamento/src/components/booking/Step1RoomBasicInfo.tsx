@@ -54,6 +54,17 @@ export function Step1RoomBasicInfo({ data, updateData, onNext }: Step1Props) {
             // Prevent past dates and times
             const now = new Date();
 
+            // If advance time is disabled, we allow "same minute" bookings
+            if (settings && !settings.room_min_advance_time_enabled) {
+                now.setSeconds(0, 0);
+            }
+
+            // If advance time is disabled, we allow "same minute" bookings
+            // by resetting seconds and milliseconds for fairer comparison
+            if (settings && !settings.room_min_advance_time_enabled) {
+                now.setSeconds(0, 0);
+            }
+
             // Parse date and time components separately to ensure local timezone
             const [year, month, day] = data.date.split('-').map(Number);
             const [startHour, startMinute] = data.startTime.split(':').map(Number);
@@ -72,6 +83,7 @@ export function Step1RoomBasicInfo({ data, updateData, onNext }: Step1Props) {
 
         // Minimum advance time validation for ROOMS (not equipment)
         if (settings && settings.room_min_advance_time_enabled) {
+            // Strict check with hours difference
             const now = new Date();
             const [year, month, day] = data.date.split('-').map(Number);
             const [startHour, startMinute] = data.startTime.split(':').map(Number);
@@ -80,6 +92,19 @@ export function Step1RoomBasicInfo({ data, updateData, onNext }: Step1Props) {
 
             if (hoursDiff < settings.room_min_advance_time_hours) {
                 setError(`É necessário agendar salas com no mínimo ${settings.room_min_advance_time_hours} horas de antecedência. Por favor, escolha outro horário.`);
+                return false;
+            }
+        } else {
+            // Basic past time check with "same minute" allowance
+            const now = new Date();
+            now.setSeconds(0, 0); // Allow same minute
+
+            const [year, month, day] = data.date.split('-').map(Number);
+            const [startHour, startMinute] = data.startTime.split(':').map(Number);
+            const bookingStart = new Date(year, month - 1, day, startHour, startMinute, 0);
+
+            if (bookingStart < now) {
+                setError("Não é possível realizar agendamentos para horários que já passaram.");
                 return false;
             }
         }

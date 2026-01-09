@@ -20,7 +20,7 @@ const customFetch = (input: RequestInfo | URL, init?: RequestInit) => {
             const admin = JSON.parse(session);
             adminToken = admin.session_token || '';
         }
-    } catch (e) { }
+    } catch { }
 
     // 2. Prepare headers container
     const headers = new Headers();

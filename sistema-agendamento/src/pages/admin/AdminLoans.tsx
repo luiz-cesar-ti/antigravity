@@ -22,7 +22,6 @@ import {
     Clock,
     Calendar,
     AlertCircle,
-    Eye,
     Trash2
 } from 'lucide-react';
 import { format, parseISO, isBefore, startOfToday } from 'date-fns';
@@ -31,7 +30,7 @@ import { clsx } from 'clsx';
 import html2pdf from 'html2pdf.js';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+
 
 
 // --- Custom Professional Modal Component ---

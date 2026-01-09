@@ -216,7 +216,7 @@ export function TeacherBookings() {
                     try {
                         const expiration = parseISO(`${bDate}T${bTime}`);
                         return !isNaN(expiration.getTime()) && now > expiration;
-                    } catch (e) { return false; }
+                    } catch { return false; }
                 })
                 .map((b: any) => b.id);
 
@@ -291,7 +291,7 @@ export function TeacherBookings() {
             }
 
             return localCode;
-        } catch (e) { return localCode; }
+        } catch { return localCode; }
     };
 
     if (loading) {
@@ -470,7 +470,7 @@ export function TeacherBookings() {
                                 try {
                                     const bookingEnd = parseISO(`${bDate}T${bTime}`);
                                     isExpired = !isNaN(bookingEnd.getTime()) && now > bookingEnd;
-                                } catch (e) { isExpired = false; }
+                                } catch { isExpired = false; }
                                 const isEffectivelyClosed = first.status === 'encerrado' || (first.status === 'active' && isExpired);
 
                                 const icon = getEquipmentIcon(first.equipment?.name, "h-6 w-6");

@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                             });
                             return;
                         }
-                    } catch (e) {
+                    } catch {
                         localStorage.removeItem('admin_session');
                     }
                 }

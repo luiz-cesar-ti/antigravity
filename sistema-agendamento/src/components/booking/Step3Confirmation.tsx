@@ -270,7 +270,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                         title: 'Termo de Responsabilidade',
                         text: 'Segue em anexo o Termo de Responsabilidade e Uso de Equipamento.'
                     });
-                } catch (err) {
+                } catch {
                     console.log('User cancelled share or share failed, falling back to download');
                 }
             } else {

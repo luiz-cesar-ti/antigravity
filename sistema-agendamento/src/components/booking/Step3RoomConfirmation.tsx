@@ -194,7 +194,7 @@ export function Step3RoomConfirmation({ data, updateData, onPrev }: Step3Props) 
                         title: 'Termo de Responsabilidade - Sala',
                         text: 'Segue em anexo o Termo de Responsabilidade e Uso de Sala.'
                     });
-                } catch (err) {
+                } catch {
                     console.log('User cancelled share or share failed, falling back to download');
                 }
             } else {

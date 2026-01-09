@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
-import { useAuth } from '../../contexts/AuthContext';
+
 import { Search, Shield, KeyRound, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import type { Admin } from '../../types';
 
@@ -101,7 +101,7 @@ export function AdminManageAdmins() {
                     const admin = JSON.parse(session);
                     adminToken = admin.session_token || '';
                 }
-            } catch (e) { }
+            } catch { }
 
             if (!adminToken) {
                 throw new Error('Sessão inválida.');

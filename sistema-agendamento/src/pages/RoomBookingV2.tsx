@@ -15,6 +15,7 @@ export function RoomBookingV2() {
     // State
     const [enabledUnits, setEnabledUnits] = useState<string[]>([]);
     const [unitRooms, setUnitRooms] = useState<Record<string, Room[]>>({});
+    const [unitSettings, setUnitSettings] = useState<Record<string, Settings>>({});
 
     // Booking State
     const [selectedRoom, setSelectedRoom] = useState<Room | null>(null); // If not null, modal is open
@@ -82,12 +83,21 @@ export function RoomBookingV2() {
                 // Fetch settings for all user's units to check which have room booking enabled
                 const { data: settingsData } = await supabase
                     .from('settings')
-                    .select('unit, room_booking_enabled')
+                    .select('*')
                     .in('unit', teacherUser.units);
 
-                const validUnits = settingsData
-                    ?.filter(s => s.room_booking_enabled)
-                    .map(s => s.unit) || [];
+                const validUnits: string[] = [];
+                const settingsMap: Record<string, Settings> = {};
+
+                if (settingsData) {
+                    settingsData.forEach(s => {
+                        settingsMap[s.unit] = s;
+                        if (s.room_booking_enabled) {
+                            validUnits.push(s.unit);
+                        }
+                    });
+                    setUnitSettings(settingsMap);
+                }
 
                 setEnabledUnits(validUnits);
 
@@ -236,16 +246,27 @@ export function RoomBookingV2() {
     const handleBook = async () => {
         if (!selectedRoom || !startTime || !endTime || !user) return;
 
-        const startTs = `${selectedDate}T${startTime}:00`;
-        const endTs = `${selectedDate}T${endTime}:00`;
+        // Create Date objects in local timezone to ensure correct UTC conversion
+        // We must parse explicitly to avoid browser inconsistencies
+        const [year, month, day] = selectedDate.split('-').map(Number);
+        const [startHour, startMinute] = startTime.split(':').map(Number);
+        const [endHour, endMinute] = endTime.split(':').map(Number);
+
+        const startDate = new Date(year, month - 1, day, startHour, startMinute, 0);
+        const endDate = new Date(year, month - 1, day, endHour, endMinute, 0);
+
+        // Convert to ISO string (UTC) for Supabase
+        // consistently handling the timezone offset 
+        const formattedStart = startDate.toISOString();
+        const formattedEnd = endDate.toISOString();
 
         setBookingLoading(true);
         try {
             const { error } = await supabase.from('room_bookings').insert({
                 room_id: selectedRoom.id,
                 user_id: user.id,
-                start_ts: startTs,
-                end_ts: endTs,
+                start_ts: formattedStart,
+                end_ts: formattedEnd,
                 status: 'confirmed'
             });
 
@@ -300,18 +321,19 @@ export function RoomBookingV2() {
 
         // Past time check - now both dates are in local timezone
         const now = new Date();
+
+        // If advance time is disabled, we allow "same minute" bookings
+        if (!settings?.room_min_advance_time_enabled) {
+            now.setSeconds(0, 0);
+        }
+
         if (newStart < now) return "Não é possível realizar agendamentos para horários que já passaram.";
 
         // Minimum advance time check for rooms
-        console.log('Checking advance time:', {
-            enabled: settings?.room_min_advance_time_enabled,
-            hours: settings?.room_min_advance_time_hours,
-            settings: settings
-        });
+
 
         if (settings?.room_min_advance_time_enabled) {
             const hoursDiff = differenceInHours(newStart, now);
-            console.log('Hours difference:', hoursDiff, 'Required:', settings.room_min_advance_time_hours);
 
             if (hoursDiff < settings.room_min_advance_time_hours) {
                 return `É necessário agendar salas com no mínimo ${settings.room_min_advance_time_hours} horas de antecedência.`;
@@ -424,10 +446,10 @@ export function RoomBookingV2() {
                                                 <Clock className="w-3.5 h-3.5 text-primary-500" />
                                                 <span>Horário: {room.min_time?.substring(0, 5)} às {room.max_time?.substring(0, 5)}</span>
                                             </div>
-                                            {settings?.room_min_advance_time_enabled && settings.room_min_advance_time_hours > 0 && (
-                                                <div className="flex items-center gap-2 text-xs font-semibold text-amber-700 bg-amber-50 -mx-3 -mb-3 mt-2 px-3 py-2 rounded-b-xl border-t border-amber-100">
-                                                    <AlertCircle className="w-3.5 h-3.5" />
-                                                    <span>Antecedência mínima: {settings.room_min_advance_time_hours} {settings.room_min_advance_time_hours === 1 ? 'hora' : 'horas'}</span>
+                                            {unitSettings[room.unit]?.room_min_advance_time_enabled && unitSettings[room.unit]?.room_min_advance_time_hours > 0 && (
+                                                <div className="flex items-center gap-2 text-xs font-bold text-blue-700 bg-blue-50 -mx-3 -mb-3 mt-2 px-3 py-2 rounded-b-xl border-t border-blue-100">
+                                                    <Info className="w-3.5 h-3.5" />
+                                                    <span>Realize agendamentos com no minimo {unitSettings[room.unit].room_min_advance_time_hours} horas de antecedência.</span>
                                                 </div>
                                             )}
                                         </div>
@@ -591,56 +613,59 @@ export function RoomBookingV2() {
                 {myBookings.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {myBookings.map((booking) => {
-                            const isPast = new Date(booking.end_ts) < new Date();
+                            // Ensure strict UTC parsing
+                            const endDate = parseISO(booking.end_ts.endsWith('Z') ? booking.end_ts : booking.end_ts + 'Z');
+                            const isPast = new Date() > endDate;
                             const status = isPast ? 'Concluído' : 'Agendado';
 
+                            // Determine colors based on status
+                            // Agendado (Future) -> Green Theme
+                            // Concluído (Past) -> Blue Theme
+                            const headerGradient = isPast
+                                ? 'bg-gradient-to-br from-indigo-500 to-blue-600'
+                                : 'bg-gradient-to-br from-emerald-500 to-teal-600';
+
+                            const badgeStyle = isPast
+                                ? 'bg-indigo-700/40 text-white'
+                                : 'bg-emerald-700/40 text-white';
+
+                            const hoverBorder = isPast
+                                ? 'hover:border-blue-200'
+                                : 'hover:border-emerald-200';
+
                             return (
-                                <div key={booking.id} className="bg-white rounded-xl shadow-md border border-gray-100 p-0 hover:shadow-xl transition-all relative overflow-hidden group">
-                                    {/* Colored Top Bar */}
-                                    <div className={`h-1.5 w-full ${isPast ? 'bg-blue-600' : 'bg-emerald-500'}`} />
+                                <div key={booking.id} className={`group bg-white rounded-xl shadow-md border hover:shadow-xl transition-all duration-300 relative overflow-hidden flex flex-col ${isPast ? 'opacity-85 grayscale-[0.1] border-gray-200' : `border-gray-200 ${hoverBorder}`}`}>
 
-                                    <div className="p-5">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide border ${isPast
-                                                ? 'bg-blue-50 text-blue-600 border-blue-100'
-                                                : 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                                }`}>
-                                                {status}
-                                            </span>
-                                            {/* ID Hash removed for simpler teacher view */}
-                                        </div>
-
-                                        <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
-                                            {booking.room?.name || 'Sala'}
-                                        </h3>
-
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50 px-2.5 py-1 rounded-lg">
-                                                <MapPin className="w-3.5 h-3.5" />
-                                                Unidade {booking.room?.unit}
+                                    {/* Header with Status-based Color */}
+                                    <div className={`p-4 flex justify-between items-start ${headerGradient}`}>
+                                        <div>
+                                            <div className="flex items-center gap-1 opacity-90 text-[10px] uppercase tracking-wider font-semibold mb-1 text-white/90">
+                                                <MapPin className="w-3 h-3" /> Unidade {booking.room?.unit}
                                             </div>
+                                            <h3 className="font-bold text-lg leading-tight text-white mb-0.5 shadow-sm" title={booking.room?.name}>
+                                                {booking.room?.name}
+                                            </h3>
                                         </div>
+                                        <div className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-white/20 shadow-sm ${badgeStyle}`}>
+                                            {status}
+                                        </div>
+                                    </div>
 
-                                        <div className="space-y-3 pt-4 border-t border-gray-100">
-                                            <div className="flex items-center gap-3 text-sm text-gray-700">
-                                                <div className={`p-2 rounded-lg ${isPast ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'}`}>
-                                                    <Calendar className="w-4 h-4" />
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs text-gray-400 font-semibold uppercase">Data</span>
-                                                    <span className="capitalize font-medium text-gray-900">
-                                                        {format(parseISO(booking.start_ts), "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                                                    </span>
-                                                </div>
+                                    <div className="p-5 flex flex-col flex-1 bg-white">
+                                        {/* Date Box */}
+                                        <div className="flex items-center gap-4 mb-5">
+                                            <div className="flex flex-col items-center justify-center bg-gray-50 border border-gray-100 rounded-lg p-2 min-w-[3.5rem]">
+                                                <span className="text-xs font-bold text-gray-400 uppercase">{format(parseISO(booking.start_ts.endsWith('Z') ? booking.start_ts : booking.start_ts + 'Z'), 'MMM', { locale: ptBR })}</span>
+                                                <span className="text-xl font-black text-gray-800">{format(parseISO(booking.start_ts.endsWith('Z') ? booking.start_ts : booking.start_ts + 'Z'), 'dd')}</span>
                                             </div>
-                                            <div className="flex items-center gap-3 text-sm text-gray-700">
-                                                <div className={`p-2 rounded-lg ${isPast ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'}`}>
-                                                    <Clock className="w-4 h-4" />
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs text-gray-400 font-semibold uppercase">Horário</span>
-                                                    <span className="font-medium text-gray-900">
-                                                        {format(parseISO(booking.start_ts), 'HH:mm')} - {format(parseISO(booking.end_ts), 'HH:mm')}
+                                            <div className="flex-1">
+                                                <p className="text-sm font-semibold text-gray-900 capitalize text-left">
+                                                    {format(parseISO(booking.start_ts.endsWith('Z') ? booking.start_ts : booking.start_ts + 'Z'), 'EEEE', { locale: ptBR })}
+                                                </p>
+                                                <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-0.5">
+                                                    <Clock className="w-3.5 h-3.5 text-primary-500" />
+                                                    <span>
+                                                        {format(parseISO(booking.start_ts.endsWith('Z') ? booking.start_ts : booking.start_ts + 'Z'), 'HH:mm')} - {format(parseISO(booking.end_ts.endsWith('Z') ? booking.end_ts : booking.end_ts + 'Z'), 'HH:mm')}
                                                     </span>
                                                 </div>
                                             </div>
@@ -655,7 +680,7 @@ export function RoomBookingV2() {
                                                     isPast: isPastBooking
                                                 });
                                             }}
-                                            className="mt-5 w-full py-2.5 text-xs font-bold text-red-600 border border-red-100 bg-red-50 rounded-xl hover:bg-red-100 hover:border-red-200 transition-all flex items-center justify-center gap-2"
+                                            className="mt-auto w-full py-2.5 text-xs font-bold text-red-600 border border-red-100 bg-red-50 rounded-xl hover:bg-red-100 hover:border-red-200 transition-all flex items-center justify-center gap-2"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                             {isPast ? 'EXCLUIR AGENDAMENTO' : 'CANCELAR AGENDAMENTO'}

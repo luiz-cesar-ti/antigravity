@@ -250,7 +250,7 @@ export function AdminBookings() {
         try {
             const bookingEnd = parseISO(`${booking.booking_date}T${booking.end_time}`);
             return !isNaN(bookingEnd.getTime()) && now > bookingEnd;
-        } catch (e) {
+        } catch {
             return false;
         }
     };

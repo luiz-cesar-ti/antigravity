@@ -270,7 +270,7 @@ export function AdminSchedule() {
             try {
                 const decoder = new TextDecoder('utf-8', { fatal: true });
                 text = decoder.decode(buffer);
-            } catch (err) {
+            } catch {
                 const decoder = new TextDecoder('windows-1252');
                 text = decoder.decode(buffer);
             }

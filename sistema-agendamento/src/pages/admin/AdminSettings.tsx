@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
-import type { Settings, Admin } from '../../types'; // Ensure Settings type exists and includes min_advance_time_hours
+import type { Settings, Admin } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
-import { Save, Clock, KeyRound, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { Save, Clock, KeyRound, AlertCircle, CheckCircle, Eye, EyeOff, Settings as SettingsIcon, Shield, Zap } from 'lucide-react';
 
 export function AdminSettings() {
     const { user } = useAuth();
@@ -55,7 +55,7 @@ export function AdminSettings() {
                     const admin = JSON.parse(session);
                     adminToken = admin.session_token || '';
                 }
-            } catch (e) { }
+            } catch { }
 
             if (!adminToken) throw new Error('Sessão inválida.');
 
@@ -111,22 +111,13 @@ export function AdminSettings() {
         setMessage(null);
 
         try {
-            // Upsert settings for this unit
-            // Assuming 'settings' table key is (unit) or we have ID.
-            // Ideally we upsert based on unit.
-
             const payload = {
                 unit: adminUser.unit,
                 min_advance_time_enabled: settings.min_advance_time_enabled,
                 min_advance_time_hours: settings.min_advance_time_hours,
-                room_booking_enabled: settings.room_booking_enabled,
+                room_booking_enabled: settings.room_booking_enabled, // Preserve existing value
                 updated_at: new Date().toISOString()
             };
-
-            // Check if exists first to decide update vs insert if no ID (or rely on upsert with constraint)
-            // Supabase .upsert() works if we have a primary key or unique constraint on 'unit'.
-            // Schema check: settings table PK is id, but maybe unique constraint on unit?
-            // If not, we should probably check existence.
 
             const { data: existing } = await supabase.from('settings').select('id').eq('unit', adminUser.unit).single();
 
@@ -165,206 +156,246 @@ export function AdminSettings() {
     }
 
     return (
-        <div className="max-w-2xl mx-auto space-y-6">
+        <div className="max-w-7xl mx-auto space-y-8 pb-12">
+            {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Configurações da Unidade</h1>
-                <p className="text-gray-500">Defina regras de agendamento para {adminUser.unit}.</p>
+                <h1 className="text-3xl font-black text-gray-900 tracking-tight">Configurações</h1>
+                <p className="text-gray-500 mt-2 text-lg">Gerencie as preferências da unidade <span className="font-bold text-primary-600">{adminUser.unit}</span>.</p>
             </div>
-
-            {message && (
-                <div className={`p-4 rounded-md ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                    {message.text}
-                </div>
-            )}
 
             {loading ? (
-                <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                <div className="flex flex-col items-center justify-center py-32 text-gray-500">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600 mb-4"></div>
+                    <p className="font-medium animate-pulse">Carregando preferências...</p>
                 </div>
             ) : (
-                <form onSubmit={handleSave} className="bg-white shadow rounded-lg p-6 border border-gray-100">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
+                    {/* LEFT COLUMN: Equipment Rules */}
                     <div className="space-y-6">
-                        <div className="flex items-start pb-6 border-b border-gray-200">
-                            <div className="flex items-center h-5">
-                                <input
-                                    id="room_booking_enabled"
-                                    name="room_booking_enabled"
-                                    type="checkbox"
-                                    checked={settings.room_booking_enabled || false}
-                                    onChange={(e) => setSettings({ ...settings, room_booking_enabled: e.target.checked })}
-                                    className="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300 rounded"
-                                />
-                            </div>
-                            <div className="ml-3 text-sm">
-                                <label htmlFor="room_booking_enabled" className="font-medium text-gray-700">
-                                    Habilitar Agendamento de Salas
-                                </label>
-                                <p className="text-gray-500">
-                                    Se habilitado, os professores desta unidade verão a opção "Salas" no menu e poderão realizar agendamentos.
-                                </p>
-                            </div>
-                        </div>
+                        <form onSubmit={handleSave} className="bg-white rounded-[2rem] p-8 shadow-xl shadow-gray-100 border border-gray-100 hover:shadow-2xl hover:shadow-primary-900/5 transition-all duration-500 group relative overflow-hidden">
+                            {/* Decorative Background Blob */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary-50 to-transparent rounded-bl-[100%] -mr-16 -mt-16 opacity-50 pointer-events-none" />
 
-                        <div className="flex items-start">
-                            <div className="flex items-center h-5">
-                                <input
-                                    id="min_time_enabled"
-                                    name="min_time_enabled"
-                                    type="checkbox"
-                                    checked={settings.min_advance_time_enabled}
-                                    onChange={(e) => setSettings({ ...settings, min_advance_time_enabled: e.target.checked })}
-                                    className="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300 rounded"
-                                />
-                            </div>
-                            <div className="ml-3 text-sm">
-                                <label htmlFor="min_time_enabled" className="font-medium text-gray-700">
-                                    Exigir Antecedência Mínima
-                                </label>
-                                <p className="text-gray-500">
-                                    Se habilitado, os professores não poderão agendar equipamentos muito próximos do horário de uso.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className={`ml-7 transition-opacity duration-200 ${settings.min_advance_time_enabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
-                            <label htmlFor="hours" className="block text-sm font-medium text-gray-700">
-                                Horas de Antecedência
-                            </label>
-                            <div className="mt-1 relative rounded-md shadow-sm w-32">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Clock className="h-5 w-5 text-gray-400" />
+                            <div className="relative">
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="p-3.5 bg-gradient-to-br from-primary-500 to-indigo-600 rounded-xl text-white shadow-lg shadow-primary-200 shadow-primary-500/30 group-hover:scale-110 transition-transform duration-500">
+                                        <Zap className="h-6 w-6" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-black text-gray-900">Regras de Equipamentos</h2>
+                                        <p className="text-sm text-gray-500 font-medium">Controle de agendamento de recursos</p>
+                                    </div>
                                 </div>
-                                <input
-                                    type="number"
-                                    name="hours"
-                                    id="hours"
-                                    min="1"
-                                    max="720"
-                                    value={settings.min_advance_time_hours}
-                                    onChange={(e) => setSettings({ ...settings, min_advance_time_hours: parseInt(e.target.value) || 0 })}
-                                    className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-2"
-                                />
+
+                                {message && (
+                                    <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 ${message.type === 'success' ? 'bg-emerald-50 text-emerald-900 border border-emerald-100' : 'bg-red-50 text-red-900 border border-red-100'}`}>
+                                        {message.type === 'success' ? <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600" /> : <AlertCircle className="h-5 w-5 shrink-0 text-red-600" />}
+                                        <span className="font-bold text-sm">{message.text}</span>
+                                    </div>
+                                )}
+
+                                <div className="space-y-8">
+                                    {/* Custom Toggle Switch */}
+                                    <div className="bg-gray-50/50 rounded-2xl p-5 border border-gray-100 hover:border-primary-100 transition-colors">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1 pr-4">
+                                                <label htmlFor="min_time_enabled" className={`font-bold text-base mb-1 block cursor-pointer transition-colors ${settings.min_advance_time_enabled ? 'text-primary-700' : 'text-gray-700'}`}>
+                                                    Exigir Antecedência Mínima
+                                                </label>
+                                                <p className="text-xs text-gray-500 leading-relaxed font-medium">
+                                                    Impede agendamentos de última hora para equipamentos.
+                                                </p>
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    id="min_time_enabled"
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={settings.min_advance_time_enabled}
+                                                    onChange={(e) => setSettings({ ...settings, min_advance_time_enabled: e.target.checked })}
+                                                />
+                                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-100 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                                            </label>
+                                        </div>
+
+                                        {/* Collapsible Content */}
+                                        <div className={`grid transition-all duration-300 ease-out ${settings.min_advance_time_enabled ? 'grid-rows-[1fr] opacity-100 mt-5 pt-5 border-t border-gray-200/50' : 'grid-rows-[0fr] opacity-0 mt-0 pt-0 border-none'}`}>
+                                            <div className="overflow-hidden">
+                                                <label htmlFor="hours" className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
+                                                    Tempo Mínimo (Horas)
+                                                </label>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="relative rounded-xl shadow-sm w-32 group/input">
+                                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                            <Clock className="h-4 w-4 text-gray-400 group-focus-within/input:text-primary-500 transition-colors" />
+                                                        </div>
+                                                        <input
+                                                            type="number"
+                                                            name="hours"
+                                                            id="hours"
+                                                            min="1"
+                                                            max="720"
+                                                            value={settings.min_advance_time_hours}
+                                                            onChange={(e) => setSettings({ ...settings, min_advance_time_hours: parseInt(e.target.value) || 0 })}
+                                                            className="block w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none font-bold text-gray-900 transition-all sm:text-sm"
+                                                        />
+                                                    </div>
+                                                    <span className="text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-lg border border-gray-200">
+                                                        {settings.min_advance_time_hours === 24 ? '1 dia' : `${settings.min_advance_time_hours} horas`}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
+                                    <button
+                                        type="submit"
+                                        disabled={saving}
+                                        className="inline-flex items-center px-6 py-3 border border-transparent shadow-lg shadow-primary-200 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all hover:-translate-y-0.5"
+                                    >
+                                        <Save className="h-4 w-4 mr-2" />
+                                        {saving ? 'Salvando...' : 'Salvar Alterações'}
+                                    </button>
+                                </div>
                             </div>
-                            <p className="mt-1 text-xs text-gray-500">Ex: 24 horas = 1 dia antes.</p>
+                        </form>
+
+                        {/* Additional info card or placeholder could go here */}
+                        <div className="bg-gradient-to-br from-indigo-900 to-violet-900 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-xl shadow-indigo-900/20 group">
+                            <div className="relative z-10">
+                                <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+                                    <Shield className="w-5 h-5 text-indigo-300" />
+                                    Segurança e Política
+                                </h3>
+                                <p className="text-indigo-100 text-sm leading-relaxed opacity-90">
+                                    As alterações feitas nesta página afetam imediatamente todos os professores vinculados à unidade <strong>{adminUser.unit}</strong>. Certifique-se de comunicar mudanças importantes nas regras de antecedência.
+                                </p>
+                            </div>
+                            {/* Bg decoration */}
+                            <SettingsIcon className="absolute -bottom-10 -right-10 w-48 h-48 text-white opacity-5 rotate-12 group-hover:rotate-45 transition-transform duration-700 ease-in-out" />
                         </div>
                     </div>
 
-
-
-
-
-                    <div className="mt-6 pt-6 border-t border-gray-200 flex justify-end">
-                        <button
-                            type="submit"
-                            disabled={saving}
-                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
-                        >
-                            <Save className="h-4 w-4 mr-2" />
-                            {saving ? 'Salvando...' : 'Salvar Regras'}
-                        </button>
-                    </div>
-                </form>
-            )}
-
-            {/* PASSWORD CHANGE SECTION */}
-            <div className="bg-white shadow rounded-lg p-6 border border-gray-100">
-                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
-                    <div className="p-2 bg-primary-50 rounded-lg">
-                        <KeyRound className="h-6 w-6 text-primary-600" />
-                    </div>
+                    {/* RIGHT COLUMN: Password */}
                     <div>
-                        <h2 className="text-lg font-bold text-gray-900">Alterar Minha Senha</h2>
-                        <p className="text-sm text-gray-500">Atualize sua credencial de acesso.</p>
+                        <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-gray-100 border border-gray-100 hover:shadow-2xl hover:shadow-primary-900/5 transition-all duration-500 group relative">
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="p-3.5 bg-gradient-to-br from-fuchsia-500 to-pink-600 rounded-xl text-white shadow-lg shadow-pink-200 shadow-fuchsia-500/30 group-hover:scale-110 transition-transform duration-500">
+                                    <KeyRound className="h-6 w-6" />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-black text-gray-900">Segurança da Conta</h2>
+                                    <p className="text-sm text-gray-500 font-medium">Atualize suas credenciais de acesso</p>
+                                </div>
+                            </div>
+
+                            {passwordMessage && (
+                                <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 ${passwordMessage.type === 'success' ? 'bg-emerald-50 text-emerald-900 border border-emerald-100' : 'bg-red-50 text-red-900 border border-red-100'}`}>
+                                    {passwordMessage.type === 'success' ? <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600" /> : <AlertCircle className="h-5 w-5 shrink-0 text-red-600" />}
+                                    <span className="font-bold text-sm">{passwordMessage.text}</span>
+                                </div>
+                            )}
+
+                            <form onSubmit={handlePasswordChange} className="space-y-5">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2 ml-1">Senha Atual</label>
+                                    <div className="relative group/input">
+                                        <input
+                                            type={showCurrentPassword ? "text" : "password"}
+                                            required
+                                            value={passwordData.currentPassword}
+                                            onChange={e => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                            className="block w-full rounded-2xl border-gray-200 bg-gray-50 focus:bg-white text-gray-900 shadow-sm focus:border-fuchsia-500 focus:ring-fuchsia-500 sm:text-sm p-4 border pr-12 outline-none transition-all placeholder:text-gray-400 font-medium"
+                                            placeholder="Digite sua senha atual"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                            className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-fuchsia-600 transition-colors"
+                                        >
+                                            {showCurrentPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2 ml-1">Nova Senha</label>
+                                        <div className="relative group/input">
+                                            <input
+                                                type={showNewPassword ? "text" : "password"}
+                                                required
+                                                value={passwordData.newPassword}
+                                                onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                                className="block w-full rounded-2xl border-gray-200 bg-gray-50 focus:bg-white text-gray-900 shadow-sm focus:border-fuchsia-500 focus:ring-fuchsia-500 sm:text-sm p-4 border pr-12 outline-none transition-all placeholder:text-gray-400 font-medium"
+                                                placeholder="Nova senha"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-fuchsia-600 transition-colors"
+                                            >
+                                                {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2 ml-1">Confirmar</label>
+                                        <div className="relative group/input">
+                                            <input
+                                                type={showConfirmPassword ? "text" : "password"}
+                                                required
+                                                value={passwordData.confirmPassword}
+                                                onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                                className="block w-full rounded-2xl border-gray-200 bg-gray-50 focus:bg-white text-gray-900 shadow-sm focus:border-fuchsia-500 focus:ring-fuchsia-500 sm:text-sm p-4 border pr-12 outline-none transition-all placeholder:text-gray-400 font-medium"
+                                                placeholder="Repita a senha"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-fuchsia-600 transition-colors"
+                                            >
+                                                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="text-[11px] text-gray-500 bg-gray-50 p-4 rounded-xl border border-gray-100 flex gap-3">
+                                    <Shield className="h-4 w-4 text-fuchsia-500 shrink-0" />
+                                    <div>
+                                        <span className="font-bold text-gray-700 block mb-1">Requisitos de Segurança:</span>
+                                        Mínimo de 8 caracteres contendo Letra Maiúscula, Letra Minúscula, Número e Símbolo (@$!%*?&).
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end pt-2">
+                                    <button
+                                        type="submit"
+                                        disabled={changingPassword}
+                                        className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent shadow-lg shadow-fuchsia-200 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-fuchsia-500 disabled:opacity-50 transition-all hover:-translate-y-0.5"
+                                    >
+                                        {changingPassword ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                Alterando...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <KeyRound className="h-4 w-4 mr-2" />
+                                                Alterar Senha de Acesso
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
-
-                {passwordMessage && (
-                    <div className={`mb-4 p-4 rounded-md flex items-center gap-2 ${passwordMessage.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                        {passwordMessage.type === 'success' ? <CheckCircle className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
-                        <span className="font-medium text-sm">{passwordMessage.text}</span>
-                    </div>
-                )}
-
-                <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
-                    <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Senha Atual</label>
-                        <div className="relative">
-                            <input
-                                type={showCurrentPassword ? "text" : "password"}
-                                required
-                                value={passwordData.currentPassword}
-                                onChange={e => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2.5 border pr-10"
-                                placeholder="Digite sua senha atual"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-primary-600 transition-colors"
-                            >
-                                {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Nova Senha</label>
-                            <div className="relative">
-                                <input
-                                    type={showNewPassword ? "text" : "password"}
-                                    required
-                                    value={passwordData.newPassword}
-                                    onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2.5 border pr-10"
-                                    placeholder="Nova senha"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowNewPassword(!showNewPassword)}
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-primary-600 transition-colors"
-                                >
-                                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                </button>
-                            </div>
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Confirmar</label>
-                            <div className="relative">
-                                <input
-                                    type={showConfirmPassword ? "text" : "password"}
-                                    required
-                                    value={passwordData.confirmPassword}
-                                    onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2.5 border pr-10"
-                                    placeholder="Repita a nova senha"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-primary-600 transition-colors"
-                                >
-                                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="text-[10px] text-gray-500 bg-gray-50 p-3 rounded border border-gray-200">
-                        <span className="font-bold block mb-1">Requisitos:</span>
-                        8+ caracteres, Letra Maiúscula, Letra Minúscula, Número e Símbolo (@$!%*?&).
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={changingPassword}
-                        className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-2.5 border border-transparent shadow-sm text-sm font-bold rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 transition-all"
-                    >
-                        {changingPassword ? 'Alterando...' : 'Alterar Senha'}
-                    </button>
-                </form>
-            </div>
+            )}
         </div>
     );
 }

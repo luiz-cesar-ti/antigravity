@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LayoutDashboard, Calendar, Monitor, Users, Settings, LogOut, Menu, X, ClipboardCheck, BookOpen, Clock, UserCog, AlignLeft, MapPin } from 'lucide-react';
+import { LayoutDashboard, Calendar, Monitor, Users, Settings, LogOut, Menu, X, ClipboardCheck, BookOpen, Clock, UserCog, MapPin } from 'lucide-react';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import { NotificationBell } from './NotificationBell';
 

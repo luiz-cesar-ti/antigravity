@@ -3,7 +3,7 @@ import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { SCHOOL_UNITS } from '../../utils/constants';
 import type { User, Admin } from '../../types';
-import { Search, Mail, Building, Pencil, X, ToggleLeft, ToggleRight, AlertCircle, UserMinus, Check, Send, Repeat, ShieldCheck, KeyRound, Shield } from 'lucide-react';
+import { Search, Mail, Building, Pencil, X, ToggleLeft, ToggleRight, AlertCircle, UserMinus, Check, Send, Repeat, ShieldCheck } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { SuccessModal } from '../../components/SuccessModal';
 import { ConfirmModal } from '../../components/ConfirmModal';
@@ -43,7 +43,7 @@ export function AdminUsers() {
 
     const fetchUsers = async () => {
         setLoading(true);
-        let query = supabase
+        const query = supabase
             .from('users')
             .select('*')
             .eq('role', 'teacher')

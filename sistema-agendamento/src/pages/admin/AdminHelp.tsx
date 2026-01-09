@@ -28,7 +28,8 @@ import {
     History as LucideHistory,
     Globe,
     Plus,
-    Power
+    Power,
+    Timer
 } from 'lucide-react';
 
 export function AdminHelp() {
@@ -543,26 +544,32 @@ export function AdminHelp() {
                                     </div>
                                 </div>
 
-                                <div className="bg-gray-50 rounded-[2rem] p-8 border border-gray-100 flex flex-col md:flex-row items-center gap-8 group">
-                                    <div className="bg-white p-6 rounded-[2.5rem] shadow-2xl border border-gray-100 relative w-64 h-40 flex items-center justify-center rotate-3 transition-transform group-hover:rotate-0 duration-500">
-                                        <div className="absolute top-4 left-4 flex gap-1.5 font-black text-[8px] uppercase tracking-tighter text-teal-600">
-                                            <div className="h-2 w-2 rounded-full bg-teal-500 animate-pulse" /> Live Now
-                                        </div>
-                                        <LayoutGrid className="h-16 w-16 text-teal-100 absolute" />
-                                        <div className="relative text-center">
-                                            <span className="block text-3xl font-black text-gray-900">100%</span>
-                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Controle Digital</span>
-                                        </div>
+                                <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-[2rem] p-8 text-white flex flex-col md:flex-row items-center gap-8 group shadow-2xl shadow-indigo-200/50 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-12 opacity-10">
+                                        <Timer className="h-48 w-48 text-white rotate-12" />
                                     </div>
-                                    <div className="flex-1">
-                                        <h4 className="text-lg font-black text-gray-900 mb-2">Pronto para começar?</h4>
-                                        <p className="text-sm text-gray-500 leading-relaxed mb-4">
-                                            O agendamento de salas é mais do que um calendário; é o reflexo da organização da sua unidade. Mantenha os espaços cadastrados e as regras claras para garantir a melhor experiência para seus docentes.
+
+                                    <div className="bg-white/10 p-6 rounded-[2.5rem] backdrop-blur-md border border-white/20 relative w-64 h-40 flex flex-col items-center justify-center gap-4 transition-transform group-hover:scale-105 duration-500 shrink-0">
+                                        <div className="absolute top-4 left-4 flex gap-1.5 font-black text-[8px] uppercase tracking-tighter text-indigo-100">
+                                            <div className="h-2 w-2 rounded-full bg-indigo-300 animate-pulse" /> Novo Recurso
+                                        </div>
+                                        <Timer className="h-12 w-12 text-white/90" />
+                                        <span className="block text-2xl font-black text-white tracking-tight">Antecedência</span>
+                                    </div>
+
+                                    <div className="flex-1 relative z-10">
+                                        <h4 className="text-2xl font-black text-white mb-2">Controle de Antecedência</h4>
+                                        <p className="text-sm text-indigo-50 leading-relaxed mb-6 font-medium">
+                                            Agora você dita o ritmo. Configure um tempo mínimo de antecedência para reservas ou desative a regra para permitir agendamentos de última hora. Flexibilidade total para coordenar sua unidade.
                                         </p>
-                                        <div className="flex gap-2">
-                                            <span className="px-3 py-1 bg-teal-100 text-teal-700 text-[10px] font-black rounded-lg uppercase">Auditório</span>
-                                            <span className="px-3 py-1 bg-blue-100 text-blue-700 text-[10px] font-black rounded-lg uppercase">Lab Informática</span>
-                                            <span className="px-3 py-1 bg-purple-100 text-purple-700 text-[10px] font-black rounded-lg uppercase">Espaço Maker</span>
+
+                                        <div className="bg-indigo-900/30 p-3 rounded-xl border border-indigo-400/30 flex gap-3 text-xs text-indigo-100 italic">
+                                            <div className="shrink-0 p-1 bg-indigo-500 rounded-full h-fit mt-0.5">
+                                                <CheckCircle2 className="h-3 w-3 text-white" />
+                                            </div>
+                                            <p>
+                                                <strong>Feedback Inteligente:</strong> Quando ativo, o sistema avisa o professor sobre o tempo mínimo exigido diretamente no card da sala, evitando frustrações.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import type { Room, RoomBooking, Admin, Settings } from '../../types';
-import { Plus, Trash2, Calendar, Clock, MapPin, Users, AlertCircle, AlertTriangle, X, Edit2, CheckCircle2, Power } from 'lucide-react';
+import type { Room, RoomBooking, Admin } from '../../types';
+import { Plus, Trash2, Calendar, Clock, MapPin, Users, AlertCircle, AlertTriangle, X, Edit2, CheckCircle2, Settings2, Save, Power } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -51,9 +51,9 @@ export function AdminRooms() {
     const [isCreating, setIsCreating] = useState(false);
 
     // Room Advance Time Settings State
-    const [settings, setSettings] = useState<Settings | null>(null);
     const [roomMinAdvanceEnabled, setRoomMinAdvanceEnabled] = useState(false);
     const [roomMinAdvanceHours, setRoomMinAdvanceHours] = useState(0);
+    const [roomBookingEnabled, setRoomBookingEnabled] = useState(true);
     const [savingSettings, setSavingSettings] = useState(false);
 
     useEffect(() => {
@@ -135,16 +135,16 @@ export function AdminRooms() {
 
             // Fetch Settings for room advance time configuration
             if (unit) {
-                const { data: settingsData } = await supabase
+                const { data } = await supabase
                     .from('settings')
                     .select('*')
                     .eq('unit', unit)
                     .single();
 
-                if (settingsData) {
-                    setSettings(settingsData);
-                    setRoomMinAdvanceEnabled(settingsData.room_min_advance_time_enabled || false);
-                    setRoomMinAdvanceHours(settingsData.room_min_advance_time_hours || 0);
+                if (data) {
+                    setRoomMinAdvanceEnabled(data.room_min_advance_time_enabled);
+                    setRoomMinAdvanceHours(data.room_min_advance_time_hours);
+                    setRoomBookingEnabled(data.room_booking_enabled);
                 }
             }
         } catch (err) {
@@ -294,28 +294,48 @@ export function AdminRooms() {
         }
     };
 
-    const handleSaveRoomAdvanceSettings = async () => {
+    const handleSaveSettings = async () => {
         if (!adminUser?.unit) return;
-
         setSavingSettings(true);
+
         try {
-            const { error } = await supabase
+            // Check if settings row exists for this unit
+            const { data: existing } = await supabase
                 .from('settings')
-                .update({
-                    room_min_advance_time_enabled: roomMinAdvanceEnabled,
-                    room_min_advance_time_hours: roomMinAdvanceHours
-                })
-                .eq('unit', adminUser.unit);
+                .select('id')
+                .eq('unit', adminUser.unit)
+                .single();
+
+            const payload = {
+                unit: adminUser.unit,
+                room_min_advance_time_enabled: roomMinAdvanceEnabled,
+                room_min_advance_time_hours: roomMinAdvanceHours,
+                room_booking_enabled: roomBookingEnabled,
+                updated_at: new Date().toISOString()
+            };
+
+            let error;
+            if (existing) {
+                const { error: err } = await supabase
+                    .from('settings')
+                    .update(payload)
+                    .eq('id', existing.id);
+                error = err;
+            } else {
+                const { error: err } = await supabase
+                    .from('settings')
+                    .insert([payload]);
+                error = err;
+            }
 
             if (error) throw error;
-
             setSuccessModal({
                 isOpen: true,
-                message: 'Configurações de agendamento atualizadas com sucesso!'
+                message: 'Configurações salvas com sucesso!'
             });
-        } catch (err: any) {
-            console.error(err);
-            alert(err.message || 'Erro ao salvar configurações.');
+        } catch (error: any) {
+            console.error('Error saving settings:', error);
+            alert('Erro ao salvar configurações: ' + (error.message || 'Erro desconhecido'));
         } finally {
             setSavingSettings(false);
         }
@@ -376,71 +396,132 @@ export function AdminRooms() {
             {/* TAB: ROOMS (CRUD) */}
             {activeTab === 'rooms' && (
                 <div className="space-y-6">
-                    {/* Room Advance Time Settings Section */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-                            <div className="p-2 bg-indigo-100 rounded-lg">
-                                <Clock className="w-5 h-5 text-indigo-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-gray-900">Configurações de Agendamento</h3>
+                    {/* Room Settings Section - Redesigned */}
+                    <div className="bg-white rounded-[2rem] shadow-xl shadow-gray-100/50 border border-gray-100 overflow-hidden relative">
+                        {/* Decorative Background Elements */}
+                        <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none">
+                            <Settings2 className="w-64 h-64 text-gray-900 -rotate-12" />
                         </div>
 
-                        <div className="space-y-5">
-                            {/* Toggle */}
-                            <div className="flex items-start">
-                                <div className="flex items-center h-5">
-                                    <input
-                                        id="room_min_advance_enabled"
-                                        type="checkbox"
-                                        checked={roomMinAdvanceEnabled}
-                                        onChange={(e) => setRoomMinAdvanceEnabled(e.target.checked)}
-                                        className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded cursor-pointer"
-                                    />
+                        <div className="p-8 relative z-10">
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="p-3 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl shadow-lg shadow-indigo-200">
+                                    <Settings2 className="w-6 h-6 text-white" />
                                 </div>
-                                <div className="ml-3 text-sm">
-                                    <label htmlFor="room_min_advance_enabled" className="font-medium text-gray-700 cursor-pointer">
-                                        Exigir Antecedência Mínima para Salas
-                                    </label>
-                                    <p className="text-gray-500 mt-1">
-                                        Se habilitado, professores precisarão agendar salas com antecedência mínima configurada.
-                                    </p>
+                                <div>
+                                    <h3 className="text-xl font-black text-gray-900">Configurações de Agendamentos</h3>
+                                    <p className="text-sm text-gray-500 font-medium">Gerencie as regras globais para reservas de salas</p>
                                 </div>
                             </div>
 
-                            {/* Hours Input */}
-                            <div className={`ml-7 transition-opacity duration-200 ${roomMinAdvanceEnabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
-                                <label htmlFor="room_advance_hours" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Horas de Antecedência
-                                </label>
-                                <div className="relative w-32">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Clock className="h-5 w-5 text-gray-400" />
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* Card 1: Global System Toggle */}
+                                <div className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 ${roomBookingEnabled
+                                    ? 'bg-gradient-to-br from-indigo-50 to-white border-indigo-200 shadow-lg shadow-indigo-100/50'
+                                    : 'bg-gray-50 border-gray-200'
+                                    }`}>
+                                    <div className="p-6">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className="p-2.5 rounded-xl bg-white shadow-sm border border-gray-100">
+                                                <Power className={`w-6 h-6 ${roomBookingEnabled ? 'text-indigo-600' : 'text-gray-400'}`} />
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={roomBookingEnabled}
+                                                    onChange={(e) => setRoomBookingEnabled(e.target.checked)}
+                                                />
+                                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-100 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                            </label>
+                                        </div>
+                                        <div>
+                                            <h4 className={`text-lg font-bold mb-1 ${roomBookingEnabled ? 'text-indigo-900' : 'text-gray-500'}`}>
+                                                Sistema de Reservas
+                                            </h4>
+                                            <p className="text-sm text-gray-500 leading-relaxed">
+                                                {roomBookingEnabled
+                                                    ? 'O sistema está ativo. Professores podem realizar agendamentos de sala normalmente.'
+                                                    : 'O sistema está desativado. Ninguem pode realizar agendamentos de sala.'}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <input
-                                        type="number"
-                                        id="room_advance_hours"
-                                        min="0"
-                                        max="720"
-                                        value={roomMinAdvanceHours}
-                                        onChange={(e) => setRoomMinAdvanceHours(parseInt(e.target.value) || 0)}
-                                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-2"
-                                        disabled={!roomMinAdvanceEnabled}
-                                    />
+                                    {roomBookingEnabled && (
+                                        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-violet-500" />
+                                    )}
                                 </div>
-                                <p className="mt-2 text-xs text-gray-500">
-                                    Ex: 2 horas = agendamento deve ser feito 2h antes do horário desejado
-                                </p>
+
+                                {/* Card 2: Advance Time Rules */}
+                                <div className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 ${roomMinAdvanceEnabled
+                                    ? 'bg-gradient-to-br from-violet-50 to-white border-violet-200 shadow-lg shadow-violet-100/50'
+                                    : 'bg-gray-50 border-gray-200'
+                                    }`}>
+                                    <div className="p-6">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className="p-2.5 rounded-xl bg-white shadow-sm border border-gray-100">
+                                                <Clock className={`w-6 h-6 ${roomMinAdvanceEnabled ? 'text-violet-600' : 'text-gray-400'}`} />
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={roomMinAdvanceEnabled}
+                                                    onChange={(e) => setRoomMinAdvanceEnabled(e.target.checked)}
+                                                />
+                                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-violet-100 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                                            </label>
+                                        </div>
+
+                                        <div className="mb-4">
+                                            <h4 className={`text-lg font-bold mb-1 ${roomMinAdvanceEnabled ? 'text-violet-900' : 'text-gray-500'}`}>
+                                                Regra de Antecedência
+                                            </h4>
+                                            <p className="text-sm text-gray-500 leading-relaxed mb-4">
+                                                {roomMinAdvanceEnabled
+                                                    ? 'Exigir tempo mínimo antes do início da reserva.'
+                                                    : 'Função desativada, os professores podem realizar agendamentos para qualquer horário.'}
+                                            </p>
+                                        </div>
+
+                                        {roomMinAdvanceEnabled && (
+                                            <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-violet-100 p-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={roomMinAdvanceHours}
+                                                    onChange={(e) => setRoomMinAdvanceHours(Number(e.target.value))}
+                                                    className="w-20 pl-3 pr-2 py-1.5 text-center font-bold text-violet-700 bg-violet-50 border border-violet-200 rounded-lg focus:ring-2 focus:ring-violet-200 focus:border-violet-300 outline-none transition-all"
+                                                />
+                                                <span className="text-sm font-semibold text-violet-700">Horas de antecedência</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {roomMinAdvanceEnabled && (
+                                        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-violet-500 to-fuchsia-500" />
+                                    )}
+                                </div>
                             </div>
 
-                            {/* Save Button - Always Enabled */}
-                            <div className="ml-7 mt-4">
+                            <div className="mt-8 flex justify-end">
                                 <button
-                                    type="button"
-                                    onClick={handleSaveRoomAdvanceSettings}
+                                    onClick={handleSaveSettings}
                                     disabled={savingSettings}
-                                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="relative overflow-hidden group px-8 py-3 bg-gray-900 text-white rounded-xl font-bold shadow-lg shadow-gray-200 transition-all hover:scale-105 active:scale-95 disabled:opacity-70 disabled:pointer-events-none"
                                 >
-                                    {savingSettings ? 'Salvando...' : 'Salvar'}
+                                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <span className="relative flex items-center gap-2">
+                                        {savingSettings ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                Salvando...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save className="w-4 h-4" />
+                                                Salvar Configurações
+                                            </>
+                                        )}
+                                    </span>
                                 </button>
                             </div>
                         </div>
@@ -802,8 +883,11 @@ export function AdminRooms() {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {bookings.map((booking) => {
-                                    const start = parseISO(booking.start_ts);
-                                    const end = parseISO(booking.end_ts);
+                                    // FORCE UTC: append Z to ensure it's parsed as UTC
+                                    // Supabase returns "2024-01-01T10:00:00" for UTC times, we need "2024-01-01T10:00:00Z"
+                                    const start = parseISO(booking.start_ts.endsWith('Z') ? booking.start_ts : booking.start_ts + 'Z');
+                                    const end = parseISO(booking.end_ts.endsWith('Z') ? booking.end_ts : booking.end_ts + 'Z');
+
                                     const isPast = new Date() > end;
                                     const isConfirmed = booking.status === 'confirmed';
 

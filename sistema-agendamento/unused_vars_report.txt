@@ -1,0 +1,19 @@
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\components\AdminLayout.tsx:4:'AlignLeft' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\components\booking\Step3Confirmation.tsx:273:'err' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\components\booking\Step3RoomConfirmation.tsx:197:'err' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\contexts\AuthContext.tsx:113:'e' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\pages\TeacherBookings.tsx:219:'e' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\pages\TeacherBookings.tsx:294:'e' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\pages\TeacherBookings.tsx:473:'e' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\pages\admin\AdminBookings.tsx:253:'e' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\pages\admin\AdminLoans.tsx:25:'Eye' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\pages\admin\AdminLoans.tsx:34:'Loader2' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\pages\admin\AdminManageAdmins.tsx:3:'useAuth' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\pages\admin\AdminManageAdmins.tsx:104:'e' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\pages\admin\AdminSchedule.tsx:273:'err' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\pages\admin\AdminSettings.tsx:58:'e' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\pages\admin\AdminUsers.tsx:6:'KeyRound' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\pages\admin\AdminUsers.tsx:6:'Shield' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\src\services\supabase.ts:23:'e' is defined but never used.
+C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\supabase\functions\send-new-booking-email\index.ts:6:'SUPABASE_ANON_KEY' is assigned a value but never used.
+KEY_ISSUE:C:\Users\luiz-\Desktop\PROJETO ANTIGRAVITY\sistema-agendamento\supabase\functions\send-new-booking-email\index.ts:6:'SUPABASE_ANON_KEY' is assigned a value but never used.
