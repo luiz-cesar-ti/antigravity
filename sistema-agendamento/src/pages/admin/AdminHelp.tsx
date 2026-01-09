@@ -110,18 +110,35 @@ export function AdminHelp() {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 pb-20 animate-in fade-in duration-500">
             {/* Header */}
-            <div className="mb-10 text-center md:text-left">
-                <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-4">Manual do Administrador</h1>
-                <p className="text-lg text-gray-600 max-w-3xl">
+            <div className="mb-6 md:mb-10 text-center md:text-left pt-6 md:pt-0">
+                <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-2 md:mb-4">Manual do Administrador</h1>
+                <p className="text-base md:text-lg text-gray-600 max-w-3xl mx-auto md:mx-0">
                     Guia completo de referência sobre todas as funcionalidades, regras de negócio e fluxos operacionais do Sistema de Agendamento.
                 </p>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-8">
-                {/* Sidebar Navigation (Sticky) */}
-                <div className="lg:w-72 shrink-0">
-                    <div className="sticky top-8 bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                        <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest px-4 mb-4">Índice</h3>
+            {/* Mobile Menu Button */}
+            <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="lg:hidden fixed bottom-6 right-6 z-50 p-4 bg-primary-600 text-white rounded-full shadow-lg shadow-primary-900/20 hover:bg-primary-700 transition-all active:scale-95"
+            >
+                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+
+            <div className="flex flex-col lg:flex-row gap-8 relative">
+                {/* Sidebar Navigation (Sticky on certain conditions) */}
+                <div className={`
+                    fixed inset-0 z-40 bg-white/95 backdrop-blur-sm lg:bg-transparent lg:static lg:w-72 lg:block p-6 lg:p-0 overflow-y-auto lg:overflow-visible transition-all duration-300
+                    ${isMobileMenuOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full lg:opacity-100 lg:translate-x-0 pointer-events-none lg:pointer-events-auto'}
+                `}>
+                    <div className="sticky top-8 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 h-full lg:h-auto overflow-y-auto lg:overflow-visible">
+                        <div className="flex items-center justify-between lg:hidden mb-6">
+                            <h3 className="text-xl font-black text-gray-900">Navegação</h3>
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-gray-100 rounded-full">
+                                <X className="h-5 w-5 text-gray-500" />
+                            </button>
+                        </div>
+                        <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest px-4 mb-4 hidden lg:block">Índice</h3>
                         <nav className="space-y-1">
                             {sections.map((section) => (
                                 <button

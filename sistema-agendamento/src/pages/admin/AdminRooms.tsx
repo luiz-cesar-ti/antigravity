@@ -403,7 +403,7 @@ export function AdminRooms() {
                             <Settings2 className="w-64 h-64 text-gray-900 -rotate-12" />
                         </div>
 
-                        <div className="p-8 relative z-10">
+                        <div className="p-6 lg:p-8 relative z-10">
                             <div className="flex items-center gap-4 mb-8">
                                 <div className="p-3 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl shadow-lg shadow-indigo-200">
                                     <Settings2 className="w-6 h-6 text-white" />
@@ -653,15 +653,15 @@ export function AdminRooms() {
                                     <p className="text-sm text-gray-400">Utilize o formulário ao lado para adicionar sua primeira sala.</p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
                                     {rooms.map(room => (
                                         <div key={room.id} className="group bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-primary-200 transition-all duration-300 relative overflow-hidden flex flex-col">
                                             <div className={`h-1.5 w-full ${room.unit === 'P1' ? 'bg-blue-500' : 'bg-purple-500'}`} />
 
-                                            <div className="p-5 flex-1 flex flex-col">
-                                                <div className="flex justify-between items-start mb-2">
+                                            <div className="p-4 sm:p-5 flex-1 flex flex-col">
+                                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2 gap-2">
                                                     <div className="flex-1">
-                                                        <div className="flex items-center gap-2 mb-1.5">
+                                                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                                                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${room.unit === 'P1' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'
                                                                 }`}>
                                                                 <MapPin className="w-3 h-3" />
@@ -677,7 +677,7 @@ export function AdminRooms() {
 
                                                     <button
                                                         onClick={() => handleToggleAvailability(room.id)}
-                                                        className={`p-2 rounded-lg transition-all shadow-sm border ${room.is_available !== false
+                                                        className={`p-2 rounded-lg transition-all shadow-sm border self-start sm:self-auto ${room.is_available !== false
                                                             ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white'
                                                             : 'bg-red-50 text-red-600 border-red-100 hover:bg-red-600 hover:text-white'
                                                             }`}
@@ -693,7 +693,7 @@ export function AdminRooms() {
                                                     </p>
                                                 )}
 
-                                                <div className="mt-auto grid grid-cols-2 gap-2 text-xs">
+                                                <div className="mt-auto grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                                                     <div className="flex items-center gap-2 text-gray-600 font-medium">
                                                         <div className="w-6 h-6 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
                                                             <Clock className="w-3.5 h-3.5" />

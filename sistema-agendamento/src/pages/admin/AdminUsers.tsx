@@ -272,7 +272,7 @@ export function AdminUsers() {
                     ) : (
                         <div className="divide-y divide-gray-100">
                             {filteredUsers.map((teacher) => (
-                                <div key={teacher.id} className={`group p-5 hover:bg-gray-50/80 transition-colors ${teacher.active === false ? 'bg-gray-50/50' : ''}`}>
+                                <div key={teacher.id} className={`group p-4 sm:p-5 hover:bg-gray-50/80 transition-colors ${teacher.active === false ? 'bg-gray-50/50' : ''}`}>
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 
                                         {/* User Info Section */}
@@ -323,7 +323,7 @@ export function AdminUsers() {
                                         </div>
 
                                         {/* Actions Section */}
-                                        <div className="flex items-center gap-2 self-start sm:self-center ml-16 sm:ml-0">
+                                        <div className="flex items-center gap-2 self-end sm:self-center mt-2 sm:mt-0 pt-2 sm:pt-0 border-t sm:border-0 border-gray-100 w-full sm:w-auto justify-end">
                                             <button
                                                 onClick={() => handleEdit(teacher)}
                                                 className="p-2 text-gray-400 hover:text-primary-600 hover:bg-white hover:shadow-sm rounded-lg border border-transparent hover:border-gray-200 transition-all"

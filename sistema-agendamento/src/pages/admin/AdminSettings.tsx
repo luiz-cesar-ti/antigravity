@@ -169,11 +169,11 @@ export function AdminSettings() {
                     <p className="font-medium animate-pulse">Carregando preferências...</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
                     {/* LEFT COLUMN: Equipment Rules */}
                     <div className="space-y-6">
-                        <form onSubmit={handleSave} className="bg-white rounded-[2rem] p-8 shadow-xl shadow-gray-100 border border-gray-100 hover:shadow-2xl hover:shadow-primary-900/5 transition-all duration-500 group relative overflow-hidden">
+                        <form onSubmit={handleSave} className="bg-white rounded-2xl lg:rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-gray-100 border border-gray-100 hover:shadow-2xl hover:shadow-primary-900/5 transition-all duration-500 group relative overflow-hidden">
                             {/* Decorative Background Blob */}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary-50 to-transparent rounded-bl-[100%] -mr-16 -mt-16 opacity-50 pointer-events-none" />
 
@@ -281,7 +281,7 @@ export function AdminSettings() {
 
                     {/* RIGHT COLUMN: Password */}
                     <div>
-                        <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-gray-100 border border-gray-100 hover:shadow-2xl hover:shadow-primary-900/5 transition-all duration-500 group relative">
+                        <div className="bg-white rounded-2xl lg:rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-gray-100 border border-gray-100 hover:shadow-2xl hover:shadow-primary-900/5 transition-all duration-500 group relative">
                             <div className="flex items-center gap-4 mb-8">
                                 <div className="p-3.5 bg-gradient-to-br from-fuchsia-500 to-pink-600 rounded-xl text-white shadow-lg shadow-pink-200 shadow-fuchsia-500/30 group-hover:scale-110 transition-transform duration-500">
                                     <KeyRound className="h-6 w-6" />
