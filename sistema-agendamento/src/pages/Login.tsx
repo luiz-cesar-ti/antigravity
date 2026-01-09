@@ -73,48 +73,56 @@ export function Login() {
 
 
     return (
-        <div className="min-h-screen bg-white flex overflow-hidden">
+        <div className="min-h-screen bg-white flex overflow-hidden lg:bg-gradient-to-r lg:from-blue-300 lg:via-blue-100 lg:to-white">
             {/* Left Side: Visual/Branding (Hidden on mobile) */}
-            <div className="hidden lg:flex lg:w-1/2 relative bg-primary-700 items-center justify-center p-12 overflow-hidden">
-                {/* Abstract background shapes */}
-                <div className="absolute top-0 right-0 w-96 h-96 bg-primary-600 rounded-full -mr-20 -mt-20 blur-3xl opacity-50"></div>
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary-800 rounded-full -ml-20 -mb-20 blur-3xl opacity-50"></div>
+            <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-start pt-0 p-12 overflow-hidden h-screen bg-transparent">
+                {/* Abstract background shapes - Adjusted for Light Theme */}
+                <div className="absolute top-0 right-0 w-96 h-96 bg-blue-400/20 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-400/20 rounded-full -ml-20 -mb-20 blur-3xl"></div>
 
-                <div className="relative z-10 max-w-lg text-center">
-                    <div className="inline-flex items-center justify-center p-4 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 mb-8 shadow-2xl">
-                        <ShieldCheck className="h-12 w-12 text-white" />
+                <div className="relative z-10 w-full max-w-lg text-center mx-auto">
+                    {/* Logo Section - Top Aligned */}
+                    <div className="flex items-center justify-center mb-0">
+                        <img
+                            src="/logo-full-blue-transparent.png"
+                            alt="Colégio Objetivo"
+                            className="h-80 w-auto object-contain drop-shadow-sm hover:scale-105 transition-transform duration-500"
+                        />
                     </div>
 
-                    <h1 className="text-5xl font-black text-white leading-tight tracking-tight mb-6">
-                        Sistema de agendamentos <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 drop-shadow-sm">Objetivo</span>
-                    </h1>
+                    {/* Text Section - Pulled Up */}
+                    <div className="-mt-8 mb-8">
+                        <h1 className="text-5xl font-black text-primary-950 leading-tight tracking-tight mb-2">
+                            Sistema de <br />
+                            <span className="text-primary-700">Agendamentos</span>
+                        </h1>
+                        <p className="text-primary-800/80 text-xl font-medium leading-relaxed max-w-sm mx-auto">
+                            Gerencie os recursos tecnológicos com facilidade e rapidez.
+                        </p>
+                    </div>
 
-                    <p className="text-primary-100 text-lg font-medium leading-relaxed mb-12">
-                        Gerencie os recursos tecnológicos do Colégio Objetivo com facilidade e segurança em uma plataforma moderna e intuitiva.
-                    </p>
-
-                    <div className="grid grid-cols-2 gap-6 text-left">
-                        <div className="bg-white/5 backdrop-blur-sm p-6 rounded-3xl border border-white/10">
-                            <div className="bg-primary-500 h-8 w-8 rounded-xl flex items-center justify-center mb-4">
-                                <CheckCircle2 className="h-5 w-5 text-white" />
+                    {/* Cards Section - Visible and Larger */}
+                    <div className="grid grid-cols-2 gap-4 text-left w-full max-w-md mx-auto">
+                        <div className="bg-white/60 backdrop-blur-sm p-6 rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all group">
+                            <div className="bg-blue-50 h-12 w-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
+                                <CheckCircle2 className="h-7 w-7 text-blue-600" />
                             </div>
-                            <h4 className="text-white font-bold mb-1">Rápido</h4>
-                            <p className="text-primary-200 text-xs">Agende equipamentos em menos de 1 minuto.</p>
+                            <h4 className="text-primary-900 font-bold mb-1 text-lg">Rápido</h4>
+                            <p className="text-primary-700/70 text-sm font-medium leading-tight">Agendamento em menos de 1 minuto.</p>
                         </div>
-                        <div className="bg-white/5 backdrop-blur-sm p-6 rounded-3xl border border-white/10">
-                            <div className="bg-primary-500 h-8 w-8 rounded-xl flex items-center justify-center mb-4">
-                                <ShieldCheck className="h-5 w-5 text-white" />
+                        <div className="bg-white/60 backdrop-blur-sm p-6 rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all group">
+                            <div className="bg-blue-50 h-12 w-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
+                                <ShieldCheck className="h-7 w-7 text-blue-600" />
                             </div>
-                            <h4 className="text-white font-bold mb-1">Seguro</h4>
-                            <p className="text-primary-200 text-xs">Assinatura digital e histórico completo.</p>
+                            <h4 className="text-primary-900 font-bold mb-1 text-lg">Seguro</h4>
+                            <p className="text-primary-700/70 text-sm font-medium leading-tight">Assinatura digital e histórico completo.</p>
                         </div>
                     </div>
                 </div>
-
             </div>
 
-            {/* Right Side: Login Form - Mobile Enhanced Background (Reverted to Light with Stronger Blue) */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-blue-200 via-blue-50 to-white lg:bg-none lg:bg-gray-50/50">
+            {/* Right Side: Login Form - Mobile Enhanced Background */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-blue-200 via-blue-50 to-white lg:bg-transparent">
                 <div className="max-w-md w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {/* Mobile Logo */}
                     <div className="lg:hidden flex flex-col items-center mb-8">
