@@ -183,7 +183,7 @@ export function AdminSettings() {
                                         <Zap className="h-6 w-6" />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-black text-gray-900">Regras de Antecedência</h2>
+                                        <h2 className="text-xl font-black text-gray-900">Regras de Antecedência de Agendamentos</h2>
                                         <p className="text-sm text-gray-500 font-medium">Controle de agendamento de recursos</p>
                                     </div>
                                 </div>

@@ -29,7 +29,8 @@ import {
     Globe,
     Plus,
     Power,
-    Timer
+    Timer,
+    KeyRound
 } from 'lucide-react';
 
 export function AdminHelp() {
@@ -521,7 +522,7 @@ export function AdminHelp() {
                                         </h3>
                                         <div className="space-y-6 flex-1 text-teal-900/80 group">
                                             <p className="text-sm leading-relaxed">
-                                                Para iniciar o uso, acesse o menu <strong>Configurações</strong> e localize a opção <strong>"Habilitar Agendamento de Salas"</strong>. Esta é uma chave mestre que altera o comportamento do sistema para toda a sua unidade.
+                                                Para ativar a função de <strong>Agendamento de salas</strong> é necessário ir até a página <strong>Salas</strong>, <strong>Gerenciar salas</strong> e ativar a função <strong>Sistema de Reservas de Salas</strong>.
                                             </p>
                                             <div className="bg-white/80 border-2 border-dashed border-teal-200 p-5 rounded-2xl transition-all group-hover:border-teal-400 group-hover:bg-white">
                                                 <div className="flex gap-4 items-center mb-3">
@@ -731,28 +732,43 @@ export function AdminHelp() {
                                                 </div>
                                             </div>
 
-                                            <div className="bg-white p-6 rounded-3xl border border-gray-200">
-                                                <div className="flex items-center gap-3 mb-4">
-                                                    <ShieldCheck className="h-6 w-6 text-gray-400" />
-                                                    <h4 className="font-bold text-gray-900">Termo de Consentimento</h4>
+                                            {/* Empty space after removing Term card from here */}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Termo de Consentimento - Horizontal / Full Width */}
+                                <div className="group relative bg-gradient-to-br from-white to-pink-50/30 p-8 rounded-[2rem] border border-pink-100/50 shadow-sm transition-all hover:shadow-md hover:border-pink-200 overflow-hidden">
+                                    {/* Decorative element */}
+                                    <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+                                        <ShieldCheck className="h-40 w-40 text-pink-600 rotate-12" />
+                                    </div>
+
+                                    <div className="relative z-10">
+                                        <div className="flex flex-col lg:flex-row gap-8 items-center lg:items-start">
+                                            {/* Left side: Icon & Intro */}
+                                            <div className="lg:w-1/3 space-y-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-4 bg-pink-100 rounded-2xl text-pink-600 shadow-sm">
+                                                        <ShieldCheck className="h-8 w-8" />
+                                                    </div>
+                                                    <h4 className="text-2xl font-black text-gray-900 tracking-tight">Termo de Consentimento</h4>
                                                 </div>
-                                                <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                                                    Etapa final obrigatória. O professor deve ler e clicar na caixa de aceite ("Li e concordo") declarando estar ciente de que:
+                                                <p className="text-sm text-gray-600 leading-relaxed font-bold">
+                                                    Esta é a <strong className="text-pink-700">etapa final e obrigatória</strong> de todo cadastro. Antes de concluir o registro, o professor deve obrigatoriamente realizar a leitura e o aceite eletrônico do termo diretamente no sistema.
                                                 </p>
-                                                <ul className="space-y-2 text-sm text-gray-600">
-                                                    <li className="flex gap-2">
-                                                        <span className="text-gray-400">•</span>
-                                                        <span>O sistema coleta Nome e E-mail para identificação.</span>
-                                                    </li>
-                                                    <li className="flex gap-2">
-                                                        <span className="text-gray-400">•</span>
-                                                        <span>Suas ações geram <strong>logs de segurança</strong>.</span>
-                                                    </li>
-                                                    <li className="flex gap-2">
-                                                        <span className="text-gray-400">•</span>
-                                                        <span>Cópias dos termos assinados são armazenadas digitalmente.</span>
-                                                    </li>
-                                                </ul>
+                                            </div>
+
+                                            {/* Right side: Importance box */}
+                                            <div className="lg:w-2/3">
+                                                <div className="bg-white/60 backdrop-blur-sm border border-pink-200/50 p-6 rounded-3xl h-full flex flex-col justify-center">
+                                                    <h5 className="flex items-center gap-2 text-xs font-black text-pink-800 uppercase tracking-widest mb-3">
+                                                        <FileText className="h-4 w-4" /> Importância Estratégica
+                                                    </h5>
+                                                    <p className="text-sm md:text-base text-gray-500 leading-relaxed text-justify">
+                                                        O aceite formaliza as diretrizes de uso e conduta entre o docente e a instituição. Sua presença no momento do registro garante que o sistema seja utilizado apenas por usuários que estejam plenamente cientes e de acordo com as normas vigentes, assegurando transparência e conformidade estratégica desde o primeiro acesso.
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -888,7 +904,7 @@ export function AdminHelp() {
                                     </div>
                                     <div className="bg-red-50 p-6 rounded-3xl border border-red-100">
                                         <h3 className="font-bold text-red-900 mb-3 flex items-center gap-2 text-lg">
-                                            <Shield className="h-5 w-5" /> Controlo Total de Segurança
+                                            <Shield className="h-5 w-5" /> Controle Total de Segurança
                                         </h3>
                                         <p className="text-sm text-red-800 leading-relaxed">
                                             Autonomia total para gerenciamento de acessos. O Super Admin tem a capacidade exclusiva de <strong className="text-red-900">redefinir a senha de qualquer Administrador do sistema</strong>. Além disso, o Super Admin pode gerenciar suas <strong className="text-red-900">próprias credenciais</strong>, assim como todos os outros administradores também possuem autonomia para alterar suas próprias senhas individualmente.
@@ -996,17 +1012,25 @@ export function AdminHelp() {
                                         <div className="border-l-4 border-cyan-500 pl-4 space-y-4">
                                             <h4 className="font-bold text-gray-900 mb-4 block">Alertas em Tempo Real</h4>
 
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-1.5 w-1.5 rounded-full bg-cyan-500"></div>
-                                                <span className="text-sm text-gray-600">Novos Pedidos de Cadastro</span>
+                                            <div className="flex items-center gap-2 text-pink-600 font-bold">
+                                                <div className="h-2 w-2 rounded-full bg-pink-500 animate-pulse"></div>
+                                                <span className="text-sm">Novos Pedidos de Cadastro</span>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <div className="h-1.5 w-1.5 rounded-full bg-cyan-500"></div>
-                                                <span className="text-sm text-gray-600">Agendamentos de Última Hora</span>
+                                                <span className="text-sm text-gray-600">Agendamentos de equipamentos</span>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <div className="h-1.5 w-1.5 rounded-full bg-cyan-500"></div>
-                                                <span className="text-sm text-gray-600">Cancelamentos Críticos</span>
+                                                <span className="text-sm text-gray-600">Cancelamento de agendamentos do equipamento</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-1.5 w-1.5 rounded-full bg-indigo-500"></div>
+                                                <span className="text-sm text-gray-600 font-bold">Reserva de Salas</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-1.5 w-1.5 rounded-full bg-indigo-500"></div>
+                                                <span className="text-sm text-gray-600">Cancelamento de reserva de Salas</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1094,14 +1118,50 @@ export function AdminHelp() {
                                 </div>
                             </div>
                             <div className="p-5 md:p-8 space-y-6">
-                                <div className="text-gray-600">Área para personalização de parâmetros globais da unidade.</div>
+                                <p className="text-gray-600 leading-relaxed">
+                                    Área destinada à personalização de parâmetros operacionais da unidade, garantindo que o sistema se adapte às necessidades logísticas da escola.
+                                </p>
 
-                                <div className="border border-gray-200 rounded-3xl p-6 hover:border-primary-200 transition-all bg-white text-left shadow-sm">
-                                    <h4 className="font-bold text-gray-900 mb-2 text-lg">Antecedência Mínima (Horas)</h4>
-                                    <p className="text-sm text-gray-500 mb-4">Define quantas horas de antecedência são exigidas para um professor realizar um agendamento.</p>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black bg-blue-100 text-blue-700 px-2 py-1 rounded uppercase tracking-wide">CONFIGURÁVEL</span>
-                                        <span className="text-xs text-gray-400">Pode ser habilitado ou desabilitado.</span>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Regra de Antecedência */}
+                                    <div className="bg-white border border-gray-100 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-all group">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="bg-blue-50 p-2 rounded-xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                                <Clock className="h-6 w-6" />
+                                            </div>
+                                            <h4 className="font-bold text-gray-900 text-lg">Regra de Antecedência de Agendamentos</h4>
+                                        </div>
+                                        <p className="text-sm text-gray-600 leading-relaxed mb-4">
+                                            Define o tempo mínimo (em horas) que o professor deve respeitar para realizar um agendamento.
+                                        </p>
+                                        <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                                            <p className="text-xs text-blue-800 leading-relaxed font-medium">
+                                                <strong className="text-blue-900">Por que usar?</strong> Esta trava é estratégica para garantir que a equipe de <strong className="text-blue-900">Educação Digital</strong> tenha tempo hábil para organizar e preparar os equipamentos ou salas antes do início da aula.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Segurança e Senha */}
+                                    <div className="bg-white border border-gray-100 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-all group">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="bg-purple-50 p-2 rounded-xl text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                                                <KeyRound className="h-6 w-6" />
+                                            </div>
+                                            <h4 className="font-bold text-gray-900 text-lg">Segurança de Acesso</h4>
+                                        </div>
+                                        <p className="text-sm text-gray-600 leading-relaxed mb-4">
+                                            O Administrador possui total autonomia para gerenciar suas próprias credenciais.
+                                        </p>
+                                        <div className="space-y-3">
+                                            <div className="flex items-start gap-2 text-xs text-gray-500">
+                                                <div className="h-1.5 w-1.5 rounded-full bg-purple-400 mt-1.5 shrink-0"></div>
+                                                <p>O administrador consegue redefinir a sua própria senha <strong className="text-gray-700">diretamente nas configurações do painel admin</strong>.</p>
+                                            </div>
+                                            <div className="flex items-start gap-2 text-xs text-gray-500">
+                                                <div className="h-1.5 w-1.5 rounded-full bg-purple-400 mt-1.5 shrink-0"></div>
+                                                <p>Caso perda o acesso total, é necessário <strong className="text-gray-700">solicitar ao Super Admin</strong> o reset imediato da senha.</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

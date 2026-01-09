@@ -437,12 +437,12 @@ export function AdminRooms() {
                                         </div>
                                         <div>
                                             <h4 className={`text-lg font-bold mb-1 ${roomBookingEnabled ? 'text-indigo-900' : 'text-gray-500'}`}>
-                                                Sistema de Reservas
+                                                Sistema de Reservas de Salas
                                             </h4>
                                             <p className="text-sm text-gray-500 leading-relaxed">
                                                 {roomBookingEnabled
                                                     ? 'O sistema está ativo. Professores podem realizar agendamentos de sala normalmente.'
-                                                    : 'O sistema está desativado. Ninguem pode realizar agendamentos de sala.'}
+                                                    : 'O sistema está desativado. Ninguém pode realizar agendamentos de sala.'}
                                             </p>
                                         </div>
                                     </div>
