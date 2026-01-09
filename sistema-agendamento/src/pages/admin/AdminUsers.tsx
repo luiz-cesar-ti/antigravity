@@ -310,11 +310,11 @@ export function AdminUsers() {
                                                     </div>
                                                     <div className="flex items-center gap-1.5 min-w-0">
                                                         <Mail className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                                                        <span className="truncate">{teacher.email}</span>
+                                                        <span className="break-all">{teacher.email}</span>
                                                     </div>
                                                     <div className="flex items-center gap-1.5">
                                                         <Building className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                                                        <span className={`truncate max-w-xs ${(!teacher.units || teacher.units.length === 0) && 'italic text-gray-400'}`}>
+                                                        <span className={`break-words ${(!teacher.units || teacher.units.length === 0) && 'italic text-gray-400'}`}>
                                                             {teacher.units && teacher.units.length > 0 ? teacher.units.join(', ') : 'Sem unidade vinculada'}
                                                         </span>
                                                     </div>

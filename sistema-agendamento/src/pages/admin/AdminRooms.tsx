@@ -677,7 +677,7 @@ export function AdminRooms() {
 
                                                     <button
                                                         onClick={() => handleToggleAvailability(room.id)}
-                                                        className={`p-2 rounded-lg transition-all shadow-sm border self-start sm:self-auto ${room.is_available !== false
+                                                        className={`absolute top-4 right-4 p-2 rounded-lg transition-all shadow-sm border ${room.is_available !== false
                                                             ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white'
                                                             : 'bg-red-50 text-red-600 border-red-100 hover:bg-red-600 hover:text-white'
                                                             }`}
@@ -688,7 +688,7 @@ export function AdminRooms() {
                                                 </div>
 
                                                 {room.description && (
-                                                    <p className="text-xs text-gray-500 mb-4 line-clamp-2 leading-relaxed bg-gray-50 p-2 rounded-lg border border-gray-100">
+                                                    <p className="text-xs text-gray-500 mb-4 line-clamp-2 leading-relaxed bg-gray-50 p-2 rounded-lg border border-gray-100 mt-2">
                                                         {room.description}
                                                     </p>
                                                 )}

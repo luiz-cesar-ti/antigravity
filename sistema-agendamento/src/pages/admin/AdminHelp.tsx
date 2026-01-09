@@ -125,31 +125,84 @@ export function AdminHelp() {
                 {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
 
-            <div className="flex flex-col lg:flex-row gap-8 relative">
-                {/* Sidebar Navigation (Sticky on certain conditions) */}
-                <div className={`
-                    fixed inset-0 z-40 bg-white/95 backdrop-blur-sm lg:bg-transparent lg:static lg:w-72 lg:block p-6 lg:p-0 overflow-y-auto lg:overflow-visible transition-all duration-300
-                    ${isMobileMenuOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full lg:opacity-100 lg:translate-x-0 pointer-events-none lg:pointer-events-auto'}
-                `}>
-                    <div className="sticky top-8 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 h-full lg:h-auto overflow-y-auto lg:overflow-visible">
-                        <div className="flex items-center justify-between lg:hidden mb-6">
-                            <h3 className="text-xl font-black text-gray-900">Navegação</h3>
-                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-gray-100 rounded-full">
-                                <X className="h-5 w-5 text-gray-500" />
-                            </button>
+            {/* Mobile Menu Modal (Premium Design) */}
+            {isMobileMenuOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:hidden animate-in fade-in duration-200">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    />
+
+                    {/* Menu Card */}
+                    <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-300 border border-gray-100">
+                        {/* Gradient Header */}
+                        <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-8 text-white relative overflow-hidden shrink-0">
+                            {/* Decorative Elements */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+                            <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full blur-2xl -ml-12 -mb-12 pointer-events-none" />
+
+                            <div className="relative z-10 flex items-start justify-between">
+                                <div>
+                                    <h3 className="text-2xl font-black tracking-tight mb-1">Índice do Manual</h3>
+                                    <p className="text-indigo-100 text-sm font-medium opacity-90">Selecione um tópico para navegar</p>
+                                </div>
+                                <button
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all shadow-sm backdrop-blur-md active:scale-95"
+                                >
+                                    <X className="w-5 h-5 text-white" />
+                                </button>
+                            </div>
                         </div>
-                        <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest px-4 mb-4 hidden lg:block">Índice</h3>
+
+                        {/* Scrollable List */}
+                        <div className="overflow-y-auto p-4 space-y-2 flex-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-200">
+                            {sections.map((section) => (
+                                <button
+                                    key={section.id}
+                                    onClick={() => scrollToSection(section.id)}
+                                    className={`w - full flex items - center gap - 4 px - 5 py - 4 rounded - 2xl text - sm font - bold transition - all duration - 300 group ${activeSection === section.id
+                                        ? 'bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 shadow-sm border border-indigo-100'
+                                        : 'bg-white text-gray-500 hover:bg-gray-50 border border-transparent hover:border-gray-100'
+                                        } `}
+                                >
+                                    <div className={`
+w - 10 h - 10 rounded - xl flex items - center justify - center transition - all duration - 300
+                                        ${activeSection === section.id
+                                            ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-200 scale-110'
+                                            : 'bg-gray-100 text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-500'
+                                        }
+`}>
+                                        <section.icon className="w-5 h-5" />
+                                    </div>
+                                    <span className="flex-1 text-left">{section.title}</span>
+                                    {activeSection === section.id && (
+                                        <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-lg shadow-indigo-500/50" />
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="flex flex-col lg:flex-row gap-8 relative">
+                {/* Desktop Sidebar (Hidden on Mobile) */}
+                <div className="hidden lg:block lg:w-72 lg:shrink-0">
+                    <div className="sticky top-8 bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                        <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest px-4 mb-4">Índice</h3>
                         <nav className="space-y-1">
                             {sections.map((section) => (
                                 <button
                                     key={section.id}
                                     onClick={() => scrollToSection(section.id)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeSection === section.id
+                                    className={`w - full flex items - center gap - 3 px - 4 py - 3 rounded - xl text - sm font - bold transition - all ${activeSection === section.id
                                         ? 'bg-primary-50 text-primary-700 shadow-sm'
                                         : 'text-gray-600 hover:bg-gray-50'
-                                        }`}
+                                        } `}
                                 >
-                                    <section.icon className={`h-4 w-4 ${activeSection === section.id ? 'text-primary-600' : 'text-gray-400'}`} />
+                                    <section.icon className={`h - 4 w - 4 ${activeSection === section.id ? 'text-primary-600' : 'text-gray-400'} `} />
                                     {section.title}
                                     {activeSection === section.id && <ChevronRight className="h-4 w-4 ml-auto text-primary-400" />}
                                 </button>
@@ -1263,15 +1316,15 @@ export function AdminHelp() {
                                 <button
                                     key={section.id}
                                     onClick={() => scrollToSection(section.id)}
-                                    className={`w-full flex items-center gap-4 px-4 py-4 rounded-xl text-sm font-bold transition-all relative overflow-hidden group active:scale-[0.98] border ${activeSection === section.id
+                                    className={`w - full flex items - center gap - 4 px - 4 py - 4 rounded - xl text - sm font - bold transition - all relative overflow - hidden group active: scale - [0.98] border ${activeSection === section.id
                                         ? 'bg-gradient-to-r from-indigo-600 to-indigo-900 text-white border-indigo-500 shadow-lg shadow-indigo-900/50'
                                         : 'bg-slate-800/40 text-slate-400 border-white/5 hover:bg-slate-800 hover:text-indigo-300'
-                                        }`}
+                                        } `}
                                 >
-                                    <div className={`p-2.5 rounded-lg transition-all duration-300 shrink-0 ${activeSection === section.id ? 'bg-white/20 text-white shadow-inner scale-110' : 'bg-black/20 text-slate-500 group-hover:text-indigo-400'}`}>
+                                    <div className={`p - 2.5 rounded - lg transition - all duration - 300 shrink - 0 ${activeSection === section.id ? 'bg-white/20 text-white shadow-inner scale-110' : 'bg-black/20 text-slate-500 group-hover:text-indigo-400'} `}>
                                         <section.icon className="h-5 w-5" />
                                     </div>
-                                    <span className={`flex-1 text-left text-base ${activeSection === section.id ? 'font-bold tracking-tight text-white' : 'font-medium'}`}>{section.title}</span>
+                                    <span className={`flex - 1 text - left text - base ${activeSection === section.id ? 'font-bold tracking-tight text-white' : 'font-medium'} `}>{section.title}</span>
 
                                     {activeSection === section.id && (
                                         <div className="flex items-center gap-2">
