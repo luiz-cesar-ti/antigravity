@@ -101,16 +101,16 @@ export function AdminUsers() {
         if (!editingUser) return;
         setSaving(true);
 
-        const { error } = await supabase
-            .from('users')
-            .update({
+        const { error } = await supabase.rpc('update_admin_user', {
+            target_user_id: editingUser.id,
+            user_data: {
                 full_name: formData.full_name,
-                // Email cannot be updated by admin
                 units: formData.units,
                 recurring_booking_enabled: formData.recurring_booking_enabled,
-                recurring_booking_units: formData.recurring_booking_units
-            })
-            .eq('id', editingUser.id);
+                recurring_booking_units: formData.recurring_booking_units,
+                active: editingUser.active // Maintain current active status
+            }
+        });
 
         if (!error) {
             await fetchUsers();
@@ -159,10 +159,12 @@ export function AdminUsers() {
     const handleToggleActive = async (targetUser: User) => {
         const newStatus = !targetUser.active;
 
-        const { error } = await supabase
-            .from('users')
-            .update({ active: newStatus })
-            .eq('id', targetUser.id);
+        const { error } = await supabase.rpc('update_admin_user', {
+            target_user_id: targetUser.id,
+            user_data: {
+                active: newStatus
+            }
+        });
 
         if (!error) {
             fetchUsers();
@@ -192,10 +194,12 @@ export function AdminUsers() {
 
         const newUnits = (targetUser.units || []).filter(u => u !== adminUnit);
 
-        const { error } = await supabase
-            .from('users')
-            .update({ units: newUnits })
-            .eq('id', targetUser.id);
+        const { error } = await supabase.rpc('update_admin_user', {
+            target_user_id: targetUser.id,
+            user_data: {
+                units: newUnits
+            }
+        });
 
         if (!error) {
             fetchUsers();

@@ -96,6 +96,7 @@ export function AdminBookings() {
             setBookings(fetchedBookings);
         } else if (error) {
             console.error('Error fetching admin bookings:', error);
+            alert(`Erro Crítico ao buscar agendamentos: ${error.message}\nCódigo: ${error.code || 'N/A'}\nPor favor, envie este erro ao suporte.`);
         }
         setLoading(false);
     };
@@ -111,10 +112,9 @@ export function AdminBookings() {
     const handleDeleteBooking = async () => {
         if (deleteModal.bookingIds.length === 0) return;
 
-        const { error } = await supabase
-            .from('bookings')
-            .delete()
-            .in('id', deleteModal.bookingIds);
+        const { error } = await supabase.rpc('delete_admin_bookings', {
+            p_booking_ids: deleteModal.bookingIds
+        });
 
         if (!error) {
             setDeleteModal({ isOpen: false, bookingIds: [] });
@@ -287,6 +287,19 @@ export function AdminBookings() {
                 <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-blue-100 text-blue-700 border border-blue-200">
                     Concluído
                 </span>
+            );
+        }
+
+        if (booking.is_recurring) {
+            return (
+                <div className="flex gap-1">
+                    <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-green-100 text-green-700 border border-green-200">
+                        Ativo
+                    </span>
+                    <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                        Recorrente
+                    </span>
+                </div>
             );
         }
 

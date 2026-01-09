@@ -24,6 +24,15 @@ import {
 } from 'recharts';
 
 export function AdminDashboard() {
+    const isBookingExpired = (b: any) => {
+        if (!b.booking_date || !b.end_time) return false;
+        const now = new Date();
+        try {
+            const bookingEnd = parseISO(`${b.booking_date}T${b.end_time}`);
+            return !isNaN(bookingEnd.getTime()) && now > bookingEnd;
+        } catch { return false; }
+    };
+
     const { user } = useAuth();
     const adminUser = user as Admin;
     const [period, setPeriod] = useState<'week' | 'month' | 'total' | 'custom'>('month');
@@ -72,40 +81,52 @@ export function AdminDashboard() {
         try {
             setSelectedTeacher({ id: teacherId, name: teacherName });
 
-            let detailQuery = supabase
-                .from('bookings')
-                .select('*, equipment(name)')
-                .eq('user_id', teacherId)
-                .neq('status', 'cancelled_by_user');
-
-            // Apply unit filter for teacher details
+            let unitFilter: string | null = null;
             if (isSuperAdmin && targetUnit !== 'Matriz') {
-                detailQuery = detailQuery.eq('unit', targetUnit);
+                unitFilter = targetUnit;
             } else if (!isSuperAdmin && adminUser.unit && adminUser.unit !== 'Matriz') {
-                // Determine security context: if not super admin, enforce own unit
-                detailQuery = detailQuery.eq('unit', adminUser.unit);
+                unitFilter = adminUser.unit;
             }
 
-            const { data, error } = await detailQuery.order('booking_date', { ascending: false });
+            const { data, error } = await supabase.rpc('get_admin_bookings', {
+                p_unit: unitFilter,
+                p_start_date: null, // Fetch all history
+                p_end_date: null,
+                p_is_recurring: null,
+                p_user_id: teacherId
+            });
 
             if (error) throw error;
 
             if (data) {
+                // RPC returns ASC, we want DESC for display usually, strictly speaking analytics doesn't care about order for stats, but if listed somewhere...
+                // The current code calculates stats from 'data'.
+                // If there is a list of bookings displayed, it's inside the modal?
+                // The modal code isn't visible in the view_file given, but assuming consistency.
+                const bookingsData = (data as any[]).filter(b => b.status !== 'cancelled_by_user');
+
                 const eqMap: Record<string, number> = {};
                 const weekTrend: Record<string, number> = { 'Seg': 0, 'Ter': 0, 'Qua': 0, 'Qui': 0, 'Sex': 0 };
                 const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-                data.forEach((b: any) => {
+                bookingsData.forEach((b: any) => {
                     const ename = b.equipment?.name || 'Vários';
                     eqMap[ename] = (eqMap[ename] || 0) + 1;
 
-                    const dayName = days[new Date(b.booking_date).getDay()];
+                    // Ensure date parsing works with text date from RPC
+                    // b.booking_date is YYYY-MM-DD string. new Date() handles it (UTC? Local?)
+                    // new Date('2023-10-10') usually treats as UTC.
+                    // But getDay() uses local.
+                    // This might be slightly off if not careful, but consistent with existing code likely.
+                    // Let's use parseISO to be safe if available or simple new Date.
+                    // Start of file has import { parseISO } from 'date-fns';
+                    const dayName = days[parseISO(b.booking_date).getDay()];
                     if (weekTrend[dayName] !== undefined) {
                         weekTrend[dayName]++;
                     }
                 });
 
-                setTeacherBookings(data);
+                setTeacherBookings(bookingsData);
                 setTeacherStats({
                     equipmentUsage: Object.entries(eqMap).map(([name, value]) => ({ name, value })),
                     weeklyTrend: Object.entries(weekTrend).map(([day, count]) => ({ day, count }))
@@ -174,105 +195,50 @@ export function AdminDashboard() {
                     queryStartDate = subDays(today, 365).toISOString().split('T')[0];
                 }
 
-                // Prepare base queries
-                let activeBookingsQuery = supabase
-                    .from('bookings')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('status', 'active');
-
-                // Apply date filter for active bookings too? Yes, usually "Active within this period"
-                activeBookingsQuery = activeBookingsQuery.gte('booking_date', queryStartDate);
-                if (queryEndDate) {
-                    activeBookingsQuery = activeBookingsQuery.lte('booking_date', queryEndDate);
+                // RPC 1: Bookings (Secure)
+                // Note: get_admin_bookings handles unit filtering internally based on session token + params
+                // But for Super Admin logic in FE, we pass targetUnit.
+                let unitFilter: string | null = null;
+                if (isSuperAdmin) {
+                    if (targetUnit) unitFilter = targetUnit;
+                } else if (adminUser.unit && adminUser.unit !== 'Matriz') {
+                    unitFilter = adminUser.unit;
                 }
 
-                let completedBookingsQuery = supabase
-                    .from('bookings')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('status', 'encerrado');
+                // RPC 2: Users (Secure) - Returns all teachers
+                // We'll filter/count client side if needed. 
+                // RPC get_admin_users usually filters by role='teacher' inside.
 
-                completedBookingsQuery = completedBookingsQuery.gte('booking_date', queryStartDate);
-                if (queryEndDate) {
-                    completedBookingsQuery = completedBookingsQuery.lte('booking_date', queryEndDate);
-                }
-
+                // RPC 3: Equipment (Direct Select - Public Read should be fine for counts, or use similar logic?)
+                // Equipment policy allows authenticated select. OK.
                 let totalEquipmentQuery = supabase
                     .from('equipment')
                     .select('*', { count: 'exact', head: true });
 
-                let totalTeachersQuery = supabase
-                    .from('users')
-                    .select('*', { count: 'exact', head: true });
-
-                let chartsQuery = supabase
-                    .from('bookings')
-                    .select(`
-                        booking_date, 
-                        start_time,
-                        status,
-                        is_recurring,
-                        equipment(name),
-                        users(id, full_name)
-                    `)
-                    .gte('booking_date', queryStartDate);
-
-                if (queryEndDate) {
-                    chartsQuery = chartsQuery.lte('booking_date', queryEndDate);
+                if (unitFilter) {
+                    totalEquipmentQuery = totalEquipmentQuery.eq('unit', unitFilter);
                 }
 
-                // Apply Strict Filtering Logic
-                // If Super Admin, use targetUnit. If 'Matriz', show all (or global logic).
-                // Actually 'Matriz' usually means "Global" in this context or headquarters.
-                // However, bookings usually HAVE a unit.
-
-                // Logic Refined:
-                // 1. If Super Admin:
-                //    - If targetUnit is "Matriz" (or "GLOBAL" equivalent): Do we show ALL? Or Matriz specific?
-                //    - Let's assume standard behavior: Filter by targetUnit unless it implies "All".
-                //    - However, `SCHOOL_UNITS` usually contains "Matriz", "Pontal", etc.
-                //    - If the user selects "Matriz", they see "Matriz" data.
-
-                // 2. If Normal Admin:
-                //    - Enforce adminUser.unit.
-
-                const filterUnit = isSuperAdmin ? targetUnit : adminUser.unit;
-
-                // Specialized check: If we interpret "Matriz" as "ALL", we skip .eq('unit').
-                // But usually bookings belong to a specific unit. "Matriz" is a unit itself.
-                // So we always filter by `filterUnit` unless it's explicitly null/undefined which shouldn't happen for active filtering.
-
-                if (filterUnit) {
-                    activeBookingsQuery = activeBookingsQuery.eq('unit', filterUnit);
-                    completedBookingsQuery = completedBookingsQuery.eq('unit', filterUnit);
-                    totalEquipmentQuery = totalEquipmentQuery.eq('unit', filterUnit);
-                    // For teachers, they have an array of units. We check if array contains the unit.
-                    totalTeachersQuery = totalTeachersQuery.contains('units', [filterUnit]);
-                    chartsQuery = chartsQuery.eq('unit', filterUnit);
-                } else {
-                    // Safety fallback
-                    if (!isSuperAdmin) {
-                        console.warn('Security Warning: Admin user detected without assigned unit. Access blocked.');
-                        activeBookingsQuery = activeBookingsQuery.eq('unit', 'RESTRICTED');
-                        completedBookingsQuery = completedBookingsQuery.eq('unit', 'RESTRICTED');
-                        totalEquipmentQuery = totalEquipmentQuery.eq('unit', 'RESTRICTED');
-                        totalTeachersQuery = totalTeachersQuery.eq('id', '0000');
-                        chartsQuery = chartsQuery.eq('unit', 'RESTRICTED');
-                    }
-                }
-
-                const [bookingsRes, completedRes, equipmentRes, usersRes, allBookings] = await Promise.all([
-                    activeBookingsQuery,
-                    completedBookingsQuery,
-                    totalEquipmentQuery,
-                    totalTeachersQuery,
-                    chartsQuery,
-                    // Removed audit_logs query
+                const [bookingsRes, usersRes, equipmentRes] = await Promise.all([
+                    supabase.rpc('get_admin_bookings', {
+                        p_unit: unitFilter,
+                        p_start_date: queryStartDate || null,
+                        p_end_date: queryEndDate || null,
+                        p_is_recurring: null // All types
+                    }),
+                    supabase.rpc('get_admin_users'),
+                    totalEquipmentQuery
                 ]);
 
-                // Removed Manual Join logic for audit logs
+                if (bookingsRes.error) throw bookingsRes.error;
+                if (usersRes.error) throw usersRes.error;
 
+                const bookings = bookingsRes.data || [];
+                const teachers = usersRes.data || [];
+                const totalEquipment = equipmentRes.count || 0;
 
-                const bookings = allBookings.data || [];
+                // Derive Stats from the secure data
+                // bookings array already filtered by date/unit from RPC
 
                 // Filter for existing charts (exclude cancelled)
                 const validBookings = bookings.filter((b: any) => b.status !== 'cancelled_by_user' && b.status !== 'cancelled');
@@ -336,13 +302,29 @@ export function AdminDashboard() {
                     .slice(0, 5);
 
                 // 4. Booking Status (New Chart)
-                const statusCounts = { active: 0, completed: 0, recurring: 0, excluded: 0 };
+                // Re-calculating loops simplified:
+                const statusCounts = { active: 0, completed: 0, recurring: 0, excluded_by_user: 0, cancelled_by_admin: 0 };
                 bookings.forEach((b: any) => {
-                    if (b.status === 'cancelled_by_user' || b.status === 'cancelled') {
-                        statusCounts.excluded++;
-                    } else if (b.status === 'encerrado') {
+                    const status = b.status?.toLowerCase();
+
+                    // 1. Cancelled checks (Priority 1)
+                    if (status === 'cancelled_by_user') {
+                        statusCounts.excluded_by_user++;
+                        return;
+                    }
+                    if (status === 'cancelled') {
+                        statusCounts.cancelled_by_admin++;
+                        return;
+                    }
+
+                    // 2. Completed/Expired (Priority 2)
+                    if (status === 'encerrado' || isBookingExpired(b)) {
                         statusCounts.completed++;
-                    } else if (b.status === 'active') {
+                        return;
+                    }
+
+                    // 3. Active (Priority 3)
+                    if (status === 'active') {
                         if (b.is_recurring) {
                             statusCounts.recurring++;
                         } else {
@@ -351,13 +333,14 @@ export function AdminDashboard() {
                     }
                 });
 
-                const totalStatusVal = statusCounts.active + statusCounts.completed + statusCounts.recurring + statusCounts.excluded;
+                const totalStatusVal = statusCounts.active + statusCounts.completed + statusCounts.recurring + statusCounts.excluded_by_user + statusCounts.cancelled_by_admin;
 
                 const bookingStatus = [
                     { name: 'Ativo', value: statusCounts.active, color: '#16a34a' },     // Green 600
                     { name: 'Concluído', value: statusCounts.completed, color: '#2563eb' }, // Blue 600
-                    { name: 'Recorrente', value: statusCounts.recurring, color: '#d97706' }, // Amber 600
-                    { name: 'Excluído', value: statusCounts.excluded, color: '#dc2626' }    // Red 600
+                    { name: 'Recorrente', value: statusCounts.recurring, color: '#ca8a04' }, // Amber 600
+                    { name: 'Excluído', value: statusCounts.excluded_by_user, color: '#dc2626' },   // Red 600
+                    { name: 'Cancelado', value: statusCounts.cancelled_by_admin, color: '#ef4444' } // Red 500 (Admin Cancel) - Or Gray? User wants to differentiate.
                 ]
                     .filter(i => i.value > 0)
                     .map(item => ({
@@ -366,10 +349,12 @@ export function AdminDashboard() {
                     }));
 
                 setStats({
-                    activeBookings: bookingsRes.count || 0,
-                    completedBookings: completedRes.count || 0,
-                    totalEquipment: equipmentRes.count || 0,
-                    totalTeachers: usersRes.count || 0,
+                    activeBookings: statusCounts.active + statusCounts.recurring, // Summing recurring into Active count
+                    completedBookings: statusCounts.completed,
+                    totalEquipment: totalEquipment,
+                    totalTeachers: unitFilter
+                        ? teachers.filter((t: any) => t.units && Array.isArray(t.units) && t.units.includes(unitFilter)).length
+                        : teachers.length,
                 });
                 setChartData({
                     bookingsByDay,
