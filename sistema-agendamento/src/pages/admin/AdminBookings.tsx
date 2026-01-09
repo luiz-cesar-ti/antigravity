@@ -266,7 +266,7 @@ export function AdminBookings() {
     const getStatusBadge = (booking: Booking) => {
         if (booking.status === 'cancelled_by_user') {
             return (
-                <span className="px-2 py-0.5 inline-flex text-[8px] items-center leading-3 font-bold uppercase tracking-wider rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+                <span className="px-2 py-0.5 inline-flex text-[8px] items-center leading-3 font-bold uppercase tracking-wider rounded-full bg-red-100 text-red-700 border border-red-200">
                     Excluído pelo Professor
                 </span>
             );
