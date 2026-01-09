@@ -52,42 +52,50 @@ export function AdminBookings() {
 
     const fetchBookings = async () => {
         if (!user) return;
-
         setLoading(true);
-        let query = supabase
-            .from('bookings')
-            .select(`
-                *,
-                created_at,
-                equipment (name, brand, model),
-                users (full_name, email) 
-            `);
 
+        // 1. Determine Unit Filter for RPC
+        let unitFilter: string | null = null;
         if (role === 'admin' || role === 'super_admin') {
             if (isSuperAdmin) {
-                if (targetUnit) query = query.eq('unit', targetUnit);
+                // Super Admin: uses dropdown selection (targetUnit)
+                if (targetUnit) unitFilter = targetUnit;
             } else {
+                // Normal Admin: locked to their own unit
                 const unit = (user as Admin).unit;
-                if (unit && unit !== 'Matriz') query = query.eq('unit', unit);
-                else if (!unit) query = query.eq('unit', 'RESTRICTED_ACCESS_NO_UNIT');
+                if (unit && unit !== 'Matriz') unitFilter = unit;
+                else if (!unit) unitFilter = 'RESTRICTED_ACCESS_NO_UNIT';
             }
         }
 
-        if (startDate) query = query.gte('booking_date', startDate);
-        if (endDate) query = query.lte('booking_date', endDate);
-        if (recurringFilter === 'recurring') query = query.eq('is_recurring', true);
-        else if (recurringFilter === 'normal') query = query.eq('is_recurring', false);
+        // 2. Determine Recurring Filter for RPC
+        let recurringBool: boolean | null = null;
+        if (recurringFilter === 'recurring') recurringBool = true;
+        if (recurringFilter === 'normal') recurringBool = false;
 
-        if (periodFilter === 'morning') query = query.gte('start_time', '07:00').lte('start_time', '12:00');
-        else if (periodFilter === 'afternoon') query = query.gte('start_time', '12:01').lte('start_time', '18:00');
-        else if (periodFilter === 'night') query = query.gte('start_time', '18:01').lte('start_time', '23:59');
-
-        const { data, error } = await query
-            .order('booking_date', { ascending: true })
-            .order('start_time', { ascending: true });
+        // 3. Call Secure RPC
+        const { data, error } = await supabase.rpc('get_admin_bookings', {
+            p_unit: unitFilter,
+            p_start_date: startDate || null,
+            p_end_date: endDate || null,
+            p_is_recurring: recurringBool
+        });
 
         if (!error && data) {
-            setBookings(data as any[]);
+            let fetchedBookings = data as any[];
+
+            // 4. Apply Period Filter Client-Side (since RPC only filters by Date)
+            if (periodFilter === 'morning') {
+                fetchedBookings = fetchedBookings.filter(b => b.start_time >= '07:00' && b.start_time <= '12:00');
+            } else if (periodFilter === 'afternoon') {
+                fetchedBookings = fetchedBookings.filter(b => b.start_time >= '12:01' && b.start_time <= '18:00');
+            } else if (periodFilter === 'night') {
+                fetchedBookings = fetchedBookings.filter(b => b.start_time >= '18:01' && b.start_time <= '23:59');
+            }
+
+            setBookings(fetchedBookings);
+        } else if (error) {
+            console.error('Error fetching admin bookings:', error);
         }
         setLoading(false);
     };

@@ -45,10 +45,10 @@ export function AdminUsers() {
     const fetchUsers = async () => {
         setLoading(true);
         const query = supabase
-            .from('users')
-            .select('*')
-            .eq('role', 'teacher')
-            .order('full_name');
+            .rpc('get_admin_users');
+        // .select('*') -> RPC returns the set
+        // .eq('role', 'teacher') -> RPC already filters by teacher
+        // .order('full_name'); -> RPC already orders
 
         const { data, error } = await query;
 
