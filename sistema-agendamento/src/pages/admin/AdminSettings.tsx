@@ -183,7 +183,7 @@ export function AdminSettings() {
                                         <Zap className="h-6 w-6" />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-black text-gray-900">Regras de Equipamentos</h2>
+                                        <h2 className="text-xl font-black text-gray-900">Regras de Antecedência</h2>
                                         <p className="text-sm text-gray-500 font-medium">Controle de agendamento de recursos</p>
                                     </div>
                                 </div>
@@ -204,7 +204,7 @@ export function AdminSettings() {
                                                     Exigir Antecedência Mínima
                                                 </label>
                                                 <p className="text-xs text-gray-500 leading-relaxed font-medium">
-                                                    Impede agendamentos de última hora para equipamentos.
+                                                    Impede que professores façam agendamentos de última hora para equipamentos.
                                                 </p>
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
