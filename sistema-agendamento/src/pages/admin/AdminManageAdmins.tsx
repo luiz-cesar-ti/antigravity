@@ -197,6 +197,9 @@ export function AdminManageAdmins() {
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider">
                                     Função
                                 </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider">
+                                    Última Alteração
+                                </th>
                                 <th scope="col" className="relative px-6 py-3">
                                     <span className="sr-only">Ações</span>
                                 </th>
@@ -246,6 +249,20 @@ export function AdminManageAdmins() {
                                                 <span className="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800">
                                                     Admin Local
                                                 </span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {admin.password_last_changed ? (
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-gray-700">
+                                                        {new Date(admin.password_last_changed).toLocaleDateString('pt-BR')}
+                                                    </span>
+                                                    <span className="text-[10px] text-gray-500">
+                                                        às {new Date(admin.password_last_changed).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-gray-400 italic">Nunca alterada</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

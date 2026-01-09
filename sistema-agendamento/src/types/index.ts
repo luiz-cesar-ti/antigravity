@@ -20,6 +20,7 @@ export interface Admin {
     unit: string;
     role: 'admin' | 'super_admin';
     session_token?: string;
+    password_last_changed?: string;
 }
 
 export interface Equipment {
