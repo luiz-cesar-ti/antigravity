@@ -125,7 +125,7 @@ export function AdminHelp() {
                 {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
 
-            {/* Mobile Menu Modal (Premium Design) */}
+            {/* Mobile Menu Modal (Clean Professional Design) */}
             {isMobileMenuOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:hidden animate-in fade-in duration-200">
                     {/* Backdrop */}
@@ -135,53 +135,48 @@ export function AdminHelp() {
                     />
 
                     {/* Menu Card */}
-                    <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-300 border border-gray-100">
-                        {/* Gradient Header */}
-                        <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-8 text-white relative overflow-hidden shrink-0">
-                            {/* Decorative Elements */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-                            <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full blur-2xl -ml-12 -mb-12 pointer-events-none" />
-
-                            <div className="relative z-10 flex items-start justify-between">
-                                <div>
-                                    <h3 className="text-2xl font-black tracking-tight mb-1">Índice do Manual</h3>
-                                    <p className="text-indigo-100 text-sm font-medium opacity-90">Selecione um tópico para navegar</p>
-                                </div>
+                    <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-300">
+                        {/* Header with Light Blue Gradient */}
+                        <div className="bg-gradient-to-r from-blue-600 to-cyan-500 p-6 text-white shrink-0">
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-xl font-bold tracking-tight">Índice do Manual</h3>
                                 <button
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all shadow-sm backdrop-blur-md active:scale-95"
+                                    className="p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors"
                                 >
                                     <X className="w-5 h-5 text-white" />
                                 </button>
                             </div>
+                            <p className="text-blue-50 text-sm font-medium opacity-90">Navegue pelos tópicos abaixo</p>
                         </div>
 
                         {/* Scrollable List */}
-                        <div className="overflow-y-auto p-4 space-y-2 flex-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-200">
-                            {sections.map((section) => (
-                                <button
-                                    key={section.id}
-                                    onClick={() => scrollToSection(section.id)}
-                                    className={`w - full flex items - center gap - 4 px - 5 py - 4 rounded - 2xl text - sm font - bold transition - all duration - 300 group ${activeSection === section.id
-                                        ? 'bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 shadow-sm border border-indigo-100'
-                                        : 'bg-white text-gray-500 hover:bg-gray-50 border border-transparent hover:border-gray-100'
-                                        } `}
-                                >
-                                    <div className={`
-w - 10 h - 10 rounded - xl flex items - center justify - center transition - all duration - 300
-                                        ${activeSection === section.id
-                                            ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-200 scale-110'
-                                            : 'bg-gray-100 text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-500'
-                                        }
-`}>
-                                        <section.icon className="w-5 h-5" />
-                                    </div>
-                                    <span className="flex-1 text-left">{section.title}</span>
-                                    {activeSection === section.id && (
-                                        <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-lg shadow-indigo-500/50" />
-                                    )}
-                                </button>
-                            ))}
+                        <div className="overflow-y-auto p-2 flex-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-200">
+                            <div className="space-y-1 p-2">
+                                {sections.map((section) => (
+                                    <button
+                                        key={section.id}
+                                        onClick={() => scrollToSection(section.id)}
+                                        className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${activeSection === section.id
+                                            ? 'bg-blue-50 text-blue-700'
+                                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        <div className={`
+                                            p-2 rounded-lg transition-colors
+                                            ${activeSection === section.id
+                                                ? 'bg-blue-100 text-blue-600'
+                                                : 'bg-gray-50 text-gray-400 group-hover:bg-gray-100'}
+                                        `}>
+                                            <section.icon className="w-5 h-5" />
+                                        </div>
+                                        <span className="flex-1 text-left">{section.title}</span>
+                                        {activeSection === section.id && (
+                                            <ChevronRight className="w-4 h-4 text-blue-500" />
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1280,74 +1275,7 @@ w - 10 h - 10 rounded - xl flex items - center justify - center transition - all
                 </div>
             </div>
 
-            {/* Mobile Navigation FAB */}
-            <div className="lg:hidden fixed bottom-6 right-6 z-50">
-                <button
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className="flex items-center gap-2 bg-primary-600 text-white px-5 py-4 rounded-3xl shadow-2xl hover:bg-primary-700 transition-all active:scale-95 border-2 border-primary-500/50 backdrop-blur-sm"
-                >
-                    {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                    <span className="font-bold text-sm tracking-wide">Índice</span>
-                </button>
-            </div>
 
-            {/* Mobile Navigation Menu Overlay */}
-            {isMobileMenuOpen && (
-                <>
-                    <div
-                        className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-md z-40 transition-opacity animate-in fade-in duration-300"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                    />
-                    <div className="lg:hidden fixed bottom-6 left-4 right-4 z-50 bg-[#0f172a] rounded-[2rem] shadow-2xl flex flex-col max-h-[75vh] animate-in slide-in-from-bottom duration-300 overflow-hidden ring-1 ring-white/10">
-                        {/* Dark Header */}
-                        <div className="flex justify-between items-center p-6 border-b border-white/5 bg-[#0f172a]/95 backdrop-blur-md sticky top-0 z-10">
-                            <div className="flex flex-col">
-                                <h3 className="text-xs font-black text-indigo-400 uppercase tracking-widest">Índice do Manual</h3>
-                                <p className="text-[10px] text-slate-400 font-medium tracking-tight mt-0.5">Selecione para navegar</p>
-                            </div>
-                            <button onClick={() => setIsMobileMenuOpen(false)} className="text-slate-400 p-2 hover:bg-white/5 rounded-full transition-colors active:scale-95">
-                                <X className="h-5 w-5" />
-                            </button>
-                        </div>
-
-                        {/* Dark Content */}
-                        <nav className="flex-1 overflow-y-auto p-4 space-y-2 bg-[#0f172a] scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-                            {sections.map((section) => (
-                                <button
-                                    key={section.id}
-                                    onClick={() => scrollToSection(section.id)}
-                                    className={`w - full flex items - center gap - 4 px - 4 py - 4 rounded - xl text - sm font - bold transition - all relative overflow - hidden group active: scale - [0.98] border ${activeSection === section.id
-                                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-900 text-white border-indigo-500 shadow-lg shadow-indigo-900/50'
-                                        : 'bg-slate-800/40 text-slate-400 border-white/5 hover:bg-slate-800 hover:text-indigo-300'
-                                        } `}
-                                >
-                                    <div className={`p - 2.5 rounded - lg transition - all duration - 300 shrink - 0 ${activeSection === section.id ? 'bg-white/20 text-white shadow-inner scale-110' : 'bg-black/20 text-slate-500 group-hover:text-indigo-400'} `}>
-                                        <section.icon className="h-5 w-5" />
-                                    </div>
-                                    <span className={`flex - 1 text - left text - base ${activeSection === section.id ? 'font-bold tracking-tight text-white' : 'font-medium'} `}>{section.title}</span>
-
-                                    {activeSection === section.id && (
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-2 w-2 rounded-full bg-indigo-300 animate-pulse shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
-                                        </div>
-                                    )}
-                                </button>
-                            ))}
-                            <div className="h-6" /> {/* Spacer */}
-                        </nav>
-
-                        {/* Dark Footer */}
-                        <div className="p-4 bg-[#0f172a] border-t border-white/5 sticky bottom-0 z-10">
-                            <button
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className="w-full py-4 bg-slate-800 border border-white/5 text-slate-400 font-black rounded-xl text-[10px] uppercase tracking-widest hover:bg-slate-700 hover:text-white transition-all active:scale-95 shadow-sm"
-                            >
-                                Fechar Menu
-                            </button>
-                        </div>
-                    </div>
-                </>
-            )}
 
             <div className="mt-20 text-center border-t border-gray-100 pt-10">
                 <p className="text-gray-400 text-sm font-medium"></p>

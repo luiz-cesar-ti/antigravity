@@ -165,7 +165,7 @@ export function Login() {
                                         type="text"
                                         autoComplete="username"
                                         required
-                                        className="block w-full pl-14 pr-5 py-4 bg-gray-50/50 border border-gray-100 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 focus:bg-white rounded-2xl text-sm font-bold placeholder:text-gray-300 transition-all outline-none"
+                                        className="block w-full pl-14 pr-5 py-4 bg-gray-50/50 border border-gray-300 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 focus:bg-white rounded-2xl text-sm font-bold placeholder:text-gray-300 transition-all outline-none"
                                         placeholder="E-mail ou Número de usuário TOTVS"
                                         value={identifier}
                                         onChange={(e) => setIdentifier(e.target.value)}
@@ -200,7 +200,7 @@ export function Login() {
                                         type={showPassword ? 'text' : 'password'}
                                         autoComplete="current-password"
                                         required
-                                        className="block w-full pl-14 pr-12 py-4 bg-gray-50 border-2 border-transparent focus:border-primary-600 focus:bg-white rounded-2xl text-sm font-bold placeholder:text-gray-300 transition-all outline-none"
+                                        className="block w-full pl-14 pr-12 py-4 bg-gray-50 border border-gray-300 focus:border-primary-600 focus:bg-white rounded-2xl text-sm font-bold placeholder:text-gray-300 transition-all outline-none"
                                         placeholder="••••••••"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
