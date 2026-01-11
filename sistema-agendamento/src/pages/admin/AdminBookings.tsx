@@ -112,7 +112,11 @@ export function AdminBookings() {
     const handleDeleteBooking = async () => {
         if (deleteModal.bookingIds.length === 0) return;
 
+        const session = localStorage.getItem('admin_session');
+        const token = session ? JSON.parse(session).session_token : '';
+
         const { error } = await supabase.rpc('delete_admin_bookings', {
+            p_admin_token: token,
             p_booking_ids: deleteModal.bookingIds
         });
 
@@ -121,7 +125,7 @@ export function AdminBookings() {
             fetchBookings();
         } else {
             console.error('Delete error:', error);
-            alert('Erro ao excluir agendamento(s).');
+            alert('Erro ao excluir agendamento(s): ' + (error.message || 'Erro desconhecido'));
         }
     };
 

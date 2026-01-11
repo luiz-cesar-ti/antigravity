@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LayoutDashboard, Calendar, Monitor, Users, Settings, LogOut, Menu, X, ClipboardCheck, BookOpen, Clock, UserCog, MapPin } from 'lucide-react';
+import { LayoutDashboard, Calendar, Monitor, Users, Settings, LogOut, Menu, X, ClipboardCheck, BookOpen, Clock, UserCog, MapPin, ShieldAlert } from 'lucide-react';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import { NotificationBell } from './NotificationBell';
 
@@ -147,7 +147,10 @@ export function AdminLayout() {
                                 </>
                             )}
                             {adminUser?.role === 'super_admin' && (
-                                <li>
+                                <li className="mb-4">
+                                    <div className="px-4 py-2 text-xs font-semibold text-primary-300 uppercase tracking-wider">
+                                        Super Admin
+                                    </div>
                                     <Link
                                         to="/admin/manage-admins"
                                         onClick={() => setIsSidebarOpen(false)}
@@ -155,6 +158,21 @@ export function AdminLayout() {
                                     >
                                         <UserCog className="w-5 h-5" />
                                         <span>Administradores</span>
+                                    </Link>
+                                </li>
+                            )}
+                            {adminUser?.role === 'super_admin' && (
+                                <li>
+                                    <Link
+                                        to="/admin/logs"
+                                        onClick={() => setIsSidebarOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/logs')}`}
+                                    >
+                                        <div className="relative">
+                                            <ShieldAlert className="w-5 h-5" />
+                                            {/* Optional: Add a red dot if there are new alerts */}
+                                        </div>
+                                        <span>Logs de Auditoria</span>
                                     </Link>
                                 </li>
                             )}
