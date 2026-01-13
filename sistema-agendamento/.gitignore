@@ -26,3 +26,23 @@ dist-ssr
 
 # Database files
 *.sql
+
+# ===========================================
+# SECURITY - Never commit these files
+# ===========================================
+# Draft/test files that may contain secrets
+*.draft.txt
+*_draft.txt
+apply_rpc_draft.txt
+test-availability.js
+
+# Environment files (already ignored, but reinforcing)
+.env
+.env.*
+!.env.example
+
+# Keys and credentials
+*.pem
+*.key
+*service_role*
+*secret*
