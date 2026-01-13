@@ -186,7 +186,9 @@ export function TeacherBookings() {
                 equipment (name, brand, model)
             `)
             .eq('user_id', user.id)
+            .is('deleted_at', null) // FILTER FOR SOFT DELETE
             .neq('status', 'cancelled_by_user');
+
 
         if (startDate) query = query.gte('booking_date', startDate);
         if (endDate) query = query.lte('booking_date', endDate);
@@ -242,7 +244,8 @@ export function TeacherBookings() {
 
         const { error } = await supabase
             .from('bookings')
-            .update({ status: 'cancelled_by_user' })
+            .update({ status: 'EXCLUIDO' })
+
             .match(
                 deleteModal.displayId && deleteModal.bookingDate
                     ? {
@@ -519,8 +522,8 @@ export function TeacherBookings() {
                                                                 isEffectivelyClosed ? 'bg-blue-50 text-blue-700 border-blue-100' :
                                                                     'bg-red-50 text-red-700 border-red-100'}
                                                         `}>
-                                                            {first.status === 'active' && !isExpired ? 'Reservado' :
-                                                                isEffectivelyClosed ? 'Concluído' : 'Cancelado'}
+                                                            {first.status === 'active' && !isExpired ? 'Agendado' :
+                                                                isEffectivelyClosed ? 'Concluído' : 'Excluído'}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -655,3 +658,4 @@ export function TeacherBookings() {
         </div>
     );
 }
+

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Clock, Server, Monitor, Database, User, ShieldAlert } from 'lucide-react';
+import { X, Clock, Monitor, Database, User, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -13,14 +13,57 @@ interface LogDetailsModalProps {
 export function LogDetailsModal({ isOpen, onClose, log }: LogDetailsModalProps) {
     if (!isOpen || !log) return null;
 
+    const LOG_FIELD_ORDER = [
+        'professor_nome',
+        'professor_email',
+        'professor_id',
+        'data_uso',
+        'hora_inicio',
+        'hora_fim',
+        'localizacao',
+        'tipo_registro',
+        'termo_versao',
+        'termo_hash',
+        'display_id',
+        'status_anterior',
+        'equipamento_nome',
+        'equipamento_marca',
+        'equipamento_modelo',
+        'quantidade'
+    ];
+
+    const sortObjectKeys = (obj: any) => {
+        if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+
+        const sortedObj: any = {};
+        // First add keys from our prescribed order
+        LOG_FIELD_ORDER.forEach(key => {
+            if (key in obj) {
+                sortedObj[key] = obj[key];
+            }
+        });
+        // Then add any other keys that weren't in the prescribed order
+        Object.keys(obj).forEach(key => {
+            if (!LOG_FIELD_ORDER.includes(key)) {
+                sortedObj[key] = obj[key];
+            }
+        });
+        return sortedObj;
+    };
+
     const formatData = (data: any) => {
         if (!data) return <span className="text-gray-400 italic">Nenhum dado registrado</span>;
 
         try {
-            // Check if it's already an object, if string try to parse
-            const content = typeof data === 'string' ? JSON.parse(data) : data;
+            let content = typeof data === 'string' ? JSON.parse(data) : data;
 
-            // Pretty print nicely
+            // Apply custom sorting to objects or arrays of objects
+            if (Array.isArray(content)) {
+                content = content.map(item => sortObjectKeys(item));
+            } else {
+                content = sortObjectKeys(content);
+            }
+
             return (
                 <div className="bg-gray-900 rounded-xl p-4 overflow-x-auto shadow-inner border border-gray-700">
                     <pre className="text-xs font-mono text-emerald-400 whitespace-pre-wrap">

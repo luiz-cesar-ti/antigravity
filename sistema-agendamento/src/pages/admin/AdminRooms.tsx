@@ -108,25 +108,16 @@ export function AdminRooms() {
             const { data: roomsData } = await roomsQuery;
             if (roomsData) setRooms(roomsData);
 
-            // Fetch Bookings with Joins
+            // Fetch Bookings with RPC
             if (activeTab === 'bookings') {
-                let bookingsQuery = supabase
-                    .from('room_bookings')
-                    .select(`
-                        id,
-                        start_ts,
-                        end_ts,
-                        status,
-                        created_at,
-                        room:rooms!inner(name, unit),
-                        users(full_name)
-                    `);
+                // if (!adminUser.session_token) throw new Error("Sessão inválida"); // REMOVIDO: AceitarAuth Híbrida
 
-                if (!isSuperAdmin && unit) {
-                    bookingsQuery = bookingsQuery.eq('room.unit', unit);
-                }
+                const { data: bookingsData, error } = await supabase.rpc('get_admin_room_bookings', {
+                    p_unit: isSuperAdmin ? null : unit,
+                    p_admin_token: adminUser.session_token || null // Passa null se não existir (v8)
+                });
 
-                const { data: bookingsData } = await bookingsQuery.order('start_ts', { ascending: false });
+                if (error) throw error;
 
                 if (bookingsData) {
                     setBookings(bookingsData as any);
@@ -201,7 +192,7 @@ export function AdminRooms() {
                     p_min_time: roomForm.min_time,
                     p_max_time: roomForm.max_time,
                     p_available_days: roomForm.available_days,
-                    p_session_token: adminUser.session_token
+                    p_admin_token: adminUser.session_token
                 });
 
                 if (error) throw error;
@@ -221,7 +212,7 @@ export function AdminRooms() {
                     p_min_time: roomForm.min_time,
                     p_max_time: roomForm.max_time,
                     p_available_days: roomForm.available_days,
-                    p_session_token: adminUser.session_token
+                    p_admin_token: adminUser.session_token
                 });
 
                 if (error) throw error;
@@ -258,7 +249,7 @@ export function AdminRooms() {
         try {
             const { data, error } = await supabase.rpc('delete_room_secure', {
                 p_room_id: deleteModal.id,
-                p_session_token: adminUser.session_token
+                p_admin_token: adminUser.session_token
             });
 
             if (error) throw error;
@@ -281,7 +272,7 @@ export function AdminRooms() {
 
             const { data, error } = await supabase.rpc('toggle_room_availability_secure', {
                 p_room_id: roomId,
-                p_session_token: adminUser.session_token
+                p_admin_token: adminUser.session_token
             });
 
             if (error) throw error;
@@ -345,13 +336,20 @@ export function AdminRooms() {
         if (!deleteModal.id || !adminUser?.session_token) return;
 
         try {
-            const { data, error } = await supabase.rpc('delete_room_booking_secure', {
+            const { error } = await supabase.rpc('delete_room_booking_secure', {
                 p_booking_id: deleteModal.id,
-                p_session_token: adminUser.session_token
+                p_admin_token: adminUser.session_token
             });
 
-            if (error) throw error;
-            if (!data.success) throw new Error(data.message);
+            if (error) {
+                // Se já estiver excluído ou não encontrado, apenas fechamos o modal e atualizamos
+                if (error.message.includes('não encontrado') || error.message.includes('já excluído')) {
+                    setDeleteModal({ isOpen: false, type: null, id: null });
+                    fetchData();
+                    return;
+                }
+                throw error;
+            }
 
             setDeleteModal({ isOpen: false, type: null, id: null });
             setSuccessModal({
@@ -359,9 +357,9 @@ export function AdminRooms() {
                 message: 'Agendamento cancelado com sucesso!'
             });
             fetchData();
-        } catch (err: any) {
-            console.error(err);
-            alert('Erro ao cancelar agendamento: ' + (err.message || 'Erro desconhecido'));
+        } catch (error: any) {
+            console.error('Erro ao cancelar agendamento:', error);
+            alert(`Erro ao cancelar agendamento: ${error.message}`);
         }
     };
 
@@ -890,28 +888,47 @@ export function AdminRooms() {
 
                                     const isPast = new Date() > end;
                                     const isConfirmed = booking.status === 'confirmed';
+                                    const isCancelledByTeacher = booking.status === 'cancelled_by_teacher';
+                                    const isCancelled = !isConfirmed;
+
+                                    // Determinar cor do header e label do badge
+                                    const getHeaderClass = () => {
+                                        if (isCancelledByTeacher) return 'bg-gradient-to-br from-amber-500 to-orange-600';
+                                        if (!isConfirmed) return 'bg-gradient-to-br from-red-500 to-rose-600';
+                                        if (isPast) return 'bg-gradient-to-br from-indigo-500 to-blue-600';
+                                        return 'bg-gradient-to-br from-emerald-500 to-teal-600';
+                                    };
+
+                                    const getStatusLabel = () => {
+                                        if (isCancelledByTeacher) return 'Cancelado pelo Professor';
+                                        if (!isConfirmed) return 'Cancelado';
+                                        if (isPast) return 'Concluído';
+                                        return 'Ativo';
+                                    };
+
+                                    const getBadgeClass = () => {
+                                        if (isCancelledByTeacher) return 'bg-amber-700/40 text-white';
+                                        if (!isConfirmed) return 'bg-black/20 text-white';
+                                        if (isPast) return 'bg-indigo-700/40 text-white';
+                                        return 'bg-emerald-700/40 text-white';
+                                    };
 
 
                                     return (
-                                        <div key={booking.id} className={`group bg-white rounded-xl shadow-md border hover:shadow-xl transition-all duration-300 relative overflow-hidden flex flex-col ${isPast ? 'opacity-75 grayscale-[0.3]' : 'border-gray-200 hover:border-primary-200'}`}>
+                                        <div key={(booking as any).booking_id} className={`group bg-white rounded-xl shadow-md border hover:shadow-xl relative overflow-hidden flex flex-col ${isPast || isCancelled ? 'opacity-75 grayscale-[0.3]' : 'border-gray-200 hover:border-primary-200'}`}>
 
                                             {/* Colored Header */}
-                                            <div className={`p-4 text-white flex justify-between items-start ${isConfirmed
-                                                ? (isPast ? 'bg-gradient-to-br from-indigo-500 to-blue-600' : 'bg-gradient-to-br from-emerald-500 to-teal-600')
-                                                : 'bg-gradient-to-br from-red-500 to-rose-600'
-                                                }`}>
+                                            <div className={`p-4 text-white flex justify-between items-start ${getHeaderClass()}`}>
                                                 <div>
                                                     <div className="flex items-center gap-1 opacity-90 text-[10px] uppercase tracking-wider font-semibold mb-1">
-                                                        <MapPin className="w-3 h-3" /> Unidade {booking.room?.unit}
+                                                        <MapPin className="w-3 h-3" /> Unidade {(booking as any).room_unit}
                                                     </div>
-                                                    <h3 className="font-bold text-lg leading-tight text-white mb-0.5" title={booking.room?.name}>
-                                                        {booking.room?.name}
+                                                    <h3 className="font-bold text-lg leading-tight text-white mb-0.5" title={(booking as any).room_name}>
+                                                        {(booking as any).room_name}
                                                     </h3>
                                                 </div>
-                                                <div className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-white/20 shadow-sm ${!isConfirmed ? 'bg-black/20 text-white' :
-                                                    isPast ? 'bg-indigo-700/40 text-white' : 'bg-emerald-700/40 text-white'
-                                                    }`}>
-                                                    {!isConfirmed ? 'Cancelado' : isPast ? 'Concluído' : 'Ativo'}
+                                                <div className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-white/20 shadow-sm ${getBadgeClass()}`}>
+                                                    {getStatusLabel()}
                                                 </div>
                                             </div>
 
@@ -941,8 +958,8 @@ export function AdminRooms() {
                                                             <Users className="w-4 h-4" />
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <span className="text-xs font-bold text-gray-700 truncate max-w-[150px]" title={booking.users?.full_name}>
-                                                                {booking.users?.full_name || 'Desconhecido'}
+                                                            <span className="text-xs font-bold text-gray-700 truncate max-w-[150px]" title={(booking as any).professor_name || 'Desconhecido'}>
+                                                                {(booking as any).professor_name || 'Desconhecido'}
                                                             </span>
                                                             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Professor</span>
                                                         </div>
@@ -952,8 +969,8 @@ export function AdminRooms() {
                                                         onClick={() => setDeleteModal({
                                                             isOpen: true,
                                                             type: 'booking',
-                                                            id: booking.id,
-                                                            roomName: booking.room?.name
+                                                            id: (booking as any).booking_id,
+                                                            roomName: (booking as any).room_name
                                                         })}
                                                         className="h-10 w-10 flex items-center justify-center bg-red-50 text-red-500 border border-red-100 rounded-xl shadow-sm hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 active:scale-90 group/btn"
                                                         title="Cancelar Agendamento"

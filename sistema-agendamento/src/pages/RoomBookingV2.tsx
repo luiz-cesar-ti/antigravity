@@ -53,16 +53,26 @@ export function RoomBookingV2() {
         if (!deleteConfirmation.bookingId) return;
 
         try {
-            const { error } = await supabase
-                .from('room_bookings')
-                .delete()
-                .eq('id', deleteConfirmation.bookingId);
-
-            if (error) throw error;
+            if (deleteConfirmation.isPast) {
+                // Agendamento PASSADO: Soft delete (remove do histórico do professor)
+                const { error } = await supabase
+                    .from('room_bookings')
+                    .update({ deleted_at: new Date().toISOString() })
+                    .eq('id', deleteConfirmation.bookingId);
+                if (error) throw error;
+            } else {
+                // Agendamento ATIVO/FUTURO: Alterar status para "cancelled_by_teacher"
+                // Isso libera o horário para novos agendamentos E mostra como cancelado para o admin
+                const { error } = await supabase
+                    .from('room_bookings')
+                    .update({ status: 'cancelled_by_teacher' })
+                    .eq('id', deleteConfirmation.bookingId);
+                if (error) throw error;
+            }
 
             triggerFeedback(
                 'success',
-                deleteConfirmation.isPast ? 'Agendamento removido do seu histórico.' : 'Reserva cancelada com sucesso.',
+                deleteConfirmation.isPast ? 'Agendamento removido do seu histórico.' : 'Reserva cancelada com sucesso. O horário foi liberado.',
                 deleteConfirmation.isPast ? 'Agendamento Excluído' : 'Cancelamento Confirmado'
             );
             fetchMyBookings();
@@ -143,7 +153,9 @@ export function RoomBookingV2() {
                         unit
                     )
                 `)
-                .eq('user_id', user.id); // Fetch ALL bookings, not just future ones
+                .eq('user_id', user.id)
+                .is('deleted_at', null) // Filtra agendamentos excluídos pelo admin
+                .neq('status', 'cancelled_by_teacher'); // Filtra agendamentos cancelados pelo professor
 
             if (error) {
                 console.error('Error fetching my bookings:', error);
@@ -220,11 +232,13 @@ export function RoomBookingV2() {
         const dayStart = `${selectedDate}T00:00:00`;
         const dayEnd = `${selectedDate}T23:59:59`;
 
+        // Buscar apenas agendamentos ATIVOS (confirmed) e NÃO EXCLUÍDOS
         const { data } = await supabase
             .from('room_bookings')
             .select('start_ts, end_ts')
             .eq('room_id', selectedRoom?.id)
             .eq('status', 'confirmed')
+            .is('deleted_at', null) // Ignorar agendamentos excluídos
             .gte('end_ts', dayStart)
             .lte('start_ts', dayEnd);
 
@@ -634,7 +648,7 @@ export function RoomBookingV2() {
                                 : 'hover:border-emerald-200';
 
                             return (
-                                <div key={booking.id} className={`group bg-white rounded-xl shadow-md border hover:shadow-xl transition-all duration-300 relative overflow-hidden flex flex-col ${isPast ? 'opacity-85 grayscale-[0.1] border-gray-200' : `border-gray-200 ${hoverBorder}`}`}>
+                                <div key={booking.id} className={`group bg-white rounded-xl shadow-md border hover:shadow-xl relative overflow-hidden flex flex-col ${isPast ? 'opacity-85 grayscale-[0.1] border-gray-200' : `border-gray-200 ${hoverBorder}`}`}>
 
                                     {/* Header with Status-based Color */}
                                     <div className={`p-4 flex justify-between items-start ${headerGradient}`}>

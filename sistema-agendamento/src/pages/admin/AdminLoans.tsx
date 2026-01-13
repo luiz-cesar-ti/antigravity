@@ -31,6 +31,29 @@ import html2pdf from 'html2pdf.js';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Função centralizada para calcular hash do documento de empréstimo
+// Usa APENAS id, user_full_name e equipment_id para garantir consistência
+// (start_at e end_at podem ter formatos diferentes dependendo da origem)
+const calculateLoanHash = async (id: string, user_full_name: string, equipment_id: string): Promise<string> => {
+    const dataString = `${id}-${user_full_name}-${equipment_id}`;
+    const encoder = new TextEncoder();
+    const data = encoder.encode(dataString);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex.substring(0, 16).toUpperCase();
+};
+
+// Função de sanitização para prevenir XSS em templates HTML
+const escapeHtml = (unsafe: string | null | undefined): string => {
+    if (!unsafe) return '';
+    return String(unsafe)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+};
 
 
 // --- Custom Professional Modal Component ---
@@ -155,19 +178,13 @@ export function AdminLoans() {
         };
     }, [modalInfo]);
 
-    // Calculate Hashes for Cards
+    // Calculate Hashes for Cards - Usando função centralizada
     useEffect(() => {
         const calculateHashes = async () => {
             const newHashes: Record<string, string> = {};
             for (const loan of loans) {
-                // Same formula as PDF
-                const dataString = `${loan.id}-${loan.user_full_name}-${loan.equipment_id}-${loan.start_at}-${loan.end_at}`;
-                const encoder = new TextEncoder();
-                const data = encoder.encode(dataString);
-                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-                newHashes[loan.id] = hashHex.substring(0, 16).toUpperCase();
+                // Usando função centralizada para garantir consistência
+                newHashes[loan.id] = await calculateLoanHash(loan.id, loan.user_full_name, loan.equipment_id);
             }
             setLoanHashes(newHashes);
         };
@@ -245,6 +262,9 @@ export function AdminLoans() {
             const startStr = `${formData.start_date}T${formData.start_time}:00-03:00`;
             const endStr = `${formData.end_date}T${formData.end_time}:00-03:00`;
 
+            // Gerar ID único temporário para calcular hash (será substituído pelo real da RPC)
+            // Mas para manter consistência, o hash será calculado após receber o ID real
+
             // Use RPC for Secure Creation
             const { data: loanData, error: loanError } = await supabase.rpc('create_equipment_loan', {
                 p_admin_token: adminUser.session_token,
@@ -261,12 +281,47 @@ export function AdminLoans() {
 
             if (loanError) throw loanError;
 
+            // Calcular hash usando função centralizada (mesma usada no card e PDF)
+            const docHash = await calculateLoanHash(loanData.id, formData.user_full_name, formData.equipment_id);
+            console.log('[DEBUG] Hash calculado:', docHash, 'para loan_id:', loanData.id);
+
+            // Atualizar o log e tabela com o hash correto
+            const { error: hashError } = await supabase.rpc('update_loan_hash', {
+                p_admin_token: adminUser.session_token,
+                p_loan_id: loanData.id,
+                p_doc_hash: docHash
+            });
+
+            if (hashError) {
+                console.error('[DEBUG] Erro ao salvar hash:', hashError);
+            } else {
+                console.log('[DEBUG] Hash salvo com sucesso!');
+            }
+
             // Note: Total quantity is updated inside the RPC now.
 
             await fetchLoans();
             await fetchEquipment();
 
             const selectedEq = equipmentList.find(e => e.id === formData.equipment_id);
+
+
+            // Construir objeto de empréstimo completo para o modal de preview
+            // Reutilizando startStr e endStr já declarados acima
+            const completeLoanData = {
+                id: loanData.id,
+                user_full_name: formData.user_full_name,
+                user_role: formData.user_role,
+                location: formData.location,
+                start_at: startStr,
+                end_at: endStr,
+                equipment_id: formData.equipment_id,
+                quantity: formData.quantity,
+                asset_number: formData.asset_numbers.join(', '),
+                unit: adminUser.unit,
+                equipment: selectedEq,
+                created_at: new Date().toISOString()
+            };
 
             setFormData({
                 user_full_name: '',
@@ -281,8 +336,8 @@ export function AdminLoans() {
                 asset_numbers: ['']
             });
 
-            // Open Preview Modal
-            setModalInfo({ type: 'preview', loanData: { ...loanData, equipment: selectedEq } });
+            // Open Preview Modal com dados completos
+            setModalInfo({ type: 'preview', loanData: completeLoanData });
 
         } catch (error: any) {
             console.error('Loan error:', error);
@@ -311,6 +366,7 @@ export function AdminLoans() {
 
     const handleDeleteLoan = async (loan: EquipmentLoan) => {
         try {
+            // Hash é buscado diretamente da tabela equipment_loans pela RPC
             const { error } = await supabase.rpc('delete_equipment_loan', {
                 p_admin_token: adminUser.session_token,
                 p_loan_id: loan.id
@@ -328,14 +384,8 @@ export function AdminLoans() {
 
 
     const generatePDF = async (loan: EquipmentLoan, download = true) => {
-        // Generate a deterministic hash for the document
-        const dataString = `${loan.id}-${loan.user_full_name}-${loan.equipment_id}-${loan.start_at}-${loan.end_at}`;
-        const encoder = new TextEncoder();
-        const data = encoder.encode(dataString);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        const shortHash = hashHex.substring(0, 16).toUpperCase(); // Show first 16 chars for readability
+        // Usando função centralizada para garantir consistência do hash
+        const shortHash = await calculateLoanHash(loan.id, loan.user_full_name, loan.equipment_id);
 
         const element = document.createElement('div');
         element.innerHTML = `
@@ -348,13 +398,13 @@ export function AdminLoans() {
                 <div style="margin-bottom: 10px; background: #fdfdfd; padding: 10px 20px; border: 1px solid #eee; border-radius: 8px;">
                     <h3 style="margin-top: 0; margin-bottom: 6px; color: #3D52A0; font-size: 14.5px; display: inline-block;">DADOS DO EMPRÉSTIMO</h3>
                     <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                        <tr><td style="padding: 0.5px 0; width: 35%;"><strong>Unidade:</strong></td><td>${loan.unit}</td></tr>
-                        <tr><td style="padding: 0.5px 0;"><strong>Solicitante:</strong></td><td>${loan.user_full_name}</td></tr>
-                        <tr><td style="padding: 0.5px 0;"><strong>Cargo:</strong></td><td>${loan.user_role}</td></tr>
-                        <tr><td style="padding: 0.5px 0;"><strong>Equipamento:</strong></td><td>${loan.equipment?.name || 'N/A'}</td></tr>
+                        <tr><td style="padding: 0.5px 0; width: 35%;"><strong>Unidade:</strong></td><td>${escapeHtml(loan.unit)}</td></tr>
+                        <tr><td style="padding: 0.5px 0;"><strong>Solicitante:</strong></td><td>${escapeHtml(loan.user_full_name)}</td></tr>
+                        <tr><td style="padding: 0.5px 0;"><strong>Cargo:</strong></td><td>${escapeHtml(loan.user_role)}</td></tr>
+                        <tr><td style="padding: 0.5px 0;"><strong>Equipamento:</strong></td><td>${escapeHtml(loan.equipment?.name || 'N/A')}</td></tr>
                         <tr><td style="padding: 0.5px 0;"><strong>Quantidade:</strong></td><td>${loan.quantity} unidade(s)</td></tr>
-                        <tr><td style="padding: 0.5px 0;"><strong>Nº Patrimônio:</strong></td><td>${loan.asset_number}</td></tr>
-                        <tr><td style="padding: 0.5px 0;"><strong>Local de Uso:</strong></td><td>${loan.location}</td></tr>
+                        <tr><td style="padding: 0.5px 0;"><strong>Nº Patrimônio:</strong></td><td>${escapeHtml(loan.asset_number)}</td></tr>
+                        <tr><td style="padding: 0.5px 0;"><strong>Local de Uso:</strong></td><td>${escapeHtml(loan.location)}</td></tr>
                         <tr><td style="padding: 0.5px 0;"><strong>Início:</strong></td><td>${format(parseISO(loan.start_at), "dd/MM/yyyy 'às' HH:mm")}</td></tr>
                         <tr><td style="padding: 0.5px 0;"><strong>Previsão de Término:</strong></td><td>${format(parseISO(loan.end_at), "dd/MM/yyyy 'às' HH:mm")}</td></tr>
                     </table>
@@ -363,7 +413,7 @@ export function AdminLoans() {
                 <div style="margin-bottom: 12px;">
                     <h3 style="color: #3D52A0; font-size: 17px; margin-bottom: 4px; padding-bottom: 2px;">TERMO DE RESPONSABILIDADE</h3>
                     <p style="font-size: 15px; text-align: justify; margin: 0 0 6px 0;">
-                        Pelo presente Termo de Responsabilidade, o solicitante acima identificado declara ter recebido da Instituição de Ensino (Objetivo - Unidade ${loan.unit}) os equipamentos acima descritos em perfeito estado de conservação e funcionamento.
+                        Pelo presente Termo de Responsabilidade, o solicitante acima identificado declara ter recebido da Instituição de Ensino (Objetivo - Unidade ${escapeHtml(loan.unit)}) os equipamentos acima descritos em perfeito estado de conservação e funcionamento.
                     </p>
                     <p style="font-size: 15px; text-align: justify; margin: 0 0 8px 0;">
                         O solicitante assume total responsabilidade pela guarda, conservação e correta utilização dos mesmos, comprometendo-se a:
@@ -380,7 +430,7 @@ export function AdminLoans() {
                 <div style="margin-top: 70px; display: flex; justify-content: space-between; gap: 50px;">
                     <div style="width: 45%; text-align: center;">
                         <div style="border-top: 1px solid #000; padding-top: 5px; font-size: 12.5px;">
-                            <strong>${loan.user_full_name}</strong><br/>
+                            <strong>${escapeHtml(loan.user_full_name)}</strong><br/>
                             <span>Solicitante</span>
                         </div>
                     </div>

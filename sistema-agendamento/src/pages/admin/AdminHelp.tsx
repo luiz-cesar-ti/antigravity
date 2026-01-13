@@ -915,6 +915,20 @@ export function AdminHelp() {
                                     <h4 className="font-bold text-gray-900 mb-2">Edição de Docentes</h4>
                                     <p className="text-xs text-gray-500">Pode alterar nomes, gerenciar unidades e excluir cadastros permanentemente.</p>
                                 </div>
+
+                                <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
+                                    <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2 text-lg">
+                                        <FileText className="h-5 w-5 text-slate-600" /> Logs de Auditoria (Visão Técnica)
+                                    </h3>
+                                    <p className="text-sm text-slate-700 leading-relaxed mb-4">
+                                        Ferramenta exclusiva para <strong>Análise Forense</strong>. O sistema grava logs apenas de usuários admin e o <strong>Super Admin é o único que pode visualizá-los</strong>. Oferece acesso ao histórico bruto de operações do banco de dados (JSON), permitindo investigar incidentes de segurança, rastrear alterações de dados e identificar a origem exata de qualquer modificação no sistema.
+                                    </p>
+                                    <div className="flex flex-wrap gap-2 text-xs font-bold text-slate-600">
+                                        <span className="bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">Viewer JSON Raw</span>
+                                        <span className="bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">Rastreio de IP</span>
+                                        <span className="bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">Diff (Antes/Depois)</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -1282,15 +1296,7 @@ export function AdminHelp() {
                                         </div>
                                     </div>
 
-                                    <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 mb-8">
-                                        <div className="flex items-center gap-2 mb-2 text-blue-600">
-                                            <Settings className="h-4 w-4" />
-                                            <h5 className="font-bold text-xs uppercase tracking-wider text-gray-900">FUNÇÕES DE BANCO SEGURAS (RPCS)</h5>
-                                        </div>
-                                        <p className="text-xs text-gray-600 leading-relaxed">
-                                            Operações sensíveis como login e troca de senha ocorrem via <strong className="text-gray-800">Remote Procedure Calls (RPCs)</strong> isoladas, que validam permissões de cargo e tokens de sessão antes de qualquer alteração no banco.
-                                        </p>
-                                    </div>
+
                                 </div>
 
                                 {/* Conformidade LGPD */}
@@ -1299,9 +1305,14 @@ export function AdminHelp() {
                                         <Info className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-emerald-900 text-lg mb-2">Conformidade LGPD: Privacidade por Design</h4>
+                                        <h4 className="font-bold text-emerald-900 text-lg mb-2">Conformidade LGPD: Privacidade</h4>
+                                        <p className="text-sm text-emerald-800 leading-relaxed mb-4">
+                                            O sistema foi construído sob o princípio de <strong className="text-emerald-950">Minimização de Dados</strong>. Coletamos apenas o essencial (Nome, E-mail, TOTVS).
+                                        </p>
+
+                                        <h5 className="font-bold text-emerald-900 text-sm mb-1">Administradores</h5>
                                         <p className="text-sm text-emerald-800 leading-relaxed">
-                                            O sistema foi construído sob o princípio de <strong className="text-emerald-950">Minimização de Dados</strong>. Coletamos apenas o essencial (Nome, E-mail, TOTVS) e garantimos o controle total do usuário sobre seus dados (exclusão de conta e limpeza de históricos). O uso de <strong className="text-emerald-950">Tokens de Sessão Temporários (24h)</strong> garante que acessos não autorizados sejam bloqueados automaticamente em caso de esquecimento de logoff.
+                                            O uso de <strong className="text-emerald-950">Tokens de Sessão Temporários (2 horas)</strong> garante que acessos não autorizados sejam bloqueados automaticamente em caso de esquecimento de logoff.
                                         </p>
                                     </div>
                                 </div>
@@ -1325,6 +1336,27 @@ export function AdminHelp() {
                                             <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
                                             <p className="text-sm text-gray-600 leading-relaxed">
                                                 <strong className="text-gray-900">Nuvem Corporativa:</strong> Hospedado em infraestrutura Supabase (AWS/Postgres) com redundância e proteção contra ataques de negação de serviço (DDoS).
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 5. Auditoria e Rastreabilidade */}
+                                <div className="bg-white border border-gray-200 p-6 rounded-[2rem] shadow-sm">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="bg-amber-50 p-2 rounded-lg text-amber-600">
+                                            <ClipboardCheck className="h-6 w-6" />
+                                        </div>
+                                        <h4 className="font-bold text-gray-900 text-lg">5. Auditoria de Ações Administrativas</h4>
+                                    </div>
+                                    <p className="text-sm text-gray-600 leading-relaxed mb-4">
+                                        Para garantir total transparência e segurança forense, o sistema registra automaticamente todas as operações críticas realizadas no painel administrativo.
+                                    </p>
+                                    <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl">
+                                        <div className="flex gap-3">
+                                            <ShieldCheck className="h-5 w-5 text-amber-600 shrink-0" />
+                                            <p className="text-xs text-amber-900 leading-relaxed">
+                                                <strong>Snapshots Detalhados:</strong> Cada ação de exclusão, edição ou criação gera um log imutável contendo o estado dos dados <em>antes</em> e <em>depois</em> da alteração, permitindo auditoria técnica completa em caso de incidentes.
                                             </p>
                                         </div>
                                     </div>
