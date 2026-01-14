@@ -44,7 +44,7 @@ export function AdminHelp() {
         { id: 'equipments', title: 'Equipamentos', icon: Monitor },
         { id: 'rooms', title: 'Gestão de Salas', icon: LayoutGrid },
         { id: 'register', title: 'Cadastro de Professores', icon: UserPlus },
-        { id: 'users', title: 'Usuários', icon: Users },
+        { id: 'users', title: 'Gestão de Usuários', icon: Users },
         { id: 'super_admin', title: 'Super Admin (Global)', icon: Globe },
         { id: 'loans', title: 'Empréstimos', icon: ClipboardCheck },
         { id: 'notifications', title: 'Notificações', icon: Bell },
@@ -408,7 +408,7 @@ export function AdminHelp() {
                                                 Agendamentos padrão são aqueles que o professor faz cadastro no sistema e realiza um agendamento de um equipamento para pesquisas pedagógicas entre o professor e os alunos no dia a dia.
                                             </p>
                                         </div>
-                                        <div className="bg-purple-50 border border-purple-100 p-5 rounded-3xl">
+                                        <div id="term-recurrent-card" className="bg-purple-50 border border-purple-100 p-5 rounded-3xl">
                                             <span className="text-[10px] uppercase font-bold bg-purple-100 text-purple-700 px-2 py-1 rounded mb-3 inline-block">RECORRENTE</span>
                                             <h4 className="font-bold text-gray-900 mb-2">Termo Recorrente</h4>
                                             <p className="text-sm text-gray-600 mb-4">
@@ -857,6 +857,15 @@ export function AdminHelp() {
                                         Permite que um professor tenha um agendamento fixo semanal (ex: Toda Quinta às 08:00).
                                     </p>
 
+                                    <button
+                                        onClick={() => scrollToSection('term-recurrent-card')}
+                                        className="mb-8 flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg text-sm font-bold hover:bg-purple-100 transition-colors group w-fit border border-purple-100"
+                                    >
+                                        <Info className="h-4 w-4 animate-pulse" />
+                                        Entenda como funciona o Termo Jurídico
+                                        <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                                    </button>
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
                                             <h4 className="font-bold text-gray-900 mb-3 text-lg">Renovação Mensal</h4>
@@ -872,7 +881,7 @@ export function AdminHelp() {
                                             <span className="absolute top-0 right-0 bg-red-50 text-red-600 text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-wider">Regra de Ouro</span>
                                             <h4 className="font-bold text-gray-900 mb-3 text-lg pr-20">Permissão de Acesso</h4>
                                             <p className="text-sm text-gray-600 leading-relaxed mb-4">
-                                                <strong className="text-gray-900">Exclusivo de Admins:</strong> Apenas um Administrador pode liberar essa função para um professor.
+                                                <strong className="text-gray-900">Exclusivo de Admins:</strong> Apenas um Administrador pode liberar essa função para um professor. Para ativar, vá na lista de usuários e clique no botão de <strong>Opções (três pontos)</strong> ou <strong>Editar</strong> no card do professor.
                                             </p>
                                             <p className="text-xs text-purple-600 italic bg-purple-50 p-3 rounded-xl border border-purple-100 leading-relaxed">
                                                 "Um Admin de uma unidade só pode conceder permissão de recorrência para professores daquela mesma unidade. Se o professor atua em outra escola, o Admin de lá é quem deve liberar."

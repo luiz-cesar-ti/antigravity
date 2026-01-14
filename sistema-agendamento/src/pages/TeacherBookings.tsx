@@ -616,34 +616,26 @@ export function TeacherBookings() {
                             );
                         };
 
-                        if (hasMultipleUnits) {
-                            return (
-                                <div className="space-y-12">
-                                    {units.sort().map(unit => (
-                                        <div key={unit}>
-                                            <div className="flex items-center gap-4 mb-8 pt-4 px-2">
-                                                <div className="h-12 w-12 bg-white rounded-2xl flex items-center justify-center border border-gray-100 shadow-sm shrink-0">
-                                                    <Building2 className="h-6 w-6 text-primary-600" />
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Unidade Escolar</span>
-                                                    <h2 className="text-xl font-black text-gray-900 tracking-tight">{unit}</h2>
-                                                </div>
-                                                <div className="h-px flex-1 bg-gradient-to-r from-gray-200 via-gray-100 to-transparent ml-6 mt-2"></div>
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-start">
-                                                {renderList.filter(g => (g[0].unit || 'GERAL') === unit).map(renderCard)}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            );
-                        }
-
-                        // Default Single Grid
+                        // Always show unit grouping
                         return (
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-start">
-                                {renderList.map(renderCard)}
+                            <div className="space-y-12">
+                                {units.sort().map(unit => (
+                                    <div key={unit}>
+                                        <div className="flex items-center gap-4 mb-8 pt-4 px-2">
+                                            <div className="h-12 w-12 bg-white rounded-2xl flex items-center justify-center border border-gray-100 shadow-sm shrink-0">
+                                                <Building2 className="h-6 w-6 text-primary-600" />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Unidade Escolar</span>
+                                                <h2 className="text-xl font-black text-gray-900 tracking-tight">{unit}</h2>
+                                            </div>
+                                            <div className="h-px flex-1 bg-gradient-to-r from-gray-200 via-gray-100 to-transparent ml-6 mt-2"></div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-start">
+                                            {renderList.filter(g => (g[0].unit || 'GERAL') === unit).map(renderCard)}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         );
                     })()

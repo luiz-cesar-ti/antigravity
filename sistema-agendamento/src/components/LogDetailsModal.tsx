@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, Clock, Monitor, Database, User, ShieldAlert } from 'lucide-react';
+import { X, Clock, Monitor, Database, User, ShieldAlert, Lightbulb } from 'lucide-react';
+import { generateChangeTip } from '../utils/changeTipGenerator';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -159,6 +160,28 @@ export function LogDetailsModal({ isOpen, onClose, log }: LogDetailsModalProps) 
                     </div>
 
 
+
+
+                    {/* Change Tip Section */}
+                    {(() => {
+                        const tip = generateChangeTip(log);
+                        if (tip) {
+                            return (
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex gap-3 shadow-sm">
+                                    <div className="bg-yellow-100 p-2 rounded-lg h-10 w-10 flex items-center justify-center shrink-0">
+                                        <Lightbulb className="h-5 w-5 text-yellow-600" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <h3 className="text-sm font-black text-yellow-800 uppercase tracking-wide mb-1">Alterações Identificadas</h3>
+                                        <p className="text-sm font-medium text-yellow-900 leading-relaxed">
+                                            {tip}
+                                        </p>
+                                    </div>
+                                </div>
+                            );
+                        }
+                        return null;
+                    })()}
 
                     {/* Diff Area */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
