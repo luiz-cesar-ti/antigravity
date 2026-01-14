@@ -796,10 +796,10 @@ export function AdminLoans() {
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-4 text-[10px] font-black text-gray-400 uppercase tracking-widest pt-2">
-                                                    <span className="flex items-center">
+                                                    <span className="flex items-center text-primary-600 font-bold">
                                                         <Hash className="h-3 w-3 mr-1" /> PAT: {loan.asset_number}
                                                     </span>
-                                                    <span className="flex items-center">
+                                                    <span className="flex items-center text-primary-600 font-bold">
                                                         <FileText className="h-3 w-3 mr-1" /> {loan.equipment?.name || 'Item Removido'} ({loan.quantity} unid.)
                                                     </span>
                                                 </div>

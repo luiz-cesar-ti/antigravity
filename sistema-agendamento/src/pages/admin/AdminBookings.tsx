@@ -268,49 +268,60 @@ export function AdminBookings() {
     };
 
     const getStatusBadge = (booking: Booking) => {
+        const expired = isBookingExpired(booking);
+        const isCompleted = expired || booking.status === 'encerrado';
+
+        // Recurring badge (always shown if is_recurring, regardless of status)
+        const recurringBadge = booking.is_recurring ? (
+            <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                Recorrente
+            </span>
+        ) : null;
+
+        // Cancelled by Professor
         if (booking.status === 'cancelled_by_user') {
             return (
-                <span className="px-2 py-0.5 inline-flex text-[8px] items-center leading-3 font-bold uppercase tracking-wider rounded-full bg-red-100 text-red-700 border border-red-200">
-                    Excluído pelo Professor
-                </span>
-            );
-        }
-
-        if (booking.status === 'cancelled') {
-            return (
-                <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-gray-100 text-gray-600 border border-gray-200">
-                    Cancelado
-                </span>
-            );
-        }
-
-        const expired = isBookingExpired(booking);
-
-        if (expired || booking.status === 'encerrado') {
-            return (
-                <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-blue-100 text-blue-700 border border-blue-200">
-                    Concluído
-                </span>
-            );
-        }
-
-        if (booking.is_recurring) {
-            return (
                 <div className="flex gap-1">
-                    <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-green-100 text-green-700 border border-green-200">
-                        Ativo
+                    <span className="px-2 py-0.5 inline-flex text-[8px] items-center leading-3 font-bold uppercase tracking-wider rounded-full bg-red-100 text-red-700 border border-red-200">
+                        Excluído pelo Professor
                     </span>
-                    <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-                        Recorrente
-                    </span>
+                    {recurringBadge}
                 </div>
             );
         }
 
+        // Cancelled by Admin
+        if (booking.status === 'cancelled') {
+            return (
+                <div className="flex gap-1">
+                    <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-gray-100 text-gray-600 border border-gray-200">
+                        Cancelado
+                    </span>
+                    {recurringBadge}
+                </div>
+            );
+        }
+
+        // Completed status
+        if (isCompleted) {
+            return (
+                <div className="flex gap-1">
+                    <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+                        Concluído
+                    </span>
+                    {recurringBadge}
+                </div>
+            );
+        }
+
+        // Active status
         return (
-            <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-green-100 text-green-700 border border-green-200">
-                Ativo
-            </span>
+            <div className="flex gap-1">
+                <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-green-100 text-green-700 border border-green-200">
+                    Ativo
+                </span>
+                {recurringBadge}
+            </div>
         );
     };
 

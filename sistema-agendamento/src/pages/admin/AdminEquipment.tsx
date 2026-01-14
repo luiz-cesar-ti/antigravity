@@ -21,6 +21,7 @@ import {
     Smartphone
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { format } from 'date-fns';
 import { ConfirmModal } from '../../components/ConfirmModal';
 
 export function AdminEquipment() {
@@ -28,6 +29,7 @@ export function AdminEquipment() {
     const adminUser = user as Admin;
 
     const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
+    const [inUseCounts, setInUseCounts] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -65,6 +67,71 @@ export function AdminEquipment() {
         }
     }, [adminUser]);
 
+    const fetchActiveCounts = async () => {
+        const now = new Date();
+        const today = format(now, 'yyyy-MM-dd');
+        const currentTime = format(now, 'HH:mm');
+        const counts: Record<string, number> = {};
+
+        // 1. Fetch Active Bookings (Time Overlap)
+        // Normal and Recurring bookings: Count if IN TIME WINDOW and NOT finished/cancelled
+        let bookingsQuery = supabase
+            .from('bookings')
+            .select('equipment_id, quantity, start_time, end_time, status')
+            .eq('booking_date', today)
+            .neq('status', 'cancelled')
+            .neq('status', 'cancelled_by_user')
+            .neq('status', 'encerrado')
+            .neq('status', 'concluido'); // Released when completed
+
+        if (adminUser?.unit) {
+            bookingsQuery = bookingsQuery.eq('unit', adminUser.unit);
+        }
+
+        const { data: bookings } = await bookingsQuery;
+
+        if (bookings) {
+            bookings.forEach((b: any) => {
+                // Normalize times to HH:mm for comparison (database may store HH:mm:ss)
+                const startTime = (b.start_time || '').substring(0, 5);
+                const endTime = (b.end_time || '').substring(0, 5);
+
+                // Count if currentTime is >= startTime AND <= endTime (inclusive boundaries)
+                if (startTime <= currentTime && endTime >= currentTime) {
+                    counts[b.equipment_id] = (counts[b.equipment_id] || 0) + b.quantity;
+                }
+            });
+        }
+
+        // 2. Fetch Active Loans (Time Overlap)
+        let loansQuery = supabase
+            .from('equipment_loans')
+            .select('equipment_id, quantity, start_at, end_at') // Added start_at, end_at
+            .eq('status', 'active');
+
+        if (adminUser?.unit) {
+            loansQuery = loansQuery.eq('unit', adminUser.unit);
+        }
+
+        const { data: loans } = await loansQuery;
+
+        if (loans) {
+            const nowTime = now.getTime();
+            loans.forEach((l: any) => {
+                // Check if loan has STARTED. 
+                // We ignore the end time because if it is still 'active' (not returned), 
+                // it is still in possession of the user, even if overdue.
+                const start = new Date(l.start_at).getTime();
+
+                if (nowTime >= start) {
+                    counts[l.equipment_id] = (counts[l.equipment_id] || 0) + l.quantity;
+                }
+            });
+        }
+
+        setInUseCounts(counts);
+    };
+
     const fetchEquipment = async () => {
         setLoading(true);
         let query = supabase
@@ -80,12 +147,24 @@ export function AdminEquipment() {
         if (!error && data) {
             setEquipmentList(data as Equipment[]);
         }
+        await fetchActiveCounts(); // Fetch counts as well
         setLoading(false);
     };
 
     useEffect(() => {
-        fetchEquipment();
-    }, [user]);
+        if (user) {
+            fetchEquipment();
+
+            // Subscribe to changes to update real-time
+            const subscription = supabase.channel('equipment_realtime')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => fetchActiveCounts())
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'equipment_loans' }, () => fetchActiveCounts())
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'equipment' }, () => fetchEquipment())
+                .subscribe();
+
+            return () => { subscription.unsubscribe(); };
+        }
+    }, [user, adminUser?.unit]);
 
     const handleOpenModal = (equipment?: Equipment) => {
         if (equipment) {
@@ -230,58 +309,74 @@ export function AdminEquipment() {
                                 <tr className="bg-gray-50/50">
                                     <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Equipamento</th>
                                     <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Marca & Modelo</th>
-                                    <th className="px-8 py-5 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Quantidade</th>
+                                    <th className="px-8 py-5 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Em Uso Agora</th>
+                                    <th className="px-8 py-5 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Quantidade Total</th>
                                     <th className="px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Ações</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {filteredList.map((item) => (
-                                    <tr key={item.id} className="hover:bg-primary-50/30 transition-colors group/row">
-                                        <td className="px-8 py-6 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <div className="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center group-hover/row:bg-primary-600 transition-colors">
-                                                    {getEquipmentIcon(item.name)}
+                                {filteredList.map((item) => {
+                                    const inUse = inUseCounts[item.id] || 0;
+                                    const available = item.total_quantity - inUse; // Just for visual check if needed, but not displaying "Available" explicitly requested "In Use"
+
+                                    return (
+                                        <tr key={item.id} className="hover:bg-primary-50/30 transition-colors group/row">
+                                            <td className="px-8 py-6 whitespace-nowrap">
+                                                <div className="flex items-center">
+                                                    <div className="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center group-hover/row:bg-primary-600 transition-colors">
+                                                        {getEquipmentIcon(item.name)}
+                                                    </div>
+                                                    <div className="ml-4">
+                                                        <div className="text-sm font-black text-gray-900">{item.name}</div>
+                                                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Patrimônio Objetivo</div>
+                                                    </div>
                                                 </div>
-                                                <div className="ml-4">
-                                                    <div className="text-sm font-black text-gray-900">{item.name}</div>
-                                                    <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Patrimônio Objetivo</div>
+                                            </td>
+                                            <td className="px-8 py-6 whitespace-nowrap">
+                                                <div className="text-sm font-bold text-gray-600">{item.brand || '—'}</div>
+                                                <div className="text-xs text-gray-400">{item.model || '—'}</div>
+                                            </td>
+                                            <td className="px-8 py-6 whitespace-nowrap text-center">
+                                                <span className={clsx(
+                                                    "inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black ring-1 ring-inset",
+                                                    inUse > 0
+                                                        ? "bg-amber-50 text-amber-700 ring-amber-600/20"
+                                                        : "bg-gray-50 text-gray-400 ring-gray-400/20"
+                                                )}>
+                                                    {inUse} em uso
+                                                </span>
+                                            </td>
+                                            <td className="px-8 py-6 whitespace-nowrap text-center">
+                                                <span className={clsx(
+                                                    "inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black ring-1 ring-inset",
+                                                    item.total_quantity > 0
+                                                        ? "bg-green-50 text-green-700 ring-green-600/20"
+                                                        : "bg-red-50 text-red-700 ring-red-600/20"
+                                                )}>
+                                                    {item.total_quantity} unid.
+                                                </span>
+                                            </td>
+                                            <td className="px-8 py-6 whitespace-nowrap text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleOpenModal(item)}
+                                                        className="p-3 text-primary-600 hover:bg-primary-600 hover:text-white rounded-xl transition-all"
+                                                        title="Editar"
+                                                    >
+                                                        <Edit2 className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => confirmDelete(item)}
+                                                        className="p-3 text-red-600 hover:bg-red-600 hover:text-white rounded-xl transition-all"
+                                                        title="Excluir"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-6 whitespace-nowrap">
-                                            <div className="text-sm font-bold text-gray-600">{item.brand || '—'}</div>
-                                            <div className="text-xs text-gray-400">{item.model || '—'}</div>
-                                        </td>
-                                        <td className="px-8 py-6 whitespace-nowrap text-center">
-                                            <span className={clsx(
-                                                "inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black ring-1 ring-inset",
-                                                item.total_quantity > 0
-                                                    ? "bg-green-50 text-green-700 ring-green-600/20"
-                                                    : "bg-red-50 text-red-700 ring-red-600/20"
-                                            )}>
-                                                {item.total_quantity} unid.
-                                            </span>
-                                        </td>
-                                        <td className="px-8 py-6 whitespace-nowrap text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleOpenModal(item)}
-                                                    className="p-3 text-primary-600 hover:bg-primary-600 hover:text-white rounded-xl transition-all"
-                                                    title="Editar"
-                                                >
-                                                    <Edit2 className="h-4 w-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => confirmDelete(item)}
-                                                    className="p-3 text-red-600 hover:bg-red-600 hover:text-white rounded-xl transition-all"
-                                                    title="Excluir"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
                             </tbody>
                         </table>
                     </div>
