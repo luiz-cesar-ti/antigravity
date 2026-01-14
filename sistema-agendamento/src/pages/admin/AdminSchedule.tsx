@@ -676,13 +676,21 @@ export function AdminSchedule() {
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
 
-                /* Dynamic Column Width */
+                /* Prevent text inflation on mobile */
+                html {
+                    -webkit-text-size-adjust: none;
+                    text-size-adjust: none;
+                }
+
+                /* Dynamic Column Width & Font */
                 :root {
                     --col-width: ${columnWidth}px;
                 }
                 @media (max-width: 768px) {
                     :root {
                         --col-width: ${mobileColumnWidth}px;
+                        /* Font size roughly 1/8th of width, clamped between 6px and 12px */
+                        --dynamic-font: clamp(6px, calc(${mobileColumnWidth}px / 8), 12px);
                     }
                 }
             `}</style>
