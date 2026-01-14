@@ -14,6 +14,8 @@ import { ptBR } from 'date-fns/locale';
 
 import { LogDetailsModal } from '../../components/LogDetailsModal';
 import { generateFriendlySummary } from '../../utils/auditLogFormatter';
+import { generateChangeTip } from '../../utils/changeTipGenerator';
+import { Lightbulb } from 'lucide-react';
 
 interface AuditLog {
     id: string;
@@ -293,53 +295,67 @@ export function AdminLogs() {
                                                             {friendly.details}
                                                         </p>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-100 text-gray-600 text-xs font-semibold">
-                                                            {friendly.target}
-                                                        </span>
-                                                    </td>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getActionColor(log.action_type)}`}>
-                                                            {log.action_type}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono text-xs">
-                                                        <div className="truncate max-w-[150px]" title={log.record_id}>
-                                                            {log.table_name}:{log.record_id?.split('-')[0]}...
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono text-xs">
-                                                        {log.ip_address !== 'unknown' ? log.ip_address : '-'}
-                                                    </td>
-                                                </>
-                                            )}
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-100 text-gray-600 text-xs font-semibold">
+                                                        {friendly.target}
+                                                    </span>
+                                                    {(() => {
+                                                        const tip = generateChangeTip(log);
+                                                        if (tip && log.action_type.includes('UPDATE')) {
+                                                            return (
+                                                                <div className="mt-2 flex items-start gap-1.5 p-2 bg-yellow-50 border border-yellow-100 rounded-lg max-w-xs">
+                                                                    <Lightbulb className="w-3.5 h-3.5 text-yellow-600 shrink-0 mt-0.5" />
+                                                                    <span className="text-[10px] text-yellow-800 font-medium leading-tight">
+                                                                        <span className="font-bold uppercase tracking-wider text-yellow-900 border-b border-yellow-200 mr-1">Dica:</span>
+                                                                        {tip}
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return null;
+                                                    })()}
+                                                </td>
+                                        </>
+                                    ) : (
+                            <>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getActionColor(log.action_type)}`}>
+                                        {log.action_type}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono text-xs">
+                                    <div className="truncate max-w-[150px]" title={log.record_id}>
+                                        {log.table_name}:{log.record_id?.split('-')[0]}...
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono text-xs">
+                                    {log.ip_address !== 'unknown' ? log.ip_address : '-'}
+                                </td>
+                            </>
+                                    )}
 
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <button
-                                                    className="text-primary-600 hover:text-primary-900 bg-primary-50 hover:bg-primary-100 p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                                                    title="Ver Detalhes"
-                                                >
-                                                    <Search className="w-4 h-4" />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button
+                                    className="text-primary-600 hover:text-primary-900 bg-primary-50 hover:bg-primary-100 p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                    title="Ver Detalhes"
+                                >
+                                    <Search className="w-4 h-4" />
+                                </button>
+                            </td>
+                        </tr>
+                        );
+                        })
+                    )}
+                    </tbody>
+                </table>
             </div>
-
-            {/* Modal de Detalhes */}
-            <LogDetailsModal
-                isOpen={!!selectedLog}
-                onClose={() => setSelectedLog(null)}
-                log={selectedLog}
-            />
         </div>
+
+            {/* Modal de Detalhes */ }
+    <LogDetailsModal
+        isOpen={!!selectedLog}
+        onClose={() => setSelectedLog(null)}
+        log={selectedLog}
+    />
+        </div >
     );
 }

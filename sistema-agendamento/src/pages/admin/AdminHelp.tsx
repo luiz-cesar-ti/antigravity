@@ -302,13 +302,13 @@ export function AdminHelp() {
                                             <span className="text-[10px] md:text-sm font-black text-blue-700 bg-blue-100 px-2 py-1 rounded mb-2 inline-block">CONCLUÍDO</span>
                                             <p className="text-xs md:text-sm text-blue-800 leading-tight">Data/Hora já passaram. Encerramento automático.</p>
                                         </div>
-                                        <div className="p-4 rounded-xl bg-amber-50 border border-amber-100">
-                                            <span className="text-[10px] md:text-sm font-black text-amber-700 bg-amber-100 px-2 py-1 rounded mb-2 inline-block">EXCLUÍDO PELO DOCENTE</span>
-                                            <p className="text-xs md:text-sm text-amber-800 leading-tight">Professor tirou da visão dele. Admin ainda vê.</p>
+                                        <div className="p-4 rounded-xl bg-red-50 border border-red-100">
+                                            <span className="text-[10px] md:text-sm font-black text-red-700 bg-red-100 px-2 py-1 rounded mb-2 inline-block">EXCLUÍDO PELO DOCENTE</span>
+                                            <p className="text-xs md:text-sm text-red-800 leading-tight">Professor tirou da visão dele. Admin ainda vê.</p>
                                         </div>
-                                        <div className="p-4 rounded-xl bg-purple-50 border border-purple-100">
-                                            <span className="text-[10px] md:text-sm font-black text-purple-700 bg-purple-100 px-2 py-1 rounded mb-2 inline-block">RECORRENTE</span>
-                                            <p className="text-xs md:text-sm text-purple-800 leading-tight">Fixo semanal. Criável até o final do mês corrente.</p>
+                                        <div className="p-4 rounded-xl bg-amber-50 border border-amber-100">
+                                            <span className="text-[10px] md:text-sm font-black text-amber-700 bg-amber-100 px-2 py-1 rounded mb-2 inline-block">RECORRENTE</span>
+                                            <p className="text-xs md:text-sm text-amber-800 leading-tight">Fixo semanal. Criável até o final do mês corrente.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -404,20 +404,26 @@ export function AdminHelp() {
                                         <div className="bg-gray-50 border border-gray-100 p-5 rounded-3xl">
                                             <span className="text-[10px] uppercase font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded mb-3 inline-block">PADRÃO</span>
                                             <h4 className="font-bold text-gray-900 mb-2">Termo de Agendamento</h4>
-                                            <p className="text-sm text-gray-600">Padrão automático para reservas pontuais.</p>
+                                            <p className="text-sm text-gray-600">
+                                                Agendamentos padrão são aqueles que o professor faz cadastro no sistema e realiza um agendamento de um equipamento para pesquisas pedagógicas entre o professor e os alunos no dia a dia.
+                                            </p>
                                         </div>
                                         <div className="bg-purple-50 border border-purple-100 p-5 rounded-3xl">
                                             <span className="text-[10px] uppercase font-bold bg-purple-100 text-purple-700 px-2 py-1 rounded mb-3 inline-block">RECORRENTE</span>
                                             <h4 className="font-bold text-gray-900 mb-2">Termo Recorrente</h4>
-                                            <p className="text-sm text-gray-600 mb-4">Fixo semanal. Captura a recorrência (ex: Toda Segunda).</p>
+                                            <p className="text-sm text-gray-600 mb-4">
+                                                Simplifica a rotina de professores que utilizam os mesmos equipamentos em dias fixos da semana. Permite criar, em uma única ação, agendamentos automáticos para todas as datas correspondentes dentro do mês vigente. O professor assina o termo uma única vez, abrangendo todas as reservas do período.
+                                            </p>
                                             <div className="text-[10px] flex items-center gap-1.5 text-purple-700 bg-purple-100 px-3 py-1.5 rounded-lg font-bold border border-purple-200 w-fit">
-                                                <Lock className="h-3 w-3" /> Cobre toda a série de aulas.
+                                                <Lock className="h-3 w-3" /> Atenção: A recorrência é mensal.
                                             </div>
                                         </div>
                                         <div className="bg-amber-50 border border-amber-100 p-5 rounded-3xl">
                                             <span className="text-[10px] uppercase font-bold bg-amber-100 text-amber-800 px-2 py-1 rounded mb-3 inline-block">EMPRÉSTIMO</span>
                                             <h4 className="font-bold text-gray-900 mb-2">Termo de Retirada</h4>
-                                            <p className="text-sm text-gray-600">Para terceiros. Assinatura dupla necessária.</p>
+                                            <p className="text-sm text-gray-600">
+                                                Esse tipo de agendamento é indicado para terceiros que não têm cadastro no sistema. É necessário inserir informações sobre o solicitante, setor, local, data, horário, equipamento, número de patrimônio e imprimir o termo de uso e responsabilidade e dar ao solicitante para que ele assine com o CPF. Esse termo será guardado em um local físico pelo técnico da educação digital.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -437,7 +443,7 @@ export function AdminHelp() {
                                         <div>
                                             <h4 className="font-bold text-gray-900 mb-1">Vínculo de Exclusão</h4>
                                             <p className="text-xs text-gray-600 leading-relaxed">
-                                                Ao excluir permanentemente um agendamento do sistema, o <strong>ID deixa de existir</strong>, invalidando a verificação de qualquer termo impresso antigo.
+                                                Quando um professor exclui um agendamento, ele recebe o status "EXCLUÍDO PELO DOCENTE" e permanece visível para o administrador. Da mesma forma, exclusões administrativas não removem o dado imediatamente; o registro é mantido no banco de dados para auditoria por 365 dias, sendo excluído automaticamente apenas após esse prazo.
                                             </p>
                                         </div>
                                     </div>
@@ -1234,11 +1240,11 @@ export function AdminHelp() {
                                         <h4 className="font-bold text-gray-900 text-lg">2. Histórico Operacional</h4>
                                     </div>
                                     <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-                                        O sistema mantém o histórico completo de agendamentos ativos, realizados e cancelados para consulta.
+                                        O sistema mantém todo o histórico de agendamentos (normais, recorrentes e empréstimos). Mesmo que um professor ou administrador realize a exclusão, esses registros permanecem salvos no banco de dados para fins de auditoria e segurança, sendo removidos permanentemente apenas após 365 dias.
                                     </p>
                                     <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl">
                                         <p className="text-xs text-gray-500 italic leading-relaxed">
-                                            Nota: Para garantir o "Direito ao Esquecimento" (outro pilar da LGPD), agendamentos antigos podem ser excluídos permanentemente pela administração, removendo seus vestígios do banco de dados quando não forem mais necessários.
+                                            Nota: Essa retenção garante a rastreabilidade completa das operações e evita perdas acidentais, assegurando que o histórico permaneça auditável por um ano inteiro antes da limpeza automática.
                                         </p>
                                     </div>
                                 </div>
@@ -1358,6 +1364,50 @@ export function AdminHelp() {
                                             <p className="text-xs text-amber-900 leading-relaxed">
                                                 <strong>Snapshots Detalhados:</strong> Cada ação de exclusão, edição ou criação gera um log imutável contendo o estado dos dados <em>antes</em> e <em>depois</em> da alteração, permitindo auditoria técnica completa em caso de incidentes.
                                             </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 6. Firewall de Dados (RLS) */}
+                                <div className="bg-gradient-to-br from-blue-900 to-indigo-900 p-6 rounded-[2rem] shadow-lg border border-blue-800 relative overflow-hidden text-white mt-8">
+                                    {/* Decorative Background */}
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                                        <Lock className="h-32 w-32 text-white" />
+                                    </div>
+
+                                    <div className="relative z-10">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="bg-white/10 p-2 rounded-lg backdrop-blur-sm border border-white/20">
+                                                <Shield className="h-6 w-6 text-blue-200" />
+                                            </div>
+                                            <h4 className="font-bold text-white text-lg">6. Firewall de Dados (RLS - Row Level Security)</h4>
+                                        </div>
+
+                                        <p className="text-blue-100 text-sm mb-6 leading-relaxed">
+                                            Além da proteção HTTPS e senhas, o sistema utiliza uma camada de segurança nativa do banco de dados chamada <strong className="text-white">RLS (Row Level Security)</strong>.
+                                        </p>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div className="bg-black/20 p-4 rounded-xl border border-white/10">
+                                                <h5 className="font-bold text-xs uppercase tracking-wider text-blue-300 mb-2">Bloqueio Total</h5>
+                                                <p className="text-xs text-blue-100 leading-relaxed">
+                                                    Mesmo em caso de invasão, o banco de dados funciona como um "Cofre Individual". Cada linha de dado tem seu próprio segurança.
+                                                </p>
+                                            </div>
+
+                                            <div className="bg-black/20 p-4 rounded-xl border border-white/10">
+                                                <h5 className="font-bold text-xs uppercase tracking-wider text-blue-300 mb-2">Isolamento Absoluto</h5>
+                                                <p className="text-xs text-blue-100 leading-relaxed">
+                                                    Vazamentos em massa são matematicamente impossíveis. Um usuário só consegue ler estritamente o que pertence a ele.
+                                                </p>
+                                            </div>
+
+                                            <div className="bg-black/20 p-4 rounded-xl border border-white/10">
+                                                <h5 className="font-bold text-xs uppercase tracking-wider text-blue-300 mb-2">Imunidade a Falhas</h5>
+                                                <p className="text-xs text-blue-100 leading-relaxed">
+                                                    A segurança não depende do aplicativo (frontend). Se houver um bug na tela, o banco de dados recusa a entrega da informação.
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
