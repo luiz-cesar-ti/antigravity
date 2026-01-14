@@ -11,13 +11,24 @@ export function UpdatePassword() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Verifica se há sessão ativa (o link de email loga o usuário)
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (!session) {
-                // Se não tiver sessão (link inválido ou expirado), manda pro login
-                navigate('/login');
+        // Escuta mudanças de estado (especialmente PASSWORD_RECOVERY)
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'PASSWORD_RECOVERY') {
+                // Evento específico de recuperação de senha - Tudo certo
+            } else if (event === 'SIGNED_IN') {
+                // Usuário logado (link processado com sucesso) - Tudo certo
+            } else if (!session) {
+                // Se não tiver sessão, verifica se tem hash na URL (ainda processando)
+                const hash = window.location.hash;
+                if (!hash || !hash.includes('type=recovery')) {
+                    navigate('/login');
+                }
             }
         });
+
+        return () => {
+            authListener.subscription.unsubscribe();
+        };
     }, [navigate]);
 
     const handleSubmit = async (e: React.FormEvent) => {

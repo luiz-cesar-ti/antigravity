@@ -21,15 +21,19 @@ export function ForgotPassword() {
             const isGlobalAdmin = email === 'atendimentotecnico.saovicente@objetivoportal.com.br';
 
             if (!isGlobalAdmin) {
-                // 1. Validar se o par TOTVS + Email existe no banco SOMENTE se não for Global Admin
-                const { data: users, error: userError } = await supabase
-                    .from('users')
-                    .select('id')
-                    .eq('totvs_number', totvs)
-                    .eq('email', email)
-                    .single();
+                // 1. Validar se o par TOTVS + Email existe via RPC segura (bypassing RLS)
+                const { data: exists, error: rpcError } = await supabase
+                    .rpc('verify_user_for_reset', {
+                        p_email: email.trim(),
+                        p_totvs: totvs.trim()
+                    });
 
-                if (userError || !users) {
+                if (rpcError) {
+                    console.error('Erro no RPC:', rpcError);
+                    throw rpcError;
+                }
+
+                if (!exists) {
                     setError('Dados não conferem. Verifique o Número TOTVS e o Email informados.');
                     setLoading(false);
                     return;
