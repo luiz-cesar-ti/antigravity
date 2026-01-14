@@ -13,7 +13,9 @@ import {
     Clock,
     LayoutGrid,
     Lock,
-    Unlock
+    Unlock,
+    Settings,
+    X
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,6 +26,7 @@ interface ScheduleGrid {
     headers: string[];
     rows: string[][];
     columnWidth?: number;
+    mobileColumnWidth?: number;
 }
 
 interface ClassSchedule {
@@ -60,7 +63,9 @@ export function AdminSchedule() {
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [columnWidth, setColumnWidth] = useState(150);
+    const [mobileColumnWidth, setMobileColumnWidth] = useState(80);
     const [isLocked, setIsLocked] = useState(true);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -113,6 +118,9 @@ export function AdminSchedule() {
                 if (data.schedule_data?.columnWidth) {
                     setColumnWidth(data.schedule_data.columnWidth);
                 }
+                if (data.schedule_data?.mobileColumnWidth) {
+                    setMobileColumnWidth(data.schedule_data.mobileColumnWidth);
+                }
             } else {
                 setSchedule({
                     unit: targetUnit,
@@ -143,7 +151,8 @@ export function AdminSchedule() {
                     ...schedule,
                     schedule_data: {
                         ...schedule.schedule_data,
-                        columnWidth: columnWidth
+                        columnWidth: columnWidth,
+                        mobileColumnWidth: mobileColumnWidth
                     },
                     unit: targetUnit,
                     updated_at: new Date().toISOString()
@@ -311,12 +320,21 @@ export function AdminSchedule() {
 
                 <div className="flex flex-wrap items-center gap-3">
                     <button
+                        onClick={() => setIsSettingsOpen(true)}
+                        className="flex items-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 font-black text-xs uppercase tracking-wider rounded-2xl hover:bg-gray-200 transition-all shadow-sm active:scale-95"
+                    >
+                        <Settings className="h-4 w-4" />
+                        <span className="hidden md:inline">Ajustes</span>
+                        <span className="md:hidden">Ajustes</span>
+                    </button>
+                    <button
                         onClick={downloadTemplate}
                         disabled={isLocked}
-                        className="flex items-center gap-2 px-6 py-3 bg-white text-gray-700 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-gray-100 hover:border-primary-200 hover:text-primary-600 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 px-6 py-3 bg-indigo-50 text-indigo-700 font-black text-xs uppercase tracking-wider rounded-2xl hover:bg-indigo-100 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Download className="h-4 w-4" />
-                        Baixar Modelo
+                        <span className="hidden md:inline">Baixar Modelo</span>
+                        <span className="md:hidden">Modelo</span>
                     </button>
                     <button
                         onClick={() => fileInputRef.current?.click()}
@@ -324,7 +342,8 @@ export function AdminSchedule() {
                         className="flex items-center gap-2 px-6 py-3 bg-primary-50 text-primary-700 font-black text-xs uppercase tracking-wider rounded-2xl border-2 border-primary-100 hover:bg-primary-100 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Upload className="h-4 w-4" />
-                        Importar CSV
+                        <span className="hidden md:inline">Importar CSV</span>
+                        <span className="md:hidden">Importar</span>
                     </button>
                     <input
                         type="file"
@@ -401,22 +420,75 @@ export function AdminSchedule() {
                     </div>
                 </div>
 
-                <div className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 space-y-3 order-1 md:order-3">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1">
-                        <LayoutGrid className="h-3 w-3" /> Largura das Colunas
-                    </label>
-                    <div className="flex items-center gap-4 pt-1">
-                        <input
-                            type="range"
-                            min="80"
-                            max="300"
-                            value={columnWidth}
-                            onChange={(e) => setColumnWidth(Number(e.target.value))}
-                            className="flex-1 h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-primary-600"
-                        />
-                        <span className="text-xs font-mono font-bold text-gray-600 w-12 text-right">{columnWidth}px</span>
+                {/* Settings Modal (Replaces inline column width control) */}
+                {isSettingsOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white p-6 rounded-[2rem] shadow-2xl w-full max-w-sm border border-gray-100 relative animate-in zoom-in-95 duration-200">
+                            <button
+                                onClick={() => setIsSettingsOpen(false)}
+                                className="absolute top-4 right-4 p-2 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors"
+                            >
+                                <X className="h-4 w-4 text-gray-500" />
+                            </button>
+
+                            <h3 className="text-lg font-black text-gray-900 mb-6 flex items-center gap-2">
+                                <Settings className="h-5 w-5 text-gray-400" />
+                                Ajustes de Visualização
+                            </h3>
+
+                            <div className="space-y-6">
+                                {/* Desktop Slider */}
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1 mb-2">
+                                        <div className="flex items-center gap-1">
+                                            <LayoutGrid className="h-3 w-3" />
+                                            Largura Desktop
+                                        </div>
+                                    </label>
+                                    <div className="flex items-center gap-4">
+                                        <input
+                                            type="range"
+                                            min="100"
+                                            max="300"
+                                            value={columnWidth}
+                                            onChange={(e) => setColumnWidth(Number(e.target.value))}
+                                            className="flex-1 h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                        />
+                                        <span className="text-xs font-mono font-bold text-gray-600 w-12 text-right">{columnWidth}px</span>
+                                    </div>
+                                </div>
+
+                                {/* Mobile Slider */}
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1 mb-2">
+                                        <div className="flex items-center gap-1">
+                                            <LayoutGrid className="h-3 w-3" />
+                                            Largura Mobile
+                                        </div>
+                                    </label>
+                                    <div className="flex items-center gap-4">
+                                        <input
+                                            type="range"
+                                            min="50"
+                                            max="200"
+                                            value={mobileColumnWidth}
+                                            onChange={(e) => setMobileColumnWidth(Number(e.target.value))}
+                                            className="flex-1 h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                                        />
+                                        <span className="text-xs font-mono font-bold text-gray-600 w-12 text-right">{mobileColumnWidth}px</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => setIsSettingsOpen(false)}
+                                className="w-full mt-8 py-3 bg-primary-600 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-primary-700 transition-colors"
+                            >
+                                Concluir
+                            </button>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* Table Area */}
@@ -470,22 +542,24 @@ export function AdminSchedule() {
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto pb-6 custom-scrollbar">
+                    <div className="overflow-auto max-h-[75vh] pb-6 custom-scrollbar">
                         <table className="border-separate border-spacing-2" style={{ tableLayout: 'fixed', width: 'max-content' }}>
                             <thead>
                                 <tr>
                                     {schedule?.schedule_data.headers.map((header, i) => (
                                         <th
                                             key={i}
-                                            className="relative group transition-all duration-200"
-                                            style={{ width: `${columnWidth}px`, minWidth: `${columnWidth}px` }}
+                                            className={`relative group transition-all duration-200 
+                                                sticky top-0 
+                                                ${i === 0 ? 'left-0 z-30 bg-white border-r border-gray-100' : 'z-20 bg-white'}`}
+                                            style={{ width: 'var(--col-width)', minWidth: 'var(--col-width)' }}
                                         >
                                             <div className="relative">
                                                 <input
                                                     type="text"
                                                     value={header}
                                                     onChange={(e) => updateHeader(i, e.target.value)}
-                                                    className={`w-full p-2 bg-gray-50 border-2 border-transparent focus:border-indigo-400 focus:bg-white rounded-2xl text-xs font-black text-center uppercase tracking-wider transition-all outline-none ${i === 0 ? 'text-indigo-600' : 'text-gray-700'}`}
+                                                    className={`w-full p-2 bg-gray-50 border-2 border-transparent focus:border-indigo-400 focus:bg-white rounded-2xl text-[9px] md:text-sm font-black text-center uppercase tracking-wider transition-all outline-none ${i === 0 ? 'text-indigo-600' : 'text-gray-700'}`}
                                                     style={{ height: '60px' }}
                                                     placeholder={i === 0 ? "Horário" : "Turma"}
                                                     disabled={isLocked}
@@ -519,7 +593,7 @@ export function AdminSchedule() {
                                 {schedule?.schedule_data.rows.map((row, rowIndex) => (
                                     <tr key={rowIndex} className="group">
                                         {row.map((cell, colIndex) => (
-                                            <td key={colIndex}>
+                                            <td key={colIndex} className={`${colIndex === 0 ? 'sticky left-0 z-10 bg-gray-50 border-r border-gray-100' : ''}`}>
                                                 <div className={`relative flex items-center justify-center transition-all border-2 rounded-2xl min-h-[60px]
                                                     ${colIndex === 0
                                                         ? 'bg-gray-50 border-gray-100'
@@ -527,7 +601,7 @@ export function AdminSchedule() {
                                                             ? 'bg-indigo-50 border-indigo-100'
                                                             : 'bg-white border-gray-100'
                                                     }`}
-                                                    style={{ width: `${columnWidth}px`, minWidth: `${columnWidth}px` }}
+                                                    style={{ width: 'var(--col-width)', minWidth: 'var(--col-width)' }}
                                                 >
                                                     {colIndex === 0 || rowIndex === 0 ? (
                                                         <input
@@ -536,8 +610,8 @@ export function AdminSchedule() {
                                                             onChange={(e) => updateCell(rowIndex, colIndex, e.target.value)}
                                                             className={`w-full bg-transparent border-none outline-none text-center px-1
                                                                 ${colIndex === 0
-                                                                    ? 'font-black text-gray-900 text-xs'
-                                                                    : 'text-indigo-700 font-bold text-xs placeholder:text-indigo-300'
+                                                                    ? 'font-black text-gray-900 text-[9px] md:text-sm'
+                                                                    : 'text-indigo-700 font-bold text-[9px] md:text-sm placeholder:text-indigo-300'
                                                                 }
                                                                 ${colIndex === 0 && rowIndex === 0 ? 'opacity-0' : ''}`}
                                                             placeholder={colIndex === 0 ? "00:00" : "Sala"}
@@ -549,7 +623,7 @@ export function AdminSchedule() {
                                                             value={cell}
                                                             onChange={(e) => updateCell(rowIndex, colIndex, e.target.value)}
                                                             disabled={isLocked}
-                                                            className={`w-full bg-transparent border-none outline-none resize-none text-center text-gray-600 font-medium text-[10px] leading-tight px-1 flex items-center justify-center ${isLocked ? 'cursor-not-allowed' : ''}`}
+                                                            className={`w-full bg-transparent border-none outline-none resize-none text-center text-gray-600 font-medium text-[8px] md:text-[13px] leading-tight px-1 flex items-center justify-center ${isLocked ? 'cursor-not-allowed' : ''}`}
                                                             placeholder="Prof."
                                                             style={{
                                                                 height: '60px',
@@ -601,6 +675,16 @@ export function AdminSchedule() {
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+
+                /* Dynamic Column Width */
+                :root {
+                    --col-width: ${columnWidth}px;
+                }
+                @media (max-width: 768px) {
+                    :root {
+                        --col-width: ${mobileColumnWidth}px;
+                    }
+                }
             `}</style>
         </div >
     );
