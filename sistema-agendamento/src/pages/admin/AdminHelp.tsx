@@ -321,13 +321,13 @@ export function AdminHelp() {
                                         <div>
                                             <h4 className="font-bold text-gray-700 mb-2 text-sm">Pelo Professor</h4>
                                             <p className="text-xs md:text-sm text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-xl">
-                                                Exclusão visual para organização pessoal. Permanece registrado para o administrador (marcado em amarelo).
+                                                O professor pode cancelar um agendamento para sua organização, mas esse registro continuará visível para o administrador, identificado com o status <strong className="text-red-600 ml-1">Excluído pelo Professor</strong>.
                                             </p>
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-gray-700 mb-2 text-sm">Pelo Administrador</h4>
                                             <p className="text-xs md:text-sm text-red-900 leading-relaxed bg-red-50 p-4 rounded-xl">
-                                                <strong>"Exclusão Permanente"</strong>. O registro é apagado definitivamente, liberando o horário no estoque.
+                                                O administrador também pode excluir agendamentos se necessário. Por segurança, todos os registros (mesmo os excluídos) permanecem salvos no banco de dados por <strong>365 dias</strong> para fins de auditoria.
                                             </p>
                                         </div>
                                     </div>
@@ -857,14 +857,7 @@ export function AdminHelp() {
                                         Permite que um professor tenha um agendamento fixo semanal (ex: Toda Quinta às 08:00).
                                     </p>
 
-                                    <button
-                                        onClick={() => scrollToSection('term-recurrent-card')}
-                                        className="mb-8 flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg text-sm font-bold hover:bg-purple-100 transition-colors group w-fit border border-purple-100"
-                                    >
-                                        <Info className="h-4 w-4 animate-pulse" />
-                                        Entenda como funciona o Termo Jurídico
-                                        <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                                    </button>
+
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
@@ -1035,61 +1028,103 @@ export function AdminHelp() {
                                     O sistema notifica os administradores instantaneamente sobre eventos importantes, como novos cadastros ou solicitações.
                                 </p>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                    {/* Coluna 1: Alertas */}
-                                    <div className="pt-2">
-                                        <div className="border-l-4 border-cyan-500 pl-4 space-y-4">
-                                            <h4 className="font-bold text-gray-900 mb-4 block">Alertas em Tempo Real</h4>
+                                <div className="space-y-6">
+                                    <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></div>
+                                        Alertas em Tempo Real
+                                    </h3>
 
-                                            <div className="flex items-center gap-2 text-pink-600 font-bold">
-                                                <div className="h-2 w-2 rounded-full bg-pink-500 animate-pulse"></div>
-                                                <span className="text-sm">Novos Pedidos de Cadastro</span>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {/* Novos Pedidos */}
+                                        <div className="bg-pink-50 rounded-2xl p-5 border border-pink-100 flex items-start gap-4 hover:shadow-md transition-shadow">
+                                            <div className="bg-pink-100 p-3 rounded-xl text-pink-600">
+                                                <UserPlus className="h-6 w-6" />
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-1.5 w-1.5 rounded-full bg-cyan-500"></div>
-                                                <span className="text-sm text-gray-600">Agendamentos de equipamentos</span>
+                                            <div>
+                                                <h4 className="font-exrabold text-pink-900 text-sm mb-1">Novos Usuários</h4>
+                                                <p className="text-xs text-pink-800 leading-snug">
+                                                    Notificação imediata quando um professor realiza o cadastro e aguarda aprovação.
+                                                </p>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-1.5 w-1.5 rounded-full bg-cyan-500"></div>
-                                                <span className="text-sm text-gray-600">Cancelamento de agendamentos do equipamento</span>
+                                        </div>
+
+                                        {/* Agendamentos Equipamento */}
+                                        <div className="bg-cyan-50 rounded-2xl p-5 border border-cyan-100 flex items-start gap-4 hover:shadow-md transition-shadow">
+                                            <div className="bg-cyan-100 p-3 rounded-xl text-cyan-600">
+                                                <Monitor className="h-6 w-6" />
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-1.5 w-1.5 rounded-full bg-indigo-500"></div>
-                                                <span className="text-sm text-gray-600 font-bold">Reserva de Salas</span>
+                                            <div>
+                                                <h4 className="font-bold text-cyan-900 text-sm mb-1">Reserva de Equipamento</h4>
+                                                <p className="text-xs text-cyan-800 leading-snug">
+                                                    Avisa quando um professor agenda um recurso (Notebooks, Projetores, etc).
+                                                </p>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-1.5 w-1.5 rounded-full bg-indigo-500"></div>
-                                                <span className="text-sm text-gray-600">Cancelamento de reserva de Salas</span>
+                                        </div>
+
+                                        {/* Cancelamento Equipamento */}
+                                        <div className="bg-red-50 rounded-2xl p-5 border border-red-100 flex items-start gap-4 hover:shadow-md transition-shadow">
+                                            <div className="bg-red-100 p-3 rounded-xl text-red-600">
+                                                <Trash2 className="h-6 w-6" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-red-900 text-sm mb-1">Cancelamento (Equip.)</h4>
+                                                <p className="text-xs text-red-800 leading-snug">
+                                                    Alerta quando um usuário desiste de um agendamento de equipamento.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Reserva Salas */}
+                                        <div className="bg-indigo-50 rounded-2xl p-5 border border-indigo-100 flex items-start gap-4 hover:shadow-md transition-shadow">
+                                            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600">
+                                                <LayoutGrid className="h-6 w-6" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-indigo-900 text-sm mb-1">Reserva de Salas</h4>
+                                                <p className="text-xs text-indigo-800 leading-snug">
+                                                    Notificação de uso de espaços físicos (Laboratórios, Auditórios).
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Cancelamento Salas */}
+                                        <div className="bg-orange-50 rounded-2xl p-5 border border-orange-100 flex items-start gap-4 hover:shadow-md transition-shadow">
+                                            <div className="bg-orange-100 p-3 rounded-xl text-orange-600">
+                                                <X className="h-6 w-6" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-orange-900 text-sm mb-1">Cancelamento (Salas)</h4>
+                                                <p className="text-xs text-orange-800 leading-snug">
+                                                    Informa a liberação de uma sala previamente ocupada.
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Coluna 2: Histórico */}
-                                    <div className="bg-cyan-50 rounded-[2rem] p-6 text-center md:text-left">
-                                        <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
-                                            <LucideHistory className="h-5 w-5 text-cyan-700" />
-                                            <h4 className="font-bold text-cyan-900">Histórico de Atividade</h4>
+                                    {/* Política de Retenção - Highlight Card */}
+                                    <div className="bg-amber-50 rounded-[2rem] p-6 border border-amber-100 mt-6 relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+                                            <Trash2 className="h-32 w-32 text-amber-900 rotate-12" />
                                         </div>
-                                        <p className="text-sm text-cyan-800 leading-relaxed">
-                                            As notificações ficam salvas por <strong className="text-cyan-900">24 horas</strong> para consulta rápida no menu superior.
-                                        </p>
-                                    </div>
 
-                                    {/* Coluna 3: Limpeza */}
-                                    <div className="bg-amber-50 rounded-[2rem] p-6 border border-amber-100">
-                                        <div className="flex items-center gap-2 mb-3 text-amber-900">
-                                            <Trash2 className="h-5 w-5" />
-                                            <h4 className="font-bold">Política de Retenção (Limpeza)</h4>
+                                        <div className="flex items-center gap-3 mb-4 relative z-10">
+                                            <div className="bg-amber-100 p-2.5 rounded-xl text-amber-700 shadow-sm">
+                                                <Trash2 className="h-6 w-6" />
+                                            </div>
+                                            <h4 className="font-bold text-amber-900 text-lg">Política de Retenção Automática</h4>
                                         </div>
-                                        <p className="text-xs text-amber-800 mb-4">
-                                            Para manter a performance do sistema e evitar acúmulo de dados desnecessários:
-                                        </p>
-                                        <div className="bg-white rounded-xl p-4 border border-amber-100 flex items-center gap-4">
-                                            <span className="text-4xl font-black text-amber-500 leading-none">
-                                                7<br /><span className="text-sm">DIAS</span>
-                                            </span>
-                                            <p className="text-xs text-gray-600 leading-tight">
-                                                É o tempo máximo que uma notificação fica guardada. Após esse período, ela é <strong className="text-gray-900">excluída permanentemente</strong> do banco de dados automaticamente.
+
+                                        <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
+                                            <div className="bg-white p-4 rounded-2xl shadow-sm border border-amber-100 flex items-center gap-4 shrink-0">
+                                                <span className="text-4xl font-black text-amber-500 leading-none">
+                                                    7<br /><span className="text-xs tracking-wider">DIAS</span>
+                                                </span>
+                                                <div className="w-px h-10 bg-amber-100"></div>
+                                                <LucideHistory className="h-6 w-6 text-amber-400" />
+                                            </div>
+
+                                            <p className="text-sm text-amber-900 leading-relaxed font-medium">
+                                                Para garantir a performance do sistema, todas as notificações são armazenadas por um período de segurança de <strong>7 dias</strong>. Após este prazo, os registros são excluídos permanentemente do banco de dados de forma automática.
                                             </p>
                                         </div>
                                     </div>
