@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { useNavigate } from 'react-router-dom';
-import { Lock } from 'lucide-react';
+import { Lock, Info, Eye, EyeOff } from 'lucide-react';
 
 export function UpdatePassword() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
@@ -93,21 +95,57 @@ export function UpdatePassword() {
                         </div>
                     )}
 
+                    {/* Password Security Tip */}
+                    <div className="mb-6 bg-blue-50 border border-blue-100 rounded-lg p-3">
+                        <div className="flex gap-2 mb-2">
+                            <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                            <p className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Senha Segura (Obrigatório)</p>
+                        </div>
+                        <p className="text-[11px] text-blue-800 leading-relaxed">
+                            Para sua segurança, a senha deve ter no mínimo <strong>8 caracteres</strong> e conter pelo menos:
+                        </p>
+                        <ul className="mt-1.5 grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] text-blue-700 font-medium">
+                            <li className="flex items-center gap-1">
+                                <div className="h-1 w-1 rounded-full bg-blue-400"></div>
+                                Letra Maiúscula
+                            </li>
+                            <li className="flex items-center gap-1">
+                                <div className="h-1 w-1 rounded-full bg-blue-400"></div>
+                                Letra Minúscula
+                            </li>
+                            <li className="flex items-center gap-1">
+                                <div className="h-1 w-1 rounded-full bg-blue-400"></div>
+                                Um Número
+                            </li>
+                            <li className="flex items-center gap-1">
+                                <div className="h-1 w-1 rounded-full bg-blue-400"></div>
+                                Símbolo (@$!%...)
+                            </li>
+                        </ul>
+                    </div>
+
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div>
                             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                                 Nova Senha
                             </label>
-                            <div className="mt-1">
+                            <div className="mt-1 relative rounded-md shadow-sm">
                                 <input
                                     id="password"
                                     name="password"
-                                    type="password"
+                                    type={showPassword ? 'text' : 'password'}
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm pr-10"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600"
+                                >
+                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                </button>
                             </div>
                         </div>
 
@@ -115,16 +153,23 @@ export function UpdatePassword() {
                             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                                 Confirmar Nova Senha
                             </label>
-                            <div className="mt-1">
+                            <div className="mt-1 relative rounded-md shadow-sm">
                                 <input
                                     id="confirmPassword"
                                     name="confirmPassword"
-                                    type="password"
+                                    type={showConfirmPassword ? 'text' : 'password'}
                                     required
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm pr-10"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600"
+                                >
+                                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                </button>
                             </div>
                         </div>
 
