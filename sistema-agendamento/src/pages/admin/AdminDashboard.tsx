@@ -150,21 +150,33 @@ export function AdminDashboard() {
 
         setIsSearchingTeachers(true);
         try {
-            let userQuery = supabase
-                .from('users')
-                .select('id, full_name, totvs_number')
-                .eq('role', 'teacher')
-                .or(`full_name.ilike.%${query}%,totvs_number.ilike.%${query}%`)
-                .limit(5);
+            // Use RPC to bypass RLS issues and ensure consistent header usage
+            const { data, error } = await supabase.rpc('get_admin_users');
 
-            if (isSuperAdmin && targetUnit !== 'Matriz') {
-                userQuery = userQuery.contains('units', [targetUnit]);
-            } else if (!isSuperAdmin && adminUser.unit && adminUser.unit !== 'Matriz') {
-                userQuery = userQuery.contains('units', [adminUser.unit]);
-            }
+            if (error) throw error;
 
-            const { data } = await userQuery;
-            setTeacherSearchResults(data || []);
+            let results = data || [];
+
+            // Client-side filtering
+            results = results.filter((u: any) => {
+                // 1. Unit Filter
+                let matchesUnit = true;
+                if (isSuperAdmin && targetUnit !== 'Matriz') {
+                    matchesUnit = u.units?.includes(targetUnit);
+                } else if (!isSuperAdmin && adminUser.unit && adminUser.unit !== 'Matriz') {
+                    matchesUnit = u.units?.includes(adminUser.unit);
+                }
+                if (!matchesUnit) return false;
+
+                // 2. Query Filter (Name or TOTVS)
+                const q = query.toLowerCase();
+                const name = u.full_name?.toLowerCase() || '';
+                const totvs = u.totvs_number?.toLowerCase() || '';
+
+                return name.includes(q) || totvs.includes(q);
+            });
+
+            setTeacherSearchResults(results.slice(0, 5));
         } catch (err) {
             console.error('Teacher search error:', err);
         } finally {
@@ -288,7 +300,7 @@ export function AdminDashboard() {
                 // 3. Top Teachers (New Ranking)
                 const teacherMap: Record<string, { id: string, name: string, count: number }> = {};
                 validBookings.forEach((b: any) => {
-                    const userId = (b as any).users?.id;
+                    const userId = b.user_id; // Fixed: user_id comes directly, not from users JSONB
                     const name = (b as any).users?.full_name || 'Desconhecido';
                     if (userId) {
                         if (!teacherMap[userId]) {
@@ -650,10 +662,10 @@ export function AdminDashboard() {
 
                 {/* 3. Popular Equipment (Donut/Pie Chart) */}
                 <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col">
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-4">
                         <div>
-                            <h3 className="text-xl font-black text-gray-900">Mix de Itens</h3>
-                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Itens mais requisitados</p>
+                            <h3 className="text-xl font-black text-gray-900">Equipamentos Mais Utilizados</h3>
+                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Ranking de equipamentos por demanda</p>
                         </div>
                         <div className="p-3 bg-green-50 rounded-2xl text-green-600">
                             <TrendingUp className="h-5 w-5" />
@@ -690,6 +702,8 @@ export function AdminDashboard() {
                             13h - 18h
                         </button>
                     </div>
+
+                    {/* Texto Explicativo removido */}
 
                     <div className="h-72 w-full relative">
                         <ResponsiveContainer width="100%" height="100%">
@@ -752,15 +766,16 @@ export function AdminDashboard() {
 
                 {/* 4. Booking Status (Status Donut) */}
                 <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col">
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-4">
                         <div>
-                            <h3 className="text-xl font-black text-gray-900">Status</h3>
-                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Panorama geral</p>
+                            <h3 className="text-xl font-black text-gray-900">Status dos Agendamentos</h3>
+                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Distribuição por situação atual</p>
                         </div>
                         <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600">
                             <Filter className="h-5 w-5" />
                         </div>
                     </div>
+                    {/* Legenda Explicativa removida */}
 
                     <div className="h-72 w-full relative mt-4">
                         <ResponsiveContainer width="100%" height="100%">
