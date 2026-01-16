@@ -249,7 +249,7 @@ export function TeacherBookings() {
 
         const { error } = await supabase
             .from('bookings')
-            .update({ status: 'cancelled_by_user' })
+            .update({ deleted_at: new Date().toISOString() })
             .match(matchCondition);
 
         if (!error) {

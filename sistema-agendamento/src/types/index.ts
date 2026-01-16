@@ -53,7 +53,7 @@ export interface RoomBooking {
     user_id: string;
     start_ts: string; // ISO String
     end_ts: string;   // ISO String
-    status: 'confirmed' | 'cancelled';
+    status: 'confirmed' | 'cancelled' | 'cancelled_by_teacher';
     created_at: string;
 
     // Joins
@@ -80,6 +80,7 @@ export interface Booking {
     is_recurring?: boolean;
     recurring_id?: string;
     term_hash?: string;
+    deleted_at?: string;
     created_at: string;
     updated_at: string;
 

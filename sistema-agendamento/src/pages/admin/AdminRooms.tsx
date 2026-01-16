@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Room, RoomBooking, Admin } from '../../types';
-import { Plus, Trash2, Calendar, Clock, MapPin, Users, AlertCircle, AlertTriangle, X, Edit2, CheckCircle2, Settings2, Save, Power } from 'lucide-react';
+import { Plus, Trash2, Calendar, Clock, MapPin, Users, AlertCircle, AlertTriangle, X, Edit2, CheckCircle2, Settings2, Save, Power, Filter, ChevronDown } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -55,6 +55,11 @@ export function AdminRooms() {
     const [roomMinAdvanceHours, setRoomMinAdvanceHours] = useState(0);
     const [roomBookingEnabled, setRoomBookingEnabled] = useState(true);
     const [savingSettings, setSavingSettings] = useState(false);
+
+    // Filters State
+    const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'concluded' | 'cancelled'>('all');
+    const [filterPeriod, setFilterPeriod] = useState<'all' | 'morning' | 'afternoon' | 'night'>('all');
+    const [filterDate, setFilterDate] = useState<string>('');
 
     useEffect(() => {
         fetchData();
@@ -873,6 +878,79 @@ export function AdminRooms() {
             {
                 activeTab === 'bookings' && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {/* Filter Bar */}
+                        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+                            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                                {/* Date Filter */}
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Calendar className="h-4 w-4 text-gray-400 group-focus-within:text-primary-500 transition-colors" />
+                                    </div>
+                                    <input
+                                        type="date"
+                                        value={filterDate}
+                                        onChange={(e) => setFilterDate(e.target.value)}
+                                        className="pl-10 pr-4 py-2.5 w-full sm:w-auto bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-4 focus:ring-primary-50 focus:border-primary-500 hover:border-primary-300 transition-all outline-none shadow-sm"
+                                    />
+                                </div>
+
+                                {/* Period Filter */}
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Clock className="h-4 w-4 text-gray-400 group-focus-within:text-primary-500 transition-colors" />
+                                    </div>
+                                    <select
+                                        value={filterPeriod}
+                                        onChange={(e) => setFilterPeriod(e.target.value as any)}
+                                        className="pl-10 pr-10 py-2.5 w-full sm:w-auto bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-4 focus:ring-primary-50 focus:border-primary-500 hover:border-primary-300 appearance-none transition-all outline-none cursor-pointer shadow-sm"
+                                    >
+                                        <option value="all">Todos os Períodos</option>
+                                        <option value="morning">Manhã (06h-12h)</option>
+                                        <option value="afternoon">Tarde (12h-18h)</option>
+                                        <option value="night">Noite (18h-23h)</option>
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <ChevronDown className="h-4 w-4 text-gray-400 group-hover:text-primary-500 transition-colors" />
+                                    </div>
+                                </div>
+
+                                {/* Status Filter */}
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <AlertCircle className="h-4 w-4 text-gray-400 group-focus-within:text-primary-500 transition-colors" />
+                                    </div>
+                                    <select
+                                        value={filterStatus}
+                                        onChange={(e) => setFilterStatus(e.target.value as any)}
+                                        className="pl-10 pr-10 py-2.5 w-full sm:w-auto bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-4 focus:ring-primary-50 focus:border-primary-500 hover:border-primary-300 appearance-none transition-all outline-none cursor-pointer shadow-sm"
+                                    >
+                                        <option value="all">Todos os Status</option>
+                                        <option value="active">Apenas Ativos</option>
+                                        <option value="concluded">Apenas Concluídos</option>
+                                        <option value="cancelled">Apenas Cancelados</option>
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <ChevronDown className="h-4 w-4 text-gray-400 group-hover:text-primary-500 transition-colors" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Clear Filters Button */}
+                            {(filterDate || filterPeriod !== 'all' || filterStatus !== 'all') && (
+                                <button
+                                    onClick={() => {
+                                        setFilterDate('');
+                                        setFilterPeriod('all');
+                                        setFilterStatus('all');
+                                    }}
+                                    className="text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
+                                >
+                                    <X className="w-3 h-3" />
+                                    Limpar Filtros
+                                </button>
+                            )}
+                        </div>
+
                         {loading ? (
                             <div className="flex flex-col items-center justify-center py-20 text-gray-500">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mb-4"></div>
@@ -880,118 +958,180 @@ export function AdminRooms() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {bookings.map((booking) => {
-                                    // FORCE UTC: append Z to ensure it's parsed as UTC
-                                    // Supabase returns "2024-01-01T10:00:00" for UTC times, we need "2024-01-01T10:00:00Z"
-                                    const start = parseISO(booking.start_ts.endsWith('Z') ? booking.start_ts : booking.start_ts + 'Z');
-                                    const end = parseISO(booking.end_ts.endsWith('Z') ? booking.end_ts : booking.end_ts + 'Z');
+                                {(() => {
+                                    // 1. FILTERING
+                                    const filtered = bookings.filter(booking => {
+                                        const start = parseISO(booking.start_ts.endsWith('Z') ? booking.start_ts : booking.start_ts + 'Z');
+                                        const end = parseISO(booking.end_ts.endsWith('Z') ? booking.end_ts : booking.end_ts + 'Z');
+                                        const hour = start.getHours();
+                                        const now = new Date();
 
-                                    const isPast = new Date() > end;
-                                    const isConfirmed = booking.status === 'confirmed';
-                                    const isCancelledByTeacher = booking.status === 'cancelled_by_teacher';
-                                    const isCancelled = !isConfirmed;
+                                        const isPast = now > end;
+                                        const isConfirmed = booking.status === 'confirmed';
+                                        const isCancelled = !isConfirmed;
 
-                                    // Determinar cor do header e label do badge
-                                    const getHeaderClass = () => {
-                                        if (isCancelledByTeacher) return 'bg-gradient-to-br from-amber-500 to-orange-600';
-                                        if (!isConfirmed) return 'bg-gradient-to-br from-red-500 to-rose-600';
-                                        if (isPast) return 'bg-gradient-to-br from-indigo-500 to-blue-600';
-                                        return 'bg-gradient-to-br from-emerald-500 to-teal-600';
-                                    };
+                                        // Status Filter
+                                        if (filterStatus === 'active') {
+                                            // Active = Confirmed AND Not Past
+                                            if (!isConfirmed || isPast) return false;
+                                        } else if (filterStatus === 'concluded') {
+                                            // Concluded = Confirmed AND Past
+                                            if (!isConfirmed || !isPast) return false;
+                                        } else if (filterStatus === 'cancelled') {
+                                            // Cancelled = Not Confirmed
+                                            if (!isCancelled) return false;
+                                        }
 
-                                    const getStatusLabel = () => {
-                                        if (isCancelledByTeacher) return 'Cancelado pelo Professor';
-                                        if (!isConfirmed) return 'Cancelado';
-                                        if (isPast) return 'Concluído';
-                                        return 'Ativo';
-                                    };
+                                        // Date Filter
+                                        if (filterDate) {
+                                            const bookingDate = format(start, 'yyyy-MM-dd');
+                                            if (bookingDate !== filterDate) return false;
+                                        }
 
-                                    const getBadgeClass = () => {
-                                        if (isCancelledByTeacher) return 'bg-amber-700/40 text-white';
-                                        if (!isConfirmed) return 'bg-black/20 text-white';
-                                        if (isPast) return 'bg-indigo-700/40 text-white';
-                                        return 'bg-emerald-700/40 text-white';
-                                    };
+                                        // Period Filter
+                                        if (filterPeriod === 'morning' && hour >= 12) return false;
+                                        if (filterPeriod === 'afternoon' && (hour < 12 || hour >= 18)) return false;
+                                        if (filterPeriod === 'night' && hour < 18) return false;
 
+                                        return true;
+                                    });
 
-                                    return (
-                                        <div key={(booking as any).booking_id} className={`group bg-white rounded-xl shadow-md border hover:shadow-xl relative overflow-hidden flex flex-col ${isPast || isCancelled ? 'opacity-75 grayscale-[0.3]' : 'border-gray-200 hover:border-primary-200'}`}>
+                                    // 2. SORTING (The "Cat's Leap" Logic)
+                                    // Upcoming/Today: ASC (closest first)
+                                    // Past: DESC (most recent past first)
+                                    const now = new Date();
+                                    const upcoming: RoomBooking[] = [];
+                                    const past: RoomBooking[] = [];
 
-                                            {/* Colored Header */}
-                                            <div className={`p-4 text-white flex justify-between items-start ${getHeaderClass()}`}>
-                                                <div>
-                                                    <div className="flex items-center gap-1 opacity-90 text-[10px] uppercase tracking-wider font-semibold mb-1">
-                                                        <MapPin className="w-3 h-3" /> Unidade {(booking as any).room_unit}
-                                                    </div>
-                                                    <h3 className="font-bold text-lg leading-tight text-white mb-0.5" title={(booking as any).room_name}>
-                                                        {(booking as any).room_name}
-                                                    </h3>
+                                    filtered.forEach(b => {
+                                        const end = parseISO(b.end_ts.endsWith('Z') ? b.end_ts : b.end_ts + 'Z');
+                                        if (end >= now) {
+                                            upcoming.push(b);
+                                        } else {
+                                            past.push(b);
+                                        }
+                                    });
+
+                                    upcoming.sort((a, b) => new Date(a.start_ts).getTime() - new Date(b.start_ts).getTime());
+                                    past.sort((a, b) => new Date(b.start_ts).getTime() - new Date(a.start_ts).getTime());
+
+                                    const finalBookings = [...upcoming, ...past];
+
+                                    if (finalBookings.length === 0) {
+                                        return (
+                                            <div className="col-span-full flex flex-col items-center justify-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200">
+                                                <div className="bg-gray-50 p-4 rounded-full mb-4">
+                                                    <Filter className="w-8 h-8 text-gray-400" />
                                                 </div>
-                                                <div className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-white/20 shadow-sm ${getBadgeClass()}`}>
-                                                    {getStatusLabel()}
+                                                <h3 className="text-lg font-bold text-gray-900">Nenhum agendamento encontrado</h3>
+                                                <p className="text-gray-500 text-sm mt-1">Tente ajustar os filtros para ver mais resultados.</p>
+                                            </div>
+                                        );
+                                    }
+
+                                    return finalBookings.map((booking) => {
+                                        // FORCE UTC: append Z to ensure it's parsed as UTC
+                                        // Supabase returns "2024-01-01T10:00:00" for UTC times, we need "2024-01-01T10:00:00Z"
+                                        const start = parseISO(booking.start_ts.endsWith('Z') ? booking.start_ts : booking.start_ts + 'Z');
+                                        const end = parseISO(booking.end_ts.endsWith('Z') ? booking.end_ts : booking.end_ts + 'Z');
+
+                                        const isPast = new Date() > end;
+                                        const isConfirmed = booking.status === 'confirmed';
+                                        const isCancelledByTeacher = booking.status === 'cancelled_by_teacher';
+                                        const isCancelled = !isConfirmed;
+
+                                        // Determinar cor do header e label do badge
+                                        const getHeaderClass = () => {
+                                            if (isCancelledByTeacher) return 'bg-gradient-to-br from-amber-500 to-orange-600';
+                                            if (!isConfirmed) return 'bg-gradient-to-br from-red-500 to-rose-600';
+                                            if (isPast) return 'bg-gradient-to-br from-indigo-500 to-blue-600';
+                                            return 'bg-gradient-to-br from-emerald-500 to-teal-600';
+                                        };
+
+                                        const getStatusLabel = () => {
+                                            if (isCancelledByTeacher) return 'Cancelado pelo Professor';
+                                            if (!isConfirmed) return 'Cancelado';
+                                            if (isPast) return 'Concluído';
+                                            return 'Ativo';
+                                        };
+
+                                        const getBadgeClass = () => {
+                                            if (isCancelledByTeacher) return 'bg-amber-700/40 text-white';
+                                            if (!isConfirmed) return 'bg-black/20 text-white';
+                                            if (isPast) return 'bg-indigo-700/40 text-white';
+                                            return 'bg-emerald-700/40 text-white';
+                                        };
+
+
+                                        return (
+                                            <div key={(booking as any).booking_id} className={`group bg-white rounded-xl shadow-md border hover:shadow-xl relative overflow-hidden flex flex-col ${isPast || isCancelled ? 'opacity-75 grayscale-[0.3]' : 'border-gray-200 hover:border-primary-200'}`}>
+
+                                                {/* Colored Header */}
+                                                <div className={`p-4 text-white flex justify-between items-start ${getHeaderClass()}`}>
+                                                    <div>
+                                                        <div className="flex items-center gap-1 opacity-90 text-[10px] uppercase tracking-wider font-semibold mb-1">
+                                                            <MapPin className="w-3 h-3" /> Unidade {(booking as any).room_unit}
+                                                        </div>
+                                                        <h3 className="font-bold text-lg leading-tight text-white mb-0.5" title={(booking as any).room_name}>
+                                                            {(booking as any).room_name}
+                                                        </h3>
+                                                    </div>
+                                                    <div className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-white/20 shadow-sm ${getBadgeClass()}`}>
+                                                        {getStatusLabel()}
+                                                    </div>
+                                                </div>
+
+                                                {/* Body */}
+                                                <div className="p-5 flex flex-col flex-1 bg-white">
+
+                                                    {/* Date Box */}
+                                                    <div className="flex items-center gap-4 mb-5">
+                                                        <div className="flex flex-col items-center justify-center bg-gray-50 border border-gray-100 rounded-lg p-2 min-w-[3.5rem]">
+                                                            <span className="text-xs font-bold text-gray-400 uppercase">{format(start, 'MMM', { locale: ptBR })}</span>
+                                                            <span className="text-xl font-black text-gray-800">{format(start, 'dd')}</span>
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <p className="text-sm font-semibold text-gray-900 capitalize text-left">
+                                                                {format(start, 'EEEE', { locale: ptBR })}
+                                                            </p>
+                                                            <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-0.5">
+                                                                <Clock className="w-3.5 h-3.5 text-primary-500" />
+                                                                <span>{format(start, 'HH:mm')} - {format(end, 'HH:mm')}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 shadow-sm">
+                                                                <Users className="w-4 h-4" />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs font-bold text-gray-700 truncate max-w-[150px]" title={(booking as any).professor_name || 'Desconhecido'}>
+                                                                    {(booking as any).professor_name || 'Desconhecido'}
+                                                                </span>
+                                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Professor</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <button
+                                                            onClick={() => setDeleteModal({
+                                                                isOpen: true,
+                                                                type: 'booking',
+                                                                id: (booking as any).booking_id,
+                                                                roomName: (booking as any).room_name
+                                                            })}
+                                                            className="h-10 w-10 flex items-center justify-center bg-red-50 text-red-500 border border-red-100 rounded-xl shadow-sm hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 active:scale-90 group/btn"
+                                                            title="Cancelar Agendamento"
+                                                        >
+                                                            <Trash2 className="w-5 h-5 transition-transform group-hover/btn:rotate-12" />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
-
-                                            {/* Body */}
-                                            <div className="p-5 flex flex-col flex-1 bg-white">
-
-                                                {/* Date Box */}
-                                                <div className="flex items-center gap-4 mb-5">
-                                                    <div className="flex flex-col items-center justify-center bg-gray-50 border border-gray-100 rounded-lg p-2 min-w-[3.5rem]">
-                                                        <span className="text-xs font-bold text-gray-400 uppercase">{format(start, 'MMM', { locale: ptBR })}</span>
-                                                        <span className="text-xl font-black text-gray-800">{format(start, 'dd')}</span>
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <p className="text-sm font-semibold text-gray-900 capitalize text-left">
-                                                            {format(start, 'EEEE', { locale: ptBR })}
-                                                        </p>
-                                                        <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-0.5">
-                                                            <Clock className="w-3.5 h-3.5 text-primary-500" />
-                                                            <span>{format(start, 'HH:mm')} - {format(end, 'HH:mm')}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 shadow-sm">
-                                                            <Users className="w-4 h-4" />
-                                                        </div>
-                                                        <div className="flex flex-col">
-                                                            <span className="text-xs font-bold text-gray-700 truncate max-w-[150px]" title={(booking as any).professor_name || 'Desconhecido'}>
-                                                                {(booking as any).professor_name || 'Desconhecido'}
-                                                            </span>
-                                                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Professor</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <button
-                                                        onClick={() => setDeleteModal({
-                                                            isOpen: true,
-                                                            type: 'booking',
-                                                            id: (booking as any).booking_id,
-                                                            roomName: (booking as any).room_name
-                                                        })}
-                                                        className="h-10 w-10 flex items-center justify-center bg-red-50 text-red-500 border border-red-100 rounded-xl shadow-sm hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 active:scale-90 group/btn"
-                                                        title="Cancelar Agendamento"
-                                                    >
-                                                        <Trash2 className="w-5 h-5 transition-transform group-hover/btn:rotate-12" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        {!loading && bookings.length === 0 && (
-                            <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200">
-                                <div className="bg-gray-50 p-4 rounded-full mb-4">
-                                    <Calendar className="w-8 h-8 text-gray-400" />
-                                </div>
-                                <h3 className="text-lg font-bold text-gray-900">Nenhum agendamento encontrado</h3>
-                                <p className="text-gray-500 text-sm mt-1">Os agendamentos realizados pelos professores aparecerão aqui.</p>
+                                        );
+                                    })
+                                })()}
                             </div>
                         )}
                     </div>

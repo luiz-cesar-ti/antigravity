@@ -278,8 +278,8 @@ export function AdminBookings() {
             </span>
         ) : null;
 
-        // Cancelled by Professor
-        if (booking.status === 'cancelled_by_user') {
+        // Cancelled by Professor (Soft Delete OR status check)
+        if (booking.status === 'cancelled_by_user' || booking.deleted_at) {
             return (
                 <div className="flex gap-1">
                     <span className="px-2 py-0.5 inline-flex text-[8px] items-center leading-3 font-bold uppercase tracking-wider rounded-full bg-red-100 text-red-700 border border-red-200">
@@ -327,7 +327,8 @@ export function AdminBookings() {
 
     const filteredBookings = bookings.filter(b => {
         const expired = isBookingExpired(b);
-        const isCancelled = b.status === 'cancelled_by_user' || b.status === 'cancelled';
+        // Include deleted_at in cancelled check
+        const isCancelled = b.status === 'cancelled_by_user' || b.status === 'cancelled' || !!b.deleted_at;
 
         // 1. Status Logic
         if (statusFilter === 'active') {
@@ -614,34 +615,31 @@ export function AdminBookings() {
 
                                                                     {/* RIGHT: User & IDs Block */}
                                                                     <div className="flex items-center gap-4">
-                                                                        {/* Larger Professor Icon */}
-                                                                        <div className="h-11 w-11 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-100">
-                                                                            <Users className="h-5 w-5 text-indigo-600" />
+                                                                        {/* Larger Professor Icon - Optimized for Desktop */}
+                                                                        <div className="h-11 w-11 lg:h-9 lg:w-9 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-100">
+                                                                            <Users className="h-5 w-5 lg:h-4 lg:w-4 text-indigo-600" />
                                                                         </div>
 
                                                                         <div className="flex flex-col gap-1">
                                                                             {/* Name + Status + ID/Hash Row */}
                                                                             <div className="flex items-center gap-3">
-                                                                                <span className="text-lg font-black text-gray-900 tracking-tight">
+                                                                                <span className="text-lg lg:text-base font-black text-gray-900 tracking-tight">
                                                                                     {(first as any).users?.full_name}
                                                                                 </span>
                                                                                 {getStatusBadge(first)}
 
                                                                                 {first.display_id && (
-                                                                                    <>
+                                                                                    <div className="flex items-center gap-1 ml-1">
                                                                                         <span className="text-gray-300 font-bold">•</span>
                                                                                         <span className="text-[10px] font-black text-indigo-600 uppercase italic tracking-wider">
                                                                                             ID TERMO #{first.display_id}
                                                                                         </span>
                                                                                         {first.term_hash && (
-                                                                                            <>
-                                                                                                <span className="text-gray-300 mx-1">-</span>
-                                                                                                <span className="text-[10px] font-bold text-gray-400 italic">
-                                                                                                    HASH: {first.term_hash.substring(0, 8)}...
-                                                                                                </span>
-                                                                                            </>
+                                                                                            <span className="text-[10px] font-bold text-gray-400 italic ml-1">
+                                                                                                - HASH: {first.term_hash.substring(0, 8)}...
+                                                                                            </span>
                                                                                         )}
-                                                                                    </>
+                                                                                    </div>
                                                                                 )}
                                                                             </div>
 
