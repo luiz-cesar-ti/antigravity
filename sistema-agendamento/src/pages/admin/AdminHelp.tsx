@@ -30,7 +30,8 @@ import {
     Plus,
     Power,
     Timer,
-    KeyRound
+    KeyRound,
+    Filter
 } from 'lucide-react';
 
 export function AdminHelp() {
@@ -244,11 +245,29 @@ export function AdminHelp() {
                                             <div className="p-2 bg-green-50 text-green-600 rounded-xl">
                                                 <PieChart className="h-5 w-5" />
                                             </div>
-                                            <h4 className="font-bold text-gray-900">Mix de Utilização</h4>
+                                            <h4 className="font-bold text-gray-900">Equipamentos Mais Utilizados</h4>
                                         </div>
-                                        <p className="text-sm text-gray-600 leading-relaxed">
-                                            O gráfico de rosca revela quais equipamentos são essenciais. Agora com <strong>filtros por turno</strong> (07h-13h e 13h-18h) para análise por período.
+                                        <p className="text-sm text-gray-600 leading-relaxed mb-2">
+                                            Ranking dinâmico dos itens com maior volume de reservas.
                                         </p>
+                                        <div className="bg-green-50 p-2 rounded-lg border border-green-100 text-xs text-green-800">
+                                            <strong>Legenda:</strong> Quanto maior a fatia no gráfico, maior foi a frequência de agendamento daquele equipamento no período.
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white border border-gray-100 p-4 md:p-5 rounded-2xl md:rounded-3xl shadow-sm hover:border-indigo-100 transition-all">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                                                <Filter className="h-5 w-5" />
+                                            </div>
+                                            <h4 className="font-bold text-gray-900">Status dos Agendamentos</h4>
+                                        </div>
+                                        <p className="text-sm text-gray-600 leading-relaxed mb-2">
+                                            Visão geral da situação das reservas.
+                                        </p>
+                                        <div className="bg-indigo-50 p-2 rounded-lg border border-indigo-100 text-xs text-indigo-800">
+                                            <strong>Legenda:</strong> Diferencia agendamentos ativos, concluídos, recorrentes ou cancelados.
+                                        </div>
                                     </div>
 
                                     <div className="bg-white border border-gray-100 p-4 md:p-5 rounded-2xl md:rounded-3xl shadow-sm hover:border-purple-100 transition-all">
