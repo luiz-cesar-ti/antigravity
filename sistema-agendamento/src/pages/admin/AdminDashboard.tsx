@@ -724,7 +724,7 @@ export function AdminDashboard() {
                                 </Pie>
                                 <Tooltip
                                     contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
-                                    formatter={(value: any, name: any, props: any) => [`${value} (${props.payload.percent}%)`, 'Quantidade']}
+                                    formatter={(value: any, _: any, props: any) => [`${value} (${props.payload.percent}%)`, 'Quantidade']}
                                 />
                             </PieChart>
                         </ResponsiveContainer>
@@ -796,7 +796,7 @@ export function AdminDashboard() {
                                 </Pie>
                                 <Tooltip
                                     contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
-                                    formatter={(value: any, name: any, props: any) => [`${value} (${props.payload.percent}%)`, 'Quantidade']}
+                                    formatter={(value: any, _: any, props: any) => [`${value} (${props.payload.percent}%)`, 'Quantidade']}
                                 />
                             </PieChart>
                         </ResponsiveContainer>
