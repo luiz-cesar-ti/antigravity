@@ -589,69 +589,42 @@ export function AdminBookings() {
                                                 {/* --- DESKTOP LAYOUT --- */}
                                                 <div className="hidden lg:block">
                                                     {!isMulti ? (
-                                                        // Single Item Layout
-                                                        <div className="flex flex-col gap-6">
-                                                            {/* TOP ROW: Combined Equipment & User Info */}
-                                                            <div className="flex flex-row items-center justify-between gap-6 pb-6 border-b border-gray-50/80">
-                                                                <div className="flex items-center">
-                                                                    {/* LEFT: Equipment Block */}
-                                                                    <div className="flex items-center gap-4">
-                                                                        <div className="h-14 w-14 bg-white rounded-2xl flex items-center justify-center shrink-0 border border-gray-100 shadow-sm group-hover:border-indigo-100 transition-colors duration-300">
-                                                                            {getEquipmentIcon(first.equipment?.name, "h-7 w-7 text-primary-600")}
-                                                                        </div>
-
-                                                                        <div className="flex flex-col gap-1.5">
-                                                                            <h3 className="text-xl font-black text-gray-900 tracking-tight leading-none">
-                                                                                {first.equipment?.name}
-                                                                            </h3>
-                                                                            <div className="inline-flex self-start items-center px-1.5 py-0.5 bg-indigo-50 text-indigo-600 text-[9px] font-black uppercase tracking-widest rounded border border-indigo-100 italic">
-                                                                                # {first.quantity} {first.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
-                                                                            </div>
-                                                                        </div>
+                                                        // Single Item Layout (Matching Multi-Item Structure)
+                                                        <div className="flex flex-col gap-3">
+                                                            {/* TOP ROW: User Info Header */}
+                                                            <div className="flex flex-row items-center justify-between gap-6 pb-3 border-b border-gray-50/80">
+                                                                <div className="flex items-center gap-3">
+                                                                    {/* Green Professor Icon */}
+                                                                    <div className="h-11 w-11 bg-green-50 rounded-xl flex items-center justify-center shrink-0 border border-green-100">
+                                                                        <Users className="h-5 w-5 text-green-600" />
                                                                     </div>
-
-                                                                    {/* Vertical Separator */}
-                                                                    <div className="h-10 w-px bg-gray-200 mx-8 shrink-0"></div>
-
-                                                                    {/* RIGHT: User & IDs Block */}
-                                                                    <div className="flex items-center gap-4">
-                                                                        {/* Larger Professor Icon - Optimized for Desktop */}
-                                                                        <div className="h-11 w-11 lg:h-9 lg:w-9 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-100">
-                                                                            <Users className="h-5 w-5 lg:h-4 lg:w-4 text-indigo-600" />
+                                                                    <div className="space-y-0.5">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <h3 className="text-base font-black text-gray-900 tracking-tight leading-tight">
+                                                                                {(first as any).users?.full_name}
+                                                                            </h3>
+                                                                            {getStatusBadge(first)}
                                                                         </div>
+                                                                        <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                                                            <span>{(first as any).users?.email}</span>
 
-                                                                        <div className="flex flex-col gap-1">
-                                                                            {/* Name + Status + ID/Hash Row */}
-                                                                            <div className="flex items-center gap-3">
-                                                                                <span className="text-lg lg:text-base font-black text-gray-900 tracking-tight">
-                                                                                    {(first as any).users?.full_name}
-                                                                                </span>
-                                                                                {getStatusBadge(first)}
-
-                                                                                {first.display_id && (
-                                                                                    <div className="flex items-center gap-1 ml-1">
-                                                                                        <span className="text-gray-300 font-bold">•</span>
-                                                                                        <span className="text-[10px] font-black text-indigo-600 uppercase italic tracking-wider">
-                                                                                            ID TERMO #{first.display_id}
-                                                                                        </span>
-                                                                                        {first.term_hash && (
-                                                                                            <span className="text-[10px] font-bold text-gray-400 italic ml-1">
-                                                                                                - HASH: {first.term_hash.substring(0, 8)}...
-                                                                                            </span>
-                                                                                        )}
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-
-                                                                            {/* Email below name (Full display) */}
-                                                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                                                                {(first as any).users?.email}
-                                                                            </span>
+                                                                            {first.display_id && (
+                                                                                <>
+                                                                                    <span className="text-gray-300">•</span>
+                                                                                    <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
+                                                                                    {first.term_hash && (
+                                                                                        <>
+                                                                                            <span className="text-gray-300 ml-1">-</span>
+                                                                                            <span className="text-gray-400 font-bold italic ml-1">HASH: {first.term_hash.substring(0, 16)}...</span>
+                                                                                        </>
+                                                                                    )}
+                                                                                </>
+                                                                            )}
                                                                         </div>
                                                                     </div>
                                                                 </div>
 
-                                                                {/* RIGHT: Actions */}
+                                                                {/* Actions */}
                                                                 <div className="flex items-center gap-2 shrink-0">
                                                                     {first.term_document && (
                                                                         <button
@@ -671,8 +644,23 @@ export function AdminBookings() {
                                                                 </div>
                                                             </div>
 
+                                                            {/* Middle: Equipment Badge (Single Item) */}
+                                                            <div className="flex flex-wrap gap-4">
+                                                                <div className="flex items-center gap-4 p-3 pr-4 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-indigo-100 transition-all">
+                                                                    <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-100 shadow-sm">
+                                                                        {getEquipmentIcon(first.equipment?.name, "h-5 w-5 text-gray-700")}
+                                                                    </div>
+                                                                    <div className="flex flex-col gap-1 min-w-0">
+                                                                        <span className="text-sm font-black text-gray-900 leading-none truncate">{first.equipment?.name}</span>
+                                                                        <span className="inline-flex self-start items-center px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase rounded border border-indigo-100 tracking-wider italic">
+                                                                            # {first.quantity} {first.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
                                                             {/* BOTTOM ROW: Info Grid */}
-                                                            <div className="grid grid-cols-4 gap-4">
+                                                            <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-50/80">
                                                                 {/* PROFESSOR */}
                                                                 <div className="flex flex-col gap-1">
                                                                     <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Professor</span>
@@ -728,8 +716,8 @@ export function AdminBookings() {
                                                             {/* TOP ROW: User Info Header (Primary for Multi) */}
                                                             <div className="flex flex-row items-center justify-between gap-6 pb-3 border-b border-gray-50/80">
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className="h-11 w-11 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0 border border-indigo-100">
-                                                                        <Users className="h-5 w-5 text-indigo-600" />
+                                                                    <div className="h-11 w-11 bg-green-50 rounded-xl flex items-center justify-center shrink-0 border border-green-100">
+                                                                        <Users className="h-5 w-5 text-green-600" />
                                                                     </div>
                                                                     <div className="space-y-0.5">
                                                                         <div className="flex items-center gap-2">
@@ -739,7 +727,7 @@ export function AdminBookings() {
                                                                             {getStatusBadge(first)}
                                                                         </div>
                                                                         <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                                                                            <span className="truncate max-w-[200px]">{(first as any).users?.email}</span>
+                                                                            <span>{(first as any).users?.email}</span>
 
                                                                             {first.display_id && (
                                                                                 <>
@@ -748,7 +736,7 @@ export function AdminBookings() {
                                                                                     {first.term_hash && (
                                                                                         <>
                                                                                             <span className="text-gray-300 ml-1">-</span>
-                                                                                            <span className="text-gray-400 font-bold italic ml-1">HASH: {first.term_hash.substring(0, 8)}...</span>
+                                                                                            <span className="text-gray-400 font-bold italic ml-1">HASH: {first.term_hash.substring(0, 16)}...</span>
                                                                                         </>
                                                                                     )}
                                                                                 </>
@@ -785,8 +773,8 @@ export function AdminBookings() {
                                                                             {getEquipmentIcon(b.equipment?.name, "h-5 w-5 text-gray-700")}
                                                                         </div>
                                                                         <div className="flex flex-col gap-1 min-w-0">
-                                                                            <span className="text-xs font-black text-gray-900 leading-none truncate">{b.equipment?.name}</span>
-                                                                            <span className="inline-flex self-start items-center px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[8px] font-black uppercase rounded border border-indigo-100 tracking-wider italic">
+                                                                            <span className="text-sm font-black text-gray-900 leading-none truncate">{b.equipment?.name}</span>
+                                                                            <span className="inline-flex self-start items-center px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase rounded border border-indigo-100 tracking-wider italic">
                                                                                 # {b.quantity} {b.quantity === 1 ? 'UNIDADE' : 'UNIDADES'}
                                                                             </span>
                                                                         </div>
