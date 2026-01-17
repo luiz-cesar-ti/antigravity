@@ -1,10 +1,27 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, Trash2, CalendarPlus, UserPlus, AlertCircle } from 'lucide-react';
 import { useNotifications } from '../contexts/NotificationContext';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+const getNotificationIcon = (message: string) => {
+    const msg = message.toLowerCase();
+    if (msg.includes('excluído') || msg.includes('excluido') || msg.includes('cancelado')) {
+        return <div className="p-1.5 bg-red-50 rounded-lg shrink-0"><Trash2 className="h-3.5 w-3.5 text-red-600" /></div>;
+    }
+    if (msg.includes('novo agendamento') || msg.includes('agendamento realizado')) {
+        return <div className="p-1.5 bg-green-50 rounded-lg shrink-0"><CalendarPlus className="h-3.5 w-3.5 text-green-600" /></div>;
+    }
+    if (msg.includes('usuário') || msg.includes('usuario') || msg.includes('cadastrado')) {
+        return <div className="p-1.5 bg-purple-50 rounded-lg shrink-0"><UserPlus className="h-3.5 w-3.5 text-purple-600" /></div>;
+    }
+    if (msg.includes('atenção') || msg.includes('erro')) {
+        return <div className="p-1.5 bg-amber-50 rounded-lg shrink-0"><AlertCircle className="h-3.5 w-3.5 text-amber-600" /></div>;
+    }
+    return <div className="p-1.5 bg-gray-50 rounded-lg shrink-0"><Bell className="h-3.5 w-3.5 text-gray-600" /></div>;
+};
 
 export function NotificationBell() {
     const { unreadCount, notifications, markAllAsRead } = useNotifications();
@@ -79,6 +96,9 @@ export function NotificationBell() {
                                         }`}
                                 >
                                     <div className="flex justify-between items-start">
+                                        <div className="mr-3 mt-0.5">
+                                            {getNotificationIcon(notification.message)}
+                                        </div>
                                         <div className="flex-1 pr-4">
                                             {notification.link ? (
                                                 <Link
