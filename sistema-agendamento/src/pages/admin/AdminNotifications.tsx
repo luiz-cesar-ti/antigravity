@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Check, Clock, Bell, Trash2 } from 'lucide-react';
+import { Check, Clock, Bell, Trash2, CalendarPlus, UserPlus, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useNotifications } from '../../contexts/NotificationContext';
 
@@ -12,6 +12,23 @@ export function AdminNotifications() {
     const filteredNotifications = filter === 'unread'
         ? notifications.filter(n => !n.read)
         : notifications;
+
+    const getNotificationIcon = (message: string) => {
+        const msg = message.toLowerCase();
+        if (msg.includes('excluído') || msg.includes('excluido') || msg.includes('cancelado')) {
+            return <div className="p-2 bg-red-100 rounded-lg"><Trash2 className="h-4 w-4 text-red-600" /></div>;
+        }
+        if (msg.includes('novo agendamento') || msg.includes('agendamento realizado')) {
+            return <div className="p-2 bg-green-100 rounded-lg"><CalendarPlus className="h-4 w-4 text-green-600" /></div>;
+        }
+        if (msg.includes('usuário') || msg.includes('usuario') || msg.includes('cadastrado')) {
+            return <div className="p-2 bg-purple-100 rounded-lg"><UserPlus className="h-4 w-4 text-purple-600" /></div>;
+        }
+        if (msg.includes('atenção') || msg.includes('erro')) {
+            return <div className="p-2 bg-amber-100 rounded-lg"><AlertCircle className="h-4 w-4 text-amber-600" /></div>;
+        }
+        return <div className="p-2 bg-gray-100 rounded-lg"><Bell className="h-4 w-4 text-gray-600" /></div>;
+    };
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -60,8 +77,10 @@ export function AdminNotifications() {
                                 className={`p-4 hover:bg-gray-50 transition-colors ${!notification.read ? 'bg-blue-50/40' : ''}`}
                             >
                                 <div className="flex items-start justify-between">
-                                    <div className="flex gap-4">
-                                        <div className={`mt-1 flex-shrink-0 w-2 h-2 rounded-full ${!notification.read ? 'bg-blue-500' : 'bg-transparent'}`} />
+                                    <div className="flex gap-3 items-start">
+                                        <div className={`mt-3 flex-shrink-0 w-2 h-2 rounded-full transition-colors ${!notification.read ? 'bg-blue-500' : 'bg-transparent'}`} />
+
+                                        {getNotificationIcon(notification.message)}
 
                                         <div className="flex-1 min-w-0">
                                             {notification.link ? (
