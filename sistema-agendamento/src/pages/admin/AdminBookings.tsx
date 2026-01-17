@@ -660,6 +660,14 @@ export function AdminBookings() {
                                                             </div>
 
                                                             {/* BOTTOM ROW: Info Grid */}
+                                                            {first.observations && (
+                                                                <div className="mt-3 mb-4 p-2.5 bg-amber-50/50 rounded-2xl border border-amber-100/50">
+                                                                    <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest block mb-1">Observações</span>
+                                                                    <p className="text-xs font-bold text-gray-600 leading-snug">
+                                                                        {first.observations}
+                                                                    </p>
+                                                                </div>
+                                                            )}
                                                             <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-50/80">
                                                                 {/* PROFESSOR */}
                                                                 <div className="flex flex-col gap-1">
@@ -709,6 +717,7 @@ export function AdminBookings() {
                                                                     </div>
                                                                 </div>
                                                             </div>
+
                                                         </div>
                                                     ) : (
                                                         // Multi Item Layout (Redesigned to match Single Item Structure)
@@ -783,6 +792,14 @@ export function AdminBookings() {
                                                             </div>
 
                                                             {/* BOTTOM ROW: Info Grid */}
+                                                            {first.observations && (
+                                                                <div className="mt-3 mb-4 p-2.5 bg-amber-50/50 rounded-2xl border border-amber-100/50">
+                                                                    <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest block mb-1">Observações</span>
+                                                                    <p className="text-xs font-bold text-gray-600 leading-snug">
+                                                                        {first.observations}
+                                                                    </p>
+                                                                </div>
+                                                            )}
                                                             <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-50/80">
                                                                 {/* PROFESSOR */}
                                                                 <div className="flex flex-col gap-1">
@@ -829,11 +846,13 @@ export function AdminBookings() {
                                                                     </div>
                                                                 </div>
                                                             </div>
+
+
                                                         </div>
                                                     )}
                                                 </div>
 
-                                                {/* --- MOBILE LAYOUT (Redesigned per new ScreenShot) --- */}
+                                                {/* --- MOBILE LAYOUT (Redesigned per new ScreenShot) -- - */}
                                                 <div className="lg:hidden flex flex-col gap-4">
                                                     {/* 1. Header: User Info & Status */}
                                                     <div className="flex gap-4">
@@ -959,7 +978,7 @@ export function AdminBookings() {
                             })()
                         )}
                     </ul>
-                </div>
+                </div >
             )}
 
             {/* DELETE MODAL */}

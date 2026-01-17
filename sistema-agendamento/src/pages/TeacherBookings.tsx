@@ -572,6 +572,15 @@ export function TeacherBookings() {
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            {first.observations && (
+                                                <div className="mt-2 p-2.5 bg-amber-50/50 rounded-2xl border border-amber-100/50">
+                                                    <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest block mb-1">Observações</span>
+                                                    <p className="text-xs font-bold text-gray-600 leading-snug">
+                                                        {first.observations}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="mt-4 pt-4 border-t border-gray-100 flex items-end justify-between">
