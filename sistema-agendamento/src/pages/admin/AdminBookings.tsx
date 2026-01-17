@@ -906,6 +906,15 @@ export function AdminBookings() {
                                                         ))}
                                                     </div>
 
+                                                    {first.observations && (
+                                                        <div className="mb-1 p-2.5 bg-amber-50/50 rounded-2xl border border-amber-100/50">
+                                                            <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest block mb-1">Observações</span>
+                                                            <p className="text-xs font-bold text-gray-600 leading-snug">
+                                                                {first.observations}
+                                                            </p>
+                                                        </div>
+                                                    )}
+
                                                     {/* 3. Actions Row (Wide Buttons) */}
                                                     <div className="flex gap-2">
                                                         {first.term_document && (
