@@ -24,14 +24,7 @@ import {
 } from 'recharts';
 
 export function AdminDashboard() {
-    const isBookingExpired = (b: any) => {
-        if (!b.booking_date || !b.end_time) return false;
-        const now = new Date();
-        try {
-            const bookingEnd = parseISO(`${b.booking_date}T${b.end_time}`);
-            return !isNaN(bookingEnd.getTime()) && now > bookingEnd;
-        } catch { return false; }
-    };
+
 
     const { user } = useAuth();
     const adminUser = user as Admin;
@@ -255,7 +248,7 @@ export function AdminDashboard() {
                 if (bookingsRes.error) throw bookingsRes.error;
                 if (usersRes.error) throw usersRes.error;
 
-                const bookings = bookingsRes.data || [];
+
                 const teachers = usersRes.data || [];
                 const totalEquipment = equipmentRes.count || 0;
 
@@ -950,7 +943,7 @@ export function AdminDashboard() {
                                                 <div key={idx} className="p-3 bg-gray-50 rounded-xl flex items-center justify-between border border-transparent hover:border-primary-100 transition-colors">
                                                     <div>
                                                         <p className="text-xs font-bold text-gray-700">
-                                                            {booking.equipment?.name} <span className="text-blue-600 font-bold ml-1">({booking.quantity})</span>
+                                                            {booking.equipment?.name} <span className="text-gray-500 font-normal ml-0.5">- Quantidade: <span className="text-blue-600 font-bold">{booking.quantity}</span> Unidade(s)</span>
                                                         </p>
                                                         <p className="text-[9px] text-gray-400 font-bold uppercase">{format(parseISO(booking.booking_date), 'dd/MM/yyyy')} • {booking.start_time}</p>
                                                     </div>

@@ -458,9 +458,7 @@ export function TeacherBookings() {
                             return dateA.localeCompare(dateB);
                         });
 
-                        // Unit Grouping Check
                         const units = Array.from(new Set(renderList.map(g => g[0].unit || 'GERAL')));
-                        const hasMultipleUnits = units.length > 1;
 
                         const renderCard = (group: Booking[]) => {
                             const first = group[0];
