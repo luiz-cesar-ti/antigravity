@@ -260,6 +260,24 @@ export function AdminDashboard() {
                     _isSoftDeleted: !!b.deleted_at // Force boolean
                 }));
 
+                // Deduplicate Bookings for Counts (Group by display_id)
+                const uniqueBookingsMap = new Map();
+                processedBookings.forEach((b: any) => {
+                    const key = b.display_id ? `term_${b.display_id}` : b.id;
+                    if (!uniqueBookingsMap.has(key)) {
+                        uniqueBookingsMap.set(key, b);
+                    }
+                });
+                const uniqueAllBookings = Array.from(uniqueBookingsMap.values());
+
+                // Filter Unique Bookings (for usage charts)
+                const uniqueValidBookings = uniqueAllBookings.filter((b: any) =>
+                    !b._isSoftDeleted &&
+                    b._status !== 'cancelled_by_user' &&
+                    b._status !== 'cancelled' &&
+                    b._status !== 'excluido'
+                );
+
                 // Filter for usage charts (Only valid, non-deleted items)
                 const validBookings = processedBookings.filter((b: any) =>
                     !b._isSoftDeleted &&
@@ -270,7 +288,7 @@ export function AdminDashboard() {
 
                 // 1. Bookings by Day (AreaChart - Smoother)
                 const daysMap: Record<string, number> = {};
-                validBookings.forEach((b: any) => {
+                uniqueValidBookings.forEach((b: any) => {
                     const dateStr = b.booking_date;
                     daysMap[dateStr] = (daysMap[dateStr] || 0) + 1;
                 });
@@ -312,7 +330,7 @@ export function AdminDashboard() {
 
                 // 3. Top Teachers (New Ranking)
                 const teacherMap: Record<string, { id: string, name: string, count: number }> = {};
-                validBookings.forEach((b: any) => {
+                uniqueValidBookings.forEach((b: any) => {
                     const userId = b.user_id; // Fixed: user_id comes directly, not from users JSONB
                     const name = (b as any).users?.full_name || 'Desconhecido';
                     if (userId) {
@@ -329,8 +347,8 @@ export function AdminDashboard() {
                 // 4. Booking Status (New Chart)
                 const statusCounts = { active: 0, completed: 0, recurring: 0, excluded_by_user: 0, cancelled_by_admin: 0 };
 
-                // Iterate over ALL bookings (including deleted) to populate Status Chart
-                processedBookings.forEach((b: any) => {
+                // Iterate over UNIQUE bookings (including deleted) to populate Status Chart
+                uniqueAllBookings.forEach((b: any) => {
                     // Priority 1: Soft Deleted (by Professor/Admin) or Cancelled by User Status
                     if (b._isSoftDeleted || b._status === 'cancelled_by_user') {
                         statusCounts.excluded_by_user++;
