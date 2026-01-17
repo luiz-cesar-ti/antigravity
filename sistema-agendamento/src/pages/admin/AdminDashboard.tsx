@@ -103,32 +103,42 @@ export function AdminDashboard() {
                 // The current code calculates stats from 'data'.
                 // If there is a list of bookings displayed, it's inside the modal?
                 // The modal code isn't visible in the view_file given, but assuming consistency.
-                const bookingsData = (data as any[]).filter(b => b.status !== 'cancelled_by_user');
+                const bookingsData = (data as any[]).filter(b =>
+                    !b.deleted_at &&
+                    !['cancelled_by_user', 'cancelled', 'excluido'].includes(b.status)
+                );
 
                 const eqMap: Record<string, number> = {};
                 const weekTrend: Record<string, number> = { 'Seg': 0, 'Ter': 0, 'Qua': 0, 'Qui': 0, 'Sex': 0 };
                 const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
+                // Deduplicate for Frequency Chart (count bookings, not items)
+                const uniqueBookingsForTrend = new Set();
+
                 bookingsData.forEach((b: any) => {
                     const ename = b.equipment?.name || 'Vários';
                     eqMap[ename] = (eqMap[ename] || 0) + 1;
 
-                    // Ensure date parsing works with text date from RPC
-                    // b.booking_date is YYYY-MM-DD string. new Date() handles it (UTC? Local?)
-                    // new Date('2023-10-10') usually treats as UTC.
-                    // But getDay() uses local.
-                    // This might be slightly off if not careful, but consistent with existing code likely.
-                    // Let's use parseISO to be safe if available or simple new Date.
-                    // Start of file has import { parseISO } from 'date-fns';
-                    const dayName = days[parseISO(b.booking_date).getDay()];
-                    if (weekTrend[dayName] !== undefined) {
-                        weekTrend[dayName]++;
+                    // Validar se 'Encerrado' ou 'Concluído' deve contar (User said yes)
+                    // Logic: Unique bookings per day
+                    // Use display_id or ID if available
+                    const uniqueKey = b.display_id ? `${b.display_id}` : b.id;
+
+                    if (!uniqueBookingsForTrend.has(uniqueKey)) {
+                        uniqueBookingsForTrend.add(uniqueKey);
+                        const dayName = days[parseISO(b.booking_date).getDay()];
+                        if (weekTrend[dayName] !== undefined) {
+                            weekTrend[dayName]++;
+                        }
                     }
                 });
 
+                // Sort bookings by date descending for History
+                bookingsData.sort((a, b) => new Date(`${b.booking_date}T${b.start_time}`).getTime() - new Date(`${a.booking_date}T${a.start_time}`).getTime());
+
                 setTeacherBookings(bookingsData);
                 setTeacherStats({
-                    equipmentUsage: Object.entries(eqMap).map(([name, value]) => ({ name, value })),
+                    equipmentUsage: Object.entries(eqMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 3),
                     weeklyTrend: Object.entries(weekTrend).map(([day, count]) => ({ day, count }))
                 });
                 setIsModalOpen(true);
@@ -629,6 +639,7 @@ export function AdminDashboard() {
                                     tickLine={false}
                                     axisLine={false}
                                     tick={{ fill: '#9CA3AF', fontWeight: 'bold' }}
+                                    allowDecimals={false}
                                 />
                                 <Tooltip
                                     contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
@@ -900,12 +911,18 @@ export function AdminDashboard() {
                                         <p className="text-3xl font-black text-primary-600">{teacherBookings.length}</p>
                                     </div>
                                     <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Mix de Equipamentos usados</p>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Equipamentos mais utilizados</p>
                                         <div className="flex flex-wrap gap-2">
                                             {teacherStats.equipmentUsage.map((eq: any, idx: number) => (
-                                                <span key={idx} className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-[10px] font-bold uppercase tracking-tight">
-                                                    {eq.name} ({eq.value})
-                                                </span>
+                                                <div key={idx} className="flex items-center gap-2 pl-2 pr-3 py-1.5 bg-gray-50 rounded-xl border border-gray-100">
+                                                    <Trophy className={clsx("h-3.5 w-3.5",
+                                                        idx === 0 ? "text-yellow-500 fill-yellow-500" :
+                                                            idx === 1 ? "text-gray-300 fill-gray-300" :
+                                                                "text-amber-700 fill-amber-700"
+                                                    )} />
+                                                    <span className="text-[10px] font-black uppercase text-gray-600">{eq.name}</span>
+                                                    <span className="text-xs font-black text-indigo-600 bg-white px-1.5 rounded-md shadow-sm border border-gray-100">{idx + 1}º</span>
+                                                </div>
                                             ))}
                                         </div>
                                     </div>
@@ -919,7 +936,7 @@ export function AdminDashboard() {
                                                 <BarChart data={teacherStats.weeklyTrend}>
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
                                                     <XAxis dataKey="day" fontSize={10} axisLine={false} tickLine={false} />
-                                                    <YAxis fontSize={10} axisLine={false} tickLine={false} />
+                                                    <YAxis fontSize={10} axisLine={false} tickLine={false} allowDecimals={false} />
                                                     <Bar dataKey="count" fill="#4F46E5" radius={[4, 4, 0, 0]} />
                                                 </BarChart>
                                             </ResponsiveContainer>
@@ -932,14 +949,16 @@ export function AdminDashboard() {
                                             {teacherBookings.map((booking, idx) => (
                                                 <div key={idx} className="p-3 bg-gray-50 rounded-xl flex items-center justify-between border border-transparent hover:border-primary-100 transition-colors">
                                                     <div>
-                                                        <p className="text-xs font-bold text-gray-700">{booking.equipment?.name}</p>
+                                                        <p className="text-xs font-bold text-gray-700">
+                                                            {booking.equipment?.name} <span className="text-blue-600 font-bold ml-1">({booking.quantity})</span>
+                                                        </p>
                                                         <p className="text-[9px] text-gray-400 font-bold uppercase">{format(parseISO(booking.booking_date), 'dd/MM/yyyy')} • {booking.start_time}</p>
                                                     </div>
                                                     <span className={clsx(
                                                         "text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter",
                                                         booking.status === 'completed' ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
                                                     )}>
-                                                        {booking.status}
+                                                        {booking.status === 'encerrado' ? 'CONCLUÍDO' : booking.status}
                                                     </span>
                                                 </div>
                                             ))}
