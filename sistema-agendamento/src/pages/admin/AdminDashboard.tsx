@@ -251,9 +251,22 @@ export function AdminDashboard() {
 
                 // Derive Stats from the secure data
                 // bookings array already filtered by date/unit from RPC
+                const rawBookings = bookingsRes.data || [];
 
-                // Filter for existing charts (exclude cancelled)
-                const validBookings = bookings.filter((b: any) => b.status !== 'cancelled_by_user' && b.status !== 'cancelled');
+                // Pre-process bookings for cleaner logic
+                const processedBookings = rawBookings.map((b: any) => ({
+                    ...b,
+                    _status: b.status?.toLowerCase(),
+                    _isSoftDeleted: !!b.deleted_at // Force boolean
+                }));
+
+                // Filter for usage charts (Only valid, non-deleted items)
+                const validBookings = processedBookings.filter((b: any) =>
+                    !b._isSoftDeleted &&
+                    b._status !== 'cancelled_by_user' &&
+                    b._status !== 'cancelled' &&
+                    b._status !== 'excluido'
+                );
 
                 // 1. Bookings by Day (AreaChart - Smoother)
                 const daysMap: Record<string, number> = {};
@@ -314,29 +327,30 @@ export function AdminDashboard() {
                     .slice(0, 5);
 
                 // 4. Booking Status (New Chart)
-                // Re-calculating loops simplified:
                 const statusCounts = { active: 0, completed: 0, recurring: 0, excluded_by_user: 0, cancelled_by_admin: 0 };
-                bookings.forEach((b: any) => {
-                    const status = b.status?.toLowerCase();
 
-                    // 1. Cancelled checks (Priority 1)
-                    if (status === 'cancelled_by_user') {
+                // Iterate over ALL bookings (including deleted) to populate Status Chart
+                processedBookings.forEach((b: any) => {
+                    // Priority 1: Soft Deleted (by Professor/Admin) or Cancelled by User Status
+                    if (b._isSoftDeleted || b._status === 'cancelled_by_user') {
                         statusCounts.excluded_by_user++;
                         return;
                     }
-                    if (status === 'cancelled') {
+
+                    // Priority 2: Cancelled by Admin Status
+                    if (b._status === 'cancelled' || b._status === 'excluido') {
                         statusCounts.cancelled_by_admin++;
                         return;
                     }
 
-                    // 2. Completed/Encerrado (Only actual status, NOT expired time)
-                    if (status === 'encerrado' || status === 'concluido') {
+                    // Priority 3: Completed/Concluded
+                    if (b._status === 'encerrado' || b._status === 'concluido') {
                         statusCounts.completed++;
                         return;
                     }
 
-                    // 3. Active (Only actual active status)
-                    if (status === 'active') {
+                    // Priority 4: Active/Recurring
+                    if (b._status === 'active') {
                         if (b.is_recurring) {
                             statusCounts.recurring++;
                         } else {
