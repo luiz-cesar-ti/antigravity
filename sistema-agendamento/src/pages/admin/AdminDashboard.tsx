@@ -329,13 +329,13 @@ export function AdminDashboard() {
                         return;
                     }
 
-                    // 2. Completed/Expired (Priority 2)
-                    if (status === 'encerrado' || isBookingExpired(b)) {
+                    // 2. Completed/Encerrado (Only actual status, NOT expired time)
+                    if (status === 'encerrado' || status === 'concluido') {
                         statusCounts.completed++;
                         return;
                     }
 
-                    // 3. Active (Priority 3)
+                    // 3. Active (Only actual active status)
                     if (status === 'active') {
                         if (b.is_recurring) {
                             statusCounts.recurring++;
