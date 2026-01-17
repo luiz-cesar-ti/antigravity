@@ -266,7 +266,13 @@ export function AdminDashboard() {
                 // Deduplicate Bookings for Counts (Group by display_id)
                 const uniqueBookingsMap = new Map();
                 processedBookings.forEach((b: any) => {
-                    const key = b.display_id ? `term_${b.display_id}` : b.id;
+                    // For recurring bookings (or multi-item), display_id is shared.
+                    // We want to count distinct Slots (Date + Time) as separate bookings,
+                    // but group multiple items in the SAME slot as 1 booking.
+                    const key = b.display_id
+                        ? `term_${b.display_id}_${b.booking_date}_${b.start_time}`
+                        : b.id;
+
                     if (!uniqueBookingsMap.has(key)) {
                         uniqueBookingsMap.set(key, b);
                     }
