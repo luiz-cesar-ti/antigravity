@@ -29,51 +29,27 @@ export function useAvailableEquipment(unit: string, date: string, startTime: str
                 const queryStartTime = startTime.length === 5 ? `${startTime}:00` : startTime;
                 const queryEndTime = endTime.length === 5 ? `${endTime}:00` : endTime;
 
-                // 1. Fetch all equipment for the unit
-                const { data: allEquipment, error: equipError } = await supabase
-                    .from('equipment')
-                    .select('*')
-                    .eq('unit', unit)
+                // Call the secure RPC instead of querying bookings directly
+                const { data, error: rpcError } = await supabase
+                    .rpc('get_available_equipment', {
+                        p_unit: unit,
+                        p_date: date,
+                        p_start_time: queryStartTime,
+                        p_end_time: queryEndTime
+                    })
                     .abortSignal(controller.signal);
 
-                if (equipError) throw equipError;
-
-                // 2. Fetch active bookings that overlap with requested time
-                const { data: bookings, error: bookingError } = await supabase
-                    .from('bookings')
-                    .select('equipment_id, quantity')
-                    .eq('unit', unit)
-                    .eq('booking_date', date)
-                    .eq('status', 'active')
-                    .lt('start_time', queryEndTime)
-                    .gt('end_time', queryStartTime)
-                    .abortSignal(controller.signal);
-
-                if (bookingError) throw bookingError;
-
-                // 3. Calculate availability
-                const equipmentMap = new Map<string, AvailableEquipment>();
-
-                allEquipment?.forEach((eq) => {
-                    equipmentMap.set(eq.id, { ...eq, available_quantity: eq.total_quantity });
-                });
-
-                bookings?.forEach((booking) => {
-                    const eq = equipmentMap.get(booking.equipment_id);
-                    if (eq) {
-                        eq.available_quantity -= booking.quantity;
-                        if (eq.available_quantity < 0) eq.available_quantity = 0;
-                    }
-                });
+                if (rpcError) throw rpcError;
 
                 if (!controller.signal.aborted) {
-                    setEquipments(Array.from(equipmentMap.values()));
+                    // The RPC returns a JSONB array, parse it if needed
+                    const parsed = Array.isArray(data) ? data : (data || []);
+                    setEquipments(parsed as AvailableEquipment[]);
                 }
 
             } catch (err: any) {
                 if (err.name === 'AbortError') {
                     console.log('Availability check aborted');
-                    // DO NOT set error state on natural abort (like cleanup)
                     return;
                 }
 
