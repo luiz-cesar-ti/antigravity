@@ -84,14 +84,18 @@ export function AdminBookings() {
         if (!error && data) {
             let fetchedBookings = data as any[];
 
-            // 4. Apply Period Filter Client-Side (since RPC only filters by Date)
-            if (periodFilter === 'morning') {
-                fetchedBookings = fetchedBookings.filter(b => b.start_time >= '07:00' && b.start_time <= '12:00');
-            } else if (periodFilter === 'afternoon') {
-                fetchedBookings = fetchedBookings.filter(b => b.start_time >= '12:01' && b.start_time <= '18:00');
-            } else if (periodFilter === 'night') {
-                fetchedBookings = fetchedBookings.filter(b => b.start_time >= '18:01' && b.start_time <= '23:59');
-            }
+            // 4. Apply Period Filter & Invisible Delete Filter
+            fetchedBookings = fetchedBookings.filter(b => {
+                // Invisible Delete Filter: Hide if status is 'deleted_by_admin'
+                if (b.status === 'deleted_by_admin') return false;
+
+                // Period Filter
+                if (periodFilter === 'morning') return b.start_time >= '07:00' && b.start_time <= '12:00';
+                if (periodFilter === 'afternoon') return b.start_time >= '12:01' && b.start_time <= '18:00';
+                if (periodFilter === 'night') return b.start_time >= '18:01' && b.start_time <= '23:59';
+
+                return true;
+            });
 
             setBookings(fetchedBookings);
         } else if (error) {
@@ -278,8 +282,20 @@ export function AdminBookings() {
             </span>
         ) : null;
 
+        // Cancelled by Admin (Soft Delete)
+        if (booking.status === 'deleted_by_admin') {
+            return (
+                <div className="flex gap-1">
+                    <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-gray-100 text-gray-700 border border-gray-300">
+                        Excluído pelo Admin
+                    </span>
+                    {recurringBadge}
+                </div>
+            );
+        }
+
         // Cancelled by Professor (Soft Delete OR status check)
-        if (booking.status === 'cancelled_by_user' || booking.deleted_at) {
+        if (booking.status === 'cancelled_by_user' || (booking.deleted_at && booking.status !== 'deleted_by_admin')) {
             return (
                 <div className="flex gap-1">
                     <span className="px-2 py-0.5 inline-flex text-[8px] items-center leading-3 font-bold uppercase tracking-wider rounded-full bg-red-100 text-red-700 border border-red-200">

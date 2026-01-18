@@ -102,7 +102,7 @@ export function AdminDashboard() {
                 );
 
                 const eqMap: Record<string, number> = {};
-                const weekTrend: Record<string, number> = { 'Seg': 0, 'Ter': 0, 'Qua': 0, 'Qui': 0, 'Sex': 0 };
+                const weekTrend: Record<string, number> = { 'Dom': 0, 'Seg': 0, 'Ter': 0, 'Qua': 0, 'Qui': 0, 'Sex': 0, 'Sáb': 0 };
                 const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
                 // Deduplicate for Frequency Chart (count bookings, not items)
@@ -358,6 +358,11 @@ export function AdminDashboard() {
 
                 // Iterate over UNIQUE bookings (including deleted) to populate Status Chart
                 uniqueAllBookings.forEach((b: any) => {
+                    // Ignore Admin Deletions
+                    if (b._status === 'deleted_by_admin') {
+                        return;
+                    }
+
                     // Priority 1: Soft Deleted (by Professor/Admin) or Cancelled by User Status
                     if (b._isSoftDeleted || b._status === 'cancelled_by_user') {
                         statusCounts.excluded_by_user++;

@@ -72,7 +72,7 @@ export interface Booking {
     equipment_id: string;
     quantity: number;
     observations?: string;
-    status: 'active' | 'encerrado' | 'cancelled' | 'cancelled_by_user';
+    status: 'active' | 'encerrado' | 'cancelled' | 'cancelled_by_user' | 'deleted_by_admin';
     term_signed: boolean;
     term_document?: any;
     manual_term_url?: string;
@@ -136,6 +136,9 @@ export interface EquipmentLoan {
 
     // Joins
     equipment?: Equipment;
+    term_hash?: string;
+    term_id?: string;
+    term_version?: string;
 }
 
 export type UserRole = 'teacher' | 'admin' | 'super_admin';

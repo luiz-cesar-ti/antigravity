@@ -34,15 +34,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Função centralizada para calcular hash do documento de empréstimo
 // Usa APENAS id, user_full_name e equipment_id para garantir consistência
 // (start_at e end_at podem ter formatos diferentes dependendo da origem)
-const calculateLoanHash = async (id: string, user_full_name: string, equipment_id: string): Promise<string> => {
-    const dataString = `${id}-${user_full_name}-${equipment_id}`;
-    const encoder = new TextEncoder();
-    const data = encoder.encode(dataString);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex.substring(0, 16).toUpperCase();
-};
+
 
 // Função de sanitização para prevenir XSS em templates HTML
 const escapeHtml = (unsafe: string | null | undefined): string => {
@@ -106,7 +98,7 @@ export function AdminLoans() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [loanHashes, setLoanHashes] = useState<Record<string, string>>({}); // Store calculated hashes
+
 
     // Modal States
     const [modalInfo, setModalInfo] = useState<{ type: 'success' | 'error' | 'preview' | 'delete' | 'return', message?: string, loanData?: any } | null>(null);
@@ -178,18 +170,7 @@ export function AdminLoans() {
         };
     }, [modalInfo]);
 
-    // Calculate Hashes for Cards - Usando função centralizada
-    useEffect(() => {
-        const calculateHashes = async () => {
-            const newHashes: Record<string, string> = {};
-            for (const loan of loans) {
-                // Usando função centralizada para garantir consistência
-                newHashes[loan.id] = await calculateLoanHash(loan.id, loan.user_full_name, loan.equipment_id);
-            }
-            setLoanHashes(newHashes);
-        };
-        if (loans.length > 0) calculateHashes();
-    }, [loans]);
+
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -281,22 +262,7 @@ export function AdminLoans() {
 
             if (loanError) throw loanError;
 
-            // Calcular hash usando função centralizada (mesma usada no card e PDF)
-            const docHash = await calculateLoanHash(loanData.id, formData.user_full_name, formData.equipment_id);
-            console.log('[DEBUG] Hash calculado:', docHash, 'para loan_id:', loanData.id);
 
-            // Atualizar o log e tabela com o hash correto
-            const { error: hashError } = await supabase.rpc('update_loan_hash', {
-                p_admin_token: adminUser.session_token,
-                p_loan_id: loanData.id,
-                p_doc_hash: docHash
-            });
-
-            if (hashError) {
-                console.error('[DEBUG] Erro ao salvar hash:', hashError);
-            } else {
-                console.log('[DEBUG] Hash salvo com sucesso!');
-            }
 
             // Note: Total quantity is updated inside the RPC now.
 
@@ -320,7 +286,14 @@ export function AdminLoans() {
                 asset_number: formData.asset_numbers.join(', '),
                 unit: adminUser.unit,
                 equipment: selectedEq,
-                created_at: new Date().toISOString()
+
+                created_at: new Date().toISOString(),
+                // @ts-ignore
+                term_hash: loanData.term_hash,
+                // @ts-ignore
+                term_id: loanData.term_id,
+                // @ts-ignore
+                term_version: loanData.term_version
             };
 
             setFormData({
@@ -384,8 +357,12 @@ export function AdminLoans() {
 
 
     const generatePDF = async (loan: EquipmentLoan, download = true) => {
-        // Usando função centralizada para garantir consistência do hash
-        const shortHash = await calculateLoanHash(loan.id, loan.user_full_name, loan.equipment_id);
+        // Usando HASH e ID OFICIAIS do banco de dados (garantindo consistência)
+        const shortHash = loan.term_hash || 'PENDENTE';
+        // @ts-ignore
+        const displayId = loan.term_id || loan.id.slice(0, 8).toUpperCase();
+        // @ts-ignore
+        const termVersion = loan.term_version || 'v1.0';
 
         const element = document.createElement('div');
         element.innerHTML = `
@@ -449,7 +426,7 @@ export function AdminLoans() {
 
                 <div style="margin-top: 40px; text-align: center; font-size: 10px; color: #555; border-top: 1px solid #ddd; padding-top: 8px;">
                     Documento emitido em ${format(loan.created_at ? parseISO(loan.created_at) : new Date(), "dd/MM/yyyy 'às' HH:mm")} <br/>
-                    <strong>ID: ${loan.id.slice(0, 8).toUpperCase()}</strong> | <span style="font-family: monospace;">HASH: ${shortHash}</span>
+                    <strong>ID: ${displayId}</strong> | <strong>Versão: ${termVersion}</strong> | <span style="font-family: monospace;">HASH: ${shortHash}</span>
                 </div>
             </div>
         `;
@@ -772,11 +749,15 @@ export function AdminLoans() {
                                                     <div className="flex flex-col gap-0.5">
                                                         <div className="flex items-center gap-2">
                                                             <h4 className="font-black text-gray-900 group-hover:text-primary-600 transition-colors">{loan.user_full_name}</h4>
-                                                            <span className="text-[10px] font-bold text-gray-400">ID {loan.id.slice(0, 8).toUpperCase()}</span>
+                                                            {/* @ts-ignore */}
+                                                            <span className="text-[10px] font-bold text-gray-400">ID {loan.term_id || loan.id.slice(0, 8).toUpperCase()}</span>
                                                         </div>
-                                                        {loanHashes[loan.id] && (
+                                                        {/* @ts-ignore */}
+                                                        {/* @ts-ignore */}
+                                                        {loan.term_hash && (
                                                             <span className="text-[10px] font-mono text-gray-600 font-bold tracking-tight" title="Hash Digital de Autenticidade">
-                                                                HASH: {loanHashes[loan.id]}
+                                                                {/* @ts-ignore */}
+                                                                HASH: {loan.term_hash.substring(0, 25)}
                                                             </span>
                                                         )}
                                                     </div>
@@ -1008,6 +989,6 @@ export function AdminLoans() {
                     </div>
                 </div>
             </Modal>
-        </div>
+        </div >
     );
 }
