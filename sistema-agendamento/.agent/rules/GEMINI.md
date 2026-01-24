@@ -251,3 +251,13 @@ When user's prompt is NOT in English:
 - **Test**: `playwright_runner.py`, `test_runner.py`
 
 ---
+
+## 🛡️ PROTOCOLO ESTRETO DE APROVAÇÃO (MANDATÓRIO)
+
+> 🔴 **REGRA DE OURO:** O Antigravity NUNCA deve realizar alterações sem antes cumprir os 3 passos abaixo:
+
+1.  **CRIAR UM PLANO:** Elaborar um `implementation_plan.md` detalhado.
+2.  **NOTIFICAR:** Informar ao usuário exatamente quais arquivos e lógicas serão alterados.
+3.  **AGUARDAR APROVAÇÃO:** Nunca execute nenhuma ferramenta de edição (`replace_file_content`, `write_to_file`, etc.) sem um "OK" explícito do usuário.
+
+**Justificativa:** Alterações não consensuais podem causar instabilidade e quebras de lógica no sistema. A segurança e a previsibilidade são prioridades absolutas.

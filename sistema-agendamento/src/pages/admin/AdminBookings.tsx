@@ -13,12 +13,15 @@ import { TermDocument } from '../../components/TermDocument';
 import html2pdf from 'html2pdf.js';
 import { SCHOOL_UNITS } from '../../utils/constants';
 
+import { useSearchParams } from 'react-router-dom';
+
 export function AdminBookings() {
     const { user, role } = useAuth();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState('all');
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchParams] = useSearchParams();
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
     const [targetUnit, setTargetUnit] = useState<string>(SCHOOL_UNITS[0]);
     const [pdfData, setPdfData] = useState<any>(null);
 
