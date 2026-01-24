@@ -103,14 +103,25 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
     const getRecurringDates = () => {
         const dayNum = data.dayOfWeek ?? data.day_of_week ?? data.term_document?.dayOfWeek ?? data.term_document?.day_of_week;
         if (!isRecurring || dayNum === undefined) return null;
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = today.getMonth();
+
+        // Use created_at if available to anchor the calculation (for past terms), otherwise use now (for preview)
+        // This fixes the issue of showing past dates for new bookings in the current month
+        const anchorDate = data.created_at ? new Date(data.created_at) : new Date();
+        const year = anchorDate.getFullYear();
+        const month = anchorDate.getMonth();
         const lastDay = new Date(year, month + 1, 0).getDate();
+
+        // Start checking from the anchor date (ignoring time)
+        const startDate = new Date(year, month, anchorDate.getDate());
+        startDate.setHours(0, 0, 0, 0);
+
         const dates: string[] = [];
         for (let day = 1; day <= lastDay; day++) {
             const date = new Date(year, month, day);
-            if (date.getDay() === dayNum) dates.push(date.toLocaleDateString('pt-BR'));
+            // Only include dates that are equal to or after the creation date
+            if (date >= startDate && date.getDay() === dayNum) {
+                dates.push(date.toLocaleDateString('pt-BR'));
+            }
         }
         return dates;
     };
