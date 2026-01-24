@@ -264,7 +264,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             // 3. If NOT email (TOTVS number), we MUST look it up first (Using Secure RPC due to RLS)
             if (!isEmail) {
-                console.log('Login: Buscando usuário por TOTVS:', identifier);
+                // console.log('Login: Buscando usuário por TOTVS:', identifier);
                 const { data: userProfile, error: lookupError } = await supabase
                     .rpc('get_user_email_by_totvs', { p_totvs_number: identifier })
                     .single() as { data: { email: string; active: boolean } | null, error: any };
@@ -274,7 +274,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     return { error: 'Usuário não encontrado. Se você é um professor, verifique seu número TOTVS.' };
                 }
 
-                console.log('Login: Usuário encontrado via TOTVS:', userProfile);
+                // console.log('Login: Usuário encontrado via TOTVS:', userProfile);
 
                 if (userProfile.active === false) {
                     return { error: 'Sua conta foi desativada. Entre em contato com a administração.' };
@@ -284,7 +284,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
 
             // 4. Perform Authentication
-            console.log('Login: Tentando autenticação com email:', emailToUse);
+            // console.log('Login: Tentando autenticação com email:', emailToUse);
             setState(prev => ({ ...prev, isLoading: true }));
 
             const { data: authData, error: authError } = await supabase.auth.signInWithPassword({

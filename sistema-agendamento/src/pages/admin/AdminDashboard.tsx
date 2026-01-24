@@ -49,9 +49,14 @@ export function AdminDashboard() {
     }, [adminUser?.id, adminUser?.unit, isSuperAdmin]);
 
     const [selectedTeacher, setSelectedTeacher] = useState<any | null>(null);
+    const [rawTeacherBookings, setRawTeacherBookings] = useState<any[]>([]);
     const [teacherBookings, setTeacherBookings] = useState<any[]>([]);
     const [teacherStats, setTeacherStats] = useState<any>({ equipmentUsage: [], weeklyTrend: [] });
     const [isModalOpen, setIsModalOpen] = useState(false);
+    // Teacher Analytics Filters
+    const [teacherFilterPeriod, setTeacherFilterPeriod] = useState<'all' | 'morning' | 'afternoon'>('all');
+    const [teacherFilterStartDate, setTeacherFilterStartDate] = useState('');
+    const [teacherFilterEndDate, setTeacherFilterEndDate] = useState('');
     const [stats, setStats] = useState({
         activeBookings: 0,
         completedBookings: 0,
@@ -71,6 +76,11 @@ export function AdminDashboard() {
 
     const fetchTeacherAnalytics = async (teacherId: string, teacherName: string) => {
         setLoading(true);
+        // Reset filters when opening new teacher
+        setTeacherFilterPeriod('all');
+        setTeacherFilterStartDate('');
+        setTeacherFilterEndDate('');
+
         try {
             setSelectedTeacher({ id: teacherId, name: teacherName });
 
@@ -83,7 +93,7 @@ export function AdminDashboard() {
 
             const { data, error } = await supabase.rpc('get_admin_bookings', {
                 p_unit: unitFilter,
-                p_start_date: null, // Fetch all history
+                p_start_date: null,
                 p_end_date: null,
                 p_is_recurring: null,
                 p_user_id: teacherId
@@ -92,48 +102,16 @@ export function AdminDashboard() {
             if (error) throw error;
 
             if (data) {
-                // RPC returns ASC, we want DESC for display usually, strictly speaking analytics doesn't care about order for stats, but if listed somewhere...
-                // The current code calculates stats from 'data'.
-                // If there is a list of bookings displayed, it's inside the modal?
-                // The modal code isn't visible in the view_file given, but assuming consistency.
+                // CRITICAL: Only include non-deleted and non-cancelled bookings for analytics
                 const bookingsData = (data as any[]).filter(b =>
                     !b.deleted_at &&
-                    !['cancelled_by_user', 'cancelled', 'excluido'].includes(b.status)
+                    !['cancelled_by_user', 'cancelled', 'excluido', 'deleted_by_admin'].includes(b.status)
                 );
 
-                const eqMap: Record<string, number> = {};
-                const weekTrend: Record<string, number> = { 'Dom': 0, 'Seg': 0, 'Ter': 0, 'Qua': 0, 'Qui': 0, 'Sex': 0, 'Sáb': 0 };
-                const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-
-                // Deduplicate for Frequency Chart (count bookings, not items)
-                const uniqueBookingsForTrend = new Set();
-
-                bookingsData.forEach((b: any) => {
-                    const ename = b.equipment?.name || 'Vários';
-                    eqMap[ename] = (eqMap[ename] || 0) + 1;
-
-                    // Validar se 'Encerrado' ou 'Concluído' deve contar (User said yes)
-                    // Logic: Unique bookings per day
-                    // Use display_id or ID if available
-                    const uniqueKey = b.display_id ? `${b.display_id}` : b.id;
-
-                    if (!uniqueBookingsForTrend.has(uniqueKey)) {
-                        uniqueBookingsForTrend.add(uniqueKey);
-                        const dayName = days[parseISO(b.booking_date).getDay()];
-                        if (weekTrend[dayName] !== undefined) {
-                            weekTrend[dayName]++;
-                        }
-                    }
-                });
-
-                // Sort bookings by date descending for History
+                // Sort by date descending
                 bookingsData.sort((a, b) => new Date(`${b.booking_date}T${b.start_time}`).getTime() - new Date(`${a.booking_date}T${a.start_time}`).getTime());
 
-                setTeacherBookings(bookingsData);
-                setTeacherStats({
-                    equipmentUsage: Object.entries(eqMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 3),
-                    weeklyTrend: Object.entries(weekTrend).map(([day, count]) => ({ day, count }))
-                });
+                setRawTeacherBookings(bookingsData);
                 setIsModalOpen(true);
             }
         } catch (err) {
@@ -143,6 +121,65 @@ export function AdminDashboard() {
             setLoading(false);
         }
     };
+
+    // Effect to filter raw bookings and recalculate stats when filters or raw data change
+    useEffect(() => {
+        if (rawTeacherBookings.length === 0) {
+            setTeacherBookings([]);
+            setTeacherStats({ equipmentUsage: [], weeklyTrend: [] });
+            return;
+        }
+
+        let filtered = [...rawTeacherBookings];
+
+        // 1. Date Filter
+        if (teacherFilterStartDate) {
+            filtered = filtered.filter(b => b.booking_date >= teacherFilterStartDate);
+        }
+        if (teacherFilterEndDate) {
+            filtered = filtered.filter(b => b.booking_date <= teacherFilterEndDate);
+        }
+
+        // 2. Period Filter (Morning: 07:00-12:59, Afternoon: 13:00-17:59)
+        if (teacherFilterPeriod === 'morning') {
+            filtered = filtered.filter(b => {
+                const hour = parseInt(b.start_time?.split(':')[0] || '0', 10);
+                return hour >= 7 && hour < 13;
+            });
+        } else if (teacherFilterPeriod === 'afternoon') {
+            filtered = filtered.filter(b => {
+                const hour = parseInt(b.start_time?.split(':')[0] || '0', 10);
+                return hour >= 13 && hour < 18;
+            });
+        }
+
+        // Calculate Stats
+        const eqMap: Record<string, number> = {};
+        const weekTrend: Record<string, number> = { 'Dom': 0, 'Seg': 0, 'Ter': 0, 'Qua': 0, 'Qui': 0, 'Sex': 0, 'Sáb': 0 };
+        const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        const uniqueBookingsForTrend = new Set<string>();
+
+        filtered.forEach((b: any) => {
+            const ename = b.equipment?.name || 'Vários';
+            eqMap[ename] = (eqMap[ename] || 0) + 1;
+
+            const uniqueKey = b.display_id ? `${b.display_id}` : b.id;
+            if (!uniqueBookingsForTrend.has(uniqueKey)) {
+                uniqueBookingsForTrend.add(uniqueKey);
+                const dayName = days[parseISO(b.booking_date).getDay()];
+                if (weekTrend[dayName] !== undefined) {
+                    weekTrend[dayName]++;
+                }
+            }
+        });
+
+        setTeacherBookings(filtered);
+        setTeacherStats({
+            equipmentUsage: Object.entries(eqMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 3),
+            weeklyTrend: Object.entries(weekTrend).map(([day, count]) => ({ day, count }))
+        });
+
+    }, [rawTeacherBookings, teacherFilterPeriod, teacherFilterStartDate, teacherFilterEndDate]);
 
     const handleTeacherSearch = async (query: string) => {
         setTeacherSearchQuery(query);
@@ -893,18 +930,65 @@ export function AdminDashboard() {
                 isModalOpen && selectedTeacher && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
                         <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
-                            {/* Modal Header */}
-                            <div className="px-8 py-6 bg-primary-600 text-white flex items-center justify-between">
+                            <div className="px-8 py-6 bg-primary-600 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div>
                                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-200">Analytics por Professor</p>
                                     <h2 className="text-2xl font-black">{selectedTeacher.name}</h2>
                                 </div>
-                                <button
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="p-2 hover:bg-white/10 rounded-xl transition-colors"
-                                >
-                                    <X className="h-6 w-6" />
-                                </button>
+
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <input
+                                        type="date"
+                                        value={teacherFilterStartDate}
+                                        onChange={(e) => setTeacherFilterStartDate(e.target.value)}
+                                        className="px-3 py-1.5 bg-primary-700/50 border border-primary-500 rounded-lg text-white text-xs font-bold placeholder-primary-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                                    />
+                                    <span className="text-primary-300">-</span>
+                                    <input
+                                        type="date"
+                                        value={teacherFilterEndDate}
+                                        onChange={(e) => setTeacherFilterEndDate(e.target.value)}
+                                        className="px-3 py-1.5 bg-primary-700/50 border border-primary-500 rounded-lg text-white text-xs font-bold placeholder-primary-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                                    />
+
+                                    <div className="h-6 w-px bg-primary-500 mx-1"></div>
+
+                                    <div className="flex bg-primary-700/50 rounded-lg p-0.5 border border-primary-500">
+                                        <button
+                                            onClick={() => setTeacherFilterPeriod('all')}
+                                            className={clsx(
+                                                "px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all",
+                                                teacherFilterPeriod === 'all' ? "bg-white text-primary-700 shadow-sm" : "text-primary-200 hover:text-white"
+                                            )}
+                                        >
+                                            Todos
+                                        </button>
+                                        <button
+                                            onClick={() => setTeacherFilterPeriod('morning')}
+                                            className={clsx(
+                                                "px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all",
+                                                teacherFilterPeriod === 'morning' ? "bg-white text-primary-700 shadow-sm" : "text-primary-200 hover:text-white"
+                                            )}
+                                        >
+                                            Manhã
+                                        </button>
+                                        <button
+                                            onClick={() => setTeacherFilterPeriod('afternoon')}
+                                            className={clsx(
+                                                "px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all",
+                                                teacherFilterPeriod === 'afternoon' ? "bg-white text-primary-700 shadow-sm" : "text-primary-200 hover:text-white"
+                                            )}
+                                        >
+                                            Tarde
+                                        </button>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsModalOpen(false)}
+                                        className="p-2 ml-2 hover:bg-white/10 rounded-xl transition-colors"
+                                    >
+                                        <X className="h-5 w-5" />
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Modal Content */}
