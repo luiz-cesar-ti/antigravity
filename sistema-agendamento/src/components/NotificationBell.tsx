@@ -1,26 +1,55 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Trash2, CalendarPlus, UserPlus, AlertCircle } from 'lucide-react';
+import { Bell, CalendarPlus, UserPlus, AlertCircle, XCircle, Home } from 'lucide-react';
 import { useNotifications } from '../contexts/NotificationContext';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const getNotificationIcon = (message: string) => {
-    const msg = message.toLowerCase();
-    if (msg.includes('excluído') || msg.includes('excluido') || msg.includes('cancelado')) {
-        return <div className="p-1.5 bg-red-50 rounded-lg shrink-0"><Trash2 className="h-3.5 w-3.5 text-red-600" /></div>;
+    const msg = message.toUpperCase();
+
+    // 1. PRIORIDADE MÁXIMA: Cancelamentos/Exclusões (Sempre X Vermelho)
+    if (msg.includes('CANCELADO') || msg.includes('EXCLUÍDO') || msg.includes('EXCLUIDO')) {
+        return <div className="p-1.5 bg-red-100 rounded-lg shrink-0"><XCircle className="h-3.5 w-3.5 text-red-600" /></div>;
     }
-    if (msg.includes('novo agendamento') || msg.includes('agendamento realizado')) {
-        return <div className="p-1.5 bg-green-50 rounded-lg shrink-0"><CalendarPlus className="h-3.5 w-3.5 text-green-600" /></div>;
+
+    // 2. Regra SALA (Criação - Dourado/Home)
+    if (msg.includes(' DE SALA')) {
+        return <div className="p-1.5 bg-amber-50 rounded-lg shrink-0"><Home className="h-3.5 w-3.5 text-amber-500" /></div>;
     }
-    if (msg.includes('usuário') || msg.includes('usuario') || msg.includes('cadastrado')) {
-        return <div className="p-1.5 bg-purple-50 rounded-lg shrink-0"><UserPlus className="h-3.5 w-3.5 text-purple-600" /></div>;
+
+    // 3. Regra EQUIPAMENTO/RECORRENTE (Criação - Verde/Calendar)
+    if (msg.includes('RECORRENTE') || msg.includes('NOVO AGENDAMENTO') || msg.includes('AGENDAMENTO REALIZADO') || msg.includes('EQUIPAMENTO')) {
+        return <div className="p-1.5 bg-green-100 rounded-lg shrink-0"><CalendarPlus className="h-3.5 w-3.5 text-green-600" /></div>;
     }
-    if (msg.includes('atenção') || msg.includes('erro')) {
-        return <div className="p-1.5 bg-amber-50 rounded-lg shrink-0"><AlertCircle className="h-3.5 w-3.5 text-amber-600" /></div>;
+
+    // 4. Outros modelos
+    if (msg.includes('USUÁRIO') || msg.includes('USUARIO') || msg.includes('CADASTRADO')) {
+        return <div className="p-1.5 bg-purple-100 rounded-lg shrink-0"><UserPlus className="h-3.5 w-3.5 text-purple-600" /></div>;
     }
-    return <div className="p-1.5 bg-gray-50 rounded-lg shrink-0"><Bell className="h-3.5 w-3.5 text-gray-600" /></div>;
+    if (msg.includes('ATENÇÃO') || msg.includes('ERRO')) {
+        return <div className="p-1.5 bg-amber-100 rounded-lg shrink-0"><AlertCircle className="h-3.5 w-3.5 text-amber-600" /></div>;
+    }
+    return <div className="p-1.5 bg-gray-100 rounded-lg shrink-0"><Bell className="h-3.5 w-3.5 text-gray-600" /></div>;
+};
+
+const getMessageStyle = (message: string) => {
+    const msg = message.toUpperCase();
+
+    // 1. Cancelamentos (Red)
+    if (msg.includes('CANCELADO') || msg.includes('EXCLUÍDO') || msg.includes('EXCLUIDO')) {
+        return 'text-red-700 font-bold';
+    }
+    // 2. Salas (Amber)
+    if (msg.includes(' DE SALA')) {
+        return 'text-amber-700 font-bold';
+    }
+    // 3. Equipamentos/Recorrentes (Green)
+    if (msg.includes('RECORRENTE') || msg.includes('NOVO AGENDAMENTO') || msg.includes('AGENDAMENTO REALIZADO') || msg.includes('EQUIPAMENTO')) {
+        return 'text-green-700 font-bold';
+    }
+    return 'text-gray-900';
 };
 
 export function NotificationBell() {
@@ -104,12 +133,12 @@ export function NotificationBell() {
                                                 <Link
                                                     to={notification.link}
                                                     onClick={() => handleNotificationClick()}
-                                                    className="block text-sm font-medium text-gray-900 hover:underline"
+                                                    className={`block text-sm font-medium hover:underline ${getMessageStyle(notification.message)}`}
                                                 >
                                                     {notification.message}
                                                 </Link>
                                             ) : (
-                                                <p className="text-sm font-medium text-gray-900">{notification.message}</p>
+                                                <p className={`text-sm font-medium ${getMessageStyle(notification.message)}`}>{notification.message}</p>
                                             )}
                                             <p className="text-xs text-gray-500 mt-1">
                                                 {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: ptBR })}

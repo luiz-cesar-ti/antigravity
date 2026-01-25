@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Check, Clock, Bell, Trash2, CalendarPlus, UserPlus, AlertCircle } from 'lucide-react';
+import { Check, Clock, Bell, Trash2, CalendarPlus, UserPlus, AlertCircle, XCircle, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useNotifications } from '../../contexts/NotificationContext';
 
@@ -14,20 +14,49 @@ export function AdminNotifications() {
         : notifications;
 
     const getNotificationIcon = (message: string) => {
-        const msg = message.toLowerCase();
-        if (msg.includes('excluído') || msg.includes('excluido') || msg.includes('cancelado')) {
-            return <div className="p-2 bg-red-100 rounded-lg"><Trash2 className="h-4 w-4 text-red-600" /></div>;
+        const msg = message.toUpperCase();
+
+        // 1. PRIORIDADE MÁXIMA: Cancelamentos/Exclusões (Sempre X Vermelho)
+        if (msg.includes('CANCELADO') || msg.includes('EXCLUÍDO') || msg.includes('EXCLUIDO')) {
+            return <div className="p-2 bg-red-100 rounded-lg"><XCircle className="h-4 w-4 text-red-600" /></div>;
         }
-        if (msg.includes('novo agendamento') || msg.includes('agendamento realizado')) {
+
+        // 2. Regra SALA (Criação - Dourado/Home)
+        if (msg.includes(' DE SALA')) {
+            return <div className="p-2 bg-amber-50 rounded-lg"><Home className="h-4 w-4 text-amber-500" /></div>;
+        }
+
+        // 3. Regra EQUIPAMENTO/RECORRENTE (Criação - Verde/Calendar)
+        if (msg.includes('RECORRENTE') || msg.includes('NOVO AGENDAMENTO') || msg.includes('AGENDAMENTO REALIZADO') || msg.includes('EQUIPAMENTO')) {
             return <div className="p-2 bg-green-100 rounded-lg"><CalendarPlus className="h-4 w-4 text-green-600" /></div>;
         }
-        if (msg.includes('usuário') || msg.includes('usuario') || msg.includes('cadastrado')) {
+
+        // 4. Outros modelos
+        if (msg.includes('USUÁRIO') || msg.includes('USUARIO') || msg.includes('CADASTRADO')) {
             return <div className="p-2 bg-purple-100 rounded-lg"><UserPlus className="h-4 w-4 text-purple-600" /></div>;
         }
-        if (msg.includes('atenção') || msg.includes('erro')) {
+        if (msg.includes('ATENÇÃO') || msg.includes('ERRO')) {
             return <div className="p-2 bg-amber-100 rounded-lg"><AlertCircle className="h-4 w-4 text-amber-600" /></div>;
         }
         return <div className="p-2 bg-gray-100 rounded-lg"><Bell className="h-4 w-4 text-gray-600" /></div>;
+    };
+
+    const getMessageStyle = (message: string) => {
+        const msg = message.toUpperCase();
+
+        // 1. Cancelamentos (Red)
+        if (msg.includes('CANCELADO') || msg.includes('EXCLUÍDO') || msg.includes('EXCLUIDO')) {
+            return 'text-red-700 font-bold';
+        }
+        // 2. Salas (Amber)
+        if (msg.includes(' DE SALA')) {
+            return 'text-amber-700 font-bold';
+        }
+        // 3. Equipamentos/Recorrentes (Green)
+        if (msg.includes('RECORRENTE') || msg.includes('NOVO AGENDAMENTO') || msg.includes('AGENDAMENTO REALIZADO') || msg.includes('EQUIPAMENTO')) {
+            return 'text-green-700 font-bold';
+        }
+        return 'text-gray-900';
     };
 
     return (
@@ -87,12 +116,12 @@ export function AdminNotifications() {
                                                 <Link
                                                     to={notification.link}
                                                     onClick={() => markAsRead(notification.id)}
-                                                    className="text-sm font-medium text-gray-900 hover:text-primary-600 hover:underline block mb-1"
+                                                    className={`text-sm font-medium hover:underline block mb-1 ${getMessageStyle(notification.message)}`}
                                                 >
                                                     {notification.message}
                                                 </Link>
                                             ) : (
-                                                <p className="text-sm font-medium text-gray-900 mb-1">{notification.message}</p>
+                                                <p className={`text-sm font-medium mb-1 ${getMessageStyle(notification.message)}`}>{notification.message}</p>
                                             )}
 
                                             <div className="flex items-center text-xs text-gray-500">
