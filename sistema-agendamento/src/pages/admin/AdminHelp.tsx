@@ -836,14 +836,52 @@ export function AdminHelp() {
                                                 <div className="bg-white p-2 rounded-lg text-indigo-600 shadow-sm border border-indigo-100">
                                                     <Settings className="h-5 w-5" />
                                                 </div>
-                                                <h4 className="font-bold text-indigo-900">Edição de Dados</h4>
+                                                <h4 className="font-bold text-indigo-900">Edição de Dados Cadastrais</h4>
                                             </div>
                                             <p className="text-sm text-indigo-800 leading-relaxed mb-4">
-                                                O Administrador possui controle total para corrigir o <strong className="text-indigo-900">Nome Completo</strong> do professor caso haja erros de digitação.
+                                                O Administrador possui controle total para corrigir dados sensíveis do professor caso haja erros no cadastro inicial:
                                             </p>
-                                            <p className="text-sm text-indigo-800 leading-relaxed bg-white/50 p-3 rounded-xl border border-indigo-200">
-                                                <strong className="text-indigo-900">Gestão de Unidades:</strong> É possível incluir ou remover um professor de uma unidade específica a qualquer momento. Isso libera ou revoga o acesso dele à agenda daquela escola imediatamente.
-                                            </p>
+
+                                            <div className="space-y-3">
+                                                {/* TOTVS & Nome */}
+                                                <div className="bg-white p-3 rounded-xl border border-indigo-100 flex items-start gap-3">
+                                                    <div className="p-1.5 bg-indigo-100 rounded-lg text-indigo-600 mt-0.5">
+                                                        <FileText className="h-4 w-4" />
+                                                    </div>
+                                                    <div>
+                                                        <strong className="text-indigo-900 text-xs block mb-0.5">Correção de Identidade</strong>
+                                                        <p className="text-xs text-indigo-700 leading-snug">
+                                                            É possível alterar o <strong className="text-indigo-950">Nome Completo</strong> e o <strong className="text-indigo-950">Número de Matrícula (TOTVS)</strong>.
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Cargo */}
+                                                <div className="bg-white p-3 rounded-xl border border-indigo-100 flex items-start gap-3">
+                                                    <div className="p-1.5 bg-indigo-100 rounded-lg text-indigo-600 mt-0.5">
+                                                        <Users className="h-4 w-4" />
+                                                    </div>
+                                                    <div>
+                                                        <strong className="text-indigo-900 text-xs block mb-0.5">Alteração de Cargo</strong>
+                                                        <p className="text-xs text-indigo-700 leading-snug">
+                                                            Permite atualizar a função do usuário (ex: de Professor para Coordenador) para refletir corretamente nos documentos.
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Unidades */}
+                                                <div className="bg-white p-3 rounded-xl border border-indigo-100 flex items-start gap-3">
+                                                    <div className="p-1.5 bg-indigo-100 rounded-lg text-indigo-600 mt-0.5">
+                                                        <LayoutGrid className="h-4 w-4" />
+                                                    </div>
+                                                    <div>
+                                                        <strong className="text-indigo-900 text-xs block mb-0.5">Gestão de Unidades</strong>
+                                                        <p className="text-xs text-indigo-700 leading-snug">
+                                                            Inclua ou remova o acesso a escolas específicas instantaneamente.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
