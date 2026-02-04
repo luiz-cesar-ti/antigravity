@@ -4,6 +4,7 @@ export interface User {
     full_name: string;
     email: string;
     units: string[];
+    job_title?: string;
     role: 'teacher';
     active: boolean;
     recurring_booking_enabled: boolean;

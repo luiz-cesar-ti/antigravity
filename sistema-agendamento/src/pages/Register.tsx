@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Mail, Lock, AlertCircle, Check, Info, FileText, X, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Lock, AlertCircle, Check, Info, FileText, X, Eye, EyeOff, Briefcase } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabase';
 import { SCHOOL_UNITS } from '../utils/constants';
@@ -16,6 +16,7 @@ export function Register() {
         password: '',
         confirm_password: '',
         units: [] as string[],
+        job_title: '',
     });
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,7 +58,7 @@ export function Register() {
         fetchTerms();
     }, []);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
@@ -78,7 +79,7 @@ export function Register() {
         setError('');
 
         // Validations
-        if (!formData.totvs_number || !formData.full_name || !formData.email || !formData.password) {
+        if (!formData.totvs_number || !formData.full_name || !formData.email || !formData.password || !formData.job_title) {
             setError('Por favor, preencha todos os campos obrigatórios.');
             return;
         }
@@ -205,6 +206,31 @@ export function Register() {
                                         value={formData.full_name}
                                         onChange={handleInputChange}
                                     />
+                                </div>
+                            </div>
+
+                            {/* Job Title */}
+                            <div className="sm:col-span-3">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Cargo/Função *
+                                </label>
+                                <div className="mt-1 relative rounded-md shadow-sm">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Briefcase className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <select
+                                        name="job_title"
+                                        required
+                                        className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3 bg-white"
+                                        value={formData.job_title}
+                                        onChange={handleInputChange}
+                                    >
+                                        <option value="">Selecione...</option>
+                                        <option value="Professor(a)">Professor(a)</option>
+                                        <option value="Coordenador(a)">Coordenador(a)</option>
+                                        <option value="Diretor(a)">Diretor(a)</option>
+                                        <option value="TI">TI</option>
+                                    </select>
                                 </div>
                             </div>
 

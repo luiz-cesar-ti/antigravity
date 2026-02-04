@@ -378,6 +378,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 full_name: data.full_name,
                 email: data.email,
                 units: data.units,
+                job_title: data.job_title,
                 terms_accepted: data.terms_accepted,
                 terms_accepted_at: data.terms_accepted ? new Date().toISOString() : null,
                 terms_version: data.terms_version || 'v1.0'

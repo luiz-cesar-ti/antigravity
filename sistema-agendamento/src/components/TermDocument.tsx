@@ -1,5 +1,6 @@
 // 🛑 FILE LOCKED: DO NOT EDIT. THIS RENDER LOGIC IS CRITICAL FOR PDF ALIGNMENT.
 import React from 'react';
+import { UNIT_LEGAL_NAMES } from '../utils/constants'; // Import legal mapping
 
 // Interfaces to handle both fresh Wizard data and stored Admin/DB data
 interface TermEquipment {
@@ -16,6 +17,10 @@ interface TermData {
     userTotvs?: string;
     unit: string;
     local: string;
+    job_title?: string;
+    jobTitle?: string;
+    legal_name?: string;
+    legalName?: string;
     date?: string;
     booking_date?: string; // Admin view often uses snake_case
     startTime?: string;
@@ -58,6 +63,19 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
     const getTotvs = () => data.totvs_number || data.userTotvs || data.term_document?.userTotvs || data.term_document?.totvs_number || data.users?.totvs_number || '';
     const getUnit = () => data.unit || data.term_document?.unit || '';
     const getLocal = () => data.local || data.term_document?.local || '';
+
+    // Cargo/Job Title Logic
+    const getJobTitle = () => data.job_title || data.jobTitle || data.term_document?.jobTitle || data.term_document?.job_title || data.users?.job_title || 'Colaborador(a)';
+
+    // Legal Name Logic (Snapshot > Constant Map > Fallback)
+    const getLegalName = () => {
+        if (data.legal_name || data.legalName) return data.legal_name || data.legalName;
+        if (data.term_document?.legalName || data.term_document?.legal_name) return data.term_document.legalName || data.term_document.legal_name;
+
+        // Fallback using current map if not in snapshot
+        const unitName = getUnit();
+        return UNIT_LEGAL_NAMES[unitName] || 'SOCIEDADE INSTRUTIVA JOAQUIM NABUCO LTDA';
+    };
 
     // Robust Room/Equipment detection
     const isRoom = data.type === 'room' ||
@@ -132,8 +150,8 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
         if (!trimmed) return <div key={key} style={{ height: '0.4rem' }} />;
 
         const isTitle = trimmed.length > 5 && trimmed === trimmed.toUpperCase() && !trimmed.includes('CIÊNCIA');
-        const isListItem = /^\d+\./.test(trimmed);
-        const listMatch = trimmed.match(/^(\d+\.)(.*)/);
+        const isListItem = /^(\d+\.|[a-zA-Z]\))/.test(trimmed);
+        const listMatch = trimmed.match(/^(\d+\.|[a-zA-Z]\))(.*)/);
 
         return (
             <p key={key} style={{
@@ -149,7 +167,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
             }}>
                 {isListItem && listMatch ? (
                     <>
-                        <strong style={{ fontWeight: 'bold', marginRight: '4px' }}>{listMatch[1]}</strong>
+                        <strong style={{ fontWeight: 'bold', marginRight: '4px' }}>{listMatch[1].replace(/\.$/, ')')}</strong>
                         {listMatch[2]}
                     </>
                 ) : trimmed}
@@ -202,9 +220,10 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
                 Declaração de Responsabilidade e Termo de Uso
             </h1>
 
-            <div style={{ textAlign: 'justify', marginBottom: '0.5rem' }}>
+            <div style={{ textAlign: 'justify', marginBottom: '2.5rem' }}>
                 <p>
                     Declaro que eu, <strong style={{ fontWeight: 'bold' }}>{getName()}</strong>, portador(a) do número de usuário TOTVS <strong style={{ fontWeight: 'bold' }}>{getTotvs()}</strong>,
+                    <strong style={{ fontWeight: 'bold' }}> {getJobTitle()}</strong> na empresa <strong style={{ fontWeight: 'bold' }}>{getLegalName()}</strong>,
                     estou ciente e de acordo com as condições de uso {isRoom ? 'do espaço físico' : 'do(s) equipamento(s)'} abaixo descrito(s),
                     responsabilizando-me integralmente por sua utilização durante o período de agendamento.
                 </p>
@@ -245,14 +264,23 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
                     {data.term_document.content.split('\n').map((line: string, i: number) => {
                         const trimmed = line.trim();
                         if (trimmed.startsWith('Estou ciente que a utilização')) {
-                            // Using isRecurring here causes reference error if not defined in scope
                             return (
-                                <div key={i} style={isRecurring ? { pageBreakBefore: 'always', paddingTop: '30mm' } : {}}>
+                                <div key={i} style={{ marginTop: '1rem' }}>
                                     {renderScienceTerm(trimmed)}
                                 </div>
                             );
                         }
                         if (trimmed === 'TERMO DE CIÊNCIA') return null;
+
+                        // Force page break before item 'h)'
+                        if (trimmed.startsWith('h)')) {
+                            return (
+                                <div key={i} style={{ pageBreakBefore: 'always', paddingTop: '20mm' }}>
+                                    {renderLine(line, i)}
+                                </div>
+                            );
+                        }
+
                         return renderLine(line, i);
                     })}
                 </div>
@@ -260,21 +288,34 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
                 <div style={{ marginBottom: '1rem' }}>
                     {renderLine('COMPROMISSOS E RESPONSABILIDADES', 'c1')}
                     {renderLine('Ao aceitar este termo, comprometo-me a:', 'c2')}
-                    {renderLine(`1. Utilizar o ${isRoom ? 'espaço' : 'equipamento'} exclusivamente durante o período agendado e no local especificado.`, 'l1')}
-                    {renderLine(`2. Zelar pela conservação e bom funcionamento do ${isRoom ? 'espaço e seus itens' : 'equipamento'}.`, 'l2')}
-                    {renderLine('3. Comunicar imediatamente à equipe responsável qualquer defeito ou irregularidade constatada.', 'l3')}
-                    {renderLine(`4. Não emprestar ou transferir o ${isRoom ? 'espaço' : 'equipamento'} a terceiros sem autorização prévia.`, 'l4')}
-                    {renderLine(`5. Orientar adequadamente o uso do ${isRoom ? 'espaço' : 'equipamento'}, quando utilizado por alunos, zelando por sua conservação.`, 'l5')}
+
+                    {renderLine(`a) Utilizar o ${isRoom ? 'espaço' : 'equipamento'} exclusivamente durante o período agendado e no local especificado.`, 'l1')}
+                    {renderLine(`b) Zelar pela conservação e bom funcionamento do ${isRoom ? 'espaço e seus itens' : 'equipamento'}.`, 'l2')}
+
+                    {renderLine(`Não emprestar ou transferir ${isRoom ? 'este espaço' : 'este equipamento'} a terceiros sem autorização prévia.`, 'l3_pre')}
+                    {renderLine(`c) Comunicar imediatamente à equipe responsável qualquer dano, irregularidade ou extravio do ${isRoom ? 'espaço' : 'equipamento'}.`, 'l3')}
+
+                    {renderLine(`d) Orientar adequadamente o uso do ${isRoom ? 'espaço' : 'equipamento'}, quando utilizado por alunos em sala de aula, zelando por sua conservação e bom funcionamento.`, 'l4')}
+
+                    {renderLine(`e) Caso o ${isRoom ? 'espaço' : 'equipamento'} seja danificado por aluno, o fato deverá ser comunicado imediatamente à Coordenação e ao Técnico da Educação Digital.`, 'l5')}
+
+                    {renderLine(`f) Estou ciente que o transporte do equipamento e sua integridade estão sob minha responsabilidade.`, 'l6')}
+
+                    {renderLine(`g) Declaro estar ciente de que serei responsável por arcar com os custos de reparo ou reposição do equipamento, nos casos de danos decorrentes de mau uso, negligência ou imperícia.`, 'l7')}
+
+                    {renderLine(`h) Declaro estar ciente de que não é permitido o armazenamento de arquivos pessoais no equipamento, sendo de responsabilidade do usuário a guarda de seus dados. O Técnico de Educação Digital está autorizado a realizar a exclusão de arquivos considerados desnecessários ou incompatíveis com a finalidade pedagógica do equipamento, sem necessidade de aviso prévio.`, 'l8')}
+
+                    {renderLine(`i) Declaro estar ciente de que os aplicativos instalados no equipamento são oficiais e previamente autorizados pela instituição, não sendo permitida a instalação de novos aplicativos sem a autorização do Técnico de Educação Digital. Todos os softwares utilizados no equipamento deverão ser oficiais e devidamente licenciados.`, 'l9')}
+
+                    {renderLine(`j) Declaro estar ciente de que o equipamento deverá ser entregue ao responsável pela Educação Digital ao final do período de agendamento, não sendo permitido deixá-lo desacompanhado, abandonado ou fora da guarda adequada nas dependências da instituição de ensino.`, 'l10')}
 
                     {isRecurring &&
-                        renderLine('6. Declaro ciência que este é um AGENDAMENTO FIXO (RECORRENTE) e este termo de responsabilidade aplica-se a todas as ocorrências geradas automaticamente por esta reserva semanal.', 'l6')
+                        renderLine('K) Declaro estar ciente de que as datas de utilização do equipamento, discriminadas na parte superior deste termo, refletem os agendamentos gerados automaticamente pelo sistema, vinculando o presente termo de responsabilidade a todas as utilizações ali previstas.', 'l11')
                     }
 
-                    <div style={{ marginTop: '1rem', textAlign: 'justify' }}>
-                        <p>Comprometo-me a devolver o(s) equipamento(s) nas mesmas condições em que o(s) recebi. Estou ciente que qualquer dano ou extravio será de minha responsabilidade.</p>
-                    </div>
 
-                    <div style={isRecurring ? { pageBreakBefore: 'always', paddingTop: '30mm' } : {}}>
+
+                    <div style={{ marginTop: '1rem' }}>
                         {renderScienceTerm()}
                     </div>
                 </div>
@@ -300,7 +341,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
                     <p style={{ fontSize: '7.5pt', color: '#6b7280', fontWeight: 'normal' }}>
                         {displayId && <span style={{ color: '#000' }}><strong style={{ fontWeight: 'bold' }}>ID DO TERMO: #{displayId}</strong></span>}
                         <span style={{ margin: '0 8px' }}>|</span>
-                        <strong style={{ fontWeight: 'bold', color: '#000' }}>VERSÃO:</strong> {data.version_tag || data.term_document?.version_tag || 'v2.0'}
+                        <strong style={{ fontWeight: 'bold', color: '#000' }}>VERSÃO:</strong> {data.version_tag || data.term_document?.version_tag || 'v3.0-loan'}
                         <span style={{ margin: '0 8px' }}>|</span>
                         <strong style={{ fontWeight: 'bold', color: '#000' }}>HASH:</strong> {(data.term_hash || data.term_fingerprint || data.term_document?.term_hash || data.term_document?.term_fingerprint)?.substring(0, 32)}...
                     </p>

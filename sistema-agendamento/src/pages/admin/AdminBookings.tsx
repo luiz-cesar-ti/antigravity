@@ -11,6 +11,7 @@ import {
 import { TermDocument } from '../../components/TermDocument';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
+import { UNIT_LEGAL_NAMES } from '../../utils/constants';
 import { SCHOOL_UNITS } from '../../utils/constants';
 
 import { useSearchParams } from 'react-router-dom';
@@ -253,6 +254,7 @@ export function AdminBookings() {
                                 data={{
                                     ...pdfData,
                                     ...pdfData.term_document,
+                                    legalName: pdfData.term_document?.legalName || UNIT_LEGAL_NAMES[pdfData.term_document?.unit || pdfData.unit],
                                     created_at: pdfData.created_at
                                 }}
                             />

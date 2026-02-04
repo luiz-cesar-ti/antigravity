@@ -30,11 +30,7 @@ import { clsx } from 'clsx';
 import html2pdf from 'html2pdf.js';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
-
-// Função centralizada para calcular hash do documento de empréstimo
-// Usa APENAS id, user_full_name e equipment_id para garantir consistência
-// (start_at e end_at podem ter formatos diferentes dependendo da origem)
-
+import { UNIT_LEGAL_NAMES } from '../../utils/constants';
 
 // Função de sanitização para prevenir XSS em templates HTML
 const escapeHtml = (unsafe: string | null | undefined): string => {
@@ -46,7 +42,6 @@ const escapeHtml = (unsafe: string | null | undefined): string => {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 };
-
 
 // --- Custom Professional Modal Component ---
 const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }: any) => (
@@ -170,8 +165,6 @@ export function AdminLoans() {
         };
     }, [modalInfo]);
 
-
-
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -192,7 +185,6 @@ export function AdminLoans() {
         const newAssets = formData.asset_numbers.filter((_, i) => i !== index);
         setFormData(prev => ({ ...prev, asset_numbers: newAssets }));
     };
-
 
     const validateForm = () => {
         const startStr = `${formData.start_date}T${formData.start_time}`;
@@ -243,10 +235,6 @@ export function AdminLoans() {
             const startStr = `${formData.start_date}T${formData.start_time}:00-03:00`;
             const endStr = `${formData.end_date}T${formData.end_time}:00-03:00`;
 
-            // Gerar ID único temporário para calcular hash (será substituído pelo real da RPC)
-            // Mas para manter consistência, o hash será calculado após receber o ID real
-
-            // Use RPC for Secure Creation
             const { data: loanData, error: loanError } = await supabase.rpc('create_equipment_loan', {
                 p_admin_token: adminUser.session_token,
                 p_user_full_name: formData.user_full_name,
@@ -262,18 +250,11 @@ export function AdminLoans() {
 
             if (loanError) throw loanError;
 
-
-
-            // Note: Total quantity is updated inside the RPC now.
-
             await fetchLoans();
             await fetchEquipment();
 
             const selectedEq = equipmentList.find(e => e.id === formData.equipment_id);
 
-
-            // Construir objeto de empréstimo completo para o modal de preview
-            // Reutilizando startStr e endStr já declarados acima
             const completeLoanData = {
                 id: loanData.id,
                 user_full_name: formData.user_full_name,
@@ -355,20 +336,22 @@ export function AdminLoans() {
         }
     };
 
-
     const generatePDF = async (loan: EquipmentLoan, download = true) => {
         // Usando HASH e ID OFICIAIS do banco de dados (garantindo consistência)
         const shortHash = loan.term_hash || 'PENDENTE';
         // @ts-ignore
         const displayId = loan.term_id || loan.id.slice(0, 8).toUpperCase();
         // @ts-ignore
-        const termVersion = loan.term_version || 'v1.0';
+        const termVersion = 'v3.0-loan';
+
+        // Get Legal Name
+        const legalName = UNIT_LEGAL_NAMES[loan.unit] || 'SISTEMA DE ENSINO DE SAO VICENTE LTDA';
 
         const element = document.createElement('div');
         element.innerHTML = `
-        <div style="padding: 20px; font-family: sans-serif; line-height: 1.3; color: #1a1a1a;">
+        <div style="padding: 10px; font-family: sans-serif; line-height: 1.3; color: #1a1a1a;">
                 <div style="text-align: center; margin-bottom: 12px;">
-                    <img src="${window.location.origin}/logo-objetivo.jpg" style="max-height: 85px; width: auto; margin-bottom: 8px; display: block; margin-left: auto; margin-right: auto;" onerror="this.style.display='none'" />
+                    <img src="${window.location.origin}/logo-objetivo.jpg" style="max-height: 85px; width: auto; margin-bottom: 8px; display: block; margin-left: auto; margin-right: auto;" />
                     <h1 style="color: #3D52A0; margin: 0; font-size: 18px; text-transform: uppercase;">TERMO DE EMPRÉSTIMO E RESPONSABILIDADE</h1>
                 </div>
 
@@ -378,7 +361,10 @@ export function AdminLoans() {
                         <tr><td style="padding: 0.5px 0; width: 35%;"><strong>Unidade:</strong></td><td>${escapeHtml(loan.unit)}</td></tr>
                         <tr><td style="padding: 0.5px 0;"><strong>Solicitante:</strong></td><td>${escapeHtml(loan.user_full_name)}</td></tr>
                         <tr><td style="padding: 0.5px 0;"><strong>Cargo:</strong></td><td>${escapeHtml(loan.user_role)}</td></tr>
-                        <tr><td style="padding: 0.5px 0;"><strong>Equipamento:</strong></td><td>${escapeHtml(loan.equipment?.name || 'N/A')}</td></tr>
+                        <tr><td style="padding: 0.5px 0;"><strong>Equipamento:</strong></td><td>
+                            ${escapeHtml(loan.equipment?.name || 'N/A')}
+                            ${loan.equipment?.model ? `<br/><span style="font-size: 11px; color: #555;">Modelo: ${escapeHtml(loan.equipment.model)}</span>` : ''}
+                        </td></tr>
                         <tr><td style="padding: 0.5px 0;"><strong>Quantidade:</strong></td><td>${loan.quantity} unidade(s)</td></tr>
                         <tr><td style="padding: 0.5px 0;"><strong>Nº Patrimônio:</strong></td><td>${escapeHtml(loan.asset_number)}</td></tr>
                         <tr><td style="padding: 0.5px 0;"><strong>Local de Uso:</strong></td><td>${escapeHtml(loan.location)}</td></tr>
@@ -390,21 +376,28 @@ export function AdminLoans() {
                 <div style="margin-bottom: 12px;">
                     <h3 style="color: #3D52A0; font-size: 17px; margin-bottom: 4px; padding-bottom: 2px;">TERMO DE RESPONSABILIDADE</h3>
                     <p style="font-size: 15px; text-align: justify; margin: 0 0 6px 0;">
-                        Pelo presente Termo de Responsabilidade, o solicitante acima identificado declara ter recebido da Instituição de Ensino (Objetivo - Unidade ${escapeHtml(loan.unit)}) os equipamentos acima descritos em perfeito estado de conservação e funcionamento.
+                        Pelo presente Termo de Responsabilidade, o solicitante acima identificado declara ter recebido da empresa <strong>${escapeHtml(legalName)}</strong> os equipamentos acima descritos em perfeito estado de conservação e funcionamento.
                     </p>
-                    <p style="font-size: 15px; text-align: justify; margin: 0 0 8px 0;">
-                        O solicitante assume total responsabilidade pela guarda, conservação e correta utilização dos mesmos, comprometendo-se a:
+                    <p style="font-size: 15px; text-align: justify; margin: 0 0 15px 0;">
+                        O solicitante assume total responsabilidade pela guarda, conservação e correta utilização dos equipamentos, comprometendo-se a:
                     </p>
-                    <div style="font-size: 14px; line-height: 1.5;">
-                        1. Zelar pela integridade física do equipamento;<br/>
-                        2. Utilizá-lo exclusivamente para fins pedagógicos/institucionais no local indicado;<br/>
-                        3. Efetuar a devolução rigorosamente no prazo estipulado;<br/>
-                        4. Comunicar imediatamente à administração qualquer avaria, perda ou extravio;<br/>
-                        5. Arcar com os custos de reparo ou reposição em caso de danos decorrentes de mau uso, negligência ou imperícia.
+
+                    <div style="height: 1px; background-color: #ddd; margin-bottom: 20px; width: 100%;"></div>
+
+                    <div style="font-size: 14px; line-height: 1.6; text-align: justify;">
+                        <p style="margin: 12px 0;"><strong>a)</strong> Zelar pela conservação e bom funcionamento do equipamento.</p>
+                        <p style="margin: 12px 0;"><strong>b)</strong> Não emprestar ou transferir este equipamento a terceiros sem autorização prévia.</p>
+                        <p style="margin: 12px 0;"><strong>c)</strong> Comunicar imediatamente à equipe responsável qualquer dano, irregularidade ou extravio do equipamento.</p>
+                        <p style="margin: 12px 0;"><strong>d)</strong> Orientar adequadamente o uso do equipamento, quando utilizado por alunos em sala de aula, zelando por sua conservação e bom funcionamento.</p>
+                        <p style="margin: 12px 0;"><strong>e)</strong> Caso o equipamento seja danificado por aluno, o fato deverá ser comunicado imediatamente à Coordenação e ao Técnico da Educação Digital.</p>
+                        <p style="margin: 12px 0;"><strong>f)</strong> Estou ciente que o transporte do equipamento e sua integridade estão sob minha responsabilidade.</p>
+                        <p style="margin: 12px 0;"><strong>g)</strong> Declaro estar ciente de que serei responsável por arcar com os custos de reparo ou reposição do equipamento, nos casos de danos decorrentes de mau uso, negligência ou imperícia.</p>
+                        <p style="margin: 12px 0; page-break-before: always; padding-top: 20px;"><strong>h)</strong> Declaro estar ciente de que não é permitido o armazenamento de arquivos pessoais no equipamento, sendo de responsabilidade do usuário a guarda de seus dados. O Técnico de Educação Digital está autorizado a realizar a exclusão de arquivos considerados desnecessários ou incompatíveis com a finalidade pedagógica do equipamento, sem necessidade de aviso prévio.</p>
+                        <p style="margin: 12px 0;"><strong>i)</strong> Declaro estar ciente de que os aplicativos instalados no equipamento são oficiais e previamente autorizados pela instituição, não sendo permitida a instalação de novos aplicativos sem a autorização do Técnico de Educação Digital. Todos os softwares utilizados no equipamento deverão ser oficiais e devidamente licenciados.</p>
                     </div>
                 </div>
 
-                <div style="margin-top: 70px; display: flex; justify-content: space-between; gap: 50px;">
+                <div style="margin-top: 50px; display: flex; justify-content: space-between; gap: 50px;">
                     <div style="width: 45%; text-align: center;">
                         <div style="border-top: 1px solid #000; padding-top: 5px; font-size: 12.5px;">
                             <strong>${escapeHtml(loan.user_full_name)}</strong><br/>
@@ -432,7 +425,7 @@ export function AdminLoans() {
         `;
 
         const opt = {
-            margin: 10,
+            margin: 20, // 2cm margin
             filename: `TERMO_EMPRESTIMO_${loan.user_full_name.replace(/\s+/g, '_')}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 3, useCORS: true },

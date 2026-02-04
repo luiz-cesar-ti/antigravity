@@ -11,6 +11,7 @@ import { format, parseISO } from 'date-fns';
 import { TermDocument } from '../components/TermDocument';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
+import { UNIT_LEGAL_NAMES } from '../utils/constants';
 
 export function TeacherBookings() {
     const { user } = useAuth();
@@ -150,6 +151,8 @@ export function TeacherBookings() {
                                 data={{
                                     ...pdfData,
                                     ...pdfData.term_document,
+                                    jobTitle: pdfData.term_document?.jobTitle || currentUser?.job_title,
+                                    legalName: pdfData.term_document?.legalName || UNIT_LEGAL_NAMES[pdfData.term_document?.unit || pdfData.unit],
                                     created_at: pdfData.created_at
                                 }}
                             />

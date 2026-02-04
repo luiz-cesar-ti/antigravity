@@ -26,6 +26,7 @@ import { clsx } from 'clsx';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
 import { generateHash } from '../../utils/hash';
+import { UNIT_LEGAL_NAMES } from '../../utils/constants';
 
 interface Step3Props {
     data: BookingData;
@@ -102,6 +103,8 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
             const termDocument = {
                 userName: data.full_name,
                 userTotvs: data.totvs_number,
+                jobTitle: (user as any)?.job_title || 'Colaborador(a)', // Snapshot User Role
+                legalName: UNIT_LEGAL_NAMES[data.unit] || 'SOCIEDADE INSTRUTIVA JOAQUIM NABUCO LTDA.', // Snapshot Legal Entity
                 unit: data.unit,
                 local: data.local,
                 date: data.isRecurring ? `Toda ${['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}` : data.date,
