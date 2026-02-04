@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { User, Mail, Lock, AlertCircle, Check, Info, FileText, X, Eye, EyeOff, Briefcase } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabase';
-import { SCHOOL_UNITS } from '../utils/constants';
+import { SCHOOL_UNITS, JOB_TITLES } from '../utils/constants';
 import { SuccessModal } from '../components/SuccessModal';
 
 export function Register() {
@@ -113,6 +113,7 @@ export function Register() {
             password: formData.password,
             totvs_number: formData.totvs_number,
             full_name: formData.full_name,
+            job_title: formData.job_title,
             units: formData.units,
             terms_accepted: acceptedTerms,
             terms_version: termVersion,
@@ -226,10 +227,11 @@ export function Register() {
                                         onChange={handleInputChange}
                                     >
                                         <option value="">Selecione...</option>
-                                        <option value="Professor(a)">Professor(a)</option>
-                                        <option value="Coordenador(a)">Coordenador(a)</option>
-                                        <option value="Diretor(a)">Diretor(a)</option>
-                                        <option value="TI">TI</option>
+                                        {JOB_TITLES.map((title) => (
+                                            <option key={title} value={title}>
+                                                {title}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>

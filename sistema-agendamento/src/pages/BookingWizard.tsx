@@ -8,6 +8,7 @@ export type BookingData = {
     unit: string;
     totvs_number: string;
     full_name: string;
+    job_title?: string;
     local: string;
     date: string;       // YYYY-MM-DD
     startTime: string;  // HH:mm
@@ -31,6 +32,7 @@ export function BookingWizard() {
         unit: '',
         totvs_number: teacherUser?.totvs_number || '',
         full_name: teacherUser?.full_name || '',
+        job_title: teacherUser?.job_title || '',
         local: '',
         date: '',
         startTime: '',

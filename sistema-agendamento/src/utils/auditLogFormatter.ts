@@ -99,7 +99,15 @@ export const generateFriendlySummary = (log: any): FriendlyLogSummary => {
             if (oldData?.active !== newData?.active) changes.push(newData?.active ? 'Reativou acesso' : 'Desativou acesso');
             if (JSON.stringify(oldData?.units) !== JSON.stringify(newData?.units)) changes.push('Alterou unidades');
 
-            details = `Atualizou professor "${userName}". ${changes.join(', ')}`;
+            // Highlight specific details requested
+            if (oldData?.totvs_number !== newData?.totvs_number) {
+                changes.push(`Alterou matrícula de "${oldData?.totvs_number || '?'}" para "${newData?.totvs_number}"`);
+            }
+            if (oldData?.job_title !== newData?.job_title) {
+                changes.push(`Alterou cargo de "${oldData?.job_title || 'Não definido'}" para "${newData?.job_title}"`);
+            }
+
+            details = `Atualizou professor "${userName}". ${changes.join(' | ')}`;
         }
     }
     // --- BOOKINGS & ROOM_BOOKINGS ---

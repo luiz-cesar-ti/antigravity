@@ -27,7 +27,8 @@ export const generateChangeTip = (log: any): string | null => {
         { key: 'email', label: 'Email' },
         { key: 'full_name', label: 'Nome Completo' },
         { key: 'status', label: 'Status' },
-        { key: 'totvs_number', label: 'Matrícula' }
+        { key: 'totvs_number', label: 'Matrícula' },
+        { key: 'job_title', label: 'Cargo' }
     ];
 
     // 1. Special Handling for 'units' (Arrays)

@@ -17,3 +17,10 @@ export const UNIT_LEGAL_NAMES: Record<string, string> = {
     'Objetivo Praia Grande': 'CENTRO EDUCACIONAL E CULTURAL DE PRAIA GRANDE LTDA',
     'Objetivo São José dos Campos': 'INSTITUTO EDUCACIONAL VALE DO PARAIBA LTDA',
 };
+
+export const JOB_TITLES = [
+    'Professor(a)',
+    'Coordenador(a)',
+    'Diretor(a)',
+    'TI',
+];

@@ -103,7 +103,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
             const termDocument = {
                 userName: data.full_name,
                 userTotvs: data.totvs_number,
-                jobTitle: (user as any)?.job_title || 'Colaborador(a)', // Snapshot User Role
+                jobTitle: data.job_title || (user as any)?.job_title || 'Colaborador(a)', // Uses Wizard data first
                 legalName: UNIT_LEGAL_NAMES[data.unit] || 'SOCIEDADE INSTRUTIVA JOAQUIM NABUCO LTDA.', // Snapshot Legal Entity
                 unit: data.unit,
                 local: data.local,

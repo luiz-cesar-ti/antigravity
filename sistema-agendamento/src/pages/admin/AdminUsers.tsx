@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { SCHOOL_UNITS } from '../../utils/constants';
+import { SCHOOL_UNITS, JOB_TITLES } from '../../utils/constants';
 import type { User, Admin } from '../../types';
 import { Search, Mail, Building, Pencil, X, ToggleLeft, ToggleRight, UserMinus, Check, Send, Repeat } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -19,6 +19,8 @@ export function AdminUsers() {
     const [formData, setFormData] = useState({
         full_name: '',
         email: '',
+        totvs_number: '',
+        job_title: '',
         units: [] as string[],
         recurring_booking_enabled: false,
         recurring_booking_units: [] as string[]
@@ -80,6 +82,8 @@ export function AdminUsers() {
         setFormData({
             full_name: user.full_name,
             email: user.email,
+            totvs_number: user.totvs_number || '',
+            job_title: user.job_title || '',
             units: user.units || [],
             recurring_booking_enabled: user.recurring_booking_enabled || false,
             recurring_booking_units: user.recurring_booking_units || []
@@ -105,6 +109,8 @@ export function AdminUsers() {
             target_user_id: editingUser.id,
             user_data: {
                 full_name: formData.full_name,
+                totvs_number: formData.totvs_number,
+                job_title: formData.job_title,
                 units: formData.units,
                 recurring_booking_enabled: formData.recurring_booking_enabled,
                 recurring_booking_units: formData.recurring_booking_units,
@@ -419,6 +425,34 @@ export function AdminUsers() {
                                     <p className="text-[11px] text-gray-400 mt-2 ml-1">
                                         Para redefinição de senha, utilize a opção "Esqueci a Senha" na tela de login.
                                     </p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2 ml-1">Número TOTVS</label>
+                                        <input
+                                            type="text"
+                                            value={formData.totvs_number}
+                                            onChange={(e) => setFormData({ ...formData, totvs_number: e.target.value })}
+                                            className="block w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-3.5 border outline-none transition-all font-medium"
+                                            placeholder="RM..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2 ml-1">Cargo</label>
+                                        <select
+                                            value={formData.job_title}
+                                            onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
+                                            className="block w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-3.5 border outline-none transition-all font-medium appearance-none"
+                                        >
+                                            <option value="">Selecione...</option>
+                                            {JOB_TITLES.map((title) => (
+                                                <option key={title} value={title}>
+                                                    {title}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
