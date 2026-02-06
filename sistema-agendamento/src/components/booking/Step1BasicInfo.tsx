@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 import type { BookingData } from '../../pages/BookingWizard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSettings } from '../../hooks/useSettings';
-import { differenceInHours, parseISO } from 'date-fns';
+import { differenceInHours, parseISO, format } from 'date-fns';
 
 interface Step1Props {
     data: BookingData;
@@ -269,7 +269,7 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
                                 name="date"
                                 value={data.date}
                                 onChange={handleInputChange}
-                                min={new Date().toISOString().split('T')[0]}
+                                min={format(new Date(), 'yyyy-MM-dd')}
                                 className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3"
                             />
                         </div>
