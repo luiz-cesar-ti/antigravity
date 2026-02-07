@@ -236,7 +236,7 @@ export function AdminHelp() {
                                             <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
                                                 <TrendingUp className="h-5 w-5" />
                                             </div>
-                                            <h4 className="font-bold text-gray-900">Indicadores de Pico</h4>
+                                            <h4 className="font-bold text-gray-900 text-base md:text-lg">Indicadores de Pico</h4>
                                         </div>
                                         <p className="text-sm text-gray-600 leading-relaxed">
                                             Gráficos de barras e linhas mostram os dias de maior demanda nos agendamentos.
@@ -248,7 +248,7 @@ export function AdminHelp() {
                                             <div className="p-2 bg-green-50 text-green-600 rounded-xl">
                                                 <PieChart className="h-5 w-5" />
                                             </div>
-                                            <h4 className="font-bold text-gray-900">Equipamentos Mais Utilizados</h4>
+                                            <h4 className="font-bold text-gray-900 text-base md:text-lg">Equipamentos Mais Utilizados</h4>
                                         </div>
                                         <p className="text-sm text-gray-600 leading-relaxed mb-2">
                                             Ranking dinâmico dos itens com maior volume de reservas.
@@ -263,7 +263,7 @@ export function AdminHelp() {
                                             <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
                                                 <Filter className="h-5 w-5" />
                                             </div>
-                                            <h4 className="font-bold text-gray-900">Status dos Agendamentos</h4>
+                                            <h4 className="font-bold text-gray-900 text-base md:text-lg">Status dos Agendamentos</h4>
                                         </div>
                                         <p className="text-sm text-gray-600 leading-relaxed mb-2">
                                             Visão geral da situação das reservas.
@@ -278,7 +278,7 @@ export function AdminHelp() {
                                             <div className="p-2 bg-purple-50 text-purple-600 rounded-xl">
                                                 <Users className="h-5 w-5" />
                                             </div>
-                                            <h4 className="font-bold text-gray-900">Busca Inteligente</h4>
+                                            <h4 className="font-bold text-gray-900 text-base md:text-lg">Busca Inteligente</h4>
                                         </div>
                                         <p className="text-sm text-gray-600 leading-relaxed">
                                             Pesquise docentes pelo Nome ou TOTVS para visualizar um relatório individual de analytics.
@@ -290,7 +290,7 @@ export function AdminHelp() {
                                             <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
                                                 <Trophy className="h-5 w-5" />
                                             </div>
-                                            <h4 className="font-bold text-gray-900">Top Docentes</h4>
+                                            <h4 className="font-bold text-gray-900 text-base md:text-lg">Top Docentes</h4>
                                         </div>
                                         <p className="text-sm text-gray-600 leading-relaxed">
                                             Ranking dos professores que mais utilizam os recursos da unidade no período selecionado.
@@ -303,10 +303,10 @@ export function AdminHelp() {
                                         <div className="p-2 bg-teal-50 text-teal-600 rounded-xl">
                                             <Building className="h-5 w-5" />
                                         </div>
-                                        <h4 className="font-bold text-gray-900">Top 3 Salas de Aula</h4>
+                                        <h4 className="font-bold text-gray-900 text-base md:text-lg">Top 3 Salas de Aula</h4>
                                     </div>
                                     <p className="text-sm text-gray-600 leading-relaxed mb-3">
-                                        Ideal para extrair informações importantes sobre os agendamentos. Permite identificar com precisão <strong>quem</strong> realizou a reserva, <strong>quando</strong> ocorreu e <strong>o que</strong> foi agendado para aquela sala específica.
+                                        O gráfico destaca as 3 salas com maior volume de agendamentos de equipamentos, mas também permite selecionar qualquer outro ambiente para uma análise completa. Essa ferramenta centraliza a gestão por sala, detalhando com precisão <strong>quem</strong> reservou, <strong>quando</strong> e <strong>o que</strong> será utilizado.
                                     </p>
                                     <div className="bg-teal-50 p-2 rounded-lg border border-teal-100 text-xs text-teal-800">
                                         <strong>Exportação CSV:</strong> Ao clicar em uma sala, o administrador pode exportar um arquivo exclusivo daquele ambiente. Isso garante acesso rápido ao histórico de responsáveis, facilitando auditorias.
@@ -329,7 +329,7 @@ export function AdminHelp() {
                             </div>
                             <div className="p-5 md:p-8 space-y-8">
                                 <div>
-                                    <h3 className="text-lg font-black text-gray-900 mb-4">Status do Card de Agendamento</h3>
+                                    <h3 className="text-lg md:text-xl font-black text-gray-900 mb-4">Status do Card de Agendamento</h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                                         <div className="p-4 rounded-xl bg-green-50 border border-green-100">
                                             <span className="text-[10px] md:text-sm font-black text-green-700 bg-green-100 px-2 py-1 rounded mb-2 inline-block">ATIVO</span>
@@ -351,7 +351,7 @@ export function AdminHelp() {
                                 </div>
 
                                 <div className="border-t border-gray-100 pt-6">
-                                    <h3 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-2">
+                                    <h3 className="text-lg md:text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
                                         <Trash2 className="h-5 w-5 text-red-500" /> Fluxo de Exclusão
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
@@ -436,7 +436,7 @@ export function AdminHelp() {
                                 </div>
 
                                 <div>
-                                    <h3 className="text-lg font-black text-gray-900 mb-4">Tipos de Termo</h3>
+                                    <h3 className="text-lg md:text-xl font-black text-gray-900 mb-4">Tipos de Termo</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div className="bg-gray-50 border border-gray-100 p-5 rounded-3xl">
                                             <span className="text-[10px] uppercase font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded mb-3 inline-block">PADRÃO</span>
@@ -525,6 +525,24 @@ export function AdminHelp() {
                                         </div>
                                     </div>
                                 </div>
+
+                                <div className="bg-emerald-50/50 rounded-2xl p-6 border border-emerald-100 mt-6">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="bg-emerald-100 p-2 rounded-lg text-emerald-700">
+                                            <Clock className="h-5 w-5" />
+                                        </div>
+                                        <h4 className="font-bold text-emerald-900 text-lg md:text-xl">Coluna "EM USO AGORA" (Monitoramento Real)</h4>
+                                    </div>
+                                    <p className="text-sm md:text-base text-gray-700 leading-relaxed mb-4">
+                                        Esta coluna oferece uma visão de <strong>patrimônio em tempo real</strong>. O número exibido indica exatamente quantos equipamentos estão fisicamente ocupados (em aula ou emprestados) <strong>neste exato momento</strong>.
+                                    </p>
+                                    <div className="bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
+                                        <p className="text-xs md:text-sm text-emerald-800">
+                                            <strong>Entenda o cálculo:</strong> O sistema verifica o relógio do servidor e cruza com os agendamentos ativos. <br />
+                                            <span className="italic block mt-1 opacity-80">Exemplo: Se um professor reservou um Notebook das 08:00 às 10:00 e agora são 09:30, o equipamento constará automaticamente como "Em Uso". Às 10:01, ele volta a ficar "Disponível".</span>
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -541,7 +559,7 @@ export function AdminHelp() {
                                         <LayoutGrid className="h-6 w-6 md:h-10 md:w-10" />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl md:text-3xl font-black tracking-tight">Gestão de Salas e Espaços</h2>
+                                        <h2 className="text-xl md:text-2xl font-black tracking-tight">Gestão de Salas e Espaços</h2>
                                         <p className="text-teal-50/80 text-sm md:text-base font-medium mt-1">Controle total da sua infraestrutura na palma da mão.</p>
                                     </div>
                                 </div>
@@ -549,7 +567,7 @@ export function AdminHelp() {
 
                             <div className="p-6 md:p-10 space-y-12">
                                 <div className="max-w-4xl">
-                                    <p className="text-gray-600 leading-relaxed text-base md:text-lg font-medium">
+                                    <p className="text-gray-600 leading-relaxed text-sm md:text-base font-medium">
                                         A função de Gestão de Salas permite que o administrador transforme espaços físicos em recursos inteligentes de agendamento. Esta ferramenta concede controle absoluto sobre a disponibilidade de salas , permitindo que os professores explorem novas possibilidades pedagógicas em ambientes otimizados e organizados.
                                     </p>
                                 </div>
@@ -559,7 +577,7 @@ export function AdminHelp() {
                                 {/* Activation Flow */}
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
                                     <div className="bg-teal-50/50 rounded-[2rem] p-8 border border-teal-100 flex flex-col">
-                                        <h3 className="text-xl font-black text-teal-900 mb-6 flex items-center gap-3">
+                                        <h3 className="text-lg md:text-xl font-bold text-teal-900 mb-6 flex items-center gap-3">
                                             <div className="p-2 bg-teal-600 rounded-xl text-white">
                                                 <Settings className="h-5 w-5" />
                                             </div>
@@ -584,7 +602,7 @@ export function AdminHelp() {
                                     <div className="bg-gradient-to-br from-red-600 via-red-700 to-red-900 rounded-[2rem] p-8 text-white relative overflow-hidden group shadow-2xl shadow-red-200/50 animate-in fade-in zoom-in duration-700">
                                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse" />
 
-                                        <h3 className="text-xl md:text-2xl font-black mb-8 flex items-center gap-4 relative z-10">
+                                        <h3 className="text-lg md:text-xl font-bold mb-8 flex items-center gap-4 relative z-10">
                                             <div className="p-3.5 bg-white/20 rounded-2xl text-white backdrop-blur-md border border-white/30 shadow-xl animate-pulse">
                                                 <Power className="h-6 w-6" />
                                             </div>
@@ -615,7 +633,7 @@ export function AdminHelp() {
 
                                 {/* Reservations and Monitoring */}
                                 <div className="space-y-6">
-                                    <h3 className="text-xl font-black text-gray-900 flex items-center gap-3 ml-2">
+                                    <h3 className="text-lg md:text-xl font-black text-gray-900 flex items-center gap-3 ml-2">
                                         <div className="p-2 bg-amber-500 rounded-xl text-white shadow-lg shadow-amber-200">
                                             <TrendingUp className="h-5 w-5" />
                                         </div>
@@ -665,11 +683,11 @@ export function AdminHelp() {
                                             <div className="h-2 w-2 rounded-full bg-indigo-300 animate-pulse" /> Novo Recurso
                                         </div>
                                         <Timer className="h-12 w-12 text-white/90" />
-                                        <span className="block text-2xl font-black text-white tracking-tight">Antecedência</span>
+                                        <span className="block text-xl md:text-2xl font-black text-white tracking-tight">Antecedência</span>
                                     </div>
 
                                     <div className="flex-1 relative z-10">
-                                        <h4 className="text-2xl font-black text-white mb-2">Controle de Antecedência</h4>
+                                        <h4 className="text-xl md:text-2xl font-black text-white mb-2">Controle de Antecedência</h4>
                                         <p className="text-sm text-indigo-50 leading-relaxed mb-6 font-medium">
                                             Agora você dita o ritmo. Configure um tempo mínimo de antecedência para reservas ou desative a regra para permitir agendamentos de última hora. Flexibilidade total para coordenar sua unidade.
                                         </p>
@@ -700,7 +718,7 @@ export function AdminHelp() {
                                         <Building className="h-6 w-6 md:h-10 md:w-10" />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl md:text-3xl font-black tracking-tight">Salas de Aula</h2>
+                                        <h2 className="text-xl md:text-2xl font-black tracking-tight">Salas de Aula</h2>
                                         <p className="text-cyan-50/80 text-sm md:text-base font-medium mt-1">Adicione e organize seus espaços pedagógicos.</p>
                                     </div>
                                 </div>
@@ -711,14 +729,14 @@ export function AdminHelp() {
                                     {/* Card Principal de Criação - Full Width with Internal Grid */}
                                     <div className="bg-white border border-gray-100 rounded-[2rem] p-8 md:p-10 shadow-sm hover:shadow-lg transition-all border-l-8 border-l-cyan-500">
                                         <div className="mb-8">
-                                            <h3 className="text-2xl md:text-3xl font-black text-gray-900 mb-4">Crie salas de aula para permitir agendamentos</h3>
+                                            <h3 className="text-xl md:text-2xl font-black text-gray-900 mb-4">Crie salas de aula para permitir agendamentos</h3>
                                             <p className="text-cyan-600 font-bold text-sm uppercase tracking-wider mb-8">CRIAÇÃO, EDIÇÃO E ORDENAÇÃO PERSONALIZADA</p>
 
                                             <div className="bg-cyan-50 p-6 rounded-2xl border border-cyan-100 flex gap-4 items-start w-full">
                                                 <div className="shrink-0 mt-1 bg-white p-2 rounded-lg shadow-sm">
                                                     <Building className="h-6 w-6 text-cyan-600" />
                                                 </div>
-                                                <p className="text-base font-medium text-cyan-900">
+                                                <p className="text-sm md:text-base font-medium text-cyan-900">
                                                     A criação de salas é fundamental, pois define exatamente quais espaços estarão disponíveis para os professores realizarem agendamentos.
                                                 </p>
                                             </div>
@@ -728,19 +746,19 @@ export function AdminHelp() {
                                             <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                                 <li className="flex items-start gap-4">
                                                     <div className="mt-1.5 h-3 w-3 rounded-full bg-cyan-500 shrink-0 shadow-sm shadow-cyan-200"></div>
-                                                    <span className="text-gray-700 text-lg"><strong>Criar e Editar:</strong> Adicione novos laboratórios, salas de vídeo ou auditórios conforme a necessidade da escola.</span>
+                                                    <span className="text-gray-700 text-sm md:text-base"><strong>Criar e Editar:</strong> Adicione novos laboratórios, salas de vídeo ou auditórios conforme a necessidade da escola.</span>
                                                 </li>
                                                 <li className="flex items-start gap-4">
                                                     <div className="mt-1.5 h-3 w-3 rounded-full bg-cyan-500 shrink-0 shadow-sm shadow-cyan-200"></div>
-                                                    <span className="text-gray-700 text-lg"><strong>Excluir:</strong> Remova espaços que deixaram de existir.</span>
+                                                    <span className="text-gray-700 text-sm md:text-base"><strong>Excluir:</strong> Remova espaços que deixaram de existir.</span>
                                                 </li>
                                                 <li className="flex items-start gap-4">
                                                     <div className="mt-1.5 h-3 w-3 rounded-full bg-cyan-500 shrink-0 shadow-sm shadow-cyan-200"></div>
-                                                    <span className="text-gray-700 text-lg"><strong>Posicionar (Reordenar):</strong> A ordem definida nesta tela é <strong className="text-gray-900 bg-cyan-100 px-1.5 py-0.5 rounded">exatamente a mesma</strong> que aparecerá para os professores.</span>
+                                                    <span className="text-gray-700 text-sm md:text-base"><strong>Posicionar (Reordenar):</strong> A ordem definida nesta tela é <strong className="text-gray-900 bg-cyan-100 px-1.5 py-0.5 rounded">exatamente a mesma</strong> que aparecerá para os professores.</span>
                                                 </li>
                                                 <li className="flex items-start gap-4">
                                                     <div className="mt-1.5 h-3 w-3 rounded-full bg-cyan-500 shrink-0 shadow-sm shadow-cyan-200"></div>
-                                                    <span className="text-gray-700 text-lg">Arraste e solte os cards das salas para definir prioridades. Coloque as salas mais importantes no topo da lista.</span>
+                                                    <span className="text-gray-700 text-sm md:text-base">Arraste e solte os cards das salas para definir prioridades. Coloque as salas mais importantes no topo da lista.</span>
                                                 </li>
                                             </ul>
                                         </div>
@@ -881,7 +899,7 @@ export function AdminHelp() {
                                                     <div className="p-4 bg-pink-100 rounded-2xl text-pink-600 shadow-sm">
                                                         <ShieldCheck className="h-8 w-8" />
                                                     </div>
-                                                    <h4 className="text-2xl font-black text-gray-900 tracking-tight">Termo de Consentimento</h4>
+                                                    <h4 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">Termo de Consentimento</h4>
                                                 </div>
                                                 <p className="text-sm text-gray-600 leading-relaxed font-bold">
                                                     Esta é a <strong className="text-pink-700">etapa final e obrigatória</strong> de todo cadastro. Antes de concluir o registro, o professor deve obrigatoriamente realizar a leitura e o aceite eletrônico do termo diretamente no sistema.
@@ -1012,7 +1030,7 @@ export function AdminHelp() {
                                         <div className="bg-white p-2 rounded-xl text-purple-600 shadow-sm">
                                             <Calendar className="h-6 w-6" />
                                         </div>
-                                        <h3 className="text-xl font-bold text-purple-900">Agendamento Recorrente</h3>
+                                        <h3 className="text-lg md:text-xl font-bold text-purple-900">Agendamento Recorrente</h3>
                                     </div>
                                     <p className="text-gray-600 mb-8 leading-relaxed">
                                         Permite que um professor tenha um agendamento fixo semanal (ex: Toda Quinta às 08:00).
@@ -1354,7 +1372,7 @@ export function AdminHelp() {
                                             <div className="bg-blue-50 p-2 rounded-xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                                 <Clock className="h-6 w-6" />
                                             </div>
-                                            <h4 className="font-bold text-gray-900 text-lg">Regra de Antecedência de Agendamentos</h4>
+                                            <h4 className="font-bold text-gray-900 text-lg md:text-xl">Regra de Antecedência de Agendamentos</h4>
                                         </div>
                                         <p className="text-sm text-gray-600 leading-relaxed mb-4">
                                             Define o tempo mínimo (em horas) que o professor deve respeitar para realizar um agendamento.
@@ -1372,7 +1390,7 @@ export function AdminHelp() {
                                             <div className="bg-purple-50 p-2 rounded-xl text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
                                                 <KeyRound className="h-6 w-6" />
                                             </div>
-                                            <h4 className="font-bold text-gray-900 text-lg">Segurança de Acesso</h4>
+                                            <h4 className="font-bold text-gray-900 text-lg md:text-xl">Segurança de Acesso</h4>
                                         </div>
                                         <p className="text-sm text-gray-600 leading-relaxed mb-4">
                                             O Administrador possui total autonomia para gerenciar suas próprias credenciais.
@@ -1415,7 +1433,7 @@ export function AdminHelp() {
                                         <div className="bg-emerald-50 p-2 rounded-lg text-emerald-600">
                                             <FileText className="h-6 w-6" />
                                         </div>
-                                        <h4 className="font-bold text-gray-900 text-lg">1. Auditoria de Consentimento (Prova Jurídica Imutável)</h4>
+                                        <h4 className="font-bold text-gray-900 text-lg md:text-xl">1. Auditoria de Consentimento (Prova Jurídica Imutável)</h4>
                                     </div>
                                     <p className="text-gray-600 mb-4 text-sm leading-relaxed">
                                         O aceite do termo sobre <strong className="text-gray-800">informações dos professores na página de cadastro</strong> gera um <strong className="text-gray-800">registro blindado</strong> e auditável. O sistema armazena a prova contendo:
@@ -1442,7 +1460,7 @@ export function AdminHelp() {
                                         <div className="bg-blue-50 p-2 rounded-lg text-blue-600">
                                             <LayoutGrid className="h-6 w-6" />
                                         </div>
-                                        <h4 className="font-bold text-gray-900 text-lg">2. Histórico Operacional</h4>
+                                        <h4 className="font-bold text-gray-900 text-lg md:text-xl">2. Histórico Operacional</h4>
                                     </div>
                                     <p className="text-gray-600 text-sm mb-6 leading-relaxed">
                                         O sistema mantém todo o histórico de agendamentos (normais, recorrentes e empréstimos). Mesmo que um professor ou administrador realize a exclusão, esses registros permanecem salvos no banco de dados para fins de auditoria e segurança, sendo removidos permanentemente apenas após 365 dias.
@@ -1460,7 +1478,7 @@ export function AdminHelp() {
                                         <div className="bg-purple-50 p-2 rounded-lg text-purple-600">
                                             <Shield className="h-6 w-6" />
                                         </div>
-                                        <h4 className="font-bold text-gray-900 text-lg">3. Arquitetura de Blindagem de Senhas</h4>
+                                        <h4 className="font-bold text-gray-900 text-lg md:text-xl">3. Arquitetura de Blindagem de Senhas</h4>
                                     </div>
                                     <p className="text-center md:text-left text-sm text-gray-600 mb-8 leading-relaxed">
                                         Implementamos um sistema de <strong className="text-gray-800">Criptografia de Ponta</strong> para garantir que as credenciais jamais sejam expostas.
@@ -1516,7 +1534,7 @@ export function AdminHelp() {
                                         <Info className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-emerald-900 text-lg mb-2">Conformidade LGPD: Privacidade</h4>
+                                        <h4 className="font-bold text-emerald-900 text-lg md:text-xl mb-2">Conformidade LGPD: Privacidade</h4>
                                         <p className="text-sm text-emerald-800 leading-relaxed mb-4">
                                             O sistema foi construído sob o princípio de <strong className="text-emerald-950">Minimização de Dados</strong>. Coletamos apenas o essencial (Nome, E-mail, TOTVS).
                                         </p>
@@ -1534,7 +1552,7 @@ export function AdminHelp() {
                                         <div className="bg-red-50 p-2 rounded-lg text-red-600">
                                             <Lock className="h-6 w-6" />
                                         </div>
-                                        <h4 className="font-bold text-gray-900 text-lg">Bloqueio Automático de Conta</h4>
+                                        <h4 className="font-bold text-gray-900 text-lg md:text-xl">Bloqueio Automático de Conta</h4>
                                     </div>
                                     <p className="text-sm text-gray-600 leading-relaxed mb-4">
                                         Para proteção contra ataques de força bruta, o sistema implementa um mecanismo de <strong className="text-gray-900">Rate Limiting</strong> no login administrativo.
@@ -1561,7 +1579,7 @@ export function AdminHelp() {
                                         <div className="bg-orange-50 p-2 rounded-lg text-orange-600">
                                             <Timer className="h-6 w-6" />
                                         </div>
-                                        <h4 className="font-bold text-gray-900 text-lg">Expiração Automática de Sessão</h4>
+                                        <h4 className="font-bold text-gray-900 text-lg md:text-xl">Expiração Automática de Sessão</h4>
                                     </div>
                                     <p className="text-sm text-gray-600 leading-relaxed mb-4">
                                         Por motivos de segurança, as sessões administrativas expiram automaticamente após um período de inatividade.
@@ -1582,7 +1600,7 @@ export function AdminHelp() {
                                         <div className="bg-blue-50 p-2 rounded-lg text-blue-600">
                                             <CheckCircle2 className="h-6 w-6" />
                                         </div>
-                                        <h4 className="font-bold text-gray-900 text-lg">4. Infraestrutura e HTTPS</h4>
+                                        <h4 className="font-bold text-gray-900 text-lg md:text-xl">4. Infraestrutura e HTTPS</h4>
                                     </div>
                                     <div className="space-y-3">
                                         <div className="flex gap-3">
