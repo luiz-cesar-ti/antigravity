@@ -11,11 +11,13 @@ import {
     LayoutDashboard,
     Calendar,
     Monitor,
+    Building,
     Users,
     ClipboardCheck,
     Settings,
     Bell,
     TrendingUp,
+    MessageSquareQuote,
     PieChart,
     Trophy,
     Clock,
@@ -44,6 +46,7 @@ export function AdminHelp() {
         { id: 'terms', title: 'Termo de Responsabilidade', icon: FileText },
         { id: 'equipments', title: 'Equipamentos', icon: Monitor },
         { id: 'rooms', title: 'Gestão de Salas', icon: LayoutGrid },
+        { id: 'classrooms', title: 'Salas de Aula', icon: Building },
         { id: 'register', title: 'Cadastro de Professores', icon: UserPlus },
         { id: 'users', title: 'Gestão de Usuários', icon: Users },
         { id: 'super_admin', title: 'Super Admin (Global)', icon: Globe },
@@ -294,6 +297,21 @@ export function AdminHelp() {
                                         </p>
                                     </div>
                                 </div>
+
+                                <div className="bg-white border border-gray-100 p-4 md:p-5 rounded-2xl md:rounded-3xl shadow-sm hover:border-teal-100 transition-all">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div className="p-2 bg-teal-50 text-teal-600 rounded-xl">
+                                            <Building className="h-5 w-5" />
+                                        </div>
+                                        <h4 className="font-bold text-gray-900">Top 3 Salas de Aula</h4>
+                                    </div>
+                                    <p className="text-sm text-gray-600 leading-relaxed mb-3">
+                                        Ideal para extrair informações importantes sobre os agendamentos. Permite identificar com precisão <strong>quem</strong> realizou a reserva, <strong>quando</strong> ocorreu e <strong>o que</strong> foi agendado para aquela sala específica.
+                                    </p>
+                                    <div className="bg-teal-50 p-2 rounded-lg border border-teal-100 text-xs text-teal-800">
+                                        <strong>Exportação CSV:</strong> Ao clicar em uma sala, o administrador pode exportar um arquivo exclusivo daquele ambiente. Isso garante acesso rápido ao histórico de responsáveis, facilitando auditorias.
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -536,6 +554,8 @@ export function AdminHelp() {
                                     </p>
                                 </div>
 
+
+
                                 {/* Activation Flow */}
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
                                     <div className="bg-teal-50/50 rounded-[2rem] p-8 border border-teal-100 flex flex-col">
@@ -661,6 +681,90 @@ export function AdminHelp() {
                                             <p>
                                                 <strong>Feedback Inteligente:</strong> Quando ativo, o sistema avisa o professor sobre o tempo mínimo exigido diretamente no card da sala, evitando frustrações.
                                             </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Salas de Aula */}
+                    <section id="classrooms" className="scroll-mt-8">
+                        <div className="bg-white rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-cyan-600 to-cyan-800 p-6 md:p-10 text-white relative">
+                                <div className="absolute top-0 right-0 p-8 opacity-10">
+                                    <Building className="h-32 w-32" />
+                                </div>
+                                <div className="flex items-center gap-4 relative z-10">
+                                    <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md shadow-inner">
+                                        <Building className="h-6 w-6 md:h-10 md:w-10" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl md:text-3xl font-black tracking-tight">Salas de Aula</h2>
+                                        <p className="text-cyan-50/80 text-sm md:text-base font-medium mt-1">Adicione e organize seus espaços pedagógicos.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-6 md:p-10 space-y-12">
+                                <div className="flex flex-col gap-8">
+                                    {/* Card Principal de Criação - Full Width with Internal Grid */}
+                                    <div className="bg-white border border-gray-100 rounded-[2rem] p-8 md:p-10 shadow-sm hover:shadow-lg transition-all border-l-8 border-l-cyan-500">
+                                        <div className="mb-8">
+                                            <h3 className="text-2xl md:text-3xl font-black text-gray-900 mb-4">Crie salas de aula para permitir agendamentos</h3>
+                                            <p className="text-cyan-600 font-bold text-sm uppercase tracking-wider mb-8">CRIAÇÃO, EDIÇÃO E ORDENAÇÃO PERSONALIZADA</p>
+
+                                            <div className="bg-cyan-50 p-6 rounded-2xl border border-cyan-100 flex gap-4 items-start w-full">
+                                                <div className="shrink-0 mt-1 bg-white p-2 rounded-lg shadow-sm">
+                                                    <Building className="h-6 w-6 text-cyan-600" />
+                                                </div>
+                                                <p className="text-base font-medium text-cyan-900">
+                                                    A criação de salas é fundamental, pois define exatamente quais espaços estarão disponíveis para os professores realizarem agendamentos.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white rounded-2xl">
+                                            <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                                <li className="flex items-start gap-4">
+                                                    <div className="mt-1.5 h-3 w-3 rounded-full bg-cyan-500 shrink-0 shadow-sm shadow-cyan-200"></div>
+                                                    <span className="text-gray-700 text-lg"><strong>Criar e Editar:</strong> Adicione novos laboratórios, salas de vídeo ou auditórios conforme a necessidade da escola.</span>
+                                                </li>
+                                                <li className="flex items-start gap-4">
+                                                    <div className="mt-1.5 h-3 w-3 rounded-full bg-cyan-500 shrink-0 shadow-sm shadow-cyan-200"></div>
+                                                    <span className="text-gray-700 text-lg"><strong>Excluir:</strong> Remova espaços que deixaram de existir.</span>
+                                                </li>
+                                                <li className="flex items-start gap-4">
+                                                    <div className="mt-1.5 h-3 w-3 rounded-full bg-cyan-500 shrink-0 shadow-sm shadow-cyan-200"></div>
+                                                    <span className="text-gray-700 text-lg"><strong>Posicionar (Reordenar):</strong> A ordem definida nesta tela é <strong className="text-gray-900 bg-cyan-100 px-1.5 py-0.5 rounded">exatamente a mesma</strong> que aparecerá para os professores.</span>
+                                                </li>
+                                                <li className="flex items-start gap-4">
+                                                    <div className="mt-1.5 h-3 w-3 rounded-full bg-cyan-500 shrink-0 shadow-sm shadow-cyan-200"></div>
+                                                    <span className="text-gray-700 text-lg">Arraste e solte os cards das salas para definir prioridades. Coloque as salas mais importantes no topo da lista.</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    {/* Card de Impacto Visual - Full Width below */}
+                                    <div className="bg-gradient-to-br from-cyan-50 to-white border border-cyan-100 rounded-[2rem] p-8 md:p-12 relative overflow-hidden text-center group">
+                                        <div className="absolute -right-10 -bottom-10 opacity-5 group-hover:opacity-10 transition-opacity duration-500">
+                                            <TrendingUp className="h-96 w-96 text-cyan-800" />
+                                        </div>
+
+                                        <div className="relative z-10 flex flex-col items-center max-w-4xl mx-auto">
+                                            <div className="flex items-center gap-3 mb-8 text-cyan-900 font-bold text-2xl bg-white/50 px-6 py-2 rounded-full backdrop-blur-sm border border-cyan-100 shadow-sm">
+                                                <TrendingUp className="h-6 w-6" />
+                                                <span>Impacto no Dashboard</span>
+                                            </div>
+
+                                            <div className="relative">
+                                                <MessageSquareQuote className="h-12 w-12 text-cyan-200 absolute -top-8 -left-8 -rotate-12" />
+                                                <p className="text-xl md:text-2xl text-cyan-900 italic font-medium leading-relaxed">
+                                                    "A organização correta das salas aprimora a visualização das informações no Dashboard. Isso facilita a análise dos agendamentos de equipamentos por ambiente, permitindo identificar quais salas possuem o maior número de reservas e garantindo uma leitura mais clara e profissional dos dados."
+                                                </p>
+                                                <MessageSquareQuote className="h-12 w-12 text-cyan-200 absolute -bottom-8 -right-8 rotate-12" />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1419,8 +1523,56 @@ export function AdminHelp() {
 
                                         <h5 className="font-bold text-emerald-900 text-sm mb-1">Administradores</h5>
                                         <p className="text-sm text-emerald-800 leading-relaxed">
-                                            O uso de <strong className="text-emerald-950">Tokens de Sessão Temporários (2 horas)</strong> garante que acessos não autorizados sejam bloqueados automaticamente em caso de esquecimento de logoff.
+                                            O uso de <strong className="text-emerald-950">Tokens de Sessão Temporários (3 horas)</strong> garante que acessos não autorizados sejam bloqueados automaticamente em caso de esquecimento de logoff.
                                         </p>
+                                    </div>
+                                </div>
+
+                                {/* Bloqueio de Conta (Rate Limiting) */}
+                                <div className="bg-white border border-gray-200 p-6 rounded-[2rem] shadow-sm">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="bg-red-50 p-2 rounded-lg text-red-600">
+                                            <Lock className="h-6 w-6" />
+                                        </div>
+                                        <h4 className="font-bold text-gray-900 text-lg">Bloqueio Automático de Conta</h4>
+                                    </div>
+                                    <p className="text-sm text-gray-600 leading-relaxed mb-4">
+                                        Para proteção contra ataques de força bruta, o sistema implementa um mecanismo de <strong className="text-gray-900">Rate Limiting</strong> no login administrativo.
+                                    </p>
+                                    <div className="bg-red-50 border border-red-100 p-4 rounded-xl space-y-3">
+                                        <div className="flex gap-3">
+                                            <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
+                                            <p className="text-xs text-red-900 leading-relaxed">
+                                                <strong>3 Tentativas:</strong> Após errar a senha 3 vezes consecutivas, a conta do administrador é <strong>bloqueada automaticamente</strong>.
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <ShieldCheck className="h-5 w-5 text-red-600 shrink-0" />
+                                            <p className="text-xs text-red-900 leading-relaxed">
+                                                <strong>Desbloqueio:</strong> Apenas o <strong>Admin Global</strong> pode desbloquear contas bloqueadas através do painel de Administradores.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Expiração de Sessão */}
+                                <div className="bg-white border border-gray-200 p-6 rounded-[2rem] shadow-sm">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="bg-orange-50 p-2 rounded-lg text-orange-600">
+                                            <Timer className="h-6 w-6" />
+                                        </div>
+                                        <h4 className="font-bold text-gray-900 text-lg">Expiração Automática de Sessão</h4>
+                                    </div>
+                                    <p className="text-sm text-gray-600 leading-relaxed mb-4">
+                                        Por motivos de segurança, as sessões administrativas expiram automaticamente após um período de inatividade.
+                                    </p>
+                                    <div className="bg-orange-50 border border-orange-100 p-4 rounded-xl">
+                                        <div className="flex gap-3">
+                                            <Clock className="h-5 w-5 text-orange-600 shrink-0" />
+                                            <p className="text-xs text-orange-900 leading-relaxed">
+                                                <strong>Tempo de Sessão:</strong> A sessão do administrador expira automaticamente após <strong>3 horas</strong>. Após esse período, será necessário fazer login novamente para continuar operando o sistema.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1516,13 +1668,13 @@ export function AdminHelp() {
                         </div>
                     </section>
                 </div>
-            </div>
+            </div >
 
 
 
             <div className="mt-20 text-center border-t border-gray-100 pt-10">
                 <p className="text-gray-400 text-sm font-medium"></p>
             </div>
-        </div>
+        </div >
     );
 }

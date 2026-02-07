@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 
-import { Search, Shield, KeyRound, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { Search, Shield, KeyRound, AlertCircle, CheckCircle, Eye, EyeOff, Lock, Unlock } from 'lucide-react';
 import type { Admin } from '../../types';
 
 export function AdminManageAdmins() {
@@ -131,6 +131,28 @@ export function AdminManageAdmins() {
         fetchAdmins();
     }, []);
 
+    // Handle Unlock Admin
+    const handleUnlockAdmin = async (adminId: string, adminName: string) => {
+        try {
+            const { data, error } = await supabase.rpc('unlock_admin_account', {
+                p_admin_id: adminId
+            });
+
+            if (error) throw error;
+
+            if (data?.success) {
+                setResetSuccess(`Conta de ${adminName} desbloqueada com sucesso!`);
+                setTimeout(() => setResetSuccess(''), 5000);
+                fetchAdmins(); // Refresh list
+            } else {
+                setError(data?.message || 'Erro ao desbloquear conta.');
+            }
+        } catch (err: any) {
+            console.error('Error unlocking admin:', err);
+            setError(`Erro ao desbloquear: ${err.message}`);
+        }
+    };
+
     const filteredAdmins = admins.filter(admin =>
         admin.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (admin.unit && admin.unit.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -246,9 +268,17 @@ export function AdminManageAdmins() {
                                                     Super Admin
                                                 </span>
                                             ) : (
-                                                <span className="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800">
-                                                    Admin Local
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800">
+                                                        Admin Local
+                                                    </span>
+                                                    {(admin as any).is_locked && (
+                                                        <span className="px-2 py-1 inline-flex items-center gap-1 text-xs leading-5 font-bold rounded-full bg-red-100 text-red-700">
+                                                            <Lock className="h-3 w-3" />
+                                                            Bloqueado
+                                                        </span>
+                                                    )}
+                                                </div>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -266,13 +296,24 @@ export function AdminManageAdmins() {
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button
-                                                onClick={() => handleOpenResetModal(admin.id, admin.username)}
-                                                className="text-primary-600 hover:text-primary-900 bg-primary-50 hover:bg-primary-100 p-2 rounded-lg transition-colors group"
-                                                title="Redefinir Senha"
-                                            >
-                                                <KeyRound className="h-5 w-5 group-hover:scale-110 transition-transform" />
-                                            </button>
+                                            <div className="flex items-center justify-end gap-2">
+                                                {(admin as any).is_locked && (
+                                                    <button
+                                                        onClick={() => handleUnlockAdmin(admin.id, admin.username)}
+                                                        className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-2 rounded-lg transition-colors group"
+                                                        title="Desbloquear Conta"
+                                                    >
+                                                        <Unlock className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => handleOpenResetModal(admin.id, admin.username)}
+                                                    className="text-primary-600 hover:text-primary-900 bg-primary-50 hover:bg-primary-100 p-2 rounded-lg transition-colors group"
+                                                    title="Redefinir Senha"
+                                                >
+                                                    <KeyRound className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Monitor, Users, TrendingUp, Trophy, Filter, X, Building } from 'lucide-react';
+import { Calendar, Monitor, Users, TrendingUp, Trophy, Filter, X, Building, ChevronDown, ChevronUp, MapPin, Search, Download } from 'lucide-react';
 import { format, parseISO, startOfWeek, startOfMonth, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '../../services/supabase';
@@ -68,11 +68,34 @@ export function AdminDashboard() {
         popularEquipment: [] as any[],
         topTeachers: [] as any[],
         bookingStatus: [] as any[],
+        topClassrooms: [] as any[],
     });
     const [loading, setLoading] = useState(true);
     const [teacherSearchQuery, setTeacherSearchQuery] = useState('');
     const [teacherSearchResults, setTeacherSearchResults] = useState<any[]>([]);
     const [isSearchingTeachers, setIsSearchingTeachers] = useState(false);
+
+    // Classroom Analytics States
+    const [expandedClassroom, setExpandedClassroom] = useState<string | null>(null);
+    const [classroomBookings, setClassroomBookings] = useState<any[]>([]);
+    const [classroomSearchQuery, setClassroomSearchQuery] = useState('');
+    const [classroomSortField, setClassroomSortField] = useState<'date' | 'professor' | 'equipment' | 'quantity'>('date');
+    const [classroomSortOrder, setClassroomSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [isLoadingClassroomBookings, setIsLoadingClassroomBookings] = useState(false);
+
+    // Classroom Section Filters
+    const [classroomPeriod, setClassroomPeriod] = useState<'30' | '60' | 'custom'>('30');
+    const [classroomStartDate, setClassroomStartDate] = useState('');
+    const [classroomEndDate, setClassroomEndDate] = useState('');
+    const [allClassrooms, setAllClassrooms] = useState<any[]>([]);
+    const [showAllOtherClassrooms, setShowAllOtherClassrooms] = useState(false);
+    const [otherClassroomsSearch, setOtherClassroomsSearch] = useState('');
+
+    // Derive "Other Classrooms" (not in Top 5)
+    const otherClassrooms = allClassrooms.slice(3);
+    const filteredOtherClassrooms = otherClassroomsSearch.trim()
+        ? otherClassrooms.filter(c => c.name.toLowerCase().includes(otherClassroomsSearch.toLowerCase()))
+        : otherClassrooms;
 
     const fetchTeacherAnalytics = async (teacherId: string, teacherName: string) => {
         setLoading(true);
@@ -223,6 +246,231 @@ export function AdminDashboard() {
             setIsSearchingTeachers(false);
         }
     };
+
+    // Fetch bookings for a specific classroom
+    const fetchClassroomBookings = async (classroomName: string) => {
+        if (expandedClassroom === classroomName) {
+            setExpandedClassroom(null);
+            setClassroomBookings([]);
+            return;
+        }
+
+        setIsLoadingClassroomBookings(true);
+        setExpandedClassroom(classroomName);
+
+        try {
+            let unitFilter: string | null = null;
+            if (isSuperAdmin && targetUnit !== 'Matriz') {
+                unitFilter = targetUnit;
+            } else if (!isSuperAdmin && adminUser.unit && adminUser.unit !== 'Matriz') {
+                unitFilter = adminUser.unit;
+            }
+
+            // Determine date range based on filter
+            let startDate: string | null = null;
+            let endDate: string | null = null;
+
+            if (classroomPeriod === '30') {
+                const start = subDays(new Date(), 30);
+                startDate = format(start, 'yyyy-MM-dd');
+            } else if (classroomPeriod === '60') {
+                const start = subDays(new Date(), 60);
+                startDate = format(start, 'yyyy-MM-dd');
+            } else if (classroomPeriod === 'custom' && classroomStartDate && classroomEndDate) {
+                startDate = classroomStartDate;
+                endDate = classroomEndDate;
+            }
+
+            const { data, error } = await supabase.rpc('get_admin_bookings', {
+                p_unit: unitFilter,
+                p_start_date: startDate || null,
+                p_end_date: endDate || null,
+                p_is_recurring: null
+            });
+
+            if (error) throw error;
+
+            // Filter for this classroom and valid bookings
+            const filtered = (data || []).filter((b: any) =>
+                b.local === classroomName &&
+                !b.deleted_at &&
+                !['cancelled_by_user', 'cancelled', 'excluido', 'deleted_by_admin'].includes(b.status?.toLowerCase())
+            );
+
+            // Sort by date descending
+            filtered.sort((a: any, b: any) =>
+                new Date(`${b.booking_date}T${b.start_time}`).getTime() -
+                new Date(`${a.booking_date}T${a.start_time}`).getTime()
+            );
+
+            setClassroomBookings(filtered);
+        } catch (err) {
+            console.error('Error fetching classroom bookings:', err);
+        } finally {
+            setIsLoadingClassroomBookings(false);
+        }
+    };
+
+    // Export classroom bookings to CSV
+    const exportClassroomCSV = () => {
+        if (classroomBookings.length === 0) return;
+
+        const headers = ['Professor', 'Equipamento', 'Modelo', 'Quantidade', 'Data', 'Hor\u00e1rio'];
+        const rows = getFilteredAndSortedBookings().map((b: any) => [
+            b.users?.full_name || 'Desconhecido',
+            b.equipment?.name || 'N/A',
+            b.equipment?.model || 'N/A',
+            b.quantity || 1,
+            format(parseISO(b.booking_date), 'dd/MM/yyyy'),
+            b.start_time || 'N/A'
+        ]);
+
+        const csvContent = [headers, ...rows].map(row => row.join(';')).join('\n');
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `agendamentos_${expandedClassroom?.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
+    // Filter and sort classroom bookings
+    const getFilteredAndSortedBookings = () => {
+        let filtered = [...classroomBookings];
+
+        // Filter by professor search
+        if (classroomSearchQuery.trim()) {
+            const query = classroomSearchQuery.toLowerCase();
+            filtered = filtered.filter((b: any) =>
+                b.users?.full_name?.toLowerCase().includes(query)
+            );
+        }
+
+        // Sort
+        filtered.sort((a: any, b: any) => {
+            let comparison = 0;
+            switch (classroomSortField) {
+                case 'date':
+                    comparison = new Date(`${a.booking_date}T${a.start_time}`).getTime() -
+                        new Date(`${b.booking_date}T${b.start_time}`).getTime();
+                    break;
+                case 'professor':
+                    comparison = (a.users?.full_name || '').localeCompare(b.users?.full_name || '');
+                    break;
+                case 'equipment':
+                    comparison = (a.equipment?.name || '').localeCompare(b.equipment?.name || '');
+                    break;
+                case 'quantity':
+                    comparison = (a.quantity || 0) - (b.quantity || 0);
+                    break;
+            }
+            return classroomSortOrder === 'asc' ? comparison : -comparison;
+        });
+
+        return filtered;
+    };
+
+    const toggleSort = (field: typeof classroomSortField) => {
+        if (classroomSortField === field) {
+            setClassroomSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setClassroomSortField(field);
+            setClassroomSortOrder('desc');
+        }
+    };
+
+    const renderClassroomDetails = () => (
+        <div className="p-4">
+            {/* Filters Row */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-4">
+                <div className="relative flex-1 max-w-xs">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                        type="text"
+                        placeholder="Buscar professor..."
+                        value={classroomSearchQuery}
+                        onChange={(e) => setClassroomSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+                    />
+                </div>
+                <button
+                    onClick={exportClassroomCSV}
+                    className="flex items-center gap-2 px-4 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold text-xs uppercase tracking-widest rounded-xl transition-colors"
+                >
+                    <Download className="h-4 w-4" />
+                    Exportar CSV
+                </button>
+            </div>
+
+            {/* Loading State */}
+            {isLoadingClassroomBookings ? (
+                <div className="flex justify-center py-8">
+                    <div className="animate-spin h-6 w-6 border-2 border-teal-500 border-t-transparent rounded-full" />
+                </div>
+            ) : (
+                <>
+                    {/* Table Header */}
+                    <div className="hidden md:grid grid-cols-6 gap-2 px-3 py-2 bg-gray-50 rounded-xl mb-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        <button onClick={() => toggleSort('professor')} className="flex items-center gap-1 hover:text-gray-600 transition-colors">
+                            Professor {classroomSortField === 'professor' && (classroomSortOrder === 'asc' ? '↑' : '↓')}
+                        </button>
+                        <button onClick={() => toggleSort('equipment')} className="flex items-center gap-1 hover:text-gray-600 transition-colors">
+                            Equipamento {classroomSortField === 'equipment' && (classroomSortOrder === 'asc' ? '↑' : '↓')}
+                        </button>
+                        <span>Modelo</span>
+                        <button onClick={() => toggleSort('quantity')} className="flex items-center gap-1 hover:text-gray-600 transition-colors">
+                            Qtd {classroomSortField === 'quantity' && (classroomSortOrder === 'asc' ? '↑' : '↓')}
+                        </button>
+                        <button onClick={() => toggleSort('date')} className="flex items-center gap-1 hover:text-gray-600 transition-colors col-span-2">
+                            Data/Hora {classroomSortField === 'date' && (classroomSortOrder === 'asc' ? '↑' : '↓')}
+                        </button>
+                    </div>
+
+                    {/* Table Body */}
+                    <div className="max-h-[300px] overflow-y-auto space-y-2 pr-1">
+                        {getFilteredAndSortedBookings().length === 0 ? (
+                            <p className="text-center text-gray-400 py-6 text-sm">Nenhum agendamento encontrado</p>
+                        ) : (
+                            getFilteredAndSortedBookings().map((booking: any, idx: number) => (
+                                <div key={idx} className="grid grid-cols-2 md:grid-cols-6 gap-2 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                                    <div className="col-span-2 md:col-span-1">
+                                        <p className="text-xs font-bold text-gray-700 truncate">{booking.users?.full_name || 'Desconhecido'}</p>
+                                        <p className="md:hidden text-[9px] text-gray-400 mt-0.5">Professor</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-600 truncate">{booking.equipment?.name || 'N/A'}</p>
+                                        <p className="md:hidden text-[9px] text-gray-400 mt-0.5">Equipamento</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 truncate">{booking.equipment?.model || 'N/A'}</p>
+                                        <p className="md:hidden text-[9px] text-gray-400 mt-0.5">Modelo</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-black text-teal-600">{booking.quantity || 1}</p>
+                                        <p className="md:hidden text-[9px] text-gray-400 mt-0.5">Quantidade</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <p className="text-xs text-gray-600">
+                                            {format(parseISO(booking.booking_date), 'dd/MM/yyyy')} • <span className="font-bold">{booking.start_time}</span>
+                                        </p>
+                                        <p className="md:hidden text-[9px] text-gray-400 mt-0.5">Data/Horário</p>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* Results Count */}
+                    <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            {getFilteredAndSortedBookings().length} registro(s) encontrado(s)
+                        </p>
+                    </div>
+                </>
+            )}
+        </div>
+    );
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -377,7 +625,7 @@ export function AdminDashboard() {
                 // 3. Top Teachers (New Ranking)
                 const teacherMap: Record<string, { id: string, name: string, count: number }> = {};
                 uniqueValidBookings.forEach((b: any) => {
-                    const userId = b.user_id; // Fixed: user_id comes directly, not from users JSONB
+                    const userId = b.user_id;
                     const name = (b as any).users?.full_name || 'Desconhecido';
                     if (userId) {
                         if (!teacherMap[userId]) {
@@ -390,72 +638,50 @@ export function AdminDashboard() {
                     .sort((a, b) => b.count - a.count)
                     .slice(0, 5);
 
-                // 4. Booking Status (New Chart)
-                const statusCounts = { active: 0, completed: 0, recurring: 0, excluded_by_user: 0, cancelled_by_admin: 0 };
+                // 4. Booking Status (Pie)
+                const statusCounts = { active: 0, completed: 0, recurring: 0, excluded: 0 };
 
-                // Iterate over UNIQUE bookings (including deleted) to populate Status Chart
+                // Recalculate based on uniqueAllBookings to catch everything
                 uniqueAllBookings.forEach((b: any) => {
-                    // Ignore Admin Deletions
-                    if (b._status === 'deleted_by_admin') {
-                        return;
-                    }
+                    if (b._status === 'deleted_by_admin') return;
 
-                    // Priority 1: Soft Deleted (by Professor/Admin) or Cancelled by User Status
-                    if (b._isSoftDeleted || b._status === 'cancelled_by_user') {
-                        statusCounts.excluded_by_user++;
-                        return;
-                    }
-
-                    // Priority 2: Cancelled by Admin Status
-                    if (b._status === 'cancelled' || b._status === 'excluido') {
-                        statusCounts.cancelled_by_admin++;
-                        return;
-                    }
-
-                    // Priority 3: Completed/Concluded
-                    if (b._status === 'encerrado' || b._status === 'concluido') {
+                    if (b._isSoftDeleted || b._status === 'cancelled_by_user' || b._status === 'cancelled' || b._status === 'excluido') {
+                        statusCounts.excluded++;
+                    } else if (b._status === 'encerrado' || b._status === 'concluido') {
                         statusCounts.completed++;
-                        return;
-                    }
-
-                    // Priority 4: Active/Recurring
-                    if (b._status === 'active') {
-                        if (b.is_recurring) {
-                            statusCounts.recurring++;
-                        } else {
-                            statusCounts.active++;
-                        }
+                    } else if (b._status === 'active' || b._status === 'confirmed' || b._status === 'confirmado') {
+                        if (b.is_recurring) statusCounts.recurring++;
+                        else statusCounts.active++;
+                    } else {
+                        // pending or others count as active for dashboard summary mostly, but let's separate if needed
+                        statusCounts.active++;
                     }
                 });
 
-                const totalStatusVal = statusCounts.active + statusCounts.completed + statusCounts.recurring + statusCounts.excluded_by_user + statusCounts.cancelled_by_admin;
-
                 const bookingStatus = [
-                    { name: 'Ativo', value: statusCounts.active, color: '#16a34a' },     // Green 600
-                    { name: 'Concluído', value: statusCounts.completed, color: '#2563eb' }, // Blue 600
-                    { name: 'Recorrente', value: statusCounts.recurring, color: '#ca8a04' }, // Amber 600
-                    { name: 'Excluído', value: statusCounts.excluded_by_user, color: '#dc2626' },   // Red 600
-                    { name: 'Cancelado', value: statusCounts.cancelled_by_admin, color: '#ef4444' } // Red 500 (Admin Cancel) - Or Gray? User wants to differentiate.
-                ]
-                    .filter(i => i.value > 0)
-                    .map(item => ({
-                        ...item,
-                        percent: totalStatusVal > 0 ? Math.round((item.value / totalStatusVal) * 100) : 0
-                    }));
+                    { name: 'Ativo', value: statusCounts.active, color: '#16a34a' },
+                    { name: 'Concluído', value: statusCounts.completed, color: '#2563eb' },
+                    { name: 'Recorrente', value: statusCounts.recurring, color: '#ca8a04' },
+                    { name: 'Cancelado', value: statusCounts.excluded, color: '#ef4444' }
+                ].filter(i => i.value > 0);
 
+                // Update Chart Data
+                setChartData(prev => ({
+                    bookingsByDay,
+                    popularEquipment,
+                    topTeachers,
+                    bookingStatus,
+                    topClassrooms: prev.topClassrooms?.slice(0, 3) || [] // Keep existing and force limit to 3 needed for consistency
+                }));
+
+                // Update Stats
                 setStats({
-                    activeBookings: statusCounts.active + statusCounts.recurring, // Summing recurring into Active count
+                    activeBookings: statusCounts.active + statusCounts.recurring,
                     completedBookings: statusCounts.completed,
                     totalEquipment: totalEquipment,
                     totalTeachers: unitFilter
                         ? teachers.filter((t: any) => t.units && Array.isArray(t.units) && t.units.includes(unitFilter)).length
                         : teachers.length,
-                });
-                setChartData({
-                    bookingsByDay,
-                    popularEquipment,
-                    topTeachers,
-                    bookingStatus
                 });
 
             } catch (error) {
@@ -466,7 +692,80 @@ export function AdminDashboard() {
         };
 
         fetchStats();
-    }, [period, adminUser?.unit, adminUser?.id, customStartDate, customEndDate, donutShift, targetUnit, isSuperAdmin]);
+    }, [period, customStartDate, customEndDate, targetUnit, adminUser.unit, donutShift]);
+
+    // Fetch Classroom Stats strictly based on Classroom Filters
+    useEffect(() => {
+        const fetchClassroomStats = async () => {
+            try {
+                // Determine date range
+                let startDate: string | null = null;
+                let endDate: string | null = null;
+
+                if (classroomPeriod === '30') {
+                    const start = subDays(new Date(), 30);
+                    startDate = format(start, 'yyyy-MM-dd');
+                } else if (classroomPeriod === '60') {
+                    const start = subDays(new Date(), 60);
+                    startDate = format(start, 'yyyy-MM-dd');
+                } else if (classroomPeriod === 'custom' && classroomStartDate && classroomEndDate) {
+                    startDate = classroomStartDate;
+                    endDate = classroomEndDate;
+                }
+
+                // Determine Unit
+                let unitFilter: string | null = null;
+                if (isSuperAdmin && targetUnit !== 'Matriz') {
+                    unitFilter = targetUnit;
+                } else if (!isSuperAdmin && adminUser.unit && adminUser.unit !== 'Matriz') {
+                    unitFilter = adminUser.unit;
+                }
+
+                const { data, error } = await supabase.rpc('get_admin_bookings', {
+                    p_unit: unitFilter,
+                    p_start_date: startDate || null,
+                    p_end_date: endDate || null,
+                    p_is_recurring: null
+                });
+
+                if (error) throw error;
+
+                const rawBookings = data || [];
+
+                // Filter valid bookings
+                const validClassroomBookings = rawBookings.filter((b: any) =>
+                    b.local &&
+                    !b.deleted_at &&
+                    !['cancelled_by_user', 'cancelled', 'excluido', 'deleted_by_admin'].includes(b.status?.toLowerCase())
+                );
+
+                // Group by Classroom
+                const classroomMap: Record<string, number> = {};
+                validClassroomBookings.forEach((b: any) => {
+                    if (b.local) {
+                        classroomMap[b.local] = (classroomMap[b.local] || 0) + 1;
+                    }
+                });
+
+                const allClassroomsData = Object.entries(classroomMap)
+                    .map(([name, count]) => ({ name, count }))
+                    .sort((a, b) => b.count - a.count);
+
+                const top3Classrooms = allClassroomsData.slice(0, 3);
+
+                setAllClassrooms(allClassroomsData);
+                setChartData(prev => ({
+                    ...prev,
+                    topClassrooms: top3Classrooms
+                }));
+
+            } catch (err) {
+                console.error("Error fetching classroom stats:", err);
+            }
+        };
+
+        fetchClassroomStats();
+    }, [classroomPeriod, classroomStartDate, classroomEndDate, targetUnit, adminUser.unit]);
 
     const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
@@ -923,7 +1222,229 @@ export function AdminDashboard() {
                 </div>
             </div>
 
+            {/* Top 5 Classrooms Section */}
+            <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h3 className="text-xl font-black text-gray-900">Top 3 Salas de Aula</h3>
+                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Salas com mais agendamentos no período</p>
+                    </div>
+                    <div className="p-3 bg-teal-50 rounded-2xl text-teal-600">
+                        <MapPin className="h-5 w-5" />
+                    </div>
+                </div>
 
+                {/* Filters Row */}
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 mb-8">
+                    {/* Period Selector */}
+                    <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-xl">
+                        <button
+                            onClick={() => setClassroomPeriod('30')}
+                            className={clsx(
+                                "px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
+                                classroomPeriod === '30' ? "bg-teal-600 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
+                            )}
+                        >
+                            30 dias
+                        </button>
+                        <button
+                            onClick={() => setClassroomPeriod('60')}
+                            className={clsx(
+                                "px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
+                                classroomPeriod === '60' ? "bg-teal-600 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
+                            )}
+                        >
+                            60 dias
+                        </button>
+                        <button
+                            onClick={() => setClassroomPeriod('custom')}
+                            className={clsx(
+                                "px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
+                                classroomPeriod === 'custom' ? "bg-teal-600 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
+                            )}
+                        >
+                            Personalizado
+                        </button>
+                    </div>
+
+                    {/* Custom Date Range */}
+                    {classroomPeriod === 'custom' && (
+                        <div className="flex items-center gap-2 animate-in slide-in-from-left-2">
+                            <input
+                                type="date"
+                                value={classroomStartDate}
+                                onChange={(e) => setClassroomStartDate(e.target.value)}
+                                className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                            />
+                            <span className="text-gray-400 font-bold text-xs">ATÉ</span>
+                            <input
+                                type="date"
+                                value={classroomEndDate}
+                                onChange={(e) => setClassroomEndDate(e.target.value)}
+                                className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {chartData.topClassrooms.length === 0 ? (
+                    <p className="text-center text-gray-400 py-10 text-sm">Sem dados de salas no período</p>
+                ) : (
+                    <div className="space-y-8">
+                        {/* TOP 5 SECTION */}
+                        <div className="space-y-4">
+                            {chartData.topClassrooms.map((classroom: any, index: number) => (
+                                <div key={classroom.name}>
+                                    <button
+                                        onClick={() => fetchClassroomBookings(classroom.name)}
+                                        className={clsx(
+                                            "w-full p-4 rounded-2xl border transition-all group",
+                                            expandedClassroom === classroom.name
+                                                ? "bg-teal-50 border-teal-200 shadow-md"
+                                                : "bg-white border-gray-100 hover:border-teal-100 hover:shadow-md"
+                                        )}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className={clsx(
+                                                    "h-10 w-10 rounded-xl flex items-center justify-center text-sm font-black shadow-sm",
+                                                    index === 0 ? "bg-gradient-to-br from-yellow-100 to-yellow-200 text-yellow-700 ring-2 ring-yellow-100" :
+                                                        index === 1 ? "bg-gradient-to-br from-gray-100 to-gray-200 text-gray-700 ring-2 ring-gray-100" :
+                                                            index === 2 ? "bg-gradient-to-br from-orange-100 to-orange-200 text-orange-700 ring-2 ring-orange-100" :
+                                                                "bg-gray-50 text-gray-400"
+                                                )}>
+                                                    {index + 1}º
+                                                </div>
+                                                <div className="text-left">
+                                                    <p className="text-base font-black text-gray-800">{classroom.name}</p>
+                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">Top {index + 1}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="text-right">
+                                                    <p className="text-lg font-black text-teal-600">{classroom.count}</p>
+                                                    <p className="text-[9px] text-gray-400 font-bold uppercase">Agendamentos</p>
+                                                </div>
+                                                <div className={clsx(
+                                                    "p-2 rounded-full transition-colors",
+                                                    expandedClassroom === classroom.name ? "bg-teal-100 text-teal-600" : "bg-gray-50 text-gray-400 group-hover:bg-teal-50 group-hover:text-teal-500"
+                                                )}>
+                                                    {expandedClassroom === classroom.name ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Progress Bar */}
+                                        <div className="mt-4 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                            <div
+                                                className={clsx(
+                                                    "h-full rounded-full transition-all duration-1000 ease-out",
+                                                    index === 0 ? "bg-gradient-to-r from-yellow-400 to-yellow-500" :
+                                                        index === 1 ? "bg-gradient-to-r from-gray-400 to-gray-500" :
+                                                            index === 2 ? "bg-gradient-to-r from-orange-400 to-orange-500" :
+                                                                "bg-gradient-to-r from-teal-400 to-teal-500"
+                                                )}
+                                                style={{ width: `${(classroom.count / chartData.topClassrooms[0].count) * 100}%` }}
+                                            />
+                                        </div>
+                                    </button>
+
+                                    {/* Expanded Details Component (Reused) */}
+                                    {expandedClassroom === classroom.name && (
+                                        <div className="mt-4 animate-in slide-in-from-top-2">
+                                            {renderClassroomDetails()}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* OTHER CLASSROOMS SECTION */}
+                        {otherClassrooms.length > 0 && (
+                            <div className="pt-8 border-t border-gray-100">
+                                <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+                                    <div>
+                                        <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                            <Building className="h-4 w-4" />
+                                            Outras Salas ({filteredOtherClassrooms.length})
+                                        </h4>
+                                    </div>
+                                    <div className="relative w-full md:w-64">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="Buscar sala..."
+                                            value={otherClassroomsSearch}
+                                            onChange={(e) => setOtherClassroomsSearch(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {(showAllOtherClassrooms ? filteredOtherClassrooms : filteredOtherClassrooms.slice(0, 6)).map((classroom: any) => (
+                                        <div key={classroom.name}>
+                                            <button
+                                                onClick={() => fetchClassroomBookings(classroom.name)}
+                                                className={clsx(
+                                                    "w-full p-4 rounded-2xl border transition-all group",
+                                                    expandedClassroom === classroom.name
+                                                        ? "bg-teal-50 border-teal-200 shadow-md"
+                                                        : "bg-white border-gray-100 hover:border-teal-100 hover:shadow-md"
+                                                )}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        {/* No Ranking Badge for Other Classrooms */}
+                                                        <div className="text-left">
+                                                            <p className="text-base font-black text-gray-800">{classroom.name}</p>
+                                                            {/* Optional label or empty */}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="text-right">
+                                                            <p className="text-lg font-black text-teal-600">{classroom.count}</p>
+                                                            <p className="text-[9px] text-gray-400 font-bold uppercase">Agendamentos</p>
+                                                        </div>
+                                                        <div className={clsx(
+                                                            "p-2 rounded-full transition-colors",
+                                                            expandedClassroom === classroom.name ? "bg-teal-100 text-teal-600" : "bg-gray-50 text-gray-400 group-hover:bg-teal-50 group-hover:text-teal-500"
+                                                        )}>
+                                                            {expandedClassroom === classroom.name ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Progress Bar (Relative to Top 1 for scale context) */}
+                                                <div className="mt-4 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-teal-400 to-teal-500"
+                                                        style={{ width: `${chartData.topClassrooms[0] ? (classroom.count / chartData.topClassrooms[0].count) * 100 : 0}%` }}
+                                                    />
+                                                </div>
+                                            </button>
+                                            {expandedClassroom === classroom.name && (
+                                                <div className="mt-4 animate-in slide-in-from-top-2">
+                                                    {renderClassroomDetails()}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {filteredOtherClassrooms.length > 6 && !otherClassroomsSearch && (
+                                    <button
+                                        onClick={() => setShowAllOtherClassrooms(!showAllOtherClassrooms)}
+                                        className="mt-6 w-full py-3 bg-gray-50 hover:bg-gray-100 text-gray-500 font-bold text-xs uppercase tracking-widest rounded-xl transition-colors border border-dashed border-gray-200"
+                                    >
+                                        {showAllOtherClassrooms ? 'Mostrar menos' : `Ver todas as outras salas (+${filteredOtherClassrooms.length - 6})`}
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {/* Teacher Analytics Modal */}
             {

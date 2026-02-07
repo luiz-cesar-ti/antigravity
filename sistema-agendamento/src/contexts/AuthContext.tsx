@@ -252,8 +252,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     isLoading: false,
                 });
                 return {};
-            } else if (rpcResult && !rpcResult.success && rpcResult.message !== 'Usuário não encontrado') {
-                return { error: 'Credenciais inválidas (Senha incorreta para Administrador)' };
+            } else if (rpcResult && !rpcResult.success) {
+                // Return the actual message from server (includes remaining attempts / locked info)
+                if (rpcResult.message !== 'Usuário não encontrado') {
+                    return { error: rpcResult.message };
+                }
             }
 
             // 2. Not an admin, try Teacher Login
