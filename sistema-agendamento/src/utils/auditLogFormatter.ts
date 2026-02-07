@@ -9,11 +9,15 @@ export interface FriendlyLogSummary {
 
 export const formatAction = (action: string): string => {
     switch (action) {
-        case 'CREATE_ROOM': return 'Criou Sala';
-        case 'UPDATE_ROOM': return 'Editou Sala';
-        case 'DELETE_ROOM': return 'Excluiu Sala';
+        case 'CREATE_ROOM': return 'Criou Sala de Reunião';
+        case 'UPDATE_ROOM': return 'Editou Sala de Reunião';
+        case 'DELETE_ROOM': return 'Excluiu Sala de Reunião';
         case 'TOGGLE_ROOM_AVAILABILITY': return 'Alterou Disponibilidade de Sala';
         case 'DELETE_ROOM_BOOKING': return 'Excluiu Reserva de Sala';
+
+        case 'CREATE_CLASSROOM': return 'Criou Sala de Aula';
+        case 'UPDATE_CLASSROOM': return 'Editou Sala de Aula';
+        case 'DELETE_CLASSROOM': return 'Excluiu Sala de Aula';
 
         case 'CREATE_LOAN': return 'Novo Empréstimo';
         case 'RETURN_LOAN': return 'Devolução de Equipamento';
@@ -33,7 +37,8 @@ export const formatAction = (action: string): string => {
 
 export const formatTargetType = (tableName: string): string => {
     switch (tableName) {
-        case 'rooms': return 'Sala';
+        case 'rooms': return 'Sala de Reunião';
+        case 'classrooms': return 'Sala de Aula';
         case 'equipment_loans': return 'Empréstimo';
         case 'users': return 'Professor';
         case 'bookings': return 'Agendamento';
@@ -57,17 +62,35 @@ export const generateFriendlySummary = (log: any): FriendlyLogSummary => {
     const newData = log.new_data;
     const oldData = log.old_data;
 
-    // --- ROOMS ---
+    // --- ROOMS (Meeting Rooms) ---
     if (log.table_name === 'rooms') {
         const roomName = newData?.name || oldData?.name || 'Desconhecida';
         if (log.action_type === 'CREATE_ROOM') {
-            details = `Criou a sala "${roomName}" na unidade ${newData?.unit || '?'}.`;
+            details = `Criou a sala de reunião "${roomName}" na unidade ${newData?.unit || '?'}.`;
         } else if (log.action_type === 'UPDATE_ROOM') {
-            details = `Atualizou dados da sala "${roomName}".`;
+            details = `Atualizou dados da sala de reunião "${roomName}".`;
         } else if (log.action_type === 'DELETE_ROOM') {
-            details = `Removeu a sala "${roomName}" permanentemente.`;
+            details = `Removeu a sala de reunião "${roomName}" permanentemente.`;
         } else if (log.action_type === 'TOGGLE_ROOM_AVAILABILITY') {
             details = `Alterou a disponibilidade da sala (ID: ${log.record_id}).`;
+        }
+    }
+    // --- CLASSROOMS (Salas de Aula) ---
+    else if (log.table_name === 'classrooms') {
+        const classroomName = newData?.name || oldData?.name || 'Desconhecida';
+        const unit = newData?.unit || oldData?.unit || '?';
+        if (log.action_type === 'CREATE_CLASSROOM') {
+            details = `Criou a sala de aula "${classroomName}" na unidade ${unit}.`;
+        } else if (log.action_type === 'UPDATE_CLASSROOM') {
+            const oldName = oldData?.name || '?';
+            const newName = newData?.name || '?';
+            if (oldName !== newName) {
+                details = `Renomeou sala de aula de "${oldName}" para "${newName}" (${unit}).`;
+            } else {
+                details = `Atualizou dados da sala de aula "${classroomName}" (${unit}).`;
+            }
+        } else if (log.action_type === 'DELETE_CLASSROOM') {
+            details = `Removeu a sala de aula "${classroomName}" (${unit}).`;
         }
     }
     // --- LOANS ---

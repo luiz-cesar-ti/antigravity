@@ -30,6 +30,7 @@ import { RoomBookingV2 } from './pages/RoomBookingV2';
 import { AdminNotifications } from './pages/admin/AdminNotifications';
 import { AdminManageAdmins } from './pages/admin/AdminManageAdmins';
 import { AdminLogs } from './pages/admin/AdminLogs';
+import { AdminClassrooms } from './pages/admin/AdminClassrooms';
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
                 <Route path="bookings" element={<AdminBookings />} />
                 <Route path="rooms" element={<AdminRooms />} />
                 <Route path="equipment" element={<AdminEquipment />} />
+                <Route path="classrooms" element={<AdminClassrooms />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="loans" element={<AdminLoans />} />
                 <Route path="schedule" element={<AdminSchedule />} />

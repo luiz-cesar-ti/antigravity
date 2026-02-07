@@ -102,6 +102,18 @@ export function AdminLayout() {
                                     </Link>
                                 </li>
                             )}
+                            {adminUser?.role !== 'super_admin' && (
+                                <li>
+                                    <Link
+                                        to="/admin/classrooms"
+                                        onClick={() => setIsSidebarOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/classrooms')}`}
+                                    >
+                                        <MapPin className="w-5 h-5" />
+                                        <span>Salas</span>
+                                    </Link>
+                                </li>
+                            )}
                             <li>
                                 <Link
                                     to="/admin/users"

@@ -1,10 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Building, User, MapPin, Calendar, Clock, AlertCircle, Repeat } from 'lucide-react';
 import { clsx } from 'clsx';
 import type { BookingData } from '../../pages/BookingWizard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSettings } from '../../hooks/useSettings';
 import { differenceInHours, parseISO, format } from 'date-fns';
+import { supabase } from '../../services/supabase';
+
+interface Classroom {
+    id: string;
+    name: string;
+    unit: string;
+    position: number;
+}
 
 interface Step1Props {
     data: BookingData;
@@ -16,6 +24,7 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
     const { user } = useAuth();
     const { settings } = useSettings(data.unit);
     const [error, setError] = useState('');
+    const [classrooms, setClassrooms] = useState<Classroom[]>([]);
 
     // Auto-fill available units from user profile
     const userProfile = user as any;
@@ -24,6 +33,27 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
     // Authorization check for recurring bookings
     const authorizedRecurringUnits = userProfile?.recurring_booking_units || [];
     const hasRecurringAuth = authorizedRecurringUnits.length > 0 || userProfile?.recurring_booking_enabled;
+
+    // Fetch classrooms when unit changes
+    useEffect(() => {
+        const fetchClassrooms = async () => {
+            if (!data.unit) {
+                setClassrooms([]);
+                return;
+            }
+            const { data: classroomsData } = await supabase
+                .from('classrooms')
+                .select('id, name, unit, position')
+                .eq('unit', data.unit)
+                .eq('is_active', true)
+                .order('position', { ascending: true });
+
+            if (classroomsData) {
+                setClassrooms(classroomsData);
+            }
+        };
+        fetchClassrooms();
+    }, [data.unit]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -220,14 +250,20 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <MapPin className="h-5 w-5 text-gray-400" />
                         </div>
-                        <input
-                            type="text"
+                        <select
                             name="local"
+                            disabled={!data.unit}
                             value={data.local}
-                            onChange={handleInputChange}
-                            className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3"
-                            placeholder="Ex: sala 10, laboratório, auditório"
-                        />
+                            onChange={(e) => updateData({ local: e.target.value })}
+                            className={`focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3 ${!data.unit ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        >
+                            <option value="">{data.unit ? 'Selecione o local...' : 'Selecione a unidade primeiro'}</option>
+                            {classrooms.map((classroom) => (
+                                <option key={classroom.id} value={classroom.name}>
+                                    {classroom.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 
