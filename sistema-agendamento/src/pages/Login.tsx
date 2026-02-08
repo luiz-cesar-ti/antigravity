@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, User, AlertCircle, ArrowRight, CheckCircle2, ShieldCheck, Eye, EyeOff, Lightbulb } from 'lucide-react';
+import {
+    Lock, User, AlertCircle, ArrowRight, CheckCircle2,
+    Calendar, Clock, Server, ChevronRight, Loader2,
+    ShieldCheck, Lightbulb, Eye, EyeOff
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { motion } from 'framer-motion';
 
 export function Login() {
     const navigate = useNavigate();
@@ -13,7 +18,7 @@ export function Login() {
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Load remembered credentials and check if already logged in
+    // Load remembered credentials
     useEffect(() => {
         const savedIdentifier = localStorage.getItem('remembered_identifier');
         if (savedIdentifier) {
@@ -21,26 +26,11 @@ export function Login() {
             setRememberMe(true);
         }
 
-        // FAIL-SAFE: If already authenticated, go to root (RootRedirect will handle dashboards)
         const token = localStorage.getItem('sb-mcnkueyuxlyasntmsvke-auth-token') || localStorage.getItem('admin_session');
         if (!isLoading && token) {
-            const checkAuth = setTimeout(() => {
-                // Settle check
-            }, 500);
-            return () => clearTimeout(checkAuth);
-        }
-    }, [isLoading]);
-
-    // Secondary effect for direct redirection when state settles
-    useEffect(() => {
-        const token = localStorage.getItem('sb-mcnkueyuxlyasntmsvke-auth-token') || localStorage.getItem('admin_session');
-        if (!isLoading && token) {
-            // Give AuthContext a moment to finalize profile fetch
             const timer = setTimeout(() => {
                 const updatedToken = localStorage.getItem('sb-mcnkueyuxlyasntmsvke-auth-token') || localStorage.getItem('admin_session');
-                if (updatedToken) {
-                    navigate('/');
-                }
+                if (updatedToken) navigate('/');
             }, 800);
             return () => clearTimeout(timer);
         }
@@ -71,95 +61,87 @@ export function Login() {
         }
     }
 
-
     return (
-        <div className="h-screen w-full flex flex-row-reverse bg-white font-sans text-slate-900 overflow-hidden">
-            {/* LOGIN FORM (Right on Desktop, Full on Mobile) */}
-            <div className="w-full lg:w-[35%] flex flex-col justify-center items-center p-6 bg-white relative z-20 shadow-2xl lg:shadow-none h-full">
+        <div className="min-h-screen w-full flex bg-white font-sans text-slate-900 overflow-hidden relative">
 
-                {/* Mobile Background Elements (visible only on mobile) */}
-                <div className="lg:hidden absolute inset-0 bg-blue-50 -z-10"></div>
-                <div className="lg:hidden absolute top-0 right-0 w-64 h-64 bg-blue-100 rounded-full blur-3xl opacity-50 -mr-16 -mt-16"></div>
+            {/* ================================================================================== */}
+            {/* MOBILE LAYOUT (< lg) - Strict adherence to screenshot design */}
+            {/* ================================================================================== */}
+            <div className="lg:hidden flex flex-col w-full h-screen bg-blue-50/30 overflow-y-auto relative">
+                {/* --- Background Gradient Element (Top Right Blue Glow) --- */}
+                <div className="absolute top-[-10%] right-[-10%] w-[80%] h-[40%] bg-blue-400/20 blur-[80px] rounded-full pointer-events-none z-0"></div>
 
-                <div className="w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="flex-1 flex flex-col px-6 pt-12 pb-6 relative z-10 text-center">
 
-                    {/* Header Section */}
-                    <div className="text-center lg:text-left mb-10">
-                        {/* Logo visible on both mobile and desktop (smaller on desktop) */}
+                    {/* 1. Header & Logo */}
+                    <div className="flex flex-col items-center mb-10 w-full">
+                        {/* Blue Standard Logo - Increased Size */}
                         <img
                             src="/logo-objetivo.png"
-                            alt="Colégio Objetivo"
-                            className="h-20 lg:h-16 mx-auto lg:mx-0 mb-6 object-contain"
+                            alt="Objetivo Logo"
+                            className="w-64 h-auto object-contain mb-8"
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.parentElement!.innerHTML = '<span class="text-4xl font-black text-blue-900 tracking-tighter">OBJETIVO</span>';
+                            }}
                         />
 
-                        <h1 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                        <h2 className="text-3xl font-black text-blue-950 tracking-tight text-center mb-2">
                             Bem-vindo de volta
-                        </h1>
-                        <p className="mt-3 text-slate-500 font-medium text-sm lg:text-base leading-relaxed">
+                        </h2>
+                        <p className="text-slate-500 font-medium text-center text-sm px-4">
                             Acesse o painel de gerenciamento de recursos.
                         </p>
                     </div>
 
-                    {/* Form */}
-                    <form className="space-y-6" onSubmit={handleSubmit}>
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full max-w-sm mx-auto text-left">
                         {error && (
-                            <div className="rounded-lg bg-red-50 p-4 border-l-4 border-red-500 flex items-start gap-3">
-                                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-                                <p className="text-sm font-bold text-red-800">{error}</p>
+                            <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded-r-lg flex items-start gap-2">
+                                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                                <p className="text-xs text-red-700 font-bold">{error}</p>
                             </div>
                         )}
 
-                        <div className="space-y-2">
-                            <label htmlFor="identifier" className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">
+                        {/* Input 1: Identification */}
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                 Identificação
                             </label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <User className="h-5 w-5 text-slate-400 group-focus-within:text-yellow-500 transition-colors duration-300" />
-                                </div>
+                            <div className="relative">
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                 <input
-                                    id="identifier"
-                                    name="identifier"
                                     type="text"
-                                    autoComplete="username"
-                                    required
-                                    className="block w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-100 text-slate-900 font-semibold rounded-xl focus:ring-0 focus:border-yellow-500 focus:bg-white transition-all outline-none placeholder:text-slate-300 sm:text-sm"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-4 pl-12 pr-4 text-slate-900 font-semibold placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                     placeholder="Usuário TOTVS ou E-mail"
                                     value={identifier}
                                     onChange={(e) => setIdentifier(e.target.value)}
                                 />
                             </div>
-                            <div className="flex items-center gap-2 mt-2 bg-yellow-50 border border-yellow-100 p-2 rounded-lg max-w-fit">
-                                <Lightbulb className="h-3 w-3 text-yellow-600 flex-shrink-0" />
-                                <p className="text-[10px] font-bold text-yellow-700 uppercase tracking-wide">
+
+                            {/* Yellow Helper Tag - Visual Only as per screenshot */}
+                            <div className="bg-amber-50 rounded-lg p-2 flex items-center gap-1.5 border border-amber-100 mt-1.5">
+                                <Lightbulb className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                <span className="text-[9px] font-bold text-amber-800 uppercase tracking-wide">
                                     O número TOTVS está no seu crachá
-                                </p>
+                                </span>
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-center pl-1">
-                                <label htmlFor="password" className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                        {/* Input 2: Password */}
+                        <div className="space-y-1.5">
+                            <div className="flex justify-between items-center ml-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                                     Senha
                                 </label>
-                                <Link
-                                    to="/forgot-password"
-                                    className="text-xs font-bold text-yellow-600 hover:text-yellow-700 uppercase tracking-widest transition-colors"
-                                >
-                                    Recuperar acesso
+                                <Link to="/forgot-password" className="text-[10px] font-bold text-amber-600 hover:underline uppercase tracking-widest">
+                                    Recuperar Acesso
                                 </Link>
                             </div>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-yellow-500 transition-colors duration-300" />
-                                </div>
+                            <div className="relative">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                 <input
-                                    id="password"
-                                    name="password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    autoComplete="current-password"
-                                    required
-                                    className="block w-full pl-12 pr-12 py-4 bg-slate-50 border-2 border-slate-100 text-slate-900 font-semibold rounded-xl focus:ring-0 focus:border-yellow-500 focus:bg-white transition-all outline-none placeholder:text-slate-300 sm:text-sm"
+                                    type={showPassword ? "text" : "password"}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-4 pl-12 pr-12 text-slate-900 font-semibold placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -167,112 +149,383 @@ export function Login() {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 p-1"
                                 >
-                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>
                             </div>
                         </div>
 
-                        <div className="flex items-center pl-1">
-                            <input
-                                id="remember-me"
-                                name="remember-me"
-                                type="checkbox"
-                                checked={rememberMe}
-                                onChange={(e) => setRememberMe(e.target.checked)}
-                                className="h-5 w-5 text-yellow-500 focus:ring-yellow-500 border-gray-300 rounded cursor-pointer transition-all"
-                            />
-                            <label htmlFor="remember-me" className="ml-2 block text-sm font-semibold text-slate-600 cursor-pointer select-none">
+                        {/* Checkbox */}
+                        <div className="flex items-center gap-3">
+                            <div
+                                onClick={() => setRememberMe(!rememberMe)}
+                                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all cursor-pointer ${rememberMe ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'}`}
+                            >
+                                {rememberMe && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                            </div>
+                            <label onClick={() => setRememberMe(!rememberMe)} className="text-sm font-semibold text-slate-600 cursor-pointer select-none">
                                 Manter conectado
                             </label>
                         </div>
 
+                        {/* Primary Button - Dark with Gold Arrow */}
                         <button
                             type="submit"
                             disabled={isSubmitting || isLoading}
-                            className="w-full relative group flex items-center justify-center py-4 px-6 bg-slate-900 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed overflow-hidden"
+                            className="w-full py-4 bg-slate-900 text-white font-bold text-sm rounded-xl shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 group"
                         >
-                            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer" />
-                            <span className="mr-2">
-                                {isSubmitting ? 'Acessando...' : 'Entrar na Plataforma'}
-                            </span>
-                            {!isSubmitting && <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform text-yellow-500" />}
+                            {isSubmitting ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <>
+                                    Entrar na Plataforma
+                                    <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-1 transition-transform" />
+                                </>
+                            )}
                         </button>
-                    </form>
 
-                    {/* Footer / Links */}
-                    <div className="mt-10 pt-6 border-t border-slate-100 flex flex-col items-center lg:items-start gap-4">
-                        <p className="text-slate-500 text-sm font-medium">
-                            Ainda não tem acesso?
-                        </p>
-                        <Link
-                            to="/register"
-                            className="inline-flex items-center justify-center px-6 py-3 border-2 border-slate-200 rounded-xl text-sm font-bold text-slate-700 bg-transparent hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 transition-all duration-300 w-full lg:w-auto"
-                        >
-                            CADASTRE-SE
-                        </Link>
-                    </div>
+                        {/* Spacer */}
+                        <div className="h-4"></div>
+
+                        {/* Secondary Action - Outlined Button */}
+                        <div className="text-center space-y-3">
+                            <p className="text-slate-400 text-xs font-medium">
+                                Ainda não tem acesso?
+                            </p>
+                            <Link
+                                to="/register"
+                                className="block w-full py-4 border border-slate-200 bg-white text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-50 active:bg-slate-100 transition-colors uppercase tracking-wider text-center"
+                            >
+                                Cadastre-se
+                            </Link>
+                        </div>
+                    </form>
                 </div>
             </div>
 
-            {/* BRANDING (Left on Desktop, Hidden on Mobile) */}
+
+            {/* ================================================================================== */}
+            {/* DESKTOP LAYOUT (lg:flex) - Preserved Original "Dynamic Scheduler" Design */}
+            {/* ================================================================================== */}
+
+            {/* --- LEFT SIDE: THE SCHEDULING UNIVERSE (65%) - INCREASED WIDTH --- */}
             <div className="hidden lg:flex lg:w-[65%] relative bg-slate-900 overflow-hidden items-center justify-center">
 
-                {/* CSS Geometric Background Pattern */}
-                <div className="absolute inset-0 opacity-20">
-                    <div className="absolute inset-0 bg-[linear-gradient(30deg,#fbbf24_1px,transparent_1px),linear-gradient(150deg,#fbbf24_1px,transparent_1px)] bg-[size:40px_40px]"></div>
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,#0f172a_100%)]"></div>
+                {/* 1. Deep Background Gradient */}
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-[#0b1121] to-[#1e3a8a] z-0"></div>
+
+                {/* 2. Animated Grid Pattern (Perspective Floor) */}
+                <motion.div
+                    initial={{ opacity: 0, rotateX: 60 }}
+                    animate={{ opacity: 0.15, rotateX: 60 }}
+                    transition={{ duration: 1.5 }}
+                    className="absolute inset-x-0 bottom-[-100px] h-[150%] z-0 pointer-events-none"
+                    style={{
+                        backgroundImage: 'linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)',
+                        backgroundSize: '60px 60px',
+                        transform: 'perspective(1000px) rotateX(60deg) scale(1.5)'
+                    }}
+                />
+
+                {/* 3. The Professional Analog Clock (Background Feature) - MOVED SLIGHTLY INWARDS */}
+                <div className="absolute top-[15%] right-[15%] w-96 h-96 opacity-10 blur-[2px] pointer-events-none z-0">
+                    {/* Clock Face */}
+                    <div className="relative w-full h-full rounded-full border-4 border-white">
+                        {/* Hour Markers */}
+                        {[...Array(12)].map((_, i) => (
+                            <div key={i} className="absolute w-1 h-4 bg-white top-0 left-1/2 -ml-0.5" style={{ transform: `rotate(${i * 30}deg) translateY(10px)`, transformOrigin: '50% 192px' }}></div>
+                        ))}
+                        {/* Hands */}
+                        <motion.div
+                            className="absolute top-1/2 left-1/2 w-1.5 h-24 bg-white/80 rounded-full origin-bottom -ml-[3px] -mt-[96px]"
+                            animate={{ rotate: 360 }}
+                            transition={{ repeat: Infinity, duration: 43200, ease: "linear" }}
+                        />
+                        <motion.div
+                            className="absolute top-1/2 left-1/2 w-1 h-32 bg-white/60 rounded-full origin-bottom -ml-[2px] -mt-[128px]"
+                            animate={{ rotate: 360 }}
+                            transition={{ repeat: Infinity, duration: 3600, ease: "linear" }}
+                        />
+                        <motion.div
+                            className="absolute top-1/2 left-1/2 w-0.5 h-36 bg-red-500/80 rounded-full origin-bottom -ml-[1px] -mt-[144px]"
+                            animate={{ rotate: 360 }}
+                            transition={{ repeat: Infinity, duration: 60, ease: "linear" }}
+                        />
+                        <div className="absolute top-1/2 left-1/2 w-3 h-3 bg-white rounded-full -ml-1.5 -mt-1.5"></div>
+                    </div>
                 </div>
 
-                {/* Dynamic Lighting Effects */}
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[100px] -mr-32 -mt-32 mix-blend-screen animate-pulse duration-1000"></div>
-                <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-yellow-500/10 rounded-full blur-[120px] -ml-20 -mb-20 mix-blend-screen"></div>
 
-                {/* Central Content */}
-                <div className="relative z-10 max-w-2xl px-12 text-center">
-                    <div className="mb-8 flex justify-center">
-                        <div className="h-24 w-24 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-2xl shadow-yellow-500/20">
-                            <ShieldCheck className="h-12 w-12 text-yellow-500" />
+                {/* 4. Floating Glass Cards (Foreground Elements - High Z-Index) */}
+                <div className="absolute inset-0 z-10 pointer-events-none">
+                    {/* Floating Card 1: Calendar - MOVED TO left-24 bottom-24 */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 50 }}
+                        animate={{
+                            opacity: 1,
+                            y: [0, -15, 0], // Continuous float: Up 15px then back down
+                            rotate: -5
+                        }}
+                        transition={{
+                            opacity: { duration: 1, delay: 0.5 },
+                            y: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }, // Loop
+                            rotate: { duration: 1, delay: 0.5 }
+                        }}
+                        className="absolute bottom-24 left-24 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl w-48 transform hover:scale-105 transition-transform"
+                    >
+                        <div className="flex items-center gap-2 mb-3">
+                            <Calendar className="w-5 h-5 text-yellow-400" />
+                            <div className="h-1.5 w-16 bg-white/20 rounded"></div>
                         </div>
-                    </div>
+                        <div className="grid grid-cols-4 gap-1">
+                            {/* Calendar Grid with Numbers 1-12 */}
+                            {[...Array(12)].map((_, i) => (
+                                <div key={i} className={`h-8 rounded-md flex items-center justify-center text-[10px] font-bold font-mono text-white/80 ${i === 5 ? 'bg-yellow-500 text-slate-900' : 'bg-white/5'}`}>
+                                    {i + 1}
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
 
-                    <h2 className="text-5xl font-black text-white tracking-tight leading-tight mb-6">
-                        Excelência em <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-200">
-                            Gestão Educacional
+                    {/* Floating Card 2: Server/Resource - MOVED TO right-24 top-36 */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{
+                            opacity: 1,
+                            x: 0,
+                            y: [0, -20, 0], // Continuous float: Up 20px then back down
+                            rotate: 5
+                        }}
+                        transition={{
+                            opacity: { duration: 1, delay: 0.7 },
+                            x: { duration: 1, delay: 0.7 },
+                            y: { duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1.2 }, // Loop
+                            rotate: { duration: 1, delay: 0.7 }
+                        }}
+                        className="absolute top-36 right-14 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl w-64"
+                    >
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                            <span className="text-xs font-mono text-green-300">AGENDAMENTO CONCLUÍDO</span>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="h-1 w-full bg-white/10 rounded overflow-hidden">
+                                <motion.div animate={{ width: ["0%", "70%"] }} transition={{ duration: 2 }} className="h-full bg-blue-500"></motion.div>
+                            </div>
+                            <div className="h-1 w-full bg-white/10 rounded overflow-hidden">
+                                <motion.div animate={{ width: ["0%", "45%"] }} transition={{ duration: 2, delay: 0.2 }} className="h-full bg-yellow-500"></motion.div>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+
+
+                {/* 5. Center Content: Logo & Headline (HIGHEST Z-INDEX) */}
+                <div className="relative z-20 text-center px-10 flex flex-col items-center">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        whileHover={{ scale: 1.05 }}
+                        className="mb-8 cursor-default"
+                    >
+                        {/* Logo Container with Golden Drop Shadow + Zoom Effect (No Blur) */}
+                        <div className="relative group transition-all duration-300">
+                            <div className="relative">
+                                {/* Using the correct logo file and forcing white color */}
+                                <img
+                                    src="/logo-objetivo.png"
+                                    alt="Objetivo Logo"
+                                    className="h-24 w-auto object-contain brightness-0 invert filter drop-shadow-none group-hover:drop-shadow-[0_0_8px_rgba(255,215,0,0.8)] transition-all duration-300"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                        // Fallback text if image fails
+                                        const fallback = document.getElementById('logo-fallback');
+                                        if (fallback) fallback.style.display = 'block';
+                                    }}
+                                />
+                                <span id="logo-fallback" className="hidden text-5xl font-black text-white tracking-tighter">OBJETIVO</span>
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* UPDATED HEADLINE: SISTEMA DE AGENDAMENTOS */}
+                    <motion.h1
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3, duration: 0.8 }}
+                        className="text-5xl lg:text-5xl font-black text-white tracking-tight leading-none mb-6 drop-shadow-lg uppercase"
+                    >
+                        Sistema de <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-100 to-yellow-500 filter drop-shadow-sm">
+                            Agendamentos
                         </span>
-                    </h2>
+                    </motion.h1>
 
-                    <p className="text-slate-400 text-lg leading-relaxed max-w-lg mx-auto">
-                        Sistema integrado para agendamento de recursos, salas e laboratórios.
-                        Segurança, rapidez e controle total na palma da sua mão.
-                    </p>
-
-                    {/* Stats / Badges */}
-                    <div className="mt-12 grid grid-cols-2 gap-6 max-w-md mx-auto">
-                        <div className="bg-slate-800/50 backdrop-blur border border-white/5 rounded-2xl p-6 text-left hover:bg-slate-800/80 transition-colors group">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Status do Sistema</span>
-                            </div>
-                            <p className="text-white font-bold text-xl group-hover:text-yellow-400 transition-colors">100% Operacional</p>
-                        </div>
-                        <div className="bg-slate-800/50 backdrop-blur border border-white/5 rounded-2xl p-6 text-left hover:bg-slate-800/80 transition-colors group">
-                            <div className="flex items-center gap-3 mb-2">
-                                <CheckCircle2 className="h-4 w-4 text-blue-500" />
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Agilidade</span>
-                            </div>
-                            <p className="text-white font-bold text-xl group-hover:text-yellow-400 transition-colors">Reserva Instantânea</p>
-                        </div>
-                    </div>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.6, duration: 0.8 }}
+                        className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-6 py-2"
+                    >
+                        <p className="text-blue-100/80 text-sm font-medium tracking-wide">
+                            Gestão de Salas • Agendamentos • Equipamentos
+                        </p>
+                    </motion.div>
                 </div>
 
-                {/* Footer Caption */}
-                <div className="absolute bottom-12 text-center w-full">
-                    <p className="text-slate-600 text-xs font-medium uppercase tracking-[0.3em]">
-                        OBJETIVO BAIXADA
-                    </p>
+                {/* 6. Footer Branding */}
+                <div className="absolute bottom-6 z-20 flex items-center gap-2 opacity-60">
+                    <div className="h-px w-12 bg-gradient-to-r from-transparent to-yellow-500"></div>
+                    <span className="text-[10px] text-yellow-500 font-bold tracking-[0.3em] uppercase">Objetivo Baixada</span>
+                    <div className="h-px w-12 bg-gradient-to-l from-transparent to-yellow-500"></div>
+                </div>
+            </div>
+
+            {/* --- RIGHT SIDE: THE LOGIN FORM (35%) - DECREASED WIDTH --- */}
+            <div className="hidden lg:flex w-full lg:w-[35%] flex-col justify-center bg-white relative z-30 shadow-2xl">
+                {/* Subtle Dot Grid Pattern */}
+                <div className="absolute inset-0 z-0 opacity-[0.03]"
+                    style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+                ></div>
+
+                {/* --- CENTERED CONTENT CONTAINER --- */}
+                <div className="w-full max-w-sm mx-auto px-6 relative z-10 flex flex-col items-center">
+
+                    {/* 1. Header & Logo (Centered like image) */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6 }}
+                        className="flex flex-col items-center mb-10 text-center w-full"
+                    >
+                        {/* Default Blue Logo - Large */}
+                        <img
+                            src="/logo-objetivo.png"
+                            alt="Objetivo Logo"
+                            className="h-16 w-auto object-contain mb-8"
+                        />
+
+                        <h2 className="text-3xl font-black text-blue-950 tracking-tight mb-2">
+                            Bem-vindo de volta
+                        </h2>
+                        <p className="text-slate-500 font-medium text-sm">
+                            Acesse o painel de gerenciamento de recursos.
+                        </p>
+                    </motion.div>
+
+                    <form onSubmit={handleSubmit} className="w-full space-y-6">
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                className="bg-red-50 border-l-4 border-red-500 p-3 rounded-r-lg flex items-start gap-2"
+                            >
+                                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                                <p className="text-xs text-red-700 font-bold">{error}</p>
+                            </motion.div>
+                        )}
+
+                        {/* Input 1: Identification */}
+                        <div className="space-y-1.5 w-full">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                Identificação
+                            </label>
+                            <div className="relative">
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <input
+                                    type="text"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-4 pl-12 pr-4 text-slate-900 font-semibold placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-sans"
+                                    placeholder="Usuário TOTVS ou E-mail"
+                                    value={identifier}
+                                    onChange={(e) => setIdentifier(e.target.value)}
+                                />
+                            </div>
+
+                            {/* Yellow Helper Tag */}
+                            <div className="bg-amber-50 rounded-lg p-2 flex items-center gap-1.5 border border-amber-100 mt-1.5">
+                                <Lightbulb className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                <span className="text-[9px] font-bold text-amber-800 uppercase tracking-wide">
+                                    O número TOTVS está no seu crachá
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Input 2: Password */}
+                        <div className="space-y-1.5 w-full">
+                            <div className="flex justify-between items-center ml-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                    Senha
+                                </label>
+                                <Link to="/forgot-password" className="text-[10px] font-bold text-amber-600 hover:underline uppercase tracking-widest">
+                                    Recuperar Acesso
+                                </Link>
+                            </div>
+                            <div className="relative">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-4 pl-12 pr-12 text-slate-900 font-semibold placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-sans"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 p-1"
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Checkbox */}
+                        <div className="flex items-center gap-3">
+                            <div
+                                onClick={() => setRememberMe(!rememberMe)}
+                                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all cursor-pointer ${rememberMe ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'}`}
+                            >
+                                {rememberMe && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                            </div>
+                            <label onClick={() => setRememberMe(!rememberMe)} className="text-sm font-semibold text-slate-600 cursor-pointer select-none">
+                                Manter conectado
+                            </label>
+                        </div>
+
+                        {/* Primary Button - Dark Navy (Matches Mobile & Image) */}
+                        <button
+                            type="submit"
+                            disabled={isSubmitting || isLoading}
+                            className="w-full py-4 bg-slate-900 text-white font-bold text-sm rounded-xl shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 group"
+                        >
+                            {isSubmitting ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <>
+                                    Entrar na Plataforma
+                                    <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-1 transition-transform" />
+                                </>
+                            )}
+                        </button>
+
+                        {/* Divider Line */}
+                        <div className="border-t border-slate-100 my-4 w-full"></div>
+
+                        {/* Secondary Action - Outlined Button (Matches Image) */}
+                        <div className="text-center space-y-3 w-full">
+                            <p className="text-slate-400 text-xs font-medium">
+                                Ainda não tem acesso?
+                            </p>
+                            <Link
+                                to="/register"
+                                className="block w-full py-4 border border-slate-200 bg-white text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-50 active:bg-slate-100 transition-colors uppercase tracking-wider text-center"
+                            >
+                                Cadastre-se
+                            </Link>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
