@@ -228,31 +228,67 @@ export function Login() {
                     }}
                 />
 
-                {/* 3. The Professional Analog Clock (Background Feature) - MOVED SLIGHTLY INWARDS */}
-                <div className="absolute top-[15%] right-[15%] w-96 h-96 opacity-10 blur-[2px] pointer-events-none z-0">
-                    {/* Clock Face */}
-                    <div className="relative w-full h-full rounded-full border-4 border-white">
-                        {/* Hour Markers */}
+                {/* 3. The Elegant Modern Clock (Background Feature) */}
+                <div className="absolute top-[10%] right-[10%] w-[420px] h-[420px] opacity-[0.12] pointer-events-none z-0">
+                    {/* Outer Glow Ring */}
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400/30 via-transparent to-yellow-400/20 blur-xl" />
+
+                    {/* Main Clock Face */}
+                    <div className="relative w-full h-full rounded-full border-2 border-white/40">
+                        {/* Inner Decorative Ring */}
+                        <div className="absolute inset-4 rounded-full border border-white/20" />
+                        <div className="absolute inset-8 rounded-full border border-dashed border-white/10" />
+
+                        {/* Hour Markers - Elegant Design */}
                         {[...Array(12)].map((_, i) => (
-                            <div key={i} className="absolute w-1 h-4 bg-white top-0 left-1/2 -ml-0.5" style={{ transform: `rotate(${i * 30}deg) translateY(10px)`, transformOrigin: '50% 192px' }}></div>
+                            <div
+                                key={i}
+                                className="absolute left-1/2 top-0 -translate-x-1/2 origin-[50%_210px]"
+                                style={{ transform: `translateX(-50%) rotate(${i * 30}deg)` }}
+                            >
+                                {/* Main Marker (larger for 12, 3, 6, 9) */}
+                                <div className={`mx-auto rounded-full bg-white ${i % 3 === 0 ? 'w-3 h-3' : 'w-1.5 h-1.5'}`}
+                                    style={{ marginTop: i % 3 === 0 ? '12px' : '16px' }} />
+                            </div>
                         ))}
-                        {/* Hands */}
-                        <motion.div
-                            className="absolute top-1/2 left-1/2 w-1.5 h-24 bg-white/80 rounded-full origin-bottom -ml-[3px] -mt-[96px]"
-                            animate={{ rotate: 360 }}
-                            transition={{ repeat: Infinity, duration: 43200, ease: "linear" }}
+
+                        {/* Minute Markers (subtle dots) */}
+                        {[...Array(60)].map((_, i) => (
+                            i % 5 !== 0 && (
+                                <div
+                                    key={`min-${i}`}
+                                    className="absolute w-0.5 h-0.5 bg-white/50 rounded-full left-1/2 top-0 -translate-x-1/2 origin-[50%_210px]"
+                                    style={{ transform: `translateX(-50%) rotate(${i * 6}deg)`, marginTop: '20px' }}
+                                />
+                            )
+                        ))}
+
+                        {/* Hour Hand - Thick & Elegant (Fixed at 11:20 position) */}
+                        <div
+                            className="absolute top-1/2 left-1/2 w-2 h-[80px] bg-gradient-to-t from-white to-white/60 rounded-full origin-bottom shadow-lg"
+                            style={{ marginLeft: '-4px', marginTop: '-80px', transform: 'rotate(340deg)' }}
                         />
-                        <motion.div
-                            className="absolute top-1/2 left-1/2 w-1 h-32 bg-white/60 rounded-full origin-bottom -ml-[2px] -mt-[128px]"
-                            animate={{ rotate: 360 }}
-                            transition={{ repeat: Infinity, duration: 3600, ease: "linear" }}
+
+                        {/* Minute Hand - Sleek (Fixed at 20 minutes position) */}
+                        <div
+                            className="absolute top-1/2 left-1/2 w-1.5 h-[110px] bg-gradient-to-t from-white/90 to-white/50 rounded-full origin-bottom"
+                            style={{ marginLeft: '-3px', marginTop: '-110px', transform: 'rotate(120deg)' }}
                         />
+
+                        {/* Second Hand - Gold Accent (Animated) */}
                         <motion.div
-                            className="absolute top-1/2 left-1/2 w-0.5 h-36 bg-red-500/80 rounded-full origin-bottom -ml-[1px] -mt-[144px]"
+                            className="absolute top-1/2 left-1/2 w-0.5 h-[130px] bg-gradient-to-t from-yellow-400 to-yellow-200 rounded-full origin-bottom shadow-[0_0_8px_rgba(250,204,21,0.5)]"
+                            style={{ marginLeft: '-1px', marginTop: '-130px' }}
                             animate={{ rotate: 360 }}
                             transition={{ repeat: Infinity, duration: 60, ease: "linear" }}
                         />
-                        <div className="absolute top-1/2 left-1/2 w-3 h-3 bg-white rounded-full -ml-1.5 -mt-1.5"></div>
+
+                        {/* Center Pin - Golden */}
+                        <div className="absolute top-1/2 left-1/2 w-5 h-5 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-full -translate-x-1/2 -translate-y-1/2 shadow-lg" />
+                        <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-white rounded-full -translate-x-1/2 -translate-y-1/2" />
+
+                        {/* Inner Decorative Circle */}
+                        <div className="absolute top-1/2 left-1/2 w-28 h-28 border border-white/10 rounded-full -translate-x-1/2 -translate-y-1/2" />
                     </div>
                 </div>
 
@@ -276,7 +312,7 @@ export function Login() {
                     >
                         <div className="flex items-center gap-2 mb-3">
                             <Calendar className="w-5 h-5 text-yellow-400" />
-                            <div className="h-1.5 w-16 bg-white/20 rounded"></div>
+                            <span className="text-[10px] font-bold text-white/80 tracking-wider uppercase">Calendário</span>
                         </div>
                         <div className="grid grid-cols-4 gap-1">
                             {/* Calendar Grid with Numbers 1-12 */}
