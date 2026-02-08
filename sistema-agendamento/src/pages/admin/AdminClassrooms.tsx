@@ -145,26 +145,7 @@ export function AdminClassrooms() {
         })
     );
 
-    // Audit log helper
-    const logAudit = async (
-        actionType: 'CREATE_CLASSROOM' | 'UPDATE_CLASSROOM' | 'DELETE_CLASSROOM',
-        recordId: string,
-        oldData: object | null,
-        newData: object | null
-    ) => {
-        try {
-            await supabase.from('admin_audit_logs').insert({
-                admin_id: adminUser?.id,
-                action_type: actionType,
-                table_name: 'classrooms',
-                record_id: recordId,
-                old_data: oldData,
-                new_data: newData
-            });
-        } catch (err) {
-            console.error('Erro ao registrar log de auditoria:', err);
-        }
-    };
+
 
     useEffect(() => {
         if (adminUser?.unit) {
@@ -208,48 +189,29 @@ export function AdminClassrooms() {
         e.preventDefault();
         if (!formData.name.trim()) return;
 
+        // Get session token from admin user
+        const sessionToken = (adminUser as any)?.session_token;
+        if (!sessionToken) {
+            console.error('Session token missing');
+            return;
+        }
+
         if (editingId) {
-            // Find old data for audit
-            const oldClassroom = classrooms.find(c => c.id === editingId);
-
-            // Update
-            await supabase
-                .from('classrooms')
-                .update({ name: formData.name.trim() })
-                .eq('id', editingId);
-
-            // Log audit for update
-            await logAudit(
-                'UPDATE_CLASSROOM',
-                editingId,
-                { name: oldClassroom?.name, unit: oldClassroom?.unit },
-                { name: formData.name.trim(), unit: formData.unit }
-            );
+            // Update via secure RPC
+            const { error } = await supabase.rpc('update_classroom_secure', {
+                p_classroom_id: editingId,
+                p_name: formData.name.trim(),
+                p_admin_token: sessionToken
+            });
+            if (error) console.error('Update error:', error);
         } else {
-            // Create with next position
-            const maxPosition = classrooms.length > 0
-                ? Math.max(...classrooms.map(c => c.position))
-                : 0;
-
-            const { data: newClassroom } = await supabase
-                .from('classrooms')
-                .insert({
-                    name: formData.name.trim(),
-                    unit: formData.unit,
-                    position: maxPosition + 1
-                })
-                .select('id')
-                .single();
-
-            // Log audit for create
-            if (newClassroom) {
-                await logAudit(
-                    'CREATE_CLASSROOM',
-                    newClassroom.id,
-                    null,
-                    { name: formData.name.trim(), unit: formData.unit }
-                );
-            }
+            // Create via secure RPC
+            const { error } = await supabase.rpc('create_classroom_secure', {
+                p_name: formData.name.trim(),
+                p_unit: formData.unit,
+                p_admin_token: sessionToken
+            });
+            if (error) console.error('Create error:', error);
         }
 
         setIsModalOpen(false);
@@ -257,19 +219,19 @@ export function AdminClassrooms() {
     };
 
     const handleDelete = async (classroom: Classroom) => {
-        // Soft delete
-        await supabase
-            .from('classrooms')
-            .update({ is_active: false })
-            .eq('id', classroom.id);
+        // Get session token from admin user
+        const sessionToken = (adminUser as any)?.session_token;
+        if (!sessionToken) {
+            console.error('Session token missing');
+            return;
+        }
 
-        // Log audit for delete
-        await logAudit(
-            'DELETE_CLASSROOM',
-            classroom.id,
-            { name: classroom.name, unit: classroom.unit },
-            null
-        );
+        // Delete via secure RPC (soft delete)
+        const { error } = await supabase.rpc('delete_classroom_secure', {
+            p_classroom_id: classroom.id,
+            p_admin_token: sessionToken
+        });
+        if (error) console.error('Delete error:', error);
 
         setDeleteModal({ isOpen: false, item: null });
         fetchClassrooms();
