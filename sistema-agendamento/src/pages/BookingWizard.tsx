@@ -86,17 +86,17 @@ export function BookingWizard() {
 
                     {/* Active Line - Animated */}
                     <motion.div
-                        className="absolute top-1/2 left-11 md:left-8 h-1.5 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 rounded-full -translate-y-1/2 z-0"
-                        initial={{ width: '0%' }}
+                        className="absolute top-1/2 left-11 right-11 md:left-8 md:right-8 h-1.5 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 rounded-full -translate-y-1/2 z-0 origin-left"
+                        initial={{ scaleX: 0 }}
                         animate={{
-                            width: `calc(${((currentStep - 1) / 2) * 100}% - ${currentStep === 1 ? '0px' : currentStep === 3 ? '40px' : '20px'})`,
+                            scaleX: (currentStep - 1) / 2,
                             backgroundPosition: ["0% 50%", "100% 50%"]
                         }}
                         transition={{
-                            width: { duration: 0.5, ease: "easeInOut" },
+                            scaleX: { duration: 0.5, ease: "easeInOut" },
                             backgroundPosition: { duration: 1.5, repeat: Infinity, ease: "linear" }
                         }}
-                        style={{ backgroundSize: "200% 100%", maxWidth: 'calc(100% - 40px)' }}
+                        style={{ backgroundSize: "200% 100%" }}
                     />
 
                     <div className="flex justify-between items-center w-full px-8 md:px-2">
