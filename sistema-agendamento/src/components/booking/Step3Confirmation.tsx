@@ -19,6 +19,7 @@ import {
     Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug
 } from 'lucide-react';
 import type { BookingData } from '../../pages/BookingWizard';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
 import { TermDocument } from '../TermDocument';
@@ -310,63 +311,68 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
         return <Monitor className={baseClass} />;
     };
 
-    const SuccessModal = () => (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity"></div>
 
-            <div className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all animate-in zoom-in-95 duration-300">
-                <div className="p-8 text-center">
-                    <div className="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-green-50 mb-6 scale-110">
-                        <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
-                            <CheckCircle2 className="h-10 w-10 text-green-600" />
+
+    const SuccessModal = () => {
+        return createPortal(
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 font-sans">
+                <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity"></div>
+
+                <div className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all animate-in zoom-in-95 duration-300">
+                    <div className="p-8 text-center">
+                        <div className="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-green-50 mb-6 scale-110">
+                            <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
+                                <CheckCircle2 className="h-10 w-10 text-green-600" />
+                            </div>
                         </div>
+
+                        <h3 className="text-2xl font-black text-gray-900 mb-2">
+                            Tudo Pronto!
+                        </h3>
+
+                        <p className="text-gray-500 text-sm leading-relaxed mb-8 px-4">
+                            Seu agendamento foi realizado com sucesso. O termo de responsabilidade foi assinado digitalmente e está disponível em seu painel.
+                        </p>
+
+                        <div className="space-y-3 mb-8 text-center flex flex-col items-center">
+                            <div className="inline-flex items-center gap-2 p-3 bg-gray-50 rounded-2xl border border-gray-100 min-w-[200px] justify-center">
+                                {data.isRecurring ? (
+                                    <>
+                                        <Repeat className="h-4 w-4 text-primary-600" />
+                                        <span className="text-sm font-bold text-gray-700">
+                                            Fixo: {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}s • {data.startTime} - {data.endTime}
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Calendar className="h-4 w-4 text-primary-600" />
+                                        <span className="text-sm font-bold text-gray-700">
+                                            {data.date.split('-').reverse().join('/')} • {data.startTime} - {data.endTime}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => navigate('/teacher/my-bookings')}
+                            className="w-full group flex items-center justify-center py-4 px-6 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-2xl shadow-xl shadow-primary-200 transition-all active:scale-95"
+                        >
+                            Ver Meus Agendamentos
+                            <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                        </button>
                     </div>
 
-                    <h3 className="text-2xl font-black text-gray-900 mb-2">
-                        Tudo Pronto!
-                    </h3>
-
-                    <p className="text-gray-500 text-sm leading-relaxed mb-8 px-4">
-                        Seu agendamento foi realizado com sucesso. O termo de responsabilidade foi assinado digitalmente e está disponível em seu painel.
-                    </p>
-
-                    <div className="space-y-3 mb-8 text-center flex flex-col items-center">
-                        <div className="inline-flex items-center gap-2 p-3 bg-gray-50 rounded-2xl border border-gray-100 min-w-[200px] justify-center">
-                            {data.isRecurring ? (
-                                <>
-                                    <Repeat className="h-4 w-4 text-primary-600" />
-                                    <span className="text-sm font-bold text-gray-700">
-                                        Fixo: {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}s • {data.startTime} - {data.endTime}
-                                    </span>
-                                </>
-                            ) : (
-                                <>
-                                    <Calendar className="h-4 w-4 text-primary-600" />
-                                    <span className="text-sm font-bold text-gray-700">
-                                        {data.date.split('-').reverse().join('/')} • {data.startTime} - {data.endTime}
-                                    </span>
-                                </>
-                            )}
-                        </div>
+                    <div className="bg-gray-50 p-4 border-t border-gray-100">
+                        <p className="text-[10px] text-gray-400 text-center font-bold uppercase tracking-[0.2em]">
+                            Sistema de Agendamento • Colégio Objetivo
+                        </p>
                     </div>
-
-                    <button
-                        onClick={() => navigate('/teacher/my-bookings')}
-                        className="w-full group flex items-center justify-center py-4 px-6 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-2xl shadow-xl shadow-primary-200 transition-all active:scale-95"
-                    >
-                        Ver Meus Agendamentos
-                        <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </button>
                 </div>
-
-                <div className="bg-gray-50 p-4 border-t border-gray-100">
-                    <p className="text-[10px] text-gray-400 text-center font-bold uppercase tracking-[0.2em]">
-                        Sistema de Agendamento • Colégio Objetivo
-                    </p>
-                </div>
-            </div>
-        </div>
-    );
+            </div>,
+            document.body
+        );
+    };
 
     const TermModal = () => (
         <div className="fixed inset-0 z-50 block sm:flex sm:items-center sm:justify-center p-0 sm:p-4 md:p-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
