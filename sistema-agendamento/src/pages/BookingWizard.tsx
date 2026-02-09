@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Step1BasicInfo } from '../components/booking/Step1BasicInfo';
 import { Step2Equipment } from '../components/booking/Step2Equipment';
@@ -43,6 +43,11 @@ export function BookingWizard() {
         termAccepted: false,
         isRecurring: false
     });
+
+    // Scroll to top when step changes
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [currentStep]);
 
     const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 3));
     const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
