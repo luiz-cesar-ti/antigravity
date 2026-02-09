@@ -5,14 +5,21 @@ export function ScrollToTop() {
     const { pathname } = useLocation();
 
     useEffect(() => {
-        // Reset window scroll (Global/Teacher)
-        window.scrollTo(0, 0);
+        // Use a small timeout to ensure it runs after layout calculation/browser scroll restoration
+        const timeoutId = setTimeout(() => {
+            // Force window scroll
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTo(0, 0);
+            document.body.scrollTo(0, 0);
 
-        // Reset AdminLayout scroll container
-        const adminContent = document.getElementById('admin-main-content');
-        if (adminContent) {
-            adminContent.scrollTo(0, 0);
-        }
+            // Reset AdminLayout scroll container
+            const adminContent = document.getElementById('admin-main-content');
+            if (adminContent) {
+                adminContent.scrollTo(0, 0);
+            }
+        }, 10); // 10ms delay is usually sufficient to override native behavior
+
+        return () => clearTimeout(timeoutId);
     }, [pathname]);
 
     return null;
