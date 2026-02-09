@@ -374,8 +374,8 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
         );
     };
 
-    const TermModal = () => (
-        <div className="fixed inset-0 z-50 block sm:flex sm:items-center sm:justify-center p-0 sm:p-4 md:p-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    const TermModal = () => createPortal(
+        <div className="fixed inset-0 z-[9999] block sm:flex sm:items-center sm:justify-center p-0 sm:p-4 md:p-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onClick={() => setModalOpen(false)}></div>
             <div className="relative z-50 flex flex-col w-full h-full sm:h-auto sm:max-w-5xl sm:max-h-[85vh] bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transition-all">
                 <div className="bg-white px-4 py-4 flex justify-between items-center border-b border-gray-100 shrink-0">
@@ -425,18 +425,19 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                         />
                     </div>
                 </div>
-            </div>
 
-            <div className="bg-white px-6 py-4 border-t border-gray-100 flex justify-end shrink-0">
-                <button
-                    type="button"
-                    className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-all"
-                    onClick={() => setModalOpen(false)}
-                >
-                    Fechar Visualização
-                </button>
+                <div className="bg-white px-6 py-4 border-t border-gray-100 flex justify-end shrink-0">
+                    <button
+                        type="button"
+                        className="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-all"
+                        onClick={() => setModalOpen(false)}
+                    >
+                        Fechar Visualização
+                    </button>
+                </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 
     return (
