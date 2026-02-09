@@ -9,7 +9,10 @@ import {
     Search,
     X,
     DoorOpen,
-    GripVertical
+    GripVertical,
+    Building2,
+    Info,
+    Check
 } from 'lucide-react';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import {
@@ -383,63 +386,108 @@ export function AdminClassrooms() {
             {/* Create/Edit Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 overflow-y-auto">
-                    <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setIsModalOpen(false)} />
-                        <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                            <form onSubmit={handleSubmit}>
-                                <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-lg font-medium leading-6 text-gray-900">
-                                            {editingId ? 'Editar Sala' : 'Nova Sala'}
-                                        </h3>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsModalOpen(false)}
-                                            className="text-gray-400 hover:text-gray-500"
-                                        >
-                                            <X className="h-5 w-5" />
-                                        </button>
-                                    </div>
-                                    <div className="space-y-4">
+                    <div className="flex min-h-full items-center justify-center p-4">
+                        {/* Backdrop */}
+                        <div
+                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+                            onClick={() => setIsModalOpen(false)}
+                        />
+
+                        {/* Modal Card */}
+                        <div className="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all animate-in zoom-in-95 duration-200">
+                            {/* Header with Gradient */}
+                            <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 px-6 py-5">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur">
+                                            <DoorOpen className="h-5 w-5 text-amber-400" />
+                                        </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700">
-                                                Nome da Sala *
-                                            </label>
+                                            <h3 className="text-lg font-bold text-white">
+                                                {editingId ? 'Editar Sala' : 'Nova Sala'}
+                                            </h3>
+                                            <p className="text-xs text-slate-400">
+                                                {editingId ? 'Atualize as informações da sala' : 'Cadastre uma nova sala de aula'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsModalOpen(false)}
+                                        className="rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
+                                    >
+                                        <X className="h-5 w-5" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Form Body */}
+                            <form onSubmit={handleSubmit}>
+                                <div className="px-6 py-5 space-y-5">
+                                    {/* Nome da Sala */}
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                                            Nome da Sala *
+                                        </label>
+                                        <div className="relative">
+                                            <DoorOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                             <input
                                                 type="text"
                                                 value={formData.name}
                                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm p-2 border"
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
                                                 placeholder="Ex: Sala 01, Laboratório, Auditório"
                                                 required
+                                                autoFocus
                                             />
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700">
-                                                Unidade
-                                            </label>
+                                    </div>
+
+                                    {/* Unidade */}
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                                            Unidade
+                                        </label>
+                                        <div className="relative">
+                                            <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                             <input
                                                 type="text"
                                                 value={formData.unit}
                                                 disabled
-                                                className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm sm:text-sm p-2 border cursor-not-allowed"
+                                                className="w-full bg-slate-100 border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 text-slate-600 font-medium cursor-not-allowed"
                                             />
                                         </div>
+                                        <p className="mt-2 text-[10px] text-slate-500 flex items-center gap-1">
+                                            <Info className="h-3 w-3" />
+                                            A sala será criada na unidade onde você é administrador
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                                    <button
-                                        type="submit"
-                                        className="inline-flex w-full justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
-                                    >
-                                        {editingId ? 'Salvar' : 'Criar'}
-                                    </button>
+
+                                {/* Footer */}
+                                <div className="border-t border-slate-100 bg-slate-50/50 px-6 py-4 flex items-center justify-end gap-3">
                                     <button
                                         type="button"
                                         onClick={() => setIsModalOpen(false)}
-                                        className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:mt-0 sm:w-auto sm:text-sm"
+                                        className="px-5 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all"
                                     >
                                         Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl hover:from-amber-600 hover:to-amber-700 shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30 transition-all flex items-center gap-2"
+                                    >
+                                        {editingId ? (
+                                            <>
+                                                <Check className="h-4 w-4" />
+                                                Salvar Alterações
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Plus className="h-4 w-4" />
+                                                Criar Sala
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </form>
