@@ -3,6 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { Step1BasicInfo } from '../components/booking/Step1BasicInfo';
 import { Step2Equipment } from '../components/booking/Step2Equipment';
 import { Step3Confirmation } from '../components/booking/Step3Confirmation';
+import { motion } from 'framer-motion';
+import { Check, Monitor, User, FileText, ChevronRight } from 'lucide-react';
 
 export type BookingData = {
     unit: string;
@@ -49,33 +51,108 @@ export function BookingWizard() {
         setBookingData(prev => ({ ...prev, ...data }));
     };
 
+    const steps = [
+        { id: 1, label: 'Dados Básicos', icon: User },
+        { id: 2, label: 'Equipamentos', icon: Monitor },
+        { id: 3, label: 'Confirmação', icon: Check }
+    ];
+
     return (
-        <div className="max-w-4xl mx-auto">
-            {/* Steps Header */}
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900">Novo Agendamento</h1>
-                <p className="text-gray-600">Preencha as informações abaixo para reservar seus equipamentos</p>
+        <div className="max-w-5xl mx-auto pb-12">
+            {/* Animated Header */}
+            <div className="mb-12 text-center">
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">
+                        Novo Agendamento
+                    </h1>
+                    <p className="text-slate-500 font-medium">
+                        Siga os 3 passos abaixo para reservar seus equipamentos com segurança
+                    </p>
+                </motion.div>
 
-                <div className="mt-6 flex items-center justify-between relative">
-                    <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-full h-1 bg-gray-200 -z-10" />
+                {/* Progress Steps */}
+                <div className="mt-10 relative max-w-3xl mx-auto">
+                    {/* Background Line */}
+                    <div className="absolute top-1/2 left-5 right-5 md:left-8 md:right-8 h-1.5 bg-gray-300 rounded-full -translate-y-1/2 z-0"></div>
 
-                    {[1, 2, 3].map(step => (
-                        <div key={step} className={`flex flex-col items-center bg-gray-50 px-2`}>
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white transition-colors ${step <= currentStep ? 'bg-primary-600' : 'bg-gray-300'
-                                }`}>
-                                {step}
-                            </div>
-                            <span className={`text-xs mt-1 font-medium ${step <= currentStep ? 'text-primary-700' : 'text-gray-500'
-                                }`}>
-                                {step === 1 ? 'Dados Básicos' : step === 2 ? 'Equipamentos' : 'Confirmação'}
-                            </span>
-                        </div>
-                    ))}
+                    {/* Active Line - Animated */}
+                    <motion.div
+                        className="absolute top-1/2 left-5 md:left-8 h-1.5 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 rounded-full -translate-y-1/2 z-0"
+                        initial={{ width: '0%' }}
+                        animate={{
+                            width: `calc(${((currentStep - 1) / 2) * 100}% - ${currentStep === 1 ? '0px' : currentStep === 3 ? '40px' : '20px'})`,
+                            backgroundPosition: ["0% 50%", "100% 50%"]
+                        }}
+                        transition={{
+                            width: { duration: 0.5, ease: "easeInOut" },
+                            backgroundPosition: { duration: 1.5, repeat: Infinity, ease: "linear" }
+                        }}
+                        style={{ backgroundSize: "200% 100%", maxWidth: 'calc(100% - 40px)' }}
+                    />
+
+                    <div className="flex justify-between items-center w-full px-2">
+                        {steps.map((step) => {
+                            const isActive = step.id === currentStep;
+                            const isCompleted = step.id < currentStep;
+
+                            return (
+                                <div key={step.id} className="relative flex flex-col items-center group cursor-default z-10">
+                                    <motion.div
+                                        className={`w-10 h-10 md:w-16 md:h-16 rounded-2xl flex items-center justify-center border-4 transition-all duration-300 shadow-lg ${isActive
+                                            ? 'bg-amber-500 border-white text-white shadow-amber-200 scale-110'
+                                            : isCompleted
+                                                ? 'bg-slate-900 border-white text-amber-400 shadow-slate-200 hover:bg-slate-800'
+                                                : 'bg-white border-slate-200 text-slate-300 shadow-sm'
+                                            }`}
+                                        animate={isActive ? { scale: 1.15 } : { scale: 1 }}
+                                        whileHover={!isActive && !isCompleted ? { scale: 1.05 } : {}}
+                                    >
+                                        {isCompleted ? (
+                                            <Check className="w-5 h-5 md:w-8 md:h-8" strokeWidth={3} />
+                                        ) : (
+                                            <step.icon className="w-5 h-5 md:w-7 md:h-7" strokeWidth={isActive ? 2.5 : 2} />
+                                        )}
+
+                                        {/* Pulse Effect for Active Step */}
+                                        {isActive && (
+                                            <motion.div
+                                                className="absolute inset-0 rounded-2xl bg-amber-400 -z-10"
+                                                animate={{ scale: [1, 1.4], opacity: [0.6, 0] }}
+                                                transition={{ duration: 1.5, repeat: Infinity }}
+                                            />
+                                        )}
+                                    </motion.div>
+
+                                    <div className={`absolute top-12 md:top-20 w-32 text-center transition-all duration-300 ${isActive ? 'translate-y-1' : ''}`}>
+                                        <span className={`text-[8px] md:text-[10px] font-black uppercase tracking-widest block mb-0.5 ${isActive ? 'text-amber-600' : isCompleted ? 'text-slate-600' : 'text-slate-300'
+                                            }`}>
+                                            Passo {step.id}
+                                        </span>
+                                        <span className={`text-xs md:text-sm font-bold ${isActive ? 'text-slate-800' : isCompleted ? 'text-slate-600' : 'text-slate-400'
+                                            }`}>
+                                            {step.label}
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
 
-            {/* Content */}
-            <div className="bg-white shadow rounded-lg p-6 border border-gray-100">
+            {/* Content Container */}
+            <motion.div
+                key={currentStep}
+                initial={{ opacity: 0, x: 20, filter: 'blur(4px)' }}
+                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, x: -20, filter: 'blur(4px)' }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className="bg-white/80 backdrop-blur-sm shadow-xl shadow-slate-200/50 rounded-3xl p-6 sm:p-10 border border-white mt-20"
+            >
                 {currentStep === 1 && (
                     <Step1BasicInfo
                         data={bookingData}
@@ -98,7 +175,7 @@ export function BookingWizard() {
                         onPrev={prevStep}
                     />
                 )}
-            </div>
+            </motion.div>
         </div>
     );
 }
