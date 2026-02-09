@@ -4,7 +4,7 @@ import { Step1BasicInfo } from '../components/booking/Step1BasicInfo';
 import { Step2Equipment } from '../components/booking/Step2Equipment';
 import { Step3Confirmation } from '../components/booking/Step3Confirmation';
 import { motion } from 'framer-motion';
-import { Check, Monitor, User, FileText, ChevronRight } from 'lucide-react';
+import { Check, Monitor, User } from 'lucide-react';
 
 export type BookingData = {
     unit: string;
@@ -77,11 +77,11 @@ export function BookingWizard() {
                 {/* Progress Steps */}
                 <div className="mt-10 relative max-w-3xl mx-auto">
                     {/* Background Line */}
-                    <div className="absolute top-1/2 left-5 right-5 md:left-8 md:right-8 h-1.5 bg-gray-300 rounded-full -translate-y-1/2 z-0"></div>
+                    <div className="absolute top-1/2 left-11 right-11 md:left-8 md:right-8 h-1.5 bg-gray-300 rounded-full -translate-y-1/2 z-0"></div>
 
                     {/* Active Line - Animated */}
                     <motion.div
-                        className="absolute top-1/2 left-5 md:left-8 h-1.5 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 rounded-full -translate-y-1/2 z-0"
+                        className="absolute top-1/2 left-11 md:left-8 h-1.5 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 rounded-full -translate-y-1/2 z-0"
                         initial={{ width: '0%' }}
                         animate={{
                             width: `calc(${((currentStep - 1) / 2) * 100}% - ${currentStep === 1 ? '0px' : currentStep === 3 ? '40px' : '20px'})`,
@@ -94,7 +94,7 @@ export function BookingWizard() {
                         style={{ backgroundSize: "200% 100%", maxWidth: 'calc(100% - 40px)' }}
                     />
 
-                    <div className="flex justify-between items-center w-full px-2">
+                    <div className="flex justify-between items-center w-full px-8 md:px-2">
                         {steps.map((step) => {
                             const isActive = step.id === currentStep;
                             const isCompleted = step.id < currentStep;
@@ -127,7 +127,7 @@ export function BookingWizard() {
                                         )}
                                     </motion.div>
 
-                                    <div className={`absolute top-12 md:top-20 w-32 text-center transition-all duration-300 ${isActive ? 'translate-y-1' : ''}`}>
+                                    <div className={`absolute top-12 md:top-20 w-24 md:w-32 text-center transition-all duration-300 ${isActive ? 'translate-y-1' : ''}`}>
                                         <span className={`text-[8px] md:text-[10px] font-black uppercase tracking-widest block mb-0.5 ${isActive ? 'text-amber-600' : isCompleted ? 'text-slate-600' : 'text-slate-300'
                                             }`}>
                                             Passo {step.id}

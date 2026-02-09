@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabase';
-import { LogOut, Home, Calendar, Menu, X, BookOpen, MapPin, User, ChevronDown } from 'lucide-react';
+import { LogOut, Home, Calendar, Menu, X, BookOpen, MapPin, User } from 'lucide-react';
 
 export function TeacherLayout() {
     const { signOut, user } = useAuth();
@@ -55,7 +55,7 @@ export function TeacherLayout() {
     ];
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-slate-50 overflow-x-hidden">
             {/* Header */}
             <header className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white shadow-lg sticky top-0 z-50 border-b border-slate-700/50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
