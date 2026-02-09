@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -28,6 +28,11 @@ export function AdminLayout() {
     const navigate = useNavigate();
     const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    // Scroll to top on route change
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [location.pathname]);
 
     const handleSignOut = async () => {
         await signOut();
