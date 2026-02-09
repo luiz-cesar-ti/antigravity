@@ -1,36 +1,72 @@
 import { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LayoutDashboard, Calendar, Monitor, Users, Settings, LogOut, Menu, X, ClipboardCheck, BookOpen, Clock, UserCog, MapPin, ShieldAlert } from 'lucide-react';
+import {
+    LayoutDashboard,
+    Calendar,
+    Monitor,
+    Users,
+    Settings,
+    LogOut,
+    Menu,
+    X,
+    ClipboardCheck,
+    BookOpen,
+    Clock,
+    UserCog,
+    MapPin,
+    ShieldAlert,
+    ChevronRight,
+    Shield
+} from 'lucide-react';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import { NotificationBell } from './NotificationBell';
 
 export function AdminLayout() {
-    // ... hooks ...
     const { signOut, user } = useAuth();
     const adminUser = user as import('../types').Admin | null;
     const navigate = useNavigate();
     const location = useLocation();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-    // ... helper functions ...
     const handleSignOut = async () => {
         await signOut();
         navigate('/login');
     };
 
-    const isActive = (path: string) => {
-        return location.pathname === path ? 'bg-primary-800 text-white' : 'text-primary-100 hover:bg-primary-600';
-    };
+    const isActive = (path: string) => location.pathname === path;
 
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    // Navigation items configuration
+    const navItems = [
+        { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', always: true },
+        { path: '/admin/bookings', icon: Calendar, label: 'Agendamentos', always: true },
+        { path: '/admin/rooms', icon: MapPin, label: 'Gestão de Salas', always: true },
+        { path: '/admin/equipment', icon: Monitor, label: 'Equipamentos', hideSuperAdmin: true },
+        { path: '/admin/classrooms', icon: MapPin, label: 'Salas de Aula', hideSuperAdmin: true },
+        { path: '/admin/users', icon: Users, label: 'Usuários', always: true },
+        { path: '/admin/loans', icon: ClipboardCheck, label: 'Empréstimos', hideSuperAdmin: true },
+        { path: '/admin/schedule', icon: Clock, label: 'Horário de Aulas', hideSuperAdmin: true },
+        { path: '/admin/manual', icon: BookOpen, label: 'Manual do Admin', hideSuperAdmin: true },
+    ];
+
+    const superAdminItems = [
+        { path: '/admin/manage-admins', icon: UserCog, label: 'Administradores' },
+        { path: '/admin/logs', icon: ShieldAlert, label: 'Logs de Auditoria' },
+    ];
+
+    const shouldShowItem = (item: typeof navItems[0]) => {
+        if (item.always) return true;
+        if (item.hideSuperAdmin && adminUser?.role === 'super_admin') return false;
+        return true;
+    };
 
     return (
         <NotificationProvider>
-            <div className="flex h-screen bg-gray-100 overflow-hidden">
+            <div className="flex h-screen bg-slate-100 overflow-hidden">
                 {/* Mobile Sidebar Overlay */}
                 {isSidebarOpen && (
                     <div
-                        className="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm md:hidden"
+                        className="fixed inset-0 z-40 bg-slate-900/70 backdrop-blur-sm md:hidden transition-opacity"
                         onClick={() => setIsSidebarOpen(false)}
                     />
                 )}
@@ -38,209 +74,178 @@ export function AdminLayout() {
                 {/* Sidebar */}
                 <aside className={`
                     fixed md:static inset-y-0 left-0 z-50
-                    w-64 bg-primary-700 text-white flex flex-col flex-shrink-0 
+                    w-72 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950
+                    text-white flex flex-col flex-shrink-0 
                     transition-transform duration-300 ease-in-out
                     ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+                    shadow-2xl shadow-slate-900/50
                 `}>
-                    <div className="p-6 flex flex-col items-center justify-center border-b border-primary-600/50 relative">
-                        <h1 className="font-black text-xl text-center leading-tight tracking-tight">
-                            {adminUser?.unit || 'Objetivo Admin'}
-                        </h1>
-                        <div className="h-1 w-12 bg-primary-400 rounded-full mt-3"></div>
-
-                        {/* Close button for mobile */}
-                        <button
-                            onClick={() => setIsSidebarOpen(false)}
-                            className="absolute top-4 right-4 md:hidden text-primary-200 hover:text-white"
-                        >
-                            <X className="h-5 w-5" />
-                        </button>
+                    {/* Header with Logo */}
+                    <div className="p-5 border-b border-slate-700/50">
+                        <div className="flex items-center gap-3">
+                            <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 border border-slate-600 flex items-center justify-center shadow-lg">
+                                <Shield className="h-6 w-6 text-amber-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h1 className="font-bold text-base text-white truncate">
+                                    {adminUser?.unit || 'Objetivo Admin'}
+                                </h1>
+                                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+                                    Painel Administrativo
+                                </p>
+                            </div>
+                            {/* Close button for mobile */}
+                            <button
+                                onClick={() => setIsSidebarOpen(false)}
+                                className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
                     </div>
 
-                    <nav className="flex-1 overflow-y-auto py-4">
-                        <ul className="space-y-1 px-2">
-                            {/* ... links ... -> Keeping existing links logic via code folding or preserving */}
-                            <li>
+                    {/* Navigation */}
+                    <nav className="flex-1 overflow-y-auto py-4 px-3 scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                        <div className="space-y-1">
+                            {navItems.filter(shouldShowItem).map((item) => (
                                 <Link
-                                    to="/admin"
+                                    key={item.path}
+                                    to={item.path}
                                     onClick={() => setIsSidebarOpen(false)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin')}`}
+                                    className={`
+                                        flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
+                                        ${isActive(item.path)
+                                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                            : 'text-slate-300 hover:bg-slate-800/70 hover:text-white border border-transparent'
+                                        }
+                                    `}
                                 >
-                                    <LayoutDashboard className="w-5 h-5" />
-                                    <span>Dashboard</span>
+                                    <item.icon className={`w-5 h-5 shrink-0 transition-colors ${isActive(item.path) ? 'text-amber-400' : 'text-slate-400 group-hover:text-amber-400'}`} />
+                                    <span className="font-medium text-sm">{item.label}</span>
+                                    {isActive(item.path) && (
+                                        <ChevronRight className="w-4 h-4 ml-auto text-amber-400" />
+                                    )}
                                 </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    to="/admin/bookings"
-                                    onClick={() => setIsSidebarOpen(false)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/bookings')}`}
-                                >
-                                    <Calendar className="w-5 h-5" />
-                                    <span>Agendamentos</span>
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    to="/admin/rooms"
-                                    onClick={() => setIsSidebarOpen(false)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/rooms')}`}
-                                >
-                                    <MapPin className="w-5 h-5" />
-                                    <span>Gestão de Salas</span>
-                                </Link>
-                            </li>
-                            {adminUser?.role !== 'super_admin' && (
-                                <li>
-                                    <Link
-                                        to="/admin/equipment"
-                                        onClick={() => setIsSidebarOpen(false)}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/equipment')}`}
-                                    >
-                                        <Monitor className="w-5 h-5" />
-                                        <span>Equipamentos</span>
-                                    </Link>
-                                </li>
-                            )}
-                            {adminUser?.role !== 'super_admin' && (
-                                <li>
-                                    <Link
-                                        to="/admin/classrooms"
-                                        onClick={() => setIsSidebarOpen(false)}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/classrooms')}`}
-                                    >
-                                        <MapPin className="w-5 h-5" />
-                                        <span>Salas de Aula</span>
-                                    </Link>
-                                </li>
-                            )}
-                            <li>
-                                <Link
-                                    to="/admin/users"
-                                    onClick={() => setIsSidebarOpen(false)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/users')}`}
-                                >
-                                    <Users className="w-5 h-5" />
-                                    <span>Usuários</span>
-                                </Link>
-                            </li>
-                            {adminUser?.role !== 'super_admin' && (
-                                <>
-                                    <li>
-                                        <Link
-                                            to="/admin/loans"
-                                            onClick={() => setIsSidebarOpen(false)}
-                                            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/loans')}`}
-                                        >
-                                            <ClipboardCheck className="w-5 h-5" />
-                                            <span>Empréstimos</span>
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link
-                                            to="/admin/schedule"
-                                            onClick={() => setIsSidebarOpen(false)}
-                                            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/schedule')}`}
-                                        >
-                                            <Clock className="w-5 h-5" />
-                                            <span>Horário de Aulas</span>
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link
-                                            to="/admin/manual"
-                                            onClick={() => setIsSidebarOpen(false)}
-                                            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/manual')}`}
-                                        >
-                                            <BookOpen className="w-5 h-5" />
-                                            <span>Manual do Admin</span>
-                                        </Link>
-                                    </li>
-                                </>
-                            )}
-                            {adminUser?.role === 'super_admin' && (
-                                <li className="mb-4">
-                                    <div className="px-4 py-2 text-xs font-semibold text-primary-300 uppercase tracking-wider">
+                            ))}
+                        </div>
+
+                        {/* Super Admin Section */}
+                        {adminUser?.role === 'super_admin' && (
+                            <div className="mt-6 pt-6 border-t border-slate-700/50">
+                                <div className="px-4 mb-3">
+                                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider bg-amber-500/10 px-2 py-1 rounded-md">
+                                        <ShieldAlert className="w-3 h-3" />
                                         Super Admin
-                                    </div>
-                                    <Link
-                                        to="/admin/manage-admins"
-                                        onClick={() => setIsSidebarOpen(false)}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/manage-admins')}`}
-                                    >
-                                        <UserCog className="w-5 h-5" />
-                                        <span>Administradores</span>
-                                    </Link>
-                                </li>
-                            )}
-                            {adminUser?.role === 'super_admin' && (
-                                <li>
-                                    <Link
-                                        to="/admin/logs"
-                                        onClick={() => setIsSidebarOpen(false)}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/logs')}`}
-                                    >
-                                        <div className="relative">
-                                            <ShieldAlert className="w-5 h-5" />
-                                            {/* Optional: Add a red dot if there are new alerts */}
-                                        </div>
-                                        <span>Logs de Auditoria</span>
-                                    </Link>
-                                </li>
-                            )}
-                            {adminUser?.role !== 'super_admin' && (
-                                <li>
-                                    <Link
-                                        to="/admin/settings"
-                                        onClick={() => setIsSidebarOpen(false)}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive('/admin/settings')}`}
-                                    >
-                                        <Settings className="w-5 h-5" />
-                                        <span>Configurações</span>
-                                    </Link>
-                                </li>
-                            )}
-                        </ul>
+                                    </span>
+                                </div>
+                                <div className="space-y-1">
+                                    {superAdminItems.map((item) => (
+                                        <Link
+                                            key={item.path}
+                                            to={item.path}
+                                            onClick={() => setIsSidebarOpen(false)}
+                                            className={`
+                                                flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
+                                                ${isActive(item.path)
+                                                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                                    : 'text-slate-300 hover:bg-slate-800/70 hover:text-white border border-transparent'
+                                                }
+                                            `}
+                                        >
+                                            <item.icon className={`w-5 h-5 shrink-0 transition-colors ${isActive(item.path) ? 'text-amber-400' : 'text-slate-400 group-hover:text-amber-400'}`} />
+                                            <span className="font-medium text-sm">{item.label}</span>
+                                            {isActive(item.path) && (
+                                                <ChevronRight className="w-4 h-4 ml-auto text-amber-400" />
+                                            )}
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Settings - Only for non super_admin */}
+                        {adminUser?.role !== 'super_admin' && (
+                            <div className="mt-4 pt-4 border-t border-slate-700/50">
+                                <Link
+                                    to="/admin/settings"
+                                    onClick={() => setIsSidebarOpen(false)}
+                                    className={`
+                                        flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
+                                        ${isActive('/admin/settings')
+                                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                            : 'text-slate-300 hover:bg-slate-800/70 hover:text-white border border-transparent'
+                                        }
+                                    `}
+                                >
+                                    <Settings className={`w-5 h-5 shrink-0 transition-colors ${isActive('/admin/settings') ? 'text-amber-400' : 'text-slate-400 group-hover:text-amber-400'}`} />
+                                    <span className="font-medium text-sm">Configurações</span>
+                                    {isActive('/admin/settings') && (
+                                        <ChevronRight className="w-4 h-4 ml-auto text-amber-400" />
+                                    )}
+                                </Link>
+                            </div>
+                        )}
                     </nav>
 
-                    <div className="p-4 border-t border-primary-600">
+                    {/* Logout Button */}
+                    <div className="p-4 border-t border-slate-700/50">
                         <button
                             onClick={handleSignOut}
-                            className="flex items-center gap-3 w-full px-4 py-2 text-primary-100 hover:text-white hover:bg-primary-600 rounded-md transition-colors"
+                            className="flex items-center gap-3 w-full px-4 py-3 text-slate-400 hover:text-amber-400 hover:bg-slate-800/70 rounded-xl transition-all duration-200 group"
                         >
-                            <LogOut className="w-5 h-5" />
-                            <span>Sair</span>
+                            <LogOut className="w-5 h-5 group-hover:text-amber-400 transition-colors" />
+                            <span className="font-medium text-sm">Sair do Sistema</span>
                         </button>
                     </div>
                 </aside>
 
                 {/* Main Content */}
-                <main id="admin-main-content" className="flex-1 overflow-auto flex flex-col w-full relative">
-                    {/* Header (Desktop & Mobile) */}
-                    <header className="bg-white border-b border-gray-200 sticky top-0 z-30 px-4 py-3 flex items-center justify-between shadow-sm">
-
-                        {/* Mobile Menu Button - Left */}
-                        <div className="md:hidden flex items-center">
+                <main id="admin-main-content" className="flex-1 overflow-auto flex flex-col w-full relative bg-slate-50">
+                    {/* Header */}
+                    <header className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 sticky top-0 z-30 px-4 lg:px-6 py-3 flex items-center justify-between shadow-lg border-b border-slate-700/50">
+                        {/* Mobile Menu Button */}
+                        <div className="md:hidden flex items-center gap-3">
                             <button
                                 onClick={() => setIsSidebarOpen(true)}
-                                className="p-2 -ml-2 text-gray-500 rounded-md hover:bg-gray-100"
+                                className="p-2 -ml-1 text-slate-300 rounded-xl hover:bg-slate-700 transition-colors"
                             >
                                 <Menu className="h-6 w-6" />
                             </button>
-                            <span className="font-bold text-gray-800 ml-2">Menu</span>
                         </div>
 
-                        {/* Spacer for Desktop to push Bell to right */}
-                        <div className="hidden md:block"></div>
+                        {/* Desktop Left Spacer */}
+                        <div className="hidden md:block w-10"></div>
+
+                        {/* Centered Logo - Desktop */}
+                        <div className="hidden md:flex absolute left-1/2 transform -translate-x-1/2 items-center gap-3">
+                            <img
+                                src="/logo-objetivo.png"
+                                alt="Objetivo"
+                                className="h-8 w-auto brightness-0 invert opacity-90"
+                            />
+                            <div className="h-6 w-px bg-slate-600"></div>
+                            <span className="text-sm font-bold tracking-wide">
+                                <span className="text-white">Sistema de</span>{' '}
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-500">Agendamentos</span>
+                            </span>
+                        </div>
+
+                        {/* Centered Logo - Mobile */}
+                        <div className="md:hidden flex-1 flex justify-center">
+                            <span className="text-xs font-bold tracking-wide">
+                                <span className="text-white">Sistema de</span>{' '}
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-500">Agendamentos</span>
+                            </span>
+                        </div>
 
                         {/* Right Actions */}
-                        <div className="flex items-center mr-6">
+                        <div className="flex items-center gap-3 mr-2">
                             <NotificationBell />
                         </div>
                     </header>
 
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-
+                    {/* Page Content */}
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
                         <Outlet />
                     </div>
                 </main>
