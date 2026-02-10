@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
         }, 10000);
 
-        const checkSession = async () => {
+        const checkAdminSession = () => {
             if (!mounted) return;
             try {
                 // 1. Admin Session (Local & Fast)
@@ -102,30 +102,77 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     try {
                         const admin = JSON.parse(adminSession);
                         if (admin?.username) {
+                            console.log('Auth: Sessão de Admin restaurada via LocalStorage');
                             setState({
                                 user: admin as Admin,
                                 role: (admin.role as UserRole) || 'admin',
                                 isAuthenticated: true,
                                 isLoading: false,
                             });
-                            return;
+                            return true; // Admin found
                         }
                     } catch {
                         localStorage.removeItem('admin_session');
                     }
                 }
+            } catch (error) {
+                console.error('Admin session check failed:', error);
+            }
+            return false; // No admin
+        };
 
-                // 2. Supabase Session
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session && mounted) {
-                    const profileData = await fetchUserProfile(session.user.id);
+        // Run admin check synchronously-ish first
+        const isAdmin = checkAdminSession();
 
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (!mounted) return;
+
+            // console.log('Auth event:', event, !!session);
+
+            // Bails out if currently an admin (Admin session takes precedence over Supabase auth events in UI)
+            // We use a functional update to check the CURRENT state accurately
+            setState(prev => {
+                if (prev.role === 'admin' || prev.role === 'super_admin') {
+                    return { ...prev, isLoading: false };
+                }
+                // Continuation handled below for non-admins
+                return prev;
+            });
+
+            // Re-read state to decide flow (hacky but necessary due to closure?)
+            // Actually, we should rely on the setState callback or Ref, but let's implement the logic explicitly.
+
+            if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !session)) {
+                setState(prev => {
+                    // Double check admin protection inside the update
+                    if (prev.role === 'admin' || prev.role === 'super_admin') return prev;
+
+                    // If we were already null and loaded, no change needed
+                    if (prev.user === null && prev.isLoading === false) return prev;
+
+                    return { user: null, role: null, isAuthenticated: false, isLoading: false };
+                });
+            } else if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
+                // Check if we are already seeing this user (avoid loop/re-render)
+                if (roleRef.current === 'teacher' && userRef.current?.id === session.user.id) {
+                    setState(prev => ({ ...prev, isLoading: false }));
+                    return;
+                }
+
+                // If the state is Admin, ignore Supabase session (Admin logged in via special flow)
+                if (roleRef.current === 'admin' || roleRef.current === 'super_admin') {
+                    return;
+                }
+
+                // New Teacher Session or Restore
+                const profileData = await fetchUserProfile(session.user.id);
+
+                if (mounted) {
                     if (profileData === 'disabled') {
+                        console.warn('Auth: Perfil desativado');
                         setState(prev => ({ ...prev, isLoading: false }));
-                        return;
-                    }
-
-                    if (profileData && mounted) {
+                    } else if (profileData) {
+                        console.log('Auth: Sessão de Professor restaurada');
                         setState({
                             user: profileData,
                             role: 'teacher',
@@ -133,77 +180,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                             isLoading: false,
                         });
                     } else {
-                        setState(prev => ({ ...prev, isLoading: false }));
-                    }
-                } else if (mounted) {
-                    setState(prev => ({ ...prev, isLoading: false }));
-                }
-            } catch (error) {
-                console.error('Session check failed:', error);
-                if (mounted) setState(prev => ({ ...prev, isLoading: false }));
-            }
-        };
-
-        checkSession();
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (!mounted) return;
-
-            // console.log('Auth event:', event, !!session);
-
-            if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !session)) {
-                setState(prev => {
-                    if (prev.role === 'admin' || prev.role === 'super_admin') return { ...prev, isLoading: false };
-                    if (prev.user === null && prev.isLoading === false) return prev;
-                    return { user: null, role: null, isAuthenticated: false, isLoading: false };
-                });
-            } else if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
-                // BAILOUT: If we are already authenticated as the same teacher, do nothing
-                if (roleRef.current === 'teacher' && userRef.current?.id === session.user.id) {
-                    setState(prev => {
-                        if (prev.isAuthenticated === true && prev.isLoading === false) return prev;
-                        return { ...prev, isAuthenticated: true, isLoading: false };
-                    });
-                    return;
-                }
-
-                // If it's an admin, we don't fetch teacher profile
-                if (roleRef.current === 'admin') {
-                    setState(prev => {
-                        if (prev.isLoading === false) return prev;
-                        return { ...prev, isLoading: false };
-                    });
-                    return;
-                }
-
-                const profileData = await fetchUserProfile(session.user.id);
-                if (mounted) {
-                    if (profileData === 'disabled') {
-                        setState(prev => ({ ...prev, isLoading: false }));
-                    } else if (profileData) {
-                        setState(prev => {
-                            // Identity check before update
-                            if (prev.user?.id === profileData.id && JSON.stringify(prev.user) === JSON.stringify(profileData) && prev.isLoading === false) {
-                                return prev;
-                            }
-                            return {
-                                user: profileData,
-                                role: 'teacher',
-                                isAuthenticated: true,
-                                isLoading: false,
-                            };
-                        });
-                    } else {
+                        console.error('Auth: Perfil não encontrado para usuário autenticado');
+                        // Failed to load profile -> Logout to be safe? Or just stop loading?
+                        // Let's stop loading so we don't hang, app will likely redirect
                         setState(prev => ({ ...prev, isLoading: false }));
                     }
                 }
             } else {
-                if (mounted) {
-                    setState(prev => {
-                        if (prev.isLoading === false) return prev;
-                        return { ...prev, isLoading: false };
-                    });
-                }
+                // Other events
+                if (mounted) setState(prev => ({ ...prev, isLoading: false }));
             }
         });
 
