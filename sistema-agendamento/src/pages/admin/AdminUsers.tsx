@@ -423,7 +423,7 @@ export function AdminUsers() {
                                         </button>
                                     </div>
                                     <p className="text-[11px] text-gray-400 mt-2 ml-1">
-                                        Para redefinição de senha, utilize a opção "Esqueci a Senha" na tela de login.
+                                        O botão <strong className="text-gray-500">"Reenviar"</strong> deve ser utilizado somente quando o usuário não recebeu o email de confirmação no momento do cadastro. Para redefinição de senha, utilize a opção "Esqueci a Senha" na tela de login.
                                     </p>
                                 </div>
 
