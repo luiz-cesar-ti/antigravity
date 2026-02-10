@@ -16,6 +16,7 @@ export interface Notification {
 interface NotificationContextType {
     notifications: Notification[];
     unreadCount: number;
+    refreshSignal: number;
     markAsRead: (id: string) => Promise<void>;
     markAllAsRead: () => Promise<void>;
     removeNotification: (id: string) => Promise<void>;
@@ -26,6 +27,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
     const { user, role } = useAuth();
     const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [refreshSignal, setRefreshSignal] = useState(0);
 
     useEffect(() => {
         if (!user || role !== 'admin') return;
@@ -91,6 +93,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                             if (prev.some(n => n.id === newNotif.id)) return prev;
                             return [newNotif, ...prev];
                         });
+
+                        // Signal other components to refresh their data
+                        setRefreshSignal(prev => prev + 1);
 
                         // Optional: Play sound
                         // const audio = new Audio('/notification.mp3'); 
@@ -172,7 +177,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     };
 
     return (
-        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, removeNotification }}>
+        <NotificationContext.Provider value={{ notifications, unreadCount, refreshSignal, markAsRead, markAllAsRead, removeNotification }}>
             {children}
         </NotificationContext.Provider>
     );

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import type { Booking, Admin } from '../../types';
 import { format, parseISO } from 'date-fns';
 import {
@@ -109,13 +110,11 @@ export function AdminBookings() {
         setLoading(false);
     };
 
+    const { refreshSignal } = useNotifications();
+
     useEffect(() => {
         fetchBookings();
-        const subscription = supabase.channel('admin_bookings_channel')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => fetchBookings())
-            .subscribe();
-        return () => { subscription.unsubscribe(); };
-    }, [user?.id, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit]);
+    }, [user?.id, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit, refreshSignal]);
 
     const handleDeleteBooking = async () => {
         if (deleteModal.bookingIds.length === 0) return;
