@@ -1,4 +1,3 @@
-import React from 'react';
 import { X, Clock, Monitor, Database, User, ShieldAlert, Lightbulb } from 'lucide-react';
 import { generateChangeTip } from '../utils/changeTipGenerator';
 import { format } from 'date-fns';

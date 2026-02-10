@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
-import { Mail, User, ArrowLeft, KeyRound, CheckCircle2, AlertCircle, Loader2, Lightbulb } from 'lucide-react';
+import { Mail, User, ArrowLeft, KeyRound, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export function ForgotPassword() {

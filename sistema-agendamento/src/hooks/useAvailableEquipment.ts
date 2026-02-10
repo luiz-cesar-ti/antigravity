@@ -53,8 +53,8 @@ export function useAvailableEquipment(unit: string, date: string, startTime: str
                     return;
                 }
 
-                console.error('CRITICAL: Availability Check Failed', {
-                    error: err,
+                console.warn('Availability Check: chamada ignorada (parâmetros incompletos ou erro de rede)', {
+                    message: err?.message || err,
                     params: { unit, date, startTime, endTime }
                 });
 

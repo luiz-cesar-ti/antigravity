@@ -299,6 +299,7 @@ export function AdminBookings() {
         }
 
         // Cancelled by Professor (Soft Delete OR status check)
+        // @ts-ignore
         if (booking.status === 'cancelled_by_user' || (booking.deleted_at && booking.status !== 'deleted_by_admin')) {
             return (
                 <div className="flex gap-1">

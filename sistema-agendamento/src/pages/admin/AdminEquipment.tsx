@@ -317,7 +317,7 @@ export function AdminEquipment() {
                             <tbody className="divide-y divide-gray-50">
                                 {filteredList.map((item) => {
                                     const inUse = inUseCounts[item.id] || 0;
-                                    const available = item.total_quantity - inUse; // Just for visual check if needed, but not displaying "Available" explicitly requested "In Use"
+                                    // const available = item.total_quantity - inUse;
 
                                     return (
                                         <tr key={item.id} className="hover:bg-primary-50/30 transition-colors group/row">

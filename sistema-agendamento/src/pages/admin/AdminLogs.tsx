@@ -1,12 +1,10 @@
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import {
     ShieldAlert,
     Search,
-    ChevronDown,
-    ChevronUp,
     Clock
 } from 'lucide-react';
 import { format } from 'date-fns';

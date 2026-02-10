@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
     Lock, User, AlertCircle, ArrowRight, CheckCircle2,
-    Calendar, Clock, Server, ChevronRight, Loader2,
-    ShieldCheck, Lightbulb, Eye, EyeOff
+    Calendar, Loader2, Lightbulb, Eye, EyeOff
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';

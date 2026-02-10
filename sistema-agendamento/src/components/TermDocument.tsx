@@ -1,6 +1,7 @@
 // 🛑 FILE LOCKED: DO NOT EDIT. THIS RENDER LOGIC IS CRITICAL FOR PDF ALIGNMENT.
 import React from 'react';
 import { UNIT_LEGAL_NAMES } from '../utils/constants'; // Import legal mapping
+// import { LOGO_BASE64 } from './TermDocumentLogo';
 
 // Interfaces to handle both fresh Wizard data and stored Admin/DB data
 interface TermEquipment {
@@ -213,7 +214,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
         }}>
             {/* Logo */}
             <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
-                <img src="/logo-objetivo.jpg" alt="Logo" crossOrigin="anonymous" style={{ maxHeight: '100px', margin: '0 auto', display: 'block' }} />
+                <img src="/logo-objetivo.jpg" alt="Logo" style={{ maxHeight: '100px', margin: '0 auto', display: 'block' }} />
             </div>
 
             <h1 style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '12pt', textTransform: 'uppercase', margin: '0 0 0.25rem' }}>
