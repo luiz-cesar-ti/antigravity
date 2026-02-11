@@ -13,7 +13,7 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [state, setState] = useState<AuthState>(() => {
-        // Synchronous check for admin session to prevent race conditions
+        // 1. Synchronous check for ADMIN session
         try {
             const adminSession = localStorage.getItem('admin_session');
             if (adminSession) {
@@ -23,13 +23,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         user: admin as Admin,
                         role: (admin.role as UserRole) || 'admin',
                         isAuthenticated: true,
-                        isLoading: false, // Start as loaded if we have admin
+                        isLoading: false,
                     };
                 }
             }
         } catch (e) {
-            console.error('Auth Init Error', e);
+            console.error('Auth Init Error (Admin)', e);
             localStorage.removeItem('admin_session');
+        }
+
+        // 2. Synchronous check for TEACHER session (Optimistic Persistence)
+        // This solves the F5 Logout issue by instantly restoring visual state
+        try {
+            const teacherSession = localStorage.getItem('teacher_session');
+            if (teacherSession) {
+                const teacher = JSON.parse(teacherSession);
+                if (teacher?.id && teacher?.email) {
+                    // Start as authenticated based on local mirror
+                    return {
+                        user: teacher as User, // It's a User object snapshot
+                        role: 'teacher',
+                        isAuthenticated: true,
+                        isLoading: false, // Immediate load!
+                    };
+                }
+            }
+        } catch (e) {
+            console.error('Auth Init Error (Teacher)', e);
+            localStorage.removeItem('teacher_session');
         }
 
         return {
@@ -40,18 +61,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
     });
 
-    // Refs to track current state for the persistent onAuthStateChange listener
-    // avoiding stale closures without re-triggering the effect.
     const userRef = useRef<User | Admin | null>(null);
     const roleRef = useRef<string | null>(null);
 
-    // Sync refs with state
     useEffect(() => {
         userRef.current = state.user;
         roleRef.current = state.role;
     }, [state.user, state.role]);
 
-    // Helper to fetch and set profile
     const fetchUserProfile = async (userId: string) => {
         try {
             const { data: profile, error } = await supabase
@@ -60,19 +77,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 .eq('id', userId)
                 .single();
 
-            if (error) {
-                console.error('Profile fetch error:', error);
-                return null;
-            }
-
+            if (error) return null;
             if (profile && profile.active === false) {
                 await supabase.auth.signOut();
                 return 'disabled';
             }
-
             return profile as User;
         } catch (err) {
-            console.error('Exception in fetchUserProfile:', err);
             return null;
         }
     };
@@ -80,128 +91,102 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         let mounted = true;
 
-        // FAIL-SAFE: If loading lasts 10s, stop it.
-        const loadingTimeout = setTimeout(() => {
-            if (mounted) {
-                setState(prev => {
-                    if (prev.isLoading) {
-                        console.warn('AuthContext: Loading timeout reached');
-                        return { ...prev, isLoading: false };
-                    }
-                    return prev;
-                });
-            }
-        }, 10000);
-
         const initAuth = async () => {
             if (!mounted) return;
 
-            // 1. Check Admin Session (Local & Fast)
-            try {
-                const adminSession = localStorage.getItem('admin_session');
-                if (adminSession) {
-                    const admin = JSON.parse(adminSession);
-                    if (admin?.username) {
-                        console.log('Auth: Sessão de Admin restaurada via LocalStorage');
-                        setState({
-                            user: admin as Admin,
-                            role: (admin.role as UserRole) || 'admin',
-                            isAuthenticated: true,
-                            isLoading: false,
-                        });
-                        return; // Stop here if Admin
-                    }
-                }
-            } catch (e) {
-                console.error('Admin session check error:', e);
-                localStorage.removeItem('admin_session');
-            }
+            // Admin is already handled by initial state synchronously.
+            // Teacher is also "handled" optimistically, but we MUST validate with Supabase.
 
-            // 2. Check Supabase Session (Async)
+            // Only check Supabase if not Admin
+            const isAdmin = localStorage.getItem('admin_session');
+            if (isAdmin) return;
+
             try {
-                // Explicitly wait for the session to be loaded from storage
+                // Get Supabase Session to validate the "Optimistic Teacher Session"
                 const { data: { session }, error } = await supabase.auth.getSession();
 
-                if (error) {
-                    console.log('Auth: Erro ao buscar sessão inicial:', error.message);
+                // If we have a cached teacher session but Supabase says NO session...
+                const cachedTeacher = localStorage.getItem('teacher_session');
+
+                if (!session) {
+                    if (cachedTeacher) {
+                        console.warn('Auth: Sessão espelhada inválida (Supabase recusou). Deslogando...');
+                        localStorage.removeItem('teacher_session');
+                        if (mounted) setState({ user: null, role: null, isAuthenticated: false, isLoading: false });
+                    } else {
+                        if (mounted) setState(prev => ({ ...prev, isLoading: false }));
+                    }
+                    return;
                 }
 
+                // If session exists, sync profile
                 if (session && mounted) {
                     const profileData = await fetchUserProfile(session.user.id);
 
                     if (profileData === 'disabled') {
-                        console.warn('Auth: Perfil desativado');
+                        localStorage.removeItem('teacher_session'); // Clear mirror
                         if (mounted) setState(prev => ({ ...prev, isLoading: false }));
                         return;
                     }
 
-                    if (profileData && mounted) {
-                        console.log('Auth: Sessão de Professor restaurada (getSession)');
-                        setState({
-                            user: profileData,
-                            role: 'teacher',
-                            isAuthenticated: true,
-                            isLoading: false,
-                        });
-                        return; // Stop here if Teacher found
+                    if (profileData) {
+                        // Valid session confirmed. Update state and mirror if needed.
+                        if (mounted) {
+                            setState({
+                                user: profileData,
+                                role: 'teacher',
+                                isAuthenticated: true,
+                                isLoading: false,
+                            });
+                            // Refresh mirror
+                            localStorage.setItem('teacher_session', JSON.stringify(profileData));
+                        }
                     }
                 }
             } catch (err) {
                 console.error('Auth Exception:', err);
-            }
-
-            // 3. If we got here, no active session found
-            if (mounted) {
-                setState(prev => ({ ...prev, isLoading: false }));
+                if (mounted) setState(prev => ({ ...prev, isLoading: false }));
             }
         };
 
-        // Start initialization
         initAuth();
 
-        // 4. Listen for future changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (!mounted) return;
-            // console.log('Auth Change Event:', event, session?.user?.email);
-
-            // Ignore INITIAL_SESSION as we handle it manually in initAuth() to be robust
             if (event === 'INITIAL_SESSION') return;
 
             if (event === 'SIGNED_OUT') {
                 setState(prev => {
-                    // Protect Admin session from Supabase signout events
                     if (prev.role === 'admin' || prev.role === 'super_admin') return prev;
+                    // If supabase signs out, we must respect it and clear mirror
+                    localStorage.removeItem('teacher_session');
                     return { user: null, role: null, isAuthenticated: false, isLoading: false };
                 });
             } else if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
                 const userId = session.user.id;
-
-                // If we are Admin, ignore generic Supabase events
                 if (roleRef.current === 'admin' || roleRef.current === 'super_admin') return;
 
-                // Optimization: If already logged in as this user, just ensure loading is false
                 if (roleRef.current === 'teacher' && userRef.current?.id === userId) {
-                    setState(prev => ({ ...prev, isLoading: false }));
+                    // Just update mirror silently just in case
                     return;
                 }
 
-                // New login or refresh
                 const profileData = await fetchUserProfile(userId);
                 if (mounted && profileData && profileData !== 'disabled') {
-                    // console.log('Auth: Sessão atualizada via listener');
                     setState({
                         user: profileData,
                         role: 'teacher',
                         isAuthenticated: true,
                         isLoading: false,
                     });
+                    // Create Mirror on Auto-Login/Refresh
+                    localStorage.setItem('teacher_session', JSON.stringify(profileData));
                 }
             }
         });
 
         return () => {
             mounted = false;
-            clearTimeout(loadingTimeout);
             subscription.unsubscribe();
         };
     }, []);
@@ -210,33 +195,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const identifier = inputIdentifier.trim();
 
         try {
-            // 1. Try Admin Login (Via Secure RPC)
-            // Uses new secure function that handles session creation server-side
+            // 1. Admin Login
             const { data: rpcResult, error: rpcError } = await supabase.rpc('admin_login_secure', {
                 p_username: identifier,
                 p_password: password
             });
 
-            if (rpcError) {
-                console.error('RPC Login Error:', rpcError);
-                // Continue to teacher login if RPC fails
-            }
-
             if (rpcResult && rpcResult.success) {
                 const adminData = rpcResult.admin;
                 const sessionToken = rpcResult.session_token;
-
-                if (!sessionToken) {
-                    return { error: 'Erro de protocolo: Token de sessão não recebido.' };
-                }
-
                 const adminUser = {
                     ...adminData,
                     role: (adminData.role as UserRole) || 'admin',
                     session_token: sessionToken
                 };
-
                 localStorage.setItem('admin_session', JSON.stringify(adminUser));
+                // Ensure teacher session is cleared if any
+                localStorage.removeItem('teacher_session');
+
                 setState({
                     user: adminUser,
                     role: adminUser.role,
@@ -244,42 +220,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     isLoading: false,
                 });
                 return {};
-            } else if (rpcResult && !rpcResult.success) {
-                // Return the actual message from server (includes remaining attempts / locked info)
-                if (rpcResult.message !== 'Usuário não encontrado') {
-                    return { error: rpcResult.message };
-                }
+            } else if (rpcResult && !rpcResult.success && rpcResult.message !== 'Usuário não encontrado') {
+                return { error: rpcResult.message };
             }
 
-            // 2. Not an admin, try Teacher Login
-
-            // Determine if identifier is likely an email
+            // 2. Teacher Login
             const isEmail = identifier.includes('@');
             let emailToUse = identifier;
 
-            // 3. If NOT email (TOTVS number), we MUST look it up first (Using Secure RPC due to RLS)
             if (!isEmail) {
-                // console.log('Login: Buscando usuário por TOTVS:', identifier);
                 const { data: userProfile, error: lookupError } = await supabase
                     .rpc('get_user_email_by_totvs', { p_totvs_number: identifier })
                     .single() as { data: { email: string; active: boolean } | null, error: any };
 
                 if (lookupError || !userProfile) {
-                    console.error('Login: TOTVS lookup failed:', lookupError);
                     return { error: 'Usuário não encontrado. Se você é um professor, verifique seu número TOTVS.' };
                 }
-
-                // console.log('Login: Usuário encontrado via TOTVS:', userProfile);
-
                 if (userProfile.active === false) {
-                    return { error: 'Sua conta foi desativada. Entre em contato com a administração.' };
+                    return { error: 'Sua conta foi desativada.' };
                 }
-
                 emailToUse = userProfile.email;
             }
 
-            // 4. Perform Authentication
-            // console.log('Login: Tentando autenticação com email:', emailToUse);
             setState(prev => ({ ...prev, isLoading: true }));
 
             const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -288,39 +250,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
 
             if (authError) {
-                console.error('Login: Supabase Auth erro:', authError);
                 setState(prev => ({ ...prev, isLoading: false }));
-                if (authError.message === 'Invalid login credentials') {
-                    return { error: 'Senha incorreta.' };
-                }
-                if (authError.message.includes('Email not confirmed')) {
-                    return { error: 'Email não confirmado. Verifique sua caixa de entrada.' };
-                }
-                return { error: authError.message };
+                return { error: authError.message === 'Invalid login credentials' ? 'Senha incorreta.' : authError.message };
             }
 
-            // 5. Explicitly wait for profile and state update to prevent loop
             if (authData.user) {
                 const profileData = await fetchUserProfile(authData.user.id);
 
-                if (profileData === 'disabled') {
+                if (!profileData || profileData === 'disabled') {
                     setState(prev => ({ ...prev, isLoading: false }));
-                    return { error: 'Sua conta foi desativada. Entre em contato com a administração.' };
+                    return { error: 'Erro ao carregar perfil ou conta desativada.' };
                 }
 
-                if (!profileData) {
-                    setState(prev => ({ ...prev, isLoading: false }));
-                    return { error: 'Perfil não encontrado na base de dados.' };
-                }
+                // SUCCESS! Update State AND Create Local Mirror
+                localStorage.setItem('teacher_session', JSON.stringify(profileData));
 
-                // Manually update state and clear loading before returning
                 setState({
                     user: profileData,
                     role: 'teacher',
                     isAuthenticated: true,
                     isLoading: false,
-                    // Force refresh role for new login
-                    // role: 'teacher' 
                 });
             }
 
@@ -328,36 +277,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         } catch (error: any) {
             setState(prev => ({ ...prev, isLoading: false }));
-            console.error('Login Exception:', error);
             return { error: error.message || 'Falha na autenticação' };
         }
     };
 
     const signOut = async () => {
-        const adminSession = localStorage.getItem('admin_session');
-        if (adminSession) {
-            try {
-                const admin = JSON.parse(adminSession);
-                if (admin.session_token) {
-                    // Remove session from DB
-                    await supabase
-                        .from('admin_sessions')
-                        .delete()
-                        .eq('token', admin.session_token);
-                }
-            } catch (e) {
-                console.error('Error during admin logout session cleanup:', e);
-            }
+        // Clear EVERYTHING
+        localStorage.removeItem('admin_session');
+        localStorage.removeItem('teacher_session'); // Remove mirror
+
+        // Remove admin session from DB if needed
+        if (state.role === 'admin' && state.user && 'session_token' in state.user) {
+            supabase.from('admin_sessions').delete().eq('token', state.user.session_token).then(() => { });
         }
 
-        localStorage.removeItem('admin_session');
         await supabase.auth.signOut();
         setState({ user: null, role: null, isAuthenticated: false, isLoading: false });
     };
 
+    // SignUp unchanged...
     const signUp = async (data: any) => {
-        // Teacher registration
-        // 1. Create Auth User
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email: data.email,
             password: data.password,
@@ -366,7 +305,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (authError) return { error: authError.message };
         if (!authData.user) return { error: 'Erro ao criar usuário' };
 
-        // 2. Create Profile
         const { error: profileError } = await supabase
             .from('users')
             .insert({
@@ -382,7 +320,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
 
         if (profileError) return { error: profileError.message };
-
         return {};
     };
 
