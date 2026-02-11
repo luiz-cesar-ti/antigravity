@@ -61,6 +61,19 @@ export function AdminRooms() {
     const [filterPeriod, setFilterPeriod] = useState<'all' | 'morning' | 'afternoon' | 'night'>('all');
     const [filterDate, setFilterDate] = useState<string>('');
 
+    // Body scroll lock effect
+    useEffect(() => {
+        const isAnyModalOpen = deleteModal.isOpen || successModal.isOpen || isEditModalOpen || isCreating;
+        if (isAnyModalOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [deleteModal.isOpen, successModal.isOpen, isEditModalOpen, isCreating]);
+
     useEffect(() => {
         fetchData();
     }, [activeTab]);

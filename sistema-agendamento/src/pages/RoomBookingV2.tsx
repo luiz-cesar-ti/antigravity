@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Room, User, Settings } from '../types';
-import { Clock, ChevronRight, AlertCircle, MapPin, Trash2, Info, X, CheckCircle, Calendar } from 'lucide-react';
+import { Clock, ChevronRight, AlertCircle, MapPin, Trash2, Info, X, CheckCircle, Calendar, Building2 } from 'lucide-react';
 import { format, parseISO, getDay, differenceInHours } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { clsx } from 'clsx';
@@ -48,6 +48,18 @@ export function RoomBookingV2() {
         bookingId: null,
         isPast: false
     });
+
+    // Body scroll lock effect
+    useEffect(() => {
+        if (selectedRoom || deleteConfirmation.isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [selectedRoom, deleteConfirmation.isOpen]);
 
     const handleConfirmDelete = async () => {
         if (!deleteConfirmation.bookingId) return;
@@ -371,7 +383,7 @@ export function RoomBookingV2() {
     };
 
     if (loading) {
-        return <div className="p-8 text-center text-gray-500">Carregando salas...</div>;
+        return <div className="p-8 text-center text-gray-600">Carregando salas...</div>;
     }
 
     if (enabledUnits.length === 0) {
@@ -381,7 +393,7 @@ export function RoomBookingV2() {
                     <AlertCircle className="w-8 h-8 text-yellow-600" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-900">Nenhuma unidade com agendamento disponível</h2>
-                <p className="text-gray-500 mt-2 max-w-md mx-auto">
+                <p className="text-gray-600 mt-2 max-w-md mx-auto">
                     O agendamento de salas ainda não foi habilitado para as suas unidades. Entre em contato com a coordenação.
                 </p>
             </div>
@@ -394,8 +406,10 @@ export function RoomBookingV2() {
 
             {enabledUnits.map(unit => (
                 <div key={unit} className="animate-fadeIn">
-                    <h2 className="text-xl font-bold text-primary-800 mb-4 flex items-center gap-2">
-                        <span className="bg-primary-100 p-2 rounded-lg">🏢</span>
+                    <h2 className="text-xl font-black text-[#1e293b] mb-6 flex items-center gap-3">
+                        <span className="bg-[#1e293b] p-2.5 rounded-xl shadow-lg border border-white/10 flex items-center justify-center">
+                            <Building2 className="w-5 h-5 text-amber-400" />
+                        </span>
                         Unidade {unit}
                     </h2>
 
@@ -409,24 +423,24 @@ export function RoomBookingV2() {
                                     className={clsx(
                                         "rounded-xl shadow-sm border p-0 text-left transition-all duration-300 group relative overflow-hidden",
                                         room.is_available !== false
-                                            ? "bg-white border-gray-200 hover:shadow-xl hover:-translate-y-1"
+                                            ? "bg-white border-gray-300 hover:shadow-xl hover:-translate-y-1"
                                             : "bg-red-50/50 border-red-200 cursor-not-allowed"
                                     )}
                                 >
                                     <div className={clsx(
                                         "h-2 w-full",
-                                        room.is_available !== false ? "bg-gradient-to-r from-primary-500 to-indigo-600" : "bg-red-600"
+                                        room.is_available !== false ? "bg-gradient-to-r from-amber-400 to-orange-600" : "bg-red-600"
                                     )} />
 
                                     <div className="p-6">
                                         <div className="flex justify-between items-start mb-4">
                                             <div className={clsx(
                                                 "p-3 rounded-xl transition-all duration-300 shadow-sm",
-                                                room.is_available !== false ? "bg-primary-50 group-hover:bg-primary-600" : "bg-red-50"
+                                                room.is_available !== false ? "bg-amber-50 group-hover:bg-gradient-to-br group-hover:from-amber-400 group-hover:to-orange-600" : "bg-red-50"
                                             )}>
                                                 <MapPin className={clsx(
                                                     "w-7 h-7 transition-colors",
-                                                    room.is_available !== false ? "text-primary-600 group-hover:text-white" : "text-red-600"
+                                                    room.is_available !== false ? "text-amber-600 group-hover:text-white" : "text-red-600"
                                                 )} />
                                             </div>
                                             <span className={clsx(
@@ -444,12 +458,12 @@ export function RoomBookingV2() {
                                         </h3>
 
                                         {room.description && (
-                                            <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed mb-4">
+                                            <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed mb-4">
                                                 {room.description}
                                             </p>
                                         )}
 
-                                        <div className="space-y-2 mb-6 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                        <div className="space-y-2 mb-6 bg-slate-50 p-3 rounded-xl border border-gray-200">
                                             <div className="flex items-center gap-2 text-xs font-semibold text-gray-600">
                                                 <Calendar className="w-3.5 h-3.5 text-primary-500" />
                                                 <span>Disponível: {room.available_days && room.available_days.length > 0
@@ -468,7 +482,7 @@ export function RoomBookingV2() {
                                             )}
                                         </div>
 
-                                        <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between font-bold text-sm">
+                                        <div className="mt-auto pt-4 border-t border-gray-200 flex items-center justify-between font-bold text-sm">
                                             <span className={clsx(
                                                 "uppercase tracking-tight",
                                                 room.is_available !== false ? "text-primary-600 group-hover:underline decoration-2 underline-offset-4" : "text-red-600"
@@ -477,7 +491,7 @@ export function RoomBookingV2() {
                                             </span>
                                             <div className={clsx(
                                                 "p-1.5 rounded-full transition-all",
-                                                room.is_available !== false ? "bg-primary-50 group-hover:bg-primary-600 group-hover:text-white" : "bg-red-50 text-red-400"
+                                                room.is_available !== false ? "bg-amber-50 group-hover:bg-amber-500 group-hover:text-white" : "bg-red-50 text-red-400"
                                             )}>
                                                 <ChevronRight className="w-4 h-4" />
                                             </div>
@@ -486,7 +500,7 @@ export function RoomBookingV2() {
                                 </button>
                             ))
                         ) : (
-                            <p className="text-gray-500 col-span-3 text-sm italic">Nenhuma sala cadastrada nesta unidade.</p>
+                            <p className="text-gray-600 col-span-3 text-sm italic">Nenhuma sala cadastrada nesta unidade.</p>
                         )}
                     </div>
                 </div>
@@ -497,7 +511,7 @@ export function RoomBookingV2() {
                 <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
                     <div className="bg-white rounded-t-2xl md:rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col h-[90vh] md:h-auto md:max-h-[90vh]">
                         {/* Header */}
-                        <div className="bg-primary-700 p-5 md:p-6 text-white flex justify-between items-start">
+                        <div className="bg-[#1e293b] p-6 text-white flex justify-between items-center border-b border-gray-800 sticky top-0 z-10">
                             <div>
                                 <h3 className="text-lg md:text-xl font-bold line-clamp-1">{selectedRoom.name}</h3>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-primary-100 text-xs md:text-sm">
@@ -524,20 +538,17 @@ export function RoomBookingV2() {
                                 <div className="space-y-1.5">
                                     <label className="block text-sm font-bold text-gray-700 md:ml-1 text-primary-900/40 uppercase tracking-widest text-[10px]">Agendamento para</label>
                                     <div className="relative group">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-gray-400 group-focus-within:text-primary-500 transition-colors">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-gray-500 group-focus-within:text-primary-500 transition-colors">
                                             <Calendar className="w-4 h-4" />
-                                            <span className="text-[10px] font-black uppercase tracking-widest hidden md:block border-r border-gray-200 pr-2 mr-1">Data</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest hidden md:block border-r border-gray-300 pr-2 mr-1">Data</span>
                                         </div>
                                         <input
                                             type="date"
                                             value={selectedDate}
                                             min={format(new Date(), 'yyyy-MM-dd')}
                                             onChange={(e) => setSelectedDate(e.target.value)}
-                                            className="w-full pl-12 md:pl-28 pr-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-100 outline-none transition-all font-bold text-gray-700"
+                                            className="w-full pl-12 md:pl-28 pr-4 py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
                                         />
-                                        <div className="md:hidden absolute right-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-gray-300 uppercase tracking-tighter pointer-events-none">
-                                            Data
-                                        </div>
                                     </div>
                                     {!isDayAvailable() && (
                                         <p className="text-red-500 text-[10px] mt-2 font-bold bg-red-50 p-2 rounded-xl border border-red-100 flex items-center gap-2 animate-pulse">
@@ -553,31 +564,31 @@ export function RoomBookingV2() {
                                     <div className="flex flex-col md:flex-row gap-4">
                                         {/* INICIO */}
                                         <div className="relative flex-1 group">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-gray-400 group-focus-within:text-primary-500 transition-colors">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-gray-600 group-focus-within:text-amber-600 transition-colors">
                                                 <Clock className="w-4 h-4" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest border-r border-gray-200 pr-2 mr-1">Horário</span>
-                                                <span className="text-[9px] font-bold text-gray-300 italic">Início</span>
+                                                <span className="text-[10px] font-black uppercase tracking-widest border-r border-gray-300 pr-2 mr-1">Horário</span>
+                                                <span className="text-[9px] font-bold text-gray-600 italic">Início</span>
                                             </div>
                                             <input
                                                 type="time"
                                                 value={startTime}
                                                 onChange={(e) => setStartTime(e.target.value)}
-                                                className="w-full pl-40 pr-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-100 outline-none transition-all font-bold text-gray-700"
+                                                className="w-full pl-[11rem] pr-4 py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
                                             />
                                         </div>
 
                                         {/* TERMINO */}
                                         <div className="relative flex-1 group">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-gray-400 group-focus-within:text-primary-500 transition-colors">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-gray-600 group-focus-within:text-amber-600 transition-colors">
                                                 <Clock className="w-4 h-4" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest border-r border-gray-200 pr-2 mr-1">Horário</span>
-                                                <span className="text-[9px] font-bold text-gray-300 italic">Fim</span>
+                                                <span className="text-[10px] font-black uppercase tracking-widest border-r border-gray-300 pr-2 mr-1">Horário</span>
+                                                <span className="text-[9px] font-bold text-gray-600 italic">Fim</span>
                                             </div>
                                             <input
                                                 type="time"
                                                 value={endTime}
                                                 onChange={(e) => setEndTime(e.target.value)}
-                                                className="w-full pl-40 pr-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-100 outline-none transition-all font-bold text-gray-700"
+                                                className="w-full pl-[11rem] pr-4 py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
                                             />
                                         </div>
                                     </div>
@@ -598,17 +609,17 @@ export function RoomBookingV2() {
                         </div>
 
                         {/* Footer */}
-                        <div className="p-5 md:p-6 border-t border-gray-100 bg-gray-50 flex flex-col md:flex-row justify-end gap-3 mt-auto">
+                        <div className="p-6 border-t border-gray-200 bg-slate-50 flex flex-col-reverse sm:flex-row justify-end gap-3 mt-auto">
                             <button
                                 onClick={handleCloseModal}
-                                className="order-2 md:order-1 px-5 py-3 md:py-2.5 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors"
+                                className="w-full sm:w-auto px-6 py-4 bg-white border-2 border-gray-200 hover:border-gray-300 hover:bg-slate-50 text-gray-700 font-black text-xs uppercase tracking-widest rounded-2xl transition-all outline-none"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleBook}
                                 disabled={!startTime || !endTime || !!getValidationMessage() || bookingLoading}
-                                className="order-1 md:order-2 px-8 py-3 md:py-2.5 bg-primary-600 text-white font-bold rounded-lg shadow-lg hover:bg-primary-700 disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center gap-2"
+                                className="w-full sm:grow-default sm:min-w-[200px] flex items-center justify-center py-4 px-8 bg-gradient-to-br from-amber-400 to-orange-600 hover:from-amber-500 hover:to-orange-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-amber-500/20 transition-all active:scale-95 group/save outline-none border border-amber-400/20 disabled:opacity-50 disabled:shadow-none"
                             >
                                 {bookingLoading ? 'Confirmando...' : 'Confirmar Reserva'}
                             </button>
@@ -618,9 +629,11 @@ export function RoomBookingV2() {
             )}
 
             {/* MY BOOKINGS SECTION */}
-            <div className="animate-fadeIn pt-10 border-t border-gray-200">
-                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                    <span className="bg-blue-100 p-2 rounded-lg">📅</span>
+            <div className="animate-fadeIn pt-10 border-t border-gray-300">
+                <h2 className="text-xl font-black text-[#1e293b] mb-8 flex items-center gap-3">
+                    <span className="bg-[#1e293b] p-2.5 rounded-xl shadow-lg border border-white/10 flex items-center justify-center">
+                        <Calendar className="w-5 h-5 text-amber-400" />
+                    </span>
                     Meus Agendamentos
                 </h2>
 
@@ -648,7 +661,7 @@ export function RoomBookingV2() {
                                 : 'hover:border-emerald-200';
 
                             return (
-                                <div key={booking.id} className={`group bg-white rounded-xl shadow-md border hover:shadow-xl relative overflow-hidden flex flex-col ${isPast ? 'opacity-85 grayscale-[0.1] border-gray-200' : `border-gray-200 ${hoverBorder}`}`}>
+                                <div key={booking.id} className={`group bg-white rounded-xl shadow-md border hover:shadow-xl relative overflow-hidden flex flex-col ${isPast ? 'opacity-85 grayscale-[0.1] border-gray-300' : `border-gray-300 ${hoverBorder}`}`}>
 
                                     {/* Header with Status-based Color */}
                                     <div className={`p-4 flex justify-between items-start ${headerGradient}`}>
@@ -668,8 +681,8 @@ export function RoomBookingV2() {
                                     <div className="p-5 flex flex-col flex-1 bg-white">
                                         {/* Date Box */}
                                         <div className="flex items-center gap-4 mb-5">
-                                            <div className="flex flex-col items-center justify-center bg-gray-50 border border-gray-100 rounded-lg p-2 min-w-[3.5rem]">
-                                                <span className="text-xs font-bold text-gray-400 uppercase">{format(parseISO(booking.start_ts.endsWith('Z') ? booking.start_ts : booking.start_ts + 'Z'), 'MMM', { locale: ptBR })}</span>
+                                            <div className="flex flex-col items-center justify-center bg-slate-50 border border-gray-200 rounded-lg p-2 min-w-[3.5rem]">
+                                                <span className="text-xs font-bold text-gray-500 uppercase">{format(parseISO(booking.start_ts.endsWith('Z') ? booking.start_ts : booking.start_ts + 'Z'), 'MMM', { locale: ptBR })}</span>
                                                 <span className="text-xl font-black text-gray-800">{format(parseISO(booking.start_ts.endsWith('Z') ? booking.start_ts : booking.start_ts + 'Z'), 'dd')}</span>
                                             </div>
                                             <div className="flex-1">
@@ -706,11 +719,11 @@ export function RoomBookingV2() {
                     </div>
                 ) : (
                     <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-                        <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <Clock className="w-8 h-8 text-gray-400" />
+                        <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <Clock className="w-8 h-8 text-gray-500" />
                         </div>
                         <h3 className="text-gray-900 font-medium mb-1">Sem agendamentos</h3>
-                        <p className="text-gray-500 text-sm">Você ainda não possui agendamentos futuros.</p>
+                        <p className="text-gray-600 text-sm">Você ainda não possui agendamentos futuros.</p>
                     </div>
                 )}
             </div>
@@ -729,7 +742,7 @@ export function RoomBookingV2() {
                         <h3 className="text-xl font-black text-gray-900 text-center mb-2">
                             {deleteConfirmation.isPast ? 'Excluir do Histórico?' : 'Cancelar Reserva?'}
                         </h3>
-                        <p className="text-sm text-gray-500 text-center mb-8 font-medium leading-relaxed">
+                        <p className="text-sm text-gray-600 text-center mb-8 font-medium leading-relaxed">
                             {deleteConfirmation.isPast
                                 ? 'Isso removerá este registro do seu histórico. Esta ação não pode ser desfeita.'
                                 : 'Tem certeza que deseja cancelar esta reserva? O horário ficará disponível para outros professores.'}
@@ -743,7 +756,7 @@ export function RoomBookingV2() {
                             </button>
                             <button
                                 onClick={() => setDeleteConfirmation({ isOpen: false, bookingId: null, isPast: false })}
-                                className="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold rounded-xl active:scale-95 transition-all text-sm uppercase tracking-wide"
+                                className="w-full py-3.5 bg-slate-50 hover:bg-gray-100 text-gray-700 font-bold rounded-xl active:scale-95 transition-all text-sm uppercase tracking-wide"
                             >
                                 Voltar
                             </button>
@@ -765,11 +778,11 @@ export function RoomBookingV2() {
                             <span className="text-sm md:text-base font-black uppercase tracking-wide text-gray-800 mb-0.5">
                                 {feedback.title || (feedback.type === 'success' ? 'Sucesso!' : 'Algo deu errado')}
                             </span>
-                            <span className="text-xs md:text-sm font-medium text-gray-500 leading-snug">{feedback.message}</span>
+                            <span className="text-xs md:text-sm font-medium text-gray-600 leading-snug">{feedback.message}</span>
                         </div>
                         <button
                             onClick={() => setFeedback(prev => ({ ...prev, show: false }))}
-                            className="ml-auto text-gray-400 hover:text-gray-600 transition-colors p-1"
+                            className="ml-auto text-gray-500 hover:text-gray-600 transition-colors p-1"
                         >
                             <X className="w-5 h-5" />
                         </button>

@@ -140,6 +140,18 @@ export function AdminClassrooms() {
         class_afternoon: ''
     });
 
+    // Body scroll lock effect
+    useEffect(() => {
+        if (isModalOpen || deleteModal.isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isModalOpen, deleteModal.isOpen]);
+
     // Dnd-kit sensors
     const sensors = useSensors(
         useSensor(PointerSensor, {

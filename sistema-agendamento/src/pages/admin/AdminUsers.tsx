@@ -44,6 +44,19 @@ export function AdminUsers() {
         action: null
     });
 
+    // Body scroll lock effect
+    useEffect(() => {
+        const isAnyModalOpen = !!editingUser || successModal.isOpen || confirmModal.isOpen;
+        if (isAnyModalOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [editingUser, successModal.isOpen, confirmModal.isOpen]);
+
     const fetchUsers = async () => {
         setLoading(true);
         const query = supabase

@@ -60,6 +60,18 @@ export function AdminEquipment() {
         unit: adminUser?.unit || ''
     });
 
+    // Body scroll lock effect
+    useEffect(() => {
+        if (isModalOpen || deleteModal.isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isModalOpen, deleteModal.isOpen]);
+
     useEffect(() => {
         if (adminUser?.unit) {
             setFormData(prev => ({ ...prev, unit: adminUser.unit }));
