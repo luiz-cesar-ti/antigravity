@@ -256,10 +256,33 @@ export function AdminSchedule() {
     };
 
     const downloadTemplate = () => {
-        const headers = ['Horário', '6º Ano A', '6º Ano B', '7º Ano A'];
-        const roomsRow = ['', 'Sala 16', 'Sala 17', 'Sala 14'];
-        const exampleRow = ['07:20 - 08:10', 'Rosane', 'D.Gatti', 'Felipe'];
-        const csvContent = [headers, roomsRow, exampleRow].map(row => row.join(',')).join('\n');
+        // Headers matching the requested model
+        const headers = ['Horário', '6º Ano A', '6º Ano B', '7º Ano A', '7º Ano B', '8º Ano A', '9º Ano A', '9º Ano B'];
+
+        // Empty row for rooms (as per model)
+        const roomsRow = new Array(headers.length).fill('');
+
+        // Fixed time slots with empty cells for classes
+        const timeSlots = [
+            '07:20 - 08:10',
+            '08:10 - 09:00',
+            '09:50 - 09:50',
+            '10:20 - 11:10',
+            '11:10 - 12:00',
+            '12:00 - 12:50'
+        ];
+
+        const dataRows = timeSlots.map(time => {
+            const row = new Array(headers.length).fill('');
+            row[0] = time;
+            return row;
+        });
+
+        // Use semicolon delimiter as requested
+        const csvContent = [headers, roomsRow, ...dataRows]
+            .map(row => row.join(';'))
+            .join('\n');
+
         const BOM = '\uFEFF';
         const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
