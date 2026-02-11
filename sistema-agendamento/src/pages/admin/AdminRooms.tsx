@@ -628,7 +628,7 @@ export function AdminRooms() {
                                     <button
                                         type="submit"
                                         disabled={isCreating}
-                                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-70 transition-all mt-4"
+                                        className="w-full flex justify-center py-3 px-4 border border-amber-400/20 rounded-lg shadow-md text-sm font-black uppercase tracking-widest text-white bg-gradient-to-br from-amber-400 to-orange-600 hover:from-amber-500 hover:to-orange-700 shadow-amber-500/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-70 transition-all mt-4"
                                     >
                                         {isCreating ? 'Salvando...' : 'Cadastrar Sala'}
                                     </button>

@@ -300,9 +300,9 @@ export function AdminClassrooms() {
                 </div>
                 <button
                     onClick={openCreateModal}
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-br from-amber-400 to-orange-600 hover:from-amber-500 hover:to-orange-700 text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-xl shadow-amber-500/20 transition-all active:scale-95 group/save outline-none border border-amber-400/20"
                 >
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-5 w-5 mr-2" />
                     Nova Sala
                 </button>
             </div>
@@ -520,7 +520,7 @@ export function AdminClassrooms() {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl hover:from-amber-600 hover:to-amber-700 shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30 transition-all flex items-center gap-2"
+                                        className="px-6 py-3 text-xs font-black uppercase tracking-widest text-white bg-gradient-to-br from-amber-400 to-orange-600 hover:from-amber-500 hover:to-orange-700 rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-xl transition-all flex items-center gap-2 border border-amber-400/20"
                                     >
                                         {editingId ? (
                                             <>

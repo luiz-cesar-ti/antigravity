@@ -265,7 +265,7 @@ export function AdminEquipment() {
 
                 <button
                     onClick={() => handleOpenModal()}
-                    className="group bg-primary-600 hover:bg-primary-700 text-white px-6 py-4 rounded-2xl font-black text-sm shadow-xl shadow-primary-200 transition-all active:scale-95 flex items-center"
+                    className="group bg-gradient-to-br from-amber-400 to-orange-600 hover:from-amber-500 hover:to-orange-700 text-white px-6 py-4 rounded-2xl font-black text-sm shadow-xl shadow-amber-500/20 transition-all active:scale-95 flex items-center border border-amber-400/20"
                 >
                     <Plus className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform duration-300" />
                     Cadastrar Item
@@ -387,9 +387,9 @@ export function AdminEquipment() {
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" onClick={handleCloseModal}></div>
 
-                    <div className="relative bg-white rounded-[2rem] shadow-2xl max-w-lg w-full overflow-hidden transform transition-all animate-in zoom-in-95 duration-300">
+                    <div className="relative bg-white rounded-[2rem] shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto overflow-x-hidden transform transition-all animate-in zoom-in-95 duration-300">
                         {/* Header: Dark Style (Inspired by "Nova Sala") */}
-                        <div className="bg-[#1e293b] p-8 sm:px-10 sm:py-7 flex justify-between items-center border-b border-gray-800">
+                        <div className="bg-[#1e293b] p-6 sm:px-10 sm:py-7 flex justify-between items-center border-b border-gray-800 sticky top-0 z-10">
                             <div className="flex items-center gap-4">
                                 <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner group/icon overflow-hidden relative">
                                     <div className="absolute inset-0 bg-primary-500/10 opacity-0 group-hover/icon:opacity-100 transition-opacity duration-500" />
@@ -416,7 +416,7 @@ export function AdminEquipment() {
                             </button>
                         </div>
 
-                        <div className="p-8 sm:p-10">
+                        <div className="p-6 sm:p-10">
                             <form id="equipment-form" onSubmit={handleSubmit} className="space-y-8">
                                 {/* Section: General Info */}
                                 <div className="space-y-6">
@@ -439,7 +439,7 @@ export function AdminEquipment() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                         <div className="space-y-2.5">
                                             <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">Marca</label>
                                             <input
@@ -489,17 +489,17 @@ export function AdminEquipment() {
                                 </div>
                             </form>
 
-                            <div className="mt-10 pt-8 border-t border-gray-100 flex gap-4">
+                            <div className="mt-10 pt-8 border-t border-gray-100 flex flex-col-reverse sm:flex-row gap-4">
                                 <button
                                     onClick={handleCloseModal}
-                                    className="grow py-4 px-6 bg-white border-2 border-gray-100 hover:border-gray-200 hover:bg-gray-50 text-gray-700 font-black text-xs uppercase tracking-widest rounded-2xl transition-all outline-none"
+                                    className="w-full sm:grow py-4 px-6 bg-white border-2 border-gray-100 hover:border-gray-200 hover:bg-gray-50 text-gray-700 font-black text-xs uppercase tracking-widest rounded-2xl transition-all outline-none"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     form="equipment-form"
                                     type="submit"
-                                    className="grow-default min-w-[200px] flex items-center justify-center py-4 px-8 bg-[#f58206] hover:bg-[#e67a05] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-[#f58206]/20 transition-all active:scale-95 group/save outline-none border border-[#f58206]/10"
+                                    className="w-full sm:grow-default sm:min-w-[200px] flex items-center justify-center py-4 px-8 bg-gradient-to-br from-amber-400 to-orange-600 hover:from-amber-500 hover:to-orange-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-amber-500/20 transition-all active:scale-95 group/save outline-none border border-amber-400/20"
                                 >
                                     <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" />
                                     {editingId ? 'Salvar Edição' : 'Criar Registro'}
