@@ -508,10 +508,10 @@ export function RoomBookingV2() {
 
             {/* BOOKING MODAL */}
             {selectedRoom && (
-                <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
-                    <div className="bg-white rounded-t-2xl md:rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col h-[90vh] md:h-auto md:max-h-[90vh]">
+                <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+                    <div className="bg-white rounded-t-3xl md:rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col h-[85dvh] md:h-auto md:max-h-[90vh]">
                         {/* Header */}
-                        <div className="bg-[#1e293b] p-6 text-white flex justify-between items-center border-b border-gray-800 sticky top-0 z-10">
+                        <div className="bg-[#1e293b] p-6 text-white flex justify-between items-center border-b border-gray-800 shrink-0">
                             <div>
                                 <h3 className="text-lg md:text-xl font-bold line-clamp-1">{selectedRoom.name}</h3>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-primary-100 text-xs md:text-sm">
@@ -573,7 +573,7 @@ export function RoomBookingV2() {
                                                 type="time"
                                                 value={startTime}
                                                 onChange={(e) => setStartTime(e.target.value)}
-                                                className="w-full pl-[11rem] pr-4 py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
+                                                className="w-full pl-[8.5rem] md:pl-[11rem] pr-4 py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
                                             />
                                         </div>
 
@@ -588,7 +588,7 @@ export function RoomBookingV2() {
                                                 type="time"
                                                 value={endTime}
                                                 onChange={(e) => setEndTime(e.target.value)}
-                                                className="w-full pl-[11rem] pr-4 py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
+                                                className="w-full pl-[8.5rem] md:pl-[11rem] pr-4 py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
                                             />
                                         </div>
                                     </div>
