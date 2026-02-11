@@ -154,6 +154,28 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
         const isListItem = /^(\d+\.|[a-zA-Z]\))/.test(trimmed);
         const listMatch = trimmed.match(/^(\d+\.|[a-zA-Z]\))(.*)/);
 
+        // UNIFIED Alignment Fix: Use Flexbox for perfect list alignment (Normal AND Recurring)
+        if (isListItem && listMatch) {
+            return (
+                <div key={key} style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    marginBottom: '0.4rem',
+                    textAlign: 'justify',
+                    fontSize: '11pt',
+                    lineHeight: '1.5'
+                }}>
+                    <div style={{ minWidth: '25px', fontWeight: 'bold' }}>
+                        {listMatch[1].replace(/\.$/, ')')}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        {listMatch[2].trim()}
+                    </div>
+                </div>
+            );
+        }
+
+        // Standard Render (Legacy / Normal Term)
         return (
             <p key={key} style={{
                 marginBottom: isTitle ? '0.4rem' : '0.4rem',
@@ -178,8 +200,8 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
 
     const renderScienceTerm = (content?: string) => (
         <div style={{
-            marginTop: '0.5rem',
-            marginBottom: '0.5rem',
+            marginTop: isRecurring ? '0.2rem' : '0.5rem', // Compact for recurring
+            marginBottom: isRecurring ? '0.2rem' : '0.5rem', // Compact for recurring
             fontSize: '11pt',
             backgroundColor: '#f3f4f6',
             padding: '0.6rem',
@@ -230,8 +252,15 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
                 </p>
             </div>
 
-            {/* Booking Stats Box */}
-            <div style={{ marginBottom: '0.5rem', border: '1px solid #d1d5db', padding: '0.4rem 0.75rem', borderRadius: '0.25rem', backgroundColor: '#f9fafb' }}>
+            {/* 
+               🛑 TRAVA DE DESIGN - LAYOUT APROVADO (Normal e Recorrente):
+               Este layout de "Dados do Agendamento", "Equipamentos" e "Listas" foi aprovado e testado.
+               A renderização de listas agora usa Flexbox para alinhamento perfeito em ambos os modos.
+               Para ajustes específicos de recorrentes (como datas), use condicionais `if (isRecurring)`.
+            */}
+
+            {/* Booking Stats Box - Adjusted spacing as requested */}
+            <div style={{ marginBottom: '0.8rem', border: '1px solid #d1d5db', padding: '0.6rem 0.75rem 0.8rem 0.75rem', borderRadius: '0.25rem', backgroundColor: '#f9fafb' }}>
                 <h2 style={{ fontWeight: 'bold', borderBottom: '1px solid #d1d5db', marginBottom: '0.25rem', paddingBottom: '8px', fontSize: '11pt', textTransform: 'uppercase' }}>Dados do Agendamento</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem' }}>
                     <p><strong>Unidade:</strong> {getUnit()}</p>
@@ -252,11 +281,20 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
             {getEquipments().length > 0 && (
                 <div style={{ marginBottom: '0.75rem' }}>
                     <h2 style={{ fontWeight: 'bold', borderBottom: '1px solid #000', marginBottom: '0.2rem', paddingBottom: '4px', fontSize: '11pt', textTransform: 'uppercase' }}>Equipamento(s) Reservado(s)</h2>
-                    <ul style={{ listStyleType: 'disc', paddingLeft: '1.25rem' }}>
+                    <div style={{ paddingLeft: '1.25rem' }}>
                         {getEquipments().map((eq, i) => (
-                            <li key={i}><strong>{eq.name}</strong>{eq.brand ? ` (${eq.brand} ${eq.model || ''})` : ''} - {eq.quantity} unidade(s)</li>
+                            <div key={i} style={{
+                                marginBottom: i < getEquipments().length - 1 ? '0.6rem' : '1rem',
+                                borderBottom: i < getEquipments().length - 1 ? '1px solid #9ca3af' : 'none', // Darker gray (#9ca3af)
+                                paddingBottom: i < getEquipments().length - 1 ? '0.6rem' : '0'
+                            }}>
+                                <p style={{ margin: 0, lineHeight: '1.4' }}><strong>Equipamento:</strong> {eq.name}</p>
+                                {eq.brand && <p style={{ margin: 0, lineHeight: '1.4' }}><strong>Marca:</strong> {eq.brand}</p>}
+                                {eq.model && <p style={{ margin: 0, lineHeight: '1.4' }}><strong>Modelo:</strong> {eq.model}</p>}
+                                <p style={{ margin: 0, lineHeight: '1.4' }}><strong>Quantidade:</strong> {String(eq.quantity).padStart(2, '0')}</p>
+                            </div>
                         ))}
-                    </ul>
+                    </div>
                 </div>
             )}
 
@@ -273,8 +311,50 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
                         }
                         if (trimmed === 'TERMO DE CIÊNCIA') return null;
 
-                        // Force page break before item 'h)'
-                        if (trimmed.startsWith('h)')) {
+                        const manyEquipments = getEquipments().length >= 3;
+                        const twoEquipments = getEquipments().length === 2;
+
+                        // RECURRING SPECIAL LOGIC: Break at 'd)' for 3+ equipments
+                        if (isRecurring && manyEquipments && trimmed.startsWith('d)')) {
+                            return (
+                                <div key={i} style={{ pageBreakBefore: 'always', paddingTop: '20mm' }}>
+                                    {renderLine(line, i)}
+                                </div>
+                            );
+                        }
+
+                        // RECURRING SPECIAL LOGIC: Break at 'f)' for 2 equipments
+                        if (isRecurring && twoEquipments && trimmed.startsWith('f)')) {
+                            return (
+                                <div key={i} style={{ pageBreakBefore: 'always', paddingTop: '20mm' }}>
+                                    {renderLine(line, i)}
+                                </div>
+                            );
+                        }
+
+                        // Specific break logic for exactly 2 equipments (force break at 'g)')
+                        // BUT ONLY IF NOT RECURRING (since recurring breaks at 'f')
+                        if (!isRecurring && twoEquipments && trimmed.startsWith('g)')) {
+                            return (
+                                <div key={i} style={{ pageBreakBefore: 'always', paddingTop: '20mm' }}>
+                                    {renderLine(line, i)}
+                                </div>
+                            );
+                        }
+
+                        // Specific break logic for 3+ equipments (force break at 'e)')
+                        // BUT ONLY IF NOT RECURRING (since recurring breaks at 'd')
+                        if (!isRecurring && manyEquipments && trimmed.startsWith('e)')) {
+                            return (
+                                <div key={i} style={{ pageBreakBefore: 'always', paddingTop: '20mm' }}>
+                                    {renderLine(line, i)}
+                                </div>
+                            );
+                        }
+
+                        // Force page break before item 'h)' (ONLY for fewer equipments)
+                        // If we broke at d) OR e) OR f) OR g), we don't need to break at h) again
+                        if (!manyEquipments && !twoEquipments && trimmed.startsWith('h)')) {
                             return (
                                 <div key={i} style={{ pageBreakBefore: 'always', paddingTop: '20mm' }}>
                                     {renderLine(line, i)}
@@ -323,7 +403,7 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
             )}
 
             {/* Signature Area */}
-            <div style={{ marginTop: isRecurring ? '2rem' : '1rem', marginBottom: isRecurring ? '4rem' : '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div style={{ marginTop: isRecurring ? '0.5rem' : '1rem', marginBottom: isRecurring ? '0.2rem' : '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div style={{ width: '50%', textAlign: 'center' }}>
                     <div style={{ fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '10px' }}>{getName()}</div>
                     <div style={{ borderBottom: '1px solid #000' }}></div>
@@ -338,8 +418,9 @@ export const TermDocument: React.FC<TermDocumentProps> = ({ data }) => {
 
             {/* Footer Traceability */}
             {(displayId || data.term_hash || data.term_fingerprint || data.term_document?.term_hash || data.term_document?.term_fingerprint) && (
-                <div style={{ marginTop: isRecurring ? '1rem' : '0.5rem', borderTop: '1px dashed #e5e7eb', paddingTop: '0.5rem', textAlign: 'center' }}>
+                <div style={{ marginTop: isRecurring ? '0.2rem' : '0.5rem', borderTop: '1px dashed #e5e7eb', paddingTop: isRecurring ? '0.2rem' : '0.5rem', textAlign: 'center' }}>
                     <p style={{ fontSize: '7.5pt', color: '#6b7280', fontWeight: 'normal' }}>
+
                         {displayId && <span style={{ color: '#000' }}><strong style={{ fontWeight: 'bold' }}>ID DO TERMO: #{displayId}</strong></span>}
                         <span style={{ margin: '0 8px' }}>|</span>
                         <strong style={{ fontWeight: 'bold', color: '#000' }}>VERSÃO:</strong> {data.version_tag || data.term_document?.version_tag || 'v3.0-loan'}
