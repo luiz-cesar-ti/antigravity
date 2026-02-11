@@ -126,8 +126,8 @@ export function BookingWizard() {
                                         {isActive && (
                                             <motion.div
                                                 className="absolute inset-0 rounded-2xl bg-amber-400 -z-10"
-                                                animate={{ scale: [1, 1.4], opacity: [0.6, 0] }}
-                                                transition={{ duration: 1.5, repeat: Infinity }}
+                                                animate={{ scale: [1, 1.25, 1], opacity: [1, 0.4, 1] }}
+                                                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                                             />
                                         )}
                                     </motion.div>
