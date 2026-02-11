@@ -12,7 +12,6 @@ import {
     Package,
     Hash,
     Info,
-    ArrowRight,
     Laptop,
     Projector,
     Speaker,
@@ -383,104 +382,127 @@ export function AdminEquipment() {
                 </div>
             )}
 
-            {/* Modal: Cadastro/Edição */}
+            {/* Modal: Cadastro/Edição - Redesign Padrão "Nova Sala" */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" onClick={handleCloseModal}></div>
 
-                    <div className="relative bg-white rounded-[2.5rem] shadow-2xl max-w-lg w-full overflow-hidden transform transition-all animate-in zoom-in-95 duration-300">
-                        <div className="p-8 sm:p-10">
-                            <div className="flex justify-between items-center mb-10">
+                    <div className="relative bg-white rounded-[2rem] shadow-2xl max-w-lg w-full overflow-hidden transform transition-all animate-in zoom-in-95 duration-300">
+                        {/* Header: Dark Style (Inspired by "Nova Sala") */}
+                        <div className="bg-[#1e293b] p-8 sm:px-10 sm:py-7 flex justify-between items-center border-b border-gray-800">
+                            <div className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner group/icon overflow-hidden relative">
+                                    <div className="absolute inset-0 bg-primary-500/10 opacity-0 group-hover/icon:opacity-100 transition-opacity duration-500" />
+                                    {editingId ? (
+                                        <Edit2 className="h-6 w-6 text-orange-400" />
+                                    ) : (
+                                        <Package className="h-6 w-6 text-orange-400" />
+                                    )}
+                                </div>
                                 <div>
-                                    <h3 className="text-2xl font-black text-gray-900 tracking-tight">
-                                        {editingId ? 'Editar Detalhes' : 'Novo Registro'}
+                                    <h3 className="text-xl font-black text-white tracking-tight">
+                                        {editingId ? 'Editar Registro' : 'Novo Item'}
                                     </h3>
-                                    <p className="text-sm text-gray-400 font-medium">Preencha as informações do equipamento.</p>
+                                    <p className="text-gray-400 text-xs font-bold leading-none mt-1">
+                                        {editingId ? 'Atualize as especificações do equipamento.' : 'Cadastre um novo equipamento no inventário.'}
+                                    </p>
                                 </div>
-                                <button onClick={handleCloseModal} className="p-3 bg-gray-50 rounded-2xl text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all">
-                                    <X className="h-6 w-6" />
-                                </button>
                             </div>
+                            <button
+                                onClick={handleCloseModal}
+                                className="p-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all outline-none"
+                            >
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
 
-                            <form id="equipment-form" onSubmit={handleSubmit} className="space-y-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nome do Item *</label>
-                                    <div className="relative group">
-                                        <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                            <Monitor className="h-5 w-5 text-gray-300 group-focus-within:text-primary-600 transition-colors" />
+                        <div className="p-8 sm:p-10">
+                            <form id="equipment-form" onSubmit={handleSubmit} className="space-y-8">
+                                {/* Section: General Info */}
+                                <div className="space-y-6">
+                                    <div className="space-y-2.5">
+                                        <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
+                                            Nome do Item <span className="text-orange-600">*</span>
+                                        </label>
+                                        <div className="relative group/field">
+                                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                                <Monitor className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                required
+                                                placeholder="Ex: Notebook, iPad, Projetor..."
+                                                className="block w-full pl-14 pr-5 py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-2xl text-sm font-bold text-gray-900 placeholder:text-gray-400 transition-all outline-none shadow-sm"
+                                                value={formData.name}
+                                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                            />
                                         </div>
-                                        <input
-                                            type="text"
-                                            required
-                                            placeholder="Ex: Notebook, iPad, Projetor..."
-                                            className="block w-full pl-14 pr-5 py-4 bg-gray-50 border-2 border-transparent focus:border-primary-100 focus:bg-white rounded-2xl text-sm font-bold placeholder:text-gray-300 transition-all outline-none"
-                                            value={formData.name}
-                                            onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                        />
                                     </div>
-                                </div>
 
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Marca</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Ex: Apple, Dell..."
-                                            className="block w-full px-5 py-4 bg-gray-50 border-2 border-transparent focus:border-primary-100 focus:bg-white rounded-2xl text-sm font-bold placeholder:text-gray-300 transition-all outline-none"
-                                            value={formData.brand}
-                                            onChange={e => setFormData({ ...formData, brand: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Modelo</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Ex: MacBook Air..."
-                                            className="block w-full px-5 py-4 bg-gray-50 border-2 border-transparent focus:border-primary-100 focus:bg-white rounded-2xl text-sm font-bold placeholder:text-gray-300 transition-all outline-none"
-                                            value={formData.model}
-                                            onChange={e => setFormData({ ...formData, model: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Quantidade em Estoque *</label>
-                                    <div className="relative group">
-                                        <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                            <Hash className="h-5 w-5 text-gray-300 group-focus-within:text-primary-600 transition-colors" />
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="space-y-2.5">
+                                            <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">Marca</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Ex: Apple, Dell..."
+                                                className="block w-full px-5 py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-2xl text-sm font-bold text-gray-900 placeholder:text-gray-400 transition-all outline-none shadow-sm"
+                                                value={formData.brand}
+                                                onChange={e => setFormData({ ...formData, brand: e.target.value })}
+                                            />
                                         </div>
-                                        <input
-                                            type="number"
-                                            required
-                                            min="0"
-                                            className="block w-full pl-14 pr-5 py-4 bg-gray-50 border-2 border-transparent focus:border-primary-100 focus:bg-white rounded-2xl text-sm font-bold placeholder:text-gray-300 transition-all outline-none"
-                                            value={formData.total_quantity}
-                                            onChange={e => setFormData({ ...formData, total_quantity: parseInt(e.target.value) || 0 })}
-                                        />
+                                        <div className="space-y-2.5">
+                                            <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">Modelo</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Ex: MacBook Air..."
+                                                className="block w-full px-5 py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-2xl text-sm font-bold text-gray-900 placeholder:text-gray-400 transition-all outline-none shadow-sm"
+                                                value={formData.model}
+                                                onChange={e => setFormData({ ...formData, model: e.target.value })}
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="flex items-start gap-2 p-4 bg-amber-50 rounded-2xl border border-amber-100 mt-2">
-                                        <Info className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                                        <p className="text-[10px] text-amber-800 font-bold leading-relaxed">
-                                            A quantidade total deve refletir o número de itens disponíveis fisicamente para agendamento nesta unidade.
-                                        </p>
+
+                                    <div className="space-y-2.5">
+                                        <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
+                                            Quantidade em Estoque <span className="text-orange-600">*</span>
+                                        </label>
+                                        <div className="relative group/field">
+                                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                                <Hash className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
+                                            </div>
+                                            <input
+                                                type="number"
+                                                required
+                                                min="0"
+                                                className="block w-full pl-14 pr-5 py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-2xl text-sm font-bold text-gray-900 placeholder:text-gray-400 transition-all outline-none shadow-sm"
+                                                value={formData.total_quantity}
+                                                onChange={e => setFormData({ ...formData, total_quantity: parseInt(e.target.value) || 0 })}
+                                            />
+                                        </div>
+                                        <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100 mt-2">
+                                            <Info className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
+                                            <p className="text-[10px] text-gray-500 font-bold leading-relaxed">
+                                                A quantidade total deve refletir o número de itens disponíveis fisicamente para agendamento nesta unidade.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </form>
 
-                            <div className="mt-10 flex gap-4">
+                            <div className="mt-10 pt-8 border-t border-gray-100 flex gap-4">
                                 <button
                                     onClick={handleCloseModal}
-                                    className="grow py-4 px-6 bg-gray-50 hover:bg-gray-100 text-gray-500 font-black text-xs rounded-2xl transition-all"
+                                    className="grow py-4 px-6 bg-white border-2 border-gray-100 hover:border-gray-200 hover:bg-gray-50 text-gray-700 font-black text-xs uppercase tracking-widest rounded-2xl transition-all outline-none"
                                 >
-                                    Descartar
+                                    Cancelar
                                 </button>
                                 <button
                                     form="equipment-form"
                                     type="submit"
-                                    className="grow flex items-center justify-center py-4 px-6 bg-primary-600 hover:bg-primary-700 text-white font-black text-xs rounded-2xl shadow-xl shadow-primary-200 transition-all active:scale-95 group/save"
+                                    className="grow-default min-w-[200px] flex items-center justify-center py-4 px-8 bg-[#f58206] hover:bg-[#e67a05] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-[#f58206]/20 transition-all active:scale-95 group/save outline-none border border-[#f58206]/10"
                                 >
-                                    {editingId ? 'Atualizar Inventário' : 'Confirmar Cadastro'}
-                                    <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                    <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" />
+                                    {editingId ? 'Salvar Edição' : 'Criar Registro'}
                                 </button>
                             </div>
                         </div>
