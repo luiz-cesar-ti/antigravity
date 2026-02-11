@@ -511,10 +511,10 @@ export function RoomBookingV2() {
                 <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center p-0 md:p-4">
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setSelectedRoom(null)}></div>
 
-                    <div className="relative bg-white rounded-t-[2.5rem] md:rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col h-[85dvh] md:h-auto md:max-h-[90vh] animate-in slide-in-from-bottom duration-300">
+                    <div className="relative bg-white rounded-t-[2.5rem] md:rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col h-auto max-h-[90dvh] animate-in slide-in-from-bottom duration-300">
 
                         {/* Header: Dark Style (Inspired by Admin) */}
-                        <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 p-6 sm:px-8 sm:py-6 flex justify-between items-center border-b border-white/5 shrink-0">
+                        <div className="bg-[#1e293b] p-5 sm:px-8 sm:py-6 flex justify-between items-center border-b border-white/5 shrink-0">
                             <div className="flex items-center gap-4">
                                 <div className="h-12 w-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center shadow-inner group/icon overflow-hidden relative">
                                     <div className="absolute inset-0 bg-amber-500/10 opacity-0 group-hover/icon:opacity-100 transition-opacity duration-500" />
@@ -524,36 +524,38 @@ export function RoomBookingV2() {
                                     <h3 className="text-xl font-black text-white tracking-tight leading-tight">
                                         {selectedRoom.name}
                                     </h3>
-                                    <div className="flex items-center gap-2 mt-1">
+                                    <p className="text-gray-400 text-xs font-bold leading-none mt-1">
+                                        Selecione a data e os horários para sua reserva.
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-2">
                                         <div className="flex items-center gap-1 text-slate-400">
-                                            <MapPin className="w-3.5 h-3.5" />
-                                            <span className="text-[10px] font-bold uppercase tracking-wider">{selectedRoom.unit}</span>
+                                            <MapPin className="w-3 h-3" />
+                                            <span className="text-[9px] font-bold uppercase tracking-wider">{selectedRoom.unit}</span>
                                         </div>
-                                        <span className="text-slate-600">•</span>
+                                        <span className="text-slate-600 text-[9px]">•</span>
                                         <div className="flex items-center gap-1 text-amber-400/80">
-                                            <Clock className="w-3.5 h-3.5" />
-                                            <span className="text-[10px] font-bold uppercase tracking-wider">{selectedRoom.min_time?.substring(0, 5)} - {selectedRoom.max_time?.substring(0, 5)}</span>
+                                            <Clock className="w-3 h-3" />
+                                            <span className="text-[9px] font-bold uppercase tracking-wider">{selectedRoom.min_time?.substring(0, 5)} - {selectedRoom.max_time?.substring(0, 5)}</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <button
                                 onClick={handleCloseModal}
-                                className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all outline-none"
+                                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all outline-none"
                             >
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
 
                         {/* Form Content */}
-                        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
+                        <div className="p-5 sm:px-8 sm:py-6 space-y-6 custom-scrollbar overflow-y-auto">
 
                             {/* Section: Data do Agendamento */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 px-1">
-                                    <div className="h-1 w-8 bg-amber-500 rounded-full" />
-                                    <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Data do Agendamento</h4>
-                                </div>
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-slate-600 uppercase tracking-[0.1em] ml-1">
+                                    Data do Agendamento
+                                </label>
 
                                 <div className="relative group/field">
                                     <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
@@ -564,14 +566,14 @@ export function RoomBookingV2() {
                                         value={selectedDate}
                                         min={format(new Date(), 'yyyy-MM-dd')}
                                         onChange={(e) => setSelectedDate(e.target.value)}
-                                        className="block w-full pl-14 pr-5 py-4 bg-slate-50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/5 rounded-[1.25rem] text-sm font-bold text-slate-900 transition-all outline-none"
+                                        className="block w-full pl-14 pr-5 py-3.5 bg-slate-50/50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/5 rounded-2xl text-sm font-bold text-slate-900 transition-all outline-none"
                                     />
                                 </div>
 
                                 {!isDayAvailable() && (
-                                    <div className="flex items-center gap-3 p-4 bg-red-50 rounded-2xl border border-red-100 animate-fadeIn">
+                                    <div className="flex items-center gap-3 p-3.5 bg-red-50 rounded-2xl border border-red-100 animate-fadeIn">
                                         <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-                                        <p className="text-xs font-bold text-red-700 leading-tight">
+                                        <p className="text-[11px] font-bold text-red-700 leading-tight">
                                             Atenção: Esta sala não está disponível para agendamentos neste dia da semana.
                                         </p>
                                     </div>
@@ -579,74 +581,69 @@ export function RoomBookingV2() {
                             </div>
 
                             {/* Section: Horários */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 px-1">
-                                    <div className="h-1 w-8 bg-amber-500 rounded-full" />
-                                    <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Período da Reserva</h4>
-                                </div>
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-slate-600 uppercase tracking-[0.1em] ml-1">
+                                    Período da Reserva
+                                </label>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-4">
                                     {/* Início */}
-                                    <div className="space-y-2">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Horário de Início</span>
+                                    <div className="space-y-1.5">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Início</span>
                                         <div className="relative group/field">
-                                            <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
                                                 <Clock className="h-4 w-4 text-slate-400 group-focus-within/field:text-amber-500 transition-colors" />
                                             </div>
                                             <input
                                                 type="time"
                                                 value={startTime}
                                                 onChange={(e) => setStartTime(e.target.value)}
-                                                className="block w-full pl-12 pr-5 py-4 bg-slate-50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/5 rounded-[1.25rem] text-sm font-bold text-slate-900 transition-all outline-none"
+                                                className="block w-full pl-10 pr-4 py-3 bg-slate-50/50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/5 rounded-xl text-sm font-bold text-slate-900 transition-all outline-none"
                                             />
                                         </div>
                                     </div>
 
                                     {/* Fim */}
-                                    <div className="space-y-2">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Horário de Término</span>
+                                    <div className="space-y-1.5">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Fim</span>
                                         <div className="relative group/field">
-                                            <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
                                                 <Clock className="h-4 w-4 text-slate-400 group-focus-within/field:text-amber-500 transition-colors" />
                                             </div>
                                             <input
                                                 type="time"
                                                 value={endTime}
                                                 onChange={(e) => setEndTime(e.target.value)}
-                                                className="block w-full pl-12 pr-5 py-4 bg-slate-50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/5 rounded-[1.25rem] text-sm font-bold text-slate-900 transition-all outline-none"
+                                                className="block w-full pl-10 pr-4 py-3 bg-slate-50/50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/5 rounded-xl text-sm font-bold text-slate-900 transition-all outline-none"
                                             />
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Recap and Info */}
-                                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-100">
-                                            <Info className="w-4 h-4 text-amber-500" />
-                                        </div>
-                                        <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
-                                            Sua reserva será automaticamente confirmada caso o horário esteja disponível.
-                                            Certifique-se de preencher os horários corretamente dentro do período de funcionamento da sala.
-                                        </p>
-                                    </div>
+                                <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-100 flex items-start gap-3">
+                                    <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
+                                        Sua reserva será confirmada caso o horário esteja disponível.
+                                        Verifique o horário de funcionamento acima.
+                                    </p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Footer: Action Buttons */}
-                        <div className="p-6 sm:px-8 sm:py-6 bg-slate-50/50 border-t border-slate-100 shrink-0">
+                        <div className="p-5 sm:px-8 sm:py-6 bg-slate-50/50 border-t border-slate-100 shrink-0">
                             <div className="flex flex-col sm:flex-row gap-3">
                                 <button
                                     onClick={handleCloseModal}
-                                    className="sm:flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500 bg-white border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm"
+                                    className="sm:flex-1 px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest text-slate-500 bg-white border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     onClick={handleBook}
                                     disabled={bookingLoading || !isDayAvailable()}
-                                    className="sm:flex-[2] relative group overflow-hidden px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.15em] text-white shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+                                    className="sm:flex-[2] relative group overflow-hidden px-8 py-3.5 rounded-xl font-black text-xs uppercase tracking-[0.15em] text-white shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-br from-amber-400 via-orange-500 to-orange-600 group-hover:from-amber-500 group-hover:to-orange-700 transition-all" />
                                     <div className="relative flex items-center justify-center gap-2">
