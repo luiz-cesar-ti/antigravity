@@ -40,6 +40,8 @@ interface Classroom {
     position: number;
     is_active: boolean;
     created_at: string;
+    class_morning?: string;
+    class_afternoon?: string;
 }
 
 interface SortableItemProps {
@@ -133,7 +135,9 @@ export function AdminClassrooms() {
 
     const [formData, setFormData] = useState({
         name: '',
-        unit: adminUser?.unit || ''
+        unit: adminUser?.unit || '',
+        class_morning: '',
+        class_afternoon: ''
     });
 
     // Dnd-kit sensors
@@ -178,13 +182,20 @@ export function AdminClassrooms() {
 
     const openCreateModal = () => {
         setEditingId(null);
-        setFormData({ name: '', unit: adminUser?.unit || '' });
+        setEditingId(null);
+        setFormData({ name: '', unit: adminUser?.unit || '', class_morning: '', class_afternoon: '' });
         setIsModalOpen(true);
     };
 
     const openEditModal = (classroom: Classroom) => {
         setEditingId(classroom.id);
-        setFormData({ name: classroom.name, unit: classroom.unit });
+        setEditingId(classroom.id);
+        setFormData({
+            name: classroom.name,
+            unit: classroom.unit,
+            class_morning: classroom.class_morning || '',
+            class_afternoon: classroom.class_afternoon || ''
+        });
         setIsModalOpen(true);
     };
 
@@ -204,7 +215,9 @@ export function AdminClassrooms() {
             const { error } = await supabase.rpc('update_classroom_secure', {
                 p_classroom_id: editingId,
                 p_name: formData.name.trim(),
-                p_admin_token: sessionToken
+                p_admin_token: sessionToken,
+                p_class_morning: formData.class_morning.trim() || null,
+                p_class_afternoon: formData.class_afternoon.trim() || null
             });
             if (error) console.error('Update error:', error);
         } else {
@@ -212,7 +225,9 @@ export function AdminClassrooms() {
             const { error } = await supabase.rpc('create_classroom_secure', {
                 p_name: formData.name.trim(),
                 p_unit: formData.unit,
-                p_admin_token: sessionToken
+                p_admin_token: sessionToken,
+                p_class_morning: formData.class_morning.trim() || null,
+                p_class_afternoon: formData.class_afternoon.trim() || null
             });
             if (error) console.error('Create error:', error);
         }
@@ -439,6 +454,36 @@ export function AdminClassrooms() {
                                                 placeholder="Ex: Sala 01, Laboratório, Auditório"
                                                 required
                                                 autoFocus
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {/* Turma Manhã */}
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                                                Turma (Manhã)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={formData.class_morning}
+                                                onChange={(e) => setFormData({ ...formData, class_morning: e.target.value })}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3.5 px-4 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                                placeholder="Ex: 3º Ano A"
+                                            />
+                                        </div>
+
+                                        {/* Turma Tarde */}
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                                                Turma (Tarde)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={formData.class_afternoon}
+                                                onChange={(e) => setFormData({ ...formData, class_afternoon: e.target.value })}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3.5 px-4 text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                                                placeholder="Ex: 1º Ano B"
                                             />
                                         </div>
                                     </div>

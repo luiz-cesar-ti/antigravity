@@ -12,6 +12,8 @@ interface Classroom {
     name: string;
     unit: string;
     position: number;
+    class_morning?: string;
+    class_afternoon?: string;
 }
 
 interface Step1Props {
@@ -43,7 +45,7 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
             }
             const { data: classroomsData } = await supabase
                 .from('classrooms')
-                .select('id, name, unit, position')
+                .select('id, name, unit, position, class_morning, class_afternoon')
                 .eq('unit', data.unit)
                 .eq('is_active', true)
                 .order('position', { ascending: true });
@@ -258,11 +260,22 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
                             className={`focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3 ${!data.unit ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                         >
                             <option value="">{data.unit ? 'Selecione o local...' : 'Selecione a unidade primeiro'}</option>
-                            {classrooms.map((classroom) => (
-                                <option key={classroom.id} value={classroom.name}>
-                                    {classroom.name}
-                                </option>
-                            ))}
+                            {classrooms.map((classroom) => {
+                                // Format label with class info if available
+                                const parts = [];
+                                if (classroom.class_morning) parts.push(`M: ${classroom.class_morning}`);
+                                if (classroom.class_afternoon) parts.push(`T: ${classroom.class_afternoon}`);
+
+                                const label = parts.length > 0
+                                    ? `${classroom.name} (${parts.join(' / ')})`
+                                    : classroom.name;
+
+                                return (
+                                    <option key={classroom.id} value={classroom.name}>
+                                        {label}
+                                    </option>
+                                );
+                            })}
                         </select>
                     </div>
                 </div>
