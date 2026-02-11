@@ -506,156 +506,133 @@ export function RoomBookingV2() {
                 </div>
             ))}
 
-            {/* BOOKING MODAL REDESIGN AREA */}
+            {/* BOOKING MODAL - MIRROR REDESIGN */}
             {selectedRoom && (
-                <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center p-0 md:p-4">
-                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setSelectedRoom(null)}></div>
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" onClick={handleCloseModal}></div>
 
-                    <div className="relative bg-white rounded-t-[2.5rem] md:rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col h-auto max-h-[90dvh] animate-in slide-in-from-bottom duration-300">
-
-                        {/* Header: Dark Style (Inspired by Admin) */}
-                        <div className="bg-[#1e293b] p-5 sm:px-8 sm:py-6 flex justify-between items-center border-b border-white/5 shrink-0">
+                    <div className="relative bg-white rounded-[2rem] shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto overflow-x-hidden transform transition-all animate-in zoom-in-95 duration-300">
+                        {/* Header: Dark Style (Mirroring Admin) */}
+                        <div className="bg-[#1e293b] p-6 sm:px-10 sm:py-7 flex justify-between items-center border-b border-gray-800 sticky top-0 z-10">
                             <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center shadow-inner group/icon overflow-hidden relative">
+                                <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner group/icon overflow-hidden relative">
                                     <div className="absolute inset-0 bg-amber-500/10 opacity-0 group-hover/icon:opacity-100 transition-opacity duration-500" />
                                     <DoorOpen className="h-6 w-6 text-amber-400" />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-black text-white tracking-tight leading-tight">
+                                    <h3 className="text-xl font-black text-white tracking-tight">
                                         {selectedRoom.name}
                                     </h3>
                                     <p className="text-gray-400 text-xs font-bold leading-none mt-1">
-                                        Selecione a data e os horários para sua reserva.
+                                        Selecione a data e horários para sua reserva.
                                     </p>
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <div className="flex items-center gap-1 text-slate-400">
-                                            <MapPin className="w-3 h-3" />
-                                            <span className="text-[9px] font-bold uppercase tracking-wider">{selectedRoom.unit}</span>
-                                        </div>
-                                        <span className="text-slate-600 text-[9px]">•</span>
-                                        <div className="flex items-center gap-1 text-amber-400/80">
-                                            <Clock className="w-3 h-3" />
-                                            <span className="text-[9px] font-bold uppercase tracking-wider">{selectedRoom.min_time?.substring(0, 5)} - {selectedRoom.max_time?.substring(0, 5)}</span>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                             <button
                                 onClick={handleCloseModal}
-                                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all outline-none"
+                                className="p-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all outline-none"
                             >
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
 
-                        {/* Form Content */}
-                        <div className="p-5 sm:px-8 sm:py-6 space-y-6 custom-scrollbar overflow-y-auto">
-
-                            {/* Section: Data do Agendamento */}
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black text-slate-600 uppercase tracking-[0.1em] ml-1">
-                                    Data do Agendamento
-                                </label>
-
-                                <div className="relative group/field">
-                                    <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
-                                        <Calendar className="h-5 w-5 text-slate-400 group-focus-within/field:text-amber-500 transition-colors" />
+                        <div className="p-6 sm:p-10">
+                            <div className="space-y-8">
+                                {/* Section: Data */}
+                                <div className="space-y-2.5">
+                                    <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
+                                        Data do Agendamento <span className="text-orange-600">*</span>
+                                    </label>
+                                    <div className="relative group/field">
+                                        <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                            <Calendar className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
+                                        </div>
+                                        <input
+                                            type="date"
+                                            required
+                                            min={format(new Date(), 'yyyy-MM-dd')}
+                                            className="block w-full pl-14 pr-5 py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-2xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
+                                            value={selectedDate}
+                                            onChange={e => setSelectedDate(e.target.value)}
+                                        />
                                     </div>
-                                    <input
-                                        type="date"
-                                        value={selectedDate}
-                                        min={format(new Date(), 'yyyy-MM-dd')}
-                                        onChange={(e) => setSelectedDate(e.target.value)}
-                                        className="block w-full pl-14 pr-5 py-3.5 bg-slate-50/50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/5 rounded-2xl text-sm font-bold text-slate-900 transition-all outline-none"
-                                    />
+                                    {!isDayAvailable() && (
+                                        <div className="flex items-start gap-3 p-4 bg-red-50 rounded-2xl border border-red-100 mt-2">
+                                            <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                                            <p className="text-[10px] text-red-700 font-bold leading-relaxed">
+                                                Esta sala não está disponível para agendamentos neste dia da semana.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
 
-                                {!isDayAvailable() && (
-                                    <div className="flex items-center gap-3 p-3.5 bg-red-50 rounded-2xl border border-red-100 animate-fadeIn">
-                                        <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-                                        <p className="text-[11px] font-bold text-red-700 leading-tight">
-                                            Atenção: Esta sala não está disponível para agendamentos neste dia da semana.
+                                {/* Section: Horários */}
+                                <div className="space-y-6">
+                                    <div className="space-y-2.5">
+                                        <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
+                                            Horário de Início <span className="text-orange-600">*</span>
+                                        </label>
+                                        <div className="relative group/field">
+                                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                                <Clock className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
+                                            </div>
+                                            <input
+                                                type="time"
+                                                required
+                                                className="block w-full pl-14 pr-5 py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-2xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
+                                                value={startTime}
+                                                onChange={e => setStartTime(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2.5">
+                                        <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
+                                            Horário de Término <span className="text-orange-600">*</span>
+                                        </label>
+                                        <div className="relative group/field">
+                                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                                <Clock className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
+                                            </div>
+                                            <input
+                                                type="time"
+                                                required
+                                                className="block w-full pl-14 pr-5 py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-2xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
+                                                value={endTime}
+                                                onChange={e => setEndTime(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100 mt-2">
+                                        <Info className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
+                                        <p className="text-[10px] text-gray-500 font-bold leading-relaxed">
+                                            A reserva será confirmada apenas se o horário estiver livre. Funcionamento: {selectedRoom.min_time?.substring(0, 5)} às {selectedRoom.max_time?.substring(0, 5)}.
                                         </p>
                                     </div>
-                                )}
-                            </div>
-
-                            {/* Section: Horários */}
-                            <div className="space-y-4">
-                                <label className="text-[10px] font-black text-slate-600 uppercase tracking-[0.1em] ml-1">
-                                    Período da Reserva
-                                </label>
-
-                                <div className="space-y-4">
-                                    {/* Início */}
-                                    <div className="space-y-1.5 max-w-[200px]">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Início</span>
-                                        <div className="relative group/field">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
-                                                <Clock className="h-4 w-4 text-slate-400 group-focus-within/field:text-amber-500 transition-colors" />
-                                            </div>
-                                            <input
-                                                type="time"
-                                                value={startTime}
-                                                onChange={(e) => setStartTime(e.target.value)}
-                                                className="block w-full pl-10 pr-4 py-3 bg-slate-50/50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/5 rounded-xl text-sm font-bold text-slate-900 transition-all outline-none"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Fim */}
-                                    <div className="space-y-1.5 max-w-[200px]">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Fim</span>
-                                        <div className="relative group/field">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
-                                                <Clock className="h-4 w-4 text-slate-400 group-focus-within/field:text-amber-500 transition-colors" />
-                                            </div>
-                                            <input
-                                                type="time"
-                                                value={endTime}
-                                                onChange={(e) => setEndTime(e.target.value)}
-                                                className="block w-full pl-10 pr-4 py-3 bg-slate-50/50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/5 rounded-xl text-sm font-bold text-slate-900 transition-all outline-none"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Recap and Info */}
-                                <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-100 flex items-start gap-3">
-                                    <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
-                                        Sua reserva será confirmada caso o horário esteja disponível.
-                                        Verifique o horário de funcionamento acima.
-                                    </p>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Footer: Action Buttons */}
-                        <div className="p-5 sm:px-8 sm:py-6 bg-slate-50/50 border-t border-slate-100 shrink-0">
-                            <div className="flex flex-col sm:flex-row gap-3">
+                            <div className="mt-10 pt-8 border-t border-gray-100 flex flex-col-reverse sm:flex-row gap-4">
                                 <button
                                     onClick={handleCloseModal}
-                                    className="sm:flex-1 px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest text-slate-500 bg-white border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm"
+                                    className="w-full sm:grow py-4 px-6 bg-white border-2 border-gray-100 hover:border-gray-200 hover:bg-gray-50 text-gray-700 font-black text-xs uppercase tracking-widest rounded-2xl transition-all outline-none"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     onClick={handleBook}
                                     disabled={bookingLoading || !isDayAvailable()}
-                                    className="sm:flex-[2] relative group overflow-hidden px-8 py-3.5 rounded-xl font-black text-xs uppercase tracking-[0.15em] text-white shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+                                    className="w-full sm:grow-default sm:min-w-[200px] flex items-center justify-center py-4 px-8 bg-gradient-to-br from-amber-400 to-orange-600 hover:from-amber-500 hover:to-orange-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-amber-500/20 transition-all active:scale-95 group/save outline-none border border-amber-400/20 disabled:opacity-50 disabled:active:scale-100"
                                 >
-                                    <div className="absolute inset-0 bg-gradient-to-br from-amber-400 via-orange-500 to-orange-600 group-hover:from-amber-500 group-hover:to-orange-700 transition-all" />
-                                    <div className="relative flex items-center justify-center gap-2">
-                                        {bookingLoading ? (
-                                            <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-                                        ) : (
-                                            <>
-                                                <span>Confirmar Reserva</span>
-                                                <Check className="w-4 h-4" />
-                                            </>
-                                        )}
-                                    </div>
+                                    {bookingLoading ? (
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        <>
+                                            <Check className="h-4 w-4 mr-2" />
+                                            Confirmar Reserva
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </div>
