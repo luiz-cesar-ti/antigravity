@@ -581,14 +581,14 @@ export function RoomBookingV2() {
                             </div>
 
                             {/* Section: Horários */}
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 <label className="text-[10px] font-black text-slate-600 uppercase tracking-[0.1em] ml-1">
                                     Período da Reserva
                                 </label>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-4">
                                     {/* Início */}
-                                    <div className="space-y-1.5">
+                                    <div className="space-y-1.5 max-w-[200px]">
                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Início</span>
                                         <div className="relative group/field">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
@@ -604,7 +604,7 @@ export function RoomBookingV2() {
                                     </div>
 
                                     {/* Fim */}
-                                    <div className="space-y-1.5">
+                                    <div className="space-y-1.5 max-w-[200px]">
                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Fim</span>
                                         <div className="relative group/field">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
