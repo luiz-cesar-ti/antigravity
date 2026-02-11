@@ -508,8 +508,8 @@ export function RoomBookingV2() {
 
             {/* BOOKING MODAL */}
             {selectedRoom && (
-                <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-                    <div className="bg-white rounded-t-3xl md:rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col h-[85dvh] md:h-auto md:max-h-[90vh]">
+                <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-sm animate-fadeIn overflow-x-hidden touch-pan-y">
+                    <div className="bg-white rounded-t-3xl md:rounded-2xl shadow-xl w-full max-w-full md:max-w-2xl overflow-hidden flex flex-col h-[80dvh] md:h-auto md:max-h-[90vh]">
                         {/* Header */}
                         <div className="bg-[#1e293b] p-6 text-white flex justify-between items-center border-b border-gray-800 shrink-0">
                             <div>
@@ -535,10 +535,13 @@ export function RoomBookingV2() {
 
                             <div className="flex flex-col gap-6">
                                 {/* DATE PICKER */}
-                                <div className="space-y-1.5">
-                                    <label className="block text-sm font-bold text-gray-700 md:ml-1 text-primary-900/40 uppercase tracking-widest text-[10px]">Agendamento para</label>
+                                <div className="space-y-2">
+                                    <div className="md:hidden flex items-center gap-2 text-primary-900/60 font-bold px-1 transition-all">
+                                        <Calendar className="w-3.5 h-3.5" />
+                                        <span className="text-[10px] uppercase tracking-widest">Data do Agendamento</span>
+                                    </div>
                                     <div className="relative group">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-gray-500 group-focus-within:text-primary-500 transition-colors">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-2 pointer-events-none text-gray-500 group-focus-within:text-primary-500 transition-colors">
                                             <Calendar className="w-4 h-4" />
                                             <span className="text-[10px] font-black uppercase tracking-widest hidden md:block border-r border-gray-300 pr-2 mr-1">Data</span>
                                         </div>
@@ -547,7 +550,7 @@ export function RoomBookingV2() {
                                             value={selectedDate}
                                             min={format(new Date(), 'yyyy-MM-dd')}
                                             onChange={(e) => setSelectedDate(e.target.value)}
-                                            className="w-full pl-12 md:pl-28 pr-4 py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
+                                            className="w-full px-4 md:pl-28 pr-4 py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
                                         />
                                     </div>
                                     {!isDayAvailable() && (
@@ -563,33 +566,45 @@ export function RoomBookingV2() {
                                     <label className="block text-sm font-bold text-gray-700 md:ml-1 text-primary-900/40 uppercase tracking-widest text-[10px]">Período</label>
                                     <div className="flex flex-col md:flex-row gap-4">
                                         {/* INICIO */}
-                                        <div className="relative flex-1 group">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-gray-600 group-focus-within:text-amber-600 transition-colors">
-                                                <Clock className="w-4 h-4" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest border-r border-gray-300 pr-2 mr-1">Horário</span>
-                                                <span className="text-[9px] font-bold text-gray-600 italic">Início</span>
+                                        <div className="flex-1 space-y-2">
+                                            <div className="md:hidden flex items-center gap-2 text-primary-900/60 font-bold px-1 transition-all">
+                                                <Clock className="w-3.5 h-3.5" />
+                                                <span className="text-[10px] uppercase tracking-widest">Início</span>
                                             </div>
-                                            <input
-                                                type="time"
-                                                value={startTime}
-                                                onChange={(e) => setStartTime(e.target.value)}
-                                                className="w-full pl-[8.5rem] md:pl-[11rem] pr-4 py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
-                                            />
+                                            <div className="relative group">
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-2 pointer-events-none text-gray-600 group-focus-within:text-amber-600 transition-colors">
+                                                    <Clock className="w-4 h-4" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest border-r border-gray-300 pr-2 mr-1">Horário</span>
+                                                    <span className="text-[9px] font-bold text-gray-600 italic">Início</span>
+                                                </div>
+                                                <input
+                                                    type="time"
+                                                    value={startTime}
+                                                    onChange={(e) => setStartTime(e.target.value)}
+                                                    className="w-full px-4 md:pl-[11rem] py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
+                                                />
+                                            </div>
                                         </div>
 
                                         {/* TERMINO */}
-                                        <div className="relative flex-1 group">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-gray-600 group-focus-within:text-amber-600 transition-colors">
-                                                <Clock className="w-4 h-4" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest border-r border-gray-300 pr-2 mr-1">Horário</span>
-                                                <span className="text-[9px] font-bold text-gray-600 italic">Fim</span>
+                                        <div className="flex-1 space-y-2">
+                                            <div className="md:hidden flex items-center gap-2 text-primary-900/60 font-bold px-1 transition-all">
+                                                <Clock className="w-3.5 h-3.5" />
+                                                <span className="text-[10px] uppercase tracking-widest">Fim</span>
                                             </div>
-                                            <input
-                                                type="time"
-                                                value={endTime}
-                                                onChange={(e) => setEndTime(e.target.value)}
-                                                className="w-full pl-[8.5rem] md:pl-[11rem] pr-4 py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
-                                            />
+                                            <div className="relative group">
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-2 pointer-events-none text-gray-600 group-focus-within:text-amber-600 transition-colors">
+                                                    <Clock className="w-4 h-4" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest border-r border-gray-300 pr-2 mr-1">Horário</span>
+                                                    <span className="text-[9px] font-bold text-gray-600 italic">Fim</span>
+                                                </div>
+                                                <input
+                                                    type="time"
+                                                    value={endTime}
+                                                    onChange={(e) => setEndTime(e.target.value)}
+                                                    className="w-full px-4 md:pl-[11rem] py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
