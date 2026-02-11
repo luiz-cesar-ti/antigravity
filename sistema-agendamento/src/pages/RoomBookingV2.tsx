@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Room, User, Settings } from '../types';
-import { Clock, ChevronRight, AlertCircle, MapPin, Trash2, Info, X, CheckCircle, Calendar, Building2 } from 'lucide-react';
+import { Clock, ChevronRight, AlertCircle, MapPin, Trash2, Info, X, CheckCircle, Calendar, Building2, DoorOpen, Check } from 'lucide-react';
 import { format, parseISO, getDay, differenceInHours } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { clsx } from 'clsx';
@@ -506,143 +506,165 @@ export function RoomBookingV2() {
                 </div>
             ))}
 
-            {/* BOOKING MODAL */}
+            {/* BOOKING MODAL REDESIGN AREA */}
             {selectedRoom && (
-                <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-sm animate-fadeIn overflow-x-hidden touch-pan-y">
-                    <div className="bg-white rounded-t-3xl md:rounded-2xl shadow-xl w-full max-w-full md:max-w-2xl overflow-hidden flex flex-col h-[80dvh] md:h-auto md:max-h-[90vh]">
-                        {/* Header */}
-                        <div className="bg-[#1e293b] p-6 text-white flex justify-between items-center border-b border-gray-800 shrink-0">
-                            <div>
-                                <h3 className="text-lg md:text-xl font-bold line-clamp-1">{selectedRoom.name}</h3>
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-primary-100 text-xs md:text-sm">
-                                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 md:w-4 md:h-4" /> Unidade {selectedRoom.unit}</span>
-                                    <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 md:w-4 md:h-4" /> {selectedRoom.min_time?.substring(0, 5)} - {selectedRoom.max_time?.substring(0, 5)}</span>
-                                </div>
-                            </div>
-                            <button onClick={handleCloseModal} className="text-white/80 hover:text-white bg-white/10 p-2 rounded-full hover:bg-white/20">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
+                <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center p-0 md:p-4">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setSelectedRoom(null)}></div>
 
-                        <div className="p-6 overflow-y-auto">
-                            {/* Description */}
-                            {selectedRoom.description && (
-                                <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6 flex gap-3 text-blue-800 text-sm">
-                                    <Info className="w-5 h-5 flex-shrink-0" />
-                                    <p>{selectedRoom.description}</p>
-                                </div>
-                            )}
+                    <div className="relative bg-white rounded-t-[2.5rem] md:rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col h-[85dvh] md:h-auto md:max-h-[90vh] animate-in slide-in-from-bottom duration-300">
 
-                            <div className="flex flex-col gap-6">
-                                {/* DATE PICKER */}
-                                <div className="space-y-2">
-                                    <div className="md:hidden flex items-center gap-2 text-primary-900/60 font-bold px-1 transition-all">
-                                        <Calendar className="w-3.5 h-3.5" />
-                                        <span className="text-[10px] uppercase tracking-widest">Data do Agendamento</span>
-                                    </div>
-                                    <div className="relative group">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-2 pointer-events-none text-gray-500 group-focus-within:text-primary-500 transition-colors">
-                                            <Calendar className="w-4 h-4" />
-                                            <span className="text-[10px] font-black uppercase tracking-widest hidden md:block border-r border-gray-300 pr-2 mr-1">Data</span>
-                                        </div>
-                                        <input
-                                            type="date"
-                                            value={selectedDate}
-                                            min={format(new Date(), 'yyyy-MM-dd')}
-                                            onChange={(e) => setSelectedDate(e.target.value)}
-                                            className="w-full px-4 md:pl-28 pr-4 py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
-                                        />
-                                    </div>
-                                    {!isDayAvailable() && (
-                                        <p className="text-red-500 text-[10px] mt-2 font-bold bg-red-50 p-2 rounded-xl border border-red-100 flex items-center gap-2 animate-pulse">
-                                            <AlertCircle className="w-3 h-3" />
-                                            Esta sala não funciona neste dia.
-                                        </p>
-                                    )}
+                        {/* Header: Dark Style (Inspired by Admin) */}
+                        <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 p-6 sm:px-8 sm:py-6 flex justify-between items-center border-b border-white/5 shrink-0">
+                            <div className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center shadow-inner group/icon overflow-hidden relative">
+                                    <div className="absolute inset-0 bg-amber-500/10 opacity-0 group-hover/icon:opacity-100 transition-opacity duration-500" />
+                                    <DoorOpen className="h-6 w-6 text-amber-400" />
                                 </div>
-
-                                {/* TIME INPUTS */}
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 md:ml-1 text-primary-900/40 uppercase tracking-widest text-[10px]">Período</label>
-                                    <div className="flex flex-col md:flex-row gap-4">
-                                        {/* INICIO */}
-                                        <div className="flex-1 space-y-2">
-                                            <div className="md:hidden flex items-center gap-2 text-primary-900/60 font-bold px-1 transition-all">
-                                                <Clock className="w-3.5 h-3.5" />
-                                                <span className="text-[10px] uppercase tracking-widest">Início</span>
-                                            </div>
-                                            <div className="relative group">
-                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-2 pointer-events-none text-gray-600 group-focus-within:text-amber-600 transition-colors">
-                                                    <Clock className="w-4 h-4" />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest border-r border-gray-300 pr-2 mr-1">Horário</span>
-                                                    <span className="text-[9px] font-bold text-gray-600 italic">Início</span>
-                                                </div>
-                                                <input
-                                                    type="time"
-                                                    value={startTime}
-                                                    onChange={(e) => setStartTime(e.target.value)}
-                                                    className="w-full px-4 md:pl-[11rem] py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
-                                                />
-                                            </div>
+                                    <h3 className="text-xl font-black text-white tracking-tight leading-tight">
+                                        {selectedRoom.name}
+                                    </h3>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <div className="flex items-center gap-1 text-slate-400">
+                                            <MapPin className="w-3.5 h-3.5" />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider">{selectedRoom.unit}</span>
                                         </div>
-
-                                        {/* TERMINO */}
-                                        <div className="flex-1 space-y-2">
-                                            <div className="md:hidden flex items-center gap-2 text-primary-900/60 font-bold px-1 transition-all">
-                                                <Clock className="w-3.5 h-3.5" />
-                                                <span className="text-[10px] uppercase tracking-widest">Fim</span>
-                                            </div>
-                                            <div className="relative group">
-                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-2 pointer-events-none text-gray-600 group-focus-within:text-amber-600 transition-colors">
-                                                    <Clock className="w-4 h-4" />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest border-r border-gray-300 pr-2 mr-1">Horário</span>
-                                                    <span className="text-[9px] font-bold text-gray-600 italic">Fim</span>
-                                                </div>
-                                                <input
-                                                    type="time"
-                                                    value={endTime}
-                                                    onChange={(e) => setEndTime(e.target.value)}
-                                                    className="w-full px-4 md:pl-[11rem] py-4 bg-slate-50 border-2 border-gray-300 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold text-gray-700"
-                                                />
-                                            </div>
+                                        <span className="text-slate-600">•</span>
+                                        <div className="flex items-center gap-1 text-amber-400/80">
+                                            <Clock className="w-3.5 h-3.5" />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider">{selectedRoom.min_time?.substring(0, 5)} - {selectedRoom.max_time?.substring(0, 5)}</span>
                                         </div>
                                     </div>
-
-                                    {/* Validation Feedback */}
-                                    {startTime && endTime && (
-                                        <div className={`mt-4 p-3 rounded-2xl text-[10px] font-bold flex items-center gap-2 border transition-all duration-300 uppercase tracking-tight ${getValidationMessage() ? 'bg-red-50 text-red-700 border-red-100 shadow-sm' : 'bg-green-50 text-green-700 border-green-100 shadow-sm'}`}>
-                                            {getValidationMessage() ? (
-                                                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                                            ) : (
-                                                <CheckCircle className="w-3.5 h-3.5 shrink-0" />
-                                            )}
-                                            {getValidationMessage() || 'Período disponível para reserva'}
-                                        </div>
-                                    )}
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Footer */}
-                        <div className="p-6 border-t border-gray-200 bg-slate-50 flex flex-col-reverse sm:flex-row justify-end gap-3 mt-auto">
                             <button
                                 onClick={handleCloseModal}
-                                className="w-full sm:w-auto px-6 py-4 bg-white border-2 border-gray-200 hover:border-gray-300 hover:bg-slate-50 text-gray-700 font-black text-xs uppercase tracking-widest rounded-2xl transition-all outline-none"
+                                className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all outline-none"
                             >
-                                Cancelar
+                                <X className="h-6 w-6" />
                             </button>
-                            <button
-                                onClick={handleBook}
-                                disabled={!startTime || !endTime || !!getValidationMessage() || bookingLoading}
-                                className="w-full sm:grow-default sm:min-w-[200px] flex items-center justify-center py-4 px-8 bg-gradient-to-br from-amber-400 to-orange-600 hover:from-amber-500 hover:to-orange-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-amber-500/20 transition-all active:scale-95 group/save outline-none border border-amber-400/20 disabled:opacity-50 disabled:shadow-none"
-                            >
-                                {bookingLoading ? 'Confirmando...' : 'Confirmar Reserva'}
-                            </button>
+                        </div>
+
+                        {/* Form Content */}
+                        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
+
+                            {/* Section: Data do Agendamento */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 px-1">
+                                    <div className="h-1 w-8 bg-amber-500 rounded-full" />
+                                    <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Data do Agendamento</h4>
+                                </div>
+
+                                <div className="relative group/field">
+                                    <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
+                                        <Calendar className="h-5 w-5 text-slate-400 group-focus-within/field:text-amber-500 transition-colors" />
+                                    </div>
+                                    <input
+                                        type="date"
+                                        value={selectedDate}
+                                        min={format(new Date(), 'yyyy-MM-dd')}
+                                        onChange={(e) => setSelectedDate(e.target.value)}
+                                        className="block w-full pl-14 pr-5 py-4 bg-slate-50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/5 rounded-[1.25rem] text-sm font-bold text-slate-900 transition-all outline-none"
+                                    />
+                                </div>
+
+                                {!isDayAvailable() && (
+                                    <div className="flex items-center gap-3 p-4 bg-red-50 rounded-2xl border border-red-100 animate-fadeIn">
+                                        <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                                        <p className="text-xs font-bold text-red-700 leading-tight">
+                                            Atenção: Esta sala não está disponível para agendamentos neste dia da semana.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Section: Horários */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 px-1">
+                                    <div className="h-1 w-8 bg-amber-500 rounded-full" />
+                                    <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Período da Reserva</h4>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {/* Início */}
+                                    <div className="space-y-2">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Horário de Início</span>
+                                        <div className="relative group/field">
+                                            <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
+                                                <Clock className="h-4 w-4 text-slate-400 group-focus-within/field:text-amber-500 transition-colors" />
+                                            </div>
+                                            <input
+                                                type="time"
+                                                value={startTime}
+                                                onChange={(e) => setStartTime(e.target.value)}
+                                                className="block w-full pl-12 pr-5 py-4 bg-slate-50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/5 rounded-[1.25rem] text-sm font-bold text-slate-900 transition-all outline-none"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Fim */}
+                                    <div className="space-y-2">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Horário de Término</span>
+                                        <div className="relative group/field">
+                                            <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
+                                                <Clock className="h-4 w-4 text-slate-400 group-focus-within/field:text-amber-500 transition-colors" />
+                                            </div>
+                                            <input
+                                                type="time"
+                                                value={endTime}
+                                                onChange={(e) => setEndTime(e.target.value)}
+                                                className="block w-full pl-12 pr-5 py-4 bg-slate-50 border-2 border-slate-100 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/5 rounded-[1.25rem] text-sm font-bold text-slate-900 transition-all outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Recap and Info */}
+                                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-100">
+                                            <Info className="w-4 h-4 text-amber-500" />
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
+                                            Sua reserva será automaticamente confirmada caso o horário esteja disponível.
+                                            Certifique-se de preencher os horários corretamente dentro do período de funcionamento da sala.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer: Action Buttons */}
+                        <div className="p-6 sm:px-8 sm:py-6 bg-slate-50/50 border-t border-slate-100 shrink-0">
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <button
+                                    onClick={handleCloseModal}
+                                    className="sm:flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500 bg-white border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleBook}
+                                    disabled={bookingLoading || !isDayAvailable()}
+                                    className="sm:flex-[2] relative group overflow-hidden px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.15em] text-white shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-br from-amber-400 via-orange-500 to-orange-600 group-hover:from-amber-500 group-hover:to-orange-700 transition-all" />
+                                    <div className="relative flex items-center justify-center gap-2">
+                                        {bookingLoading ? (
+                                            <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                                        ) : (
+                                            <>
+                                                <span>Confirmar Reserva</span>
+                                                <Check className="w-4 h-4" />
+                                            </>
+                                        )}
+                                    </div>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
-
             {/* MY BOOKINGS SECTION */}
             <div className="animate-fadeIn pt-10 border-t border-gray-300">
                 <h2 className="text-xl font-black text-[#1e293b] mb-8 flex items-center gap-3">
