@@ -92,6 +92,9 @@ export function AdminDashboard() {
         totalEquipment: 0,
         totalTeachers: 0,
     });
+    // NOVO: Estado para detalhamento do inventário
+    const [inventoryItems, setInventoryItems] = useState<{ name: string, quantity: number }[]>([]);
+
     const [chartData, setChartData] = useState({
         bookingsByDay: [] as any[],
         popularEquipment: [] as any[],
@@ -538,14 +541,14 @@ export function AdminDashboard() {
                 // We'll filter/count client side if needed. 
                 // RPC get_admin_users usually filters by role='teacher' inside.
 
-                // RPC 3: Equipment (Direct Select - Public Read should be fine for counts, or use similar logic?)
-                // Equipment policy allows authenticated select. OK.
-                let totalEquipmentQuery = supabase
+                // RPC 3: Equipment (Direct Select)
+                // Buscar lista completa para cálculo e tooltip
+                let equipmentQuery = supabase
                     .from('equipment')
-                    .select('*', { count: 'exact', head: true });
+                    .select('name, total_quantity, unit');
 
                 if (unitFilter) {
-                    totalEquipmentQuery = totalEquipmentQuery.eq('unit', unitFilter);
+                    equipmentQuery = equipmentQuery.eq('unit', unitFilter);
                 }
 
                 const [bookingsRes, usersRes, equipmentRes] = await Promise.all([
@@ -556,15 +559,23 @@ export function AdminDashboard() {
                         p_is_recurring: null // All types
                     }),
                     supabase.rpc('get_admin_users'),
-                    totalEquipmentQuery
+                    equipmentQuery
                 ]);
 
                 if (bookingsRes.error) throw bookingsRes.error;
                 if (usersRes.error) throw usersRes.error;
+                if (equipmentRes.error) throw equipmentRes.error;
 
 
                 const teachers = usersRes.data || [];
-                const totalEquipment = equipmentRes.count || 0;
+                const equipmentList = equipmentRes.data || [];
+                const totalEquipmentTypes = equipmentList.length;
+
+                // Armazenar detalhamento ordenado por quantidade
+                setInventoryItems(equipmentList.map((item: any) => ({
+                    name: item.name,
+                    quantity: item.total_quantity || 0
+                })).sort((a, b) => b.quantity - a.quantity));
 
                 // Derive Stats from the secure data
                 // bookings array already filtered by date/unit from RPC
@@ -707,7 +718,7 @@ export function AdminDashboard() {
                 setStats({
                     activeBookings: statusCounts.active + statusCounts.recurring,
                     completedBookings: statusCounts.completed,
-                    totalEquipment: totalEquipment,
+                    totalEquipment: totalEquipmentTypes,
                     totalTeachers: unitFilter
                         ? teachers.filter((t: any) => t.units && Array.isArray(t.units) && t.units.includes(unitFilter)).length
                         : teachers.length,
@@ -952,13 +963,41 @@ export function AdminDashboard() {
                         <p className="text-3xl font-black text-gray-900">{stats.completedBookings}</p>
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center group hover:border-green-200 transition-all">
+                <div className="relative group bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center hover:border-green-200 transition-all cursor-help">
                     <div className="p-4 rounded-2xl bg-green-50 text-green-600 mr-5 group-hover:scale-110 transition-transform">
                         <Monitor className="h-7 w-7" />
                     </div>
                     <div>
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Itens no Inventário</p>
                         <p className="text-3xl font-black text-gray-900">{stats.totalEquipment}</p>
+                    </div>
+
+                    {/* TOOLTIP CUSTOMIZADO DE INVENTÁRIO */}
+                    <div className="absolute left-0 top-full mt-4 w-64 bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100 p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-50 pointer-events-none group-hover:pointer-events-auto">
+                        <div className="absolute -top-2 left-10 w-4 h-4 bg-white border-t border-l border-gray-100 transform rotate-45"></div>
+
+                        <div className="relative z-10">
+                            <h4 className="text-[10px] font-black text-green-600 uppercase tracking-widest mb-3 border-b border-gray-100 pb-2">
+                                Detalhamento
+                            </h4>
+
+                            <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-200">
+                                {inventoryItems.map((item, idx) => (
+                                    <div key={idx} className="flex items-center justify-between text-xs group/item hover:bg-green-50/50 p-1.5 rounded-lg transition-colors">
+                                        <span className="font-bold text-gray-600 truncate max-w-[140px]" title={item.name}>
+                                            {item.name}
+                                        </span>
+                                        <span className="font-black text-green-600 bg-green-50 px-2 py-0.5 rounded-md border border-green-100">
+                                            {item.quantity}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-3 pt-2 border-t border-gray-50 text-[9px] text-gray-400 text-center font-medium">
+                                Estoque atualizado
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center group hover:border-purple-200 transition-all">
