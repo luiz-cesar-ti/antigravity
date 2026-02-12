@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Trophy, AlertCircle, Calendar } from 'lucide-react';
+import { X, Trophy, AlertCircle, Calendar, RotateCcw } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import clsx from 'clsx';
 import {
@@ -167,6 +167,18 @@ const DesktopAnalytics: React.FC<TeacherAnalyticsModalProps> = ({
                         <DateInputs startDate={startDate} setStartDate={setStartDate} endDate={endDate} setEndDate={setEndDate} />
                         <div className="h-6 w-px bg-slate-700 mx-1"></div>
                         <PeriodFilter period={period} setPeriod={setPeriod} />
+                        <div className="h-6 w-px bg-slate-700 mx-1"></div>
+                        <button
+                            onClick={() => {
+                                setStartDate('');
+                                setEndDate('');
+                                setPeriod('all');
+                            }}
+                            className="p-1.5 hover:bg-white/10 rounded-lg text-blue-400 hover:text-white transition-colors"
+                            title="Limpar Filtros"
+                        >
+                            <RotateCcw className="h-4 w-4" />
+                        </button>
                     </div>
 
                     <button
@@ -333,8 +345,21 @@ const MobileAnalytics: React.FC<TeacherAnalyticsModalProps> = ({
                 </div>
 
                 <div className="space-y-3 relative z-10">
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black uppercase text-blue-300 tracking-wider">Período de Análise:</span>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black uppercase text-blue-300 tracking-wider">Período de Análise:</span>
+                        </div>
+                        <button
+                            onClick={() => {
+                                setStartDate('');
+                                setEndDate('');
+                                setPeriod('all');
+                            }}
+                            className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 rounded-lg border border-slate-700 hover:bg-slate-700 transition-colors"
+                        >
+                            <RotateCcw className="h-3 w-3 text-blue-400" />
+                            <span className="text-[9px] font-black text-blue-300 uppercase tracking-wider">Limpar</span>
+                        </button>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
