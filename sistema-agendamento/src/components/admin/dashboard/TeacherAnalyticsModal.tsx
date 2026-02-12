@@ -154,8 +154,7 @@ const DesktopAnalytics: React.FC<TeacherAnalyticsModalProps> = ({
         <div className="bg-white w-full max-w-5xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
             {/* Header */}
             <div className="px-8 py-6 bg-slate-900 text-white flex items-center justify-between shadow-lg relative overflow-hidden">
-                {/* Decorative Gradient Background */}
-                <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-blue-900/20 to-transparent pointer-events-none" />
+
 
                 <div className="relative z-10">
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500 mb-1">Analytics por Professor</p>
@@ -320,9 +319,6 @@ const MobileAnalytics: React.FC<TeacherAnalyticsModalProps> = ({
         <div className="bg-gray-50 w-full h-full sm:h-auto sm:max-h-[85vh] sm:rounded-3xl shadow-none sm:shadow-2xl overflow-hidden flex flex-col">
             {/* Header Mobile */}
             <div className="px-6 py-6 bg-slate-900 text-white flex flex-col gap-6 relative overflow-hidden">
-                {/* Decorative Elements */}
-                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-amber-500/20 to-transparent rounded-bl-full pointer-events-none" />
-
                 <div className="flex items-start justify-between relative z-10">
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500 mb-1">Analytics</p>
@@ -337,8 +333,9 @@ const MobileAnalytics: React.FC<TeacherAnalyticsModalProps> = ({
                 </div>
 
                 <div className="space-y-3 relative z-10">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-1">
                         <span className="text-[10px] font-black uppercase text-blue-300 tracking-wider">Período de Análise:</span>
+                        <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest bg-gray-800/50 px-2 py-0.5 rounded w-fit">DD/MM/AAAA</span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -418,7 +415,12 @@ const MobileAnalytics: React.FC<TeacherAnalyticsModalProps> = ({
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
                                 <XAxis dataKey="day" fontSize={8} axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontWeight: 600 }} />
                                 <YAxis fontSize={8} axisLine={false} tickLine={false} allowDecimals={false} tick={{ fill: '#9CA3AF', fontWeight: 600 }} />
-                                <Bar dataKey="count" fill="#3B82F6" radius={[2, 2, 0, 0]} />
+                                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F9FAFB' }} />
+                                <Bar dataKey="count" fill="#3B82F6" radius={[2, 2, 0, 0]}>
+                                    {stats.weeklyTrend.map((entry, index) => (
+                                        <Cell key={`cell-mobile-${index}`} fill={entry.count > 0 ? '#3B82F6' : '#E5E7EB'} />
+                                    ))}
+                                </Bar>
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
