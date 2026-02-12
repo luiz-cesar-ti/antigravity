@@ -605,12 +605,41 @@ export function RoomBookingV2() {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-start gap-3 p-3 sm:p-4 bg-gray-50 rounded-3xl border border-gray-100 mt-2">
-                                            <Info className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
-                                            <p className="text-[10px] text-gray-500 font-bold leading-relaxed">
-                                                Verifique a disponibilidade antes de confirmar sua reserva.
-                                            </p>
-                                        </div>
+                                        {(() => {
+                                            const validationMsg = getValidationMessage();
+                                            const hasAllFields = selectedDate && startTime && endTime;
+
+                                            if (!hasAllFields) {
+                                                return (
+                                                    <div className="flex items-start gap-3 p-3 sm:p-4 bg-gray-50 rounded-3xl border border-gray-100 mt-2">
+                                                        <Info className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
+                                                        <p className="text-[10px] text-gray-500 font-bold leading-relaxed">
+                                                            Verifique a disponibilidade antes de confirmar sua reserva.
+                                                        </p>
+                                                    </div>
+                                                );
+                                            }
+
+                                            if (validationMsg) {
+                                                return (
+                                                    <div className="flex items-start gap-3 p-3 sm:p-4 bg-rose-50 rounded-3xl border border-rose-100 mt-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                                                        <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                                                        <p className="text-[10px] text-rose-700 font-bold leading-relaxed">
+                                                            {validationMsg}
+                                                        </p>
+                                                    </div>
+                                                );
+                                            }
+
+                                            return (
+                                                <div className="flex items-start gap-3 p-3 sm:p-4 bg-emerald-50 rounded-3xl border border-emerald-100 mt-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                                                    <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                                                    <p className="text-[10px] text-emerald-700 font-bold leading-relaxed">
+                                                        Horário disponível para reserva!
+                                                    </p>
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
 
