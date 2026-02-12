@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Lock, ShieldCheck, FileText, AlertTriangle, CheckCircle2, LayoutGrid, ClipboardCheck, Clock, Timer, Info } from 'lucide-react';
+import { Shield, Lock, ShieldCheck, FileText, AlertTriangle, CheckCircle2, LayoutGrid, ClipboardCheck, Clock, Timer } from 'lucide-react';
 
 export const SecuritySection: React.FC = () => {
     return (
@@ -119,23 +119,7 @@ export const SecuritySection: React.FC = () => {
 
                     </div>
 
-                    {/* Conformidade LGPD */}
-                    <div className="bg-emerald-50 rounded-2xl p-6 border border-emerald-100 flex gap-4">
-                        <div className="shrink-0 bg-white p-2 rounded-lg text-emerald-600 border border-emerald-100 h-fit">
-                            <Info className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-emerald-900 text-lg md:text-xl mb-2">Conformidade LGPD: Privacidade</h4>
-                            <p className="text-sm text-emerald-800 leading-relaxed mb-4">
-                                O sistema foi construído sob o princípio de <strong className="text-emerald-950">Minimização de Dados</strong>. Coletamos apenas o essencial (Nome, E-mail, TOTVS).
-                            </p>
 
-                            <h5 className="font-bold text-emerald-900 text-sm mb-1">Administradores</h5>
-                            <p className="text-sm text-emerald-800 leading-relaxed">
-                                O uso de <strong className="text-emerald-950">Tokens de Sessão Temporários (3 horas)</strong> garante que acessos não autorizados sejam bloqueados automaticamente em caso de esquecimento de logoff.
-                            </p>
-                        </div>
-                    </div>
 
                     {/* Bloqueio de Conta (Rate Limiting) */}
                     <div className="bg-white border border-gray-200 p-6 rounded-[2rem] shadow-sm">
