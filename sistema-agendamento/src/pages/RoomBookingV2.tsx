@@ -344,10 +344,25 @@ export function RoomBookingV2() {
         const newStart = new Date(year, month - 1, day, startHour, startMinute, 0);
         const newEnd = new Date(year, month - 1, day, endHour, endMinute, 0);
 
+        console.log('Validating Slot:', {
+            start: newStart.toISOString(),
+            end: newEnd.toISOString(),
+            occupiedCount: occupiedSlots.length
+        });
+
         const hasOverlap = occupiedSlots.some(booking => {
-            const bStart = new Date(booking.start_ts);
-            const bEnd = new Date(booking.end_ts);
-            return (newStart < bEnd && newEnd > bStart);
+            // Parse booking times consistently as UTC ISO strings
+            const bookingStart = parseISO(booking.start_ts.endsWith('Z') ? booking.start_ts : booking.start_ts + 'Z');
+            const bookingEnd = parseISO(booking.end_ts.endsWith('Z') ? booking.end_ts : booking.end_ts + 'Z');
+
+            // Debug individual checks
+            // console.log('Checking overlap against:', { 
+            //     bStart: bookingStart.toISOString(), 
+            //     bEnd: bookingEnd.toISOString(), 
+            //     overlap: (newStart < bookingEnd && newEnd > bookingStart)
+            // });
+
+            return (newStart < bookingEnd && newEnd > bookingStart);
         });
 
         if (hasOverlap) return "Este horário já está ocupado por outro agendamento.";
