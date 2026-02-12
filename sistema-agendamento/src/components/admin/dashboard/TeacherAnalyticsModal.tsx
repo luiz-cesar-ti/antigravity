@@ -333,24 +333,31 @@ const MobileAnalytics: React.FC<TeacherAnalyticsModalProps> = ({
                 </div>
 
                 <div className="space-y-3 relative z-10">
-                    <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
                         <span className="text-[10px] font-black uppercase text-blue-300 tracking-wider">Período de Análise:</span>
-                        <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest bg-gray-800/50 px-2 py-0.5 rounded w-fit">DD/MM/AAAA</span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-xs font-bold focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none appearance-none"
-                        />
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-xs font-bold focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none appearance-none"
-                        />
+                        <div className="relative">
+                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 h-3.5 w-3.5 pointer-events-none" />
+                            <input
+                                type="date"
+                                value={startDate}
+                                placeholder="DD/MM/AAAA"
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="w-full pl-9 pr-2 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-xs font-bold focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none appearance-none placeholder-slate-500"
+                            />
+                        </div>
+                        <div className="relative">
+                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 h-3.5 w-3.5 pointer-events-none" />
+                            <input
+                                type="date"
+                                value={endDate}
+                                placeholder="DD/MM/AAAA"
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="w-full pl-9 pr-2 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-xs font-bold focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none appearance-none placeholder-slate-500"
+                            />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 pt-2">
