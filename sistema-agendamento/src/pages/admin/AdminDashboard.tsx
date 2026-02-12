@@ -1451,69 +1451,77 @@ export function AdminDashboard() {
                 isModalOpen && selectedTeacher && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
                         <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
-                            <div className="px-8 py-6 bg-primary-600 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="px-4 py-4 md:px-8 md:py-6 bg-primary-600 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div>
                                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-200">Analytics por Professor</p>
-                                    <h2 className="text-2xl font-black">{selectedTeacher.name}</h2>
+                                    <h2 className="text-xl md:text-2xl font-black">{selectedTeacher.name}</h2>
                                 </div>
 
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <input
-                                        type="date"
-                                        value={teacherFilterStartDate}
-                                        onChange={(e) => setTeacherFilterStartDate(e.target.value)}
-                                        className="px-3 py-1.5 bg-primary-700/50 border border-primary-500 rounded-lg text-white text-xs font-bold placeholder-primary-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                                    />
-                                    <span className="text-primary-300">-</span>
-                                    <input
-                                        type="date"
-                                        value={teacherFilterEndDate}
-                                        onChange={(e) => setTeacherFilterEndDate(e.target.value)}
-                                        className="px-3 py-1.5 bg-primary-700/50 border border-primary-500 rounded-lg text-white text-xs font-bold placeholder-primary-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                                    />
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                                    <div className="flex items-center gap-2 self-start sm:self-auto">
+                                        <span className="text-[10px] font-black uppercase text-primary-200 tracking-wider">Período:</span>
+                                    </div>
 
-                                    <div className="h-6 w-px bg-primary-500 mx-1"></div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <div className="flex items-center gap-2 flex-1 sm:flex-none">
+                                            <input
+                                                type="date"
+                                                value={teacherFilterStartDate}
+                                                onChange={(e) => setTeacherFilterStartDate(e.target.value)}
+                                                className="w-full sm:w-auto px-2 md:px-3 py-1.5 bg-primary-700/50 border border-primary-500 rounded-lg text-white text-xs font-bold placeholder-primary-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                                            />
+                                            <span className="text-primary-300">-</span>
+                                            <input
+                                                type="date"
+                                                value={teacherFilterEndDate}
+                                                onChange={(e) => setTeacherFilterEndDate(e.target.value)}
+                                                className="w-full sm:w-auto px-2 md:px-3 py-1.5 bg-primary-700/50 border border-primary-500 rounded-lg text-white text-xs font-bold placeholder-primary-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                                            />
+                                        </div>
 
-                                    <div className="flex bg-primary-700/50 rounded-lg p-0.5 border border-primary-500">
+                                        <div className="hidden sm:block h-6 w-px bg-primary-500 mx-1"></div>
+
+                                        <div className="flex bg-primary-700/50 rounded-lg p-0.5 border border-primary-500 overflow-x-auto">
+                                            <button
+                                                onClick={() => setTeacherFilterPeriod('all')}
+                                                className={clsx(
+                                                    "px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all whitespace-nowrap",
+                                                    teacherFilterPeriod === 'all' ? "bg-white text-primary-700 shadow-sm" : "text-primary-200 hover:text-white"
+                                                )}
+                                            >
+                                                Todos
+                                            </button>
+                                            <button
+                                                onClick={() => setTeacherFilterPeriod('morning')}
+                                                className={clsx(
+                                                    "px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all whitespace-nowrap",
+                                                    teacherFilterPeriod === 'morning' ? "bg-white text-primary-700 shadow-sm" : "text-primary-200 hover:text-white"
+                                                )}
+                                            >
+                                                Manhã
+                                            </button>
+                                            <button
+                                                onClick={() => setTeacherFilterPeriod('afternoon')}
+                                                className={clsx(
+                                                    "px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all whitespace-nowrap",
+                                                    teacherFilterPeriod === 'afternoon' ? "bg-white text-primary-700 shadow-sm" : "text-primary-200 hover:text-white"
+                                                )}
+                                            >
+                                                Tarde
+                                            </button>
+                                        </div>
                                         <button
-                                            onClick={() => setTeacherFilterPeriod('all')}
-                                            className={clsx(
-                                                "px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all",
-                                                teacherFilterPeriod === 'all' ? "bg-white text-primary-700 shadow-sm" : "text-primary-200 hover:text-white"
-                                            )}
+                                            onClick={() => setIsModalOpen(false)}
+                                            className="p-2 ml-auto sm:ml-2 hover:bg-white/10 rounded-xl transition-colors"
                                         >
-                                            Todos
-                                        </button>
-                                        <button
-                                            onClick={() => setTeacherFilterPeriod('morning')}
-                                            className={clsx(
-                                                "px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all",
-                                                teacherFilterPeriod === 'morning' ? "bg-white text-primary-700 shadow-sm" : "text-primary-200 hover:text-white"
-                                            )}
-                                        >
-                                            Manhã
-                                        </button>
-                                        <button
-                                            onClick={() => setTeacherFilterPeriod('afternoon')}
-                                            className={clsx(
-                                                "px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all",
-                                                teacherFilterPeriod === 'afternoon' ? "bg-white text-primary-700 shadow-sm" : "text-primary-200 hover:text-white"
-                                            )}
-                                        >
-                                            Tarde
+                                            <X className="h-5 w-5" />
                                         </button>
                                     </div>
-                                    <button
-                                        onClick={() => setIsModalOpen(false)}
-                                        className="p-2 ml-2 hover:bg-white/10 rounded-xl transition-colors"
-                                    >
-                                        <X className="h-5 w-5" />
-                                    </button>
                                 </div>
                             </div>
 
                             {/* Modal Content */}
-                            <div className="flex-1 overflow-y-auto p-8 bg-gray-50">
+                            <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                     <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total de Reservas</p>
