@@ -241,8 +241,15 @@ export function RoomBookingV2() {
     }, [selectedRoom]);
 
     const fetchOccupancy = async () => {
-        const dayStart = `${selectedDate}T00:00:00`;
-        const dayEnd = `${selectedDate}T23:59:59`;
+        // Parse date components to ensure local timezone interpretation
+        const [year, month, day] = selectedDate.split('-').map(Number);
+
+        // Start of day in local time -> convert to UTC ISO
+        const startOfDay = new Date(year, month - 1, day, 0, 0, 0);
+        const endOfDay = new Date(year, month - 1, day, 23, 59, 59);
+
+        const startIso = startOfDay.toISOString();
+        const endIso = endOfDay.toISOString();
 
         // Buscar apenas agendamentos ATIVOS (confirmed) e NÃO EXCLUÍDOS
         const { data } = await supabase
@@ -251,8 +258,8 @@ export function RoomBookingV2() {
             .eq('room_id', selectedRoom?.id)
             .eq('status', 'confirmed')
             .is('deleted_at', null) // Ignorar agendamentos excluídos
-            .gte('end_ts', dayStart)
-            .lte('start_ts', dayEnd);
+            .gte('end_ts', startIso)
+            .lte('start_ts', endIso);
 
         if (data) setOccupiedSlots(data);
     };
