@@ -508,132 +508,134 @@ export function RoomBookingV2() {
 
             {/* BOOKING MODAL - MIRROR REDESIGN */}
             {selectedRoom && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center">
                     <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" onClick={handleCloseModal}></div>
 
-                    <div className="relative bg-white rounded-[2rem] shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto sm:overflow-visible overflow-x-hidden transform transition-all animate-in zoom-in-95 duration-300">
-                        {/* Header: Dark Style (Mirroring Admin with additional top spacing for mobile) */}
-                        <div className="bg-[#1e293b] p-5 pt-8 sm:px-10 sm:py-7 flex justify-between items-center border-b border-gray-800 sticky top-0 z-10 transition-all">
-                            <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner group/icon overflow-hidden relative">
-                                    <div className="absolute inset-0 bg-amber-500/10 opacity-0 group-hover/icon:opacity-100 transition-opacity duration-500" />
-                                    <DoorOpen className="h-6 w-6 text-amber-400" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-white tracking-tight">
-                                        {selectedRoom.name}
-                                    </h3>
-                                    <p className="text-gray-400 text-xs font-bold leading-none mt-1">
-                                        Selecione a data e horários para sua reserva.
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={handleCloseModal}
-                                className="p-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all outline-none"
-                            >
-                                <X className="h-6 w-6" />
-                            </button>
-                        </div>
-
-                        <div className="p-5 sm:p-10">
-                            <div className="space-y-6 sm:space-y-8">
-                                {/* Section: Data */}
-                                <div className="space-y-2.5 max-w-[95%] sm:max-w-[90%] mx-auto">
-                                    <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
-                                        Data do Agendamento <span className="text-orange-600">*</span>
-                                    </label>
-                                    <div className="relative group/field">
-                                        <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                            <Calendar className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
-                                        </div>
-                                        <input
-                                            type="date"
-                                            required
-                                            min={format(new Date(), 'yyyy-MM-dd')}
-                                            className="block w-full pl-14 pr-5 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
-                                            value={selectedDate}
-                                            onChange={e => setSelectedDate(e.target.value)}
-                                        />
+                    <div className="relative w-full max-w-lg p-4 transform transition-all animate-in zoom-in-95 duration-300">
+                        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-h-[90vh] overflow-y-auto sm:overflow-visible overflow-x-hidden">
+                            {/* Header: Dark Style (Mirroring Admin with additional top spacing for mobile) */}
+                            <div className="bg-[#1e293b] p-5 pt-8 sm:px-10 sm:py-7 flex justify-between items-center border-b border-gray-800 sticky top-0 z-10 transition-all">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner group/icon overflow-hidden relative">
+                                        <div className="absolute inset-0 bg-amber-500/10 opacity-0 group-hover/icon:opacity-100 transition-opacity duration-500" />
+                                        <DoorOpen className="h-6 w-6 text-amber-400" />
                                     </div>
-                                    {!isDayAvailable() && (
-                                        <div className="flex items-start gap-3 p-3 sm:p-4 bg-red-50 rounded-3xl border border-red-100 mt-2">
-                                            <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
-                                            <p className="text-[10px] text-red-700 font-bold leading-relaxed">
-                                                Esta sala não está disponível para agendamentos neste dia da semana.
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Section: Horários */}
-                                <div className="space-y-5 sm:space-y-6 max-w-[95%] sm:max-w-[90%] mx-auto">
-                                    <div className="space-y-2.5">
-                                        <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
-                                            Horário de Início <span className="text-orange-600">*</span>
-                                        </label>
-                                        <div className="relative group/field">
-                                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                                <Clock className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
-                                            </div>
-                                            <input
-                                                type="time"
-                                                required
-                                                className="block w-full pl-14 pr-5 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
-                                                value={startTime}
-                                                onChange={e => setStartTime(e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2.5">
-                                        <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
-                                            Horário de Término <span className="text-orange-600">*</span>
-                                        </label>
-                                        <div className="relative group/field">
-                                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                                <Clock className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
-                                            </div>
-                                            <input
-                                                type="time"
-                                                required
-                                                className="block w-full pl-14 pr-5 py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
-                                                value={endTime}
-                                                onChange={e => setEndTime(e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-start gap-3 p-3 sm:p-4 bg-gray-50 rounded-3xl border border-gray-100 mt-2">
-                                        <Info className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
-                                        <p className="text-[10px] text-gray-500 font-bold leading-relaxed">
-                                            Verifique a disponibilidade antes de confirmar sua reserva.
+                                    <div>
+                                        <h3 className="text-xl font-black text-white tracking-tight">
+                                            {selectedRoom.name}
+                                        </h3>
+                                        <p className="text-gray-400 text-xs font-bold leading-none mt-1">
+                                            Selecione a data e horários para sua reserva.
                                         </p>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div className="mt-10 pt-8 border-t border-gray-100 flex flex-col-reverse sm:flex-row gap-4">
                                 <button
                                     onClick={handleCloseModal}
-                                    className="w-full sm:grow py-4 px-6 bg-white border-2 border-gray-100 hover:border-gray-200 hover:bg-gray-50 text-gray-700 font-black text-xs uppercase tracking-widest rounded-2xl transition-all outline-none"
+                                    className="p-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all outline-none"
                                 >
-                                    Cancelar
+                                    <X className="h-6 w-6" />
                                 </button>
-                                <button
-                                    onClick={handleBook}
-                                    disabled={bookingLoading || !isDayAvailable()}
-                                    className="w-full sm:grow-default sm:min-w-[200px] flex items-center justify-center py-4 px-8 bg-gradient-to-br from-amber-400 to-orange-600 hover:from-amber-500 hover:to-orange-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-amber-500/20 transition-all active:scale-95 group/save outline-none border border-amber-400/20 disabled:opacity-50 disabled:active:scale-100"
-                                >
-                                    {bookingLoading ? (
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    ) : (
-                                        <>
-                                            <Check className="h-4 w-4 mr-2" />
-                                            Confirmar Reserva
-                                        </>
-                                    )}
-                                </button>
+                            </div>
+
+                            <div className="p-5 sm:p-10">
+                                <div className="space-y-6 sm:space-y-8">
+                                    {/* Section: Data */}
+                                    <div className="space-y-2.5 max-w-[95%] sm:max-w-[90%] mx-auto">
+                                        <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
+                                            Data do Agendamento <span className="text-orange-600">*</span>
+                                        </label>
+                                        <div className="relative group/field">
+                                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                                <Calendar className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
+                                            </div>
+                                            <input
+                                                type="date"
+                                                required
+                                                min={format(new Date(), 'yyyy-MM-dd')}
+                                                className="block w-full pl-14 pr-5 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
+                                                value={selectedDate}
+                                                onChange={e => setSelectedDate(e.target.value)}
+                                            />
+                                        </div>
+                                        {!isDayAvailable() && (
+                                            <div className="flex items-start gap-3 p-3 sm:p-4 bg-red-50 rounded-3xl border border-red-100 mt-2">
+                                                <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                                                <p className="text-[10px] text-red-700 font-bold leading-relaxed">
+                                                    Esta sala não está disponível para agendamentos neste dia da semana.
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Section: Horários */}
+                                    <div className="space-y-5 sm:space-y-6 max-w-[95%] sm:max-w-[90%] mx-auto">
+                                        <div className="space-y-2.5">
+                                            <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
+                                                Horário de Início <span className="text-orange-600">*</span>
+                                            </label>
+                                            <div className="relative group/field">
+                                                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                                    <Clock className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
+                                                </div>
+                                                <input
+                                                    type="time"
+                                                    required
+                                                    className="block w-full pl-14 pr-5 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
+                                                    value={startTime}
+                                                    onChange={e => setStartTime(e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2.5">
+                                            <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
+                                                Horário de Término <span className="text-orange-600">*</span>
+                                            </label>
+                                            <div className="relative group/field">
+                                                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                                    <Clock className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
+                                                </div>
+                                                <input
+                                                    type="time"
+                                                    required
+                                                    className="block w-full pl-14 pr-5 py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
+                                                    value={endTime}
+                                                    onChange={e => setEndTime(e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3 p-3 sm:p-4 bg-gray-50 rounded-3xl border border-gray-100 mt-2">
+                                            <Info className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
+                                            <p className="text-[10px] text-gray-500 font-bold leading-relaxed">
+                                                Verifique a disponibilidade antes de confirmar sua reserva.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-10 pt-8 border-t border-gray-100 flex flex-col-reverse sm:flex-row gap-4">
+                                    <button
+                                        onClick={handleCloseModal}
+                                        className="w-full sm:grow py-4 px-6 bg-white border-2 border-gray-100 hover:border-gray-200 hover:bg-gray-50 text-gray-700 font-black text-xs uppercase tracking-widest rounded-2xl transition-all outline-none"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleBook}
+                                        disabled={bookingLoading || !isDayAvailable()}
+                                        className="w-full sm:grow-default sm:min-w-[200px] flex items-center justify-center py-4 px-8 bg-gradient-to-br from-amber-400 to-orange-600 hover:from-amber-500 hover:to-orange-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-amber-500/20 transition-all active:scale-95 group/save outline-none border border-amber-400/20 disabled:opacity-50 disabled:active:scale-100"
+                                    >
+                                        {bookingLoading ? (
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        ) : (
+                                            <>
+                                                <Check className="h-4 w-4 mr-2" />
+                                                Confirmar Reserva
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
