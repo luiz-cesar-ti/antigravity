@@ -607,7 +607,7 @@ export function RoomBookingV2() {
                                     <div className="flex items-start gap-3 p-3 sm:p-4 bg-gray-50 rounded-3xl border border-gray-100 mt-2">
                                         <Info className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
                                         <p className="text-[10px] text-gray-500 font-bold leading-relaxed">
-                                            A reserva será confirmada apenas se o horário estiver livre. Funcionamento: {selectedRoom.min_time?.substring(0, 5)} às {selectedRoom.max_time?.substring(0, 5)}.
+                                            Verifique a disponibilidade antes de confirmar sua reserva.
                                         </p>
                                     </div>
                                 </div>
