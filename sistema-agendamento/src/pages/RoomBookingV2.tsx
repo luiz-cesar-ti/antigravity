@@ -547,27 +547,27 @@ export function RoomBookingV2() {
                             </div>
 
                             <div className="p-5 sm:p-10">
-                                <div className="space-y-6 sm:space-y-8">
+                                <div className="space-y-4 sm:space-y-8">
                                     {/* Section: Data */}
-                                    <div className="space-y-2.5 max-w-[95%] sm:max-w-[90%] mx-auto">
+                                    <div className="space-y-1.5 sm:space-y-2.5 max-w-[95%] sm:max-w-[90%] mx-auto">
                                         <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
                                             Data do Agendamento <span className="text-orange-600">*</span>
                                         </label>
                                         <div className="relative group/field">
-                                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                            <div className="absolute inset-y-0 left-0 pl-4 sm:pl-5 flex items-center pointer-events-none">
                                                 <Calendar className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
                                             </div>
                                             <input
                                                 type="date"
                                                 required
                                                 min={format(new Date(), 'yyyy-MM-dd')}
-                                                className="block w-full pl-14 pr-5 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
+                                                className="block w-full pl-12 sm:pl-14 pr-4 sm:pr-5 py-2.5 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-2xl sm:rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
                                                 value={selectedDate}
                                                 onChange={e => setSelectedDate(e.target.value)}
                                             />
                                         </div>
                                         {!isDayAvailable() && (
-                                            <div className="flex items-start gap-3 p-3 sm:p-4 bg-red-50 rounded-3xl border border-red-100 mt-2">
+                                            <div className="flex items-start gap-3 p-3 sm:p-4 bg-red-50 rounded-2xl sm:rounded-3xl border border-red-100 mt-2">
                                                 <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
                                                 <p className="text-[10px] text-red-700 font-bold leading-relaxed">
                                                     Esta sala não está disponível para agendamentos neste dia da semana.
@@ -577,37 +577,37 @@ export function RoomBookingV2() {
                                     </div>
 
                                     {/* Section: Horários */}
-                                    <div className="space-y-5 sm:space-y-6 max-w-[95%] sm:max-w-[90%] mx-auto">
-                                        <div className="space-y-2.5">
+                                    <div className="space-y-4 sm:space-y-6 max-w-[95%] sm:max-w-[90%] mx-auto">
+                                        <div className="space-y-1.5 sm:space-y-2.5">
                                             <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
                                                 Horário de Início <span className="text-orange-600">*</span>
                                             </label>
                                             <div className="relative group/field">
-                                                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                                <div className="absolute inset-y-0 left-0 pl-4 sm:pl-5 flex items-center pointer-events-none">
                                                     <Clock className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
                                                 </div>
                                                 <input
                                                     type="time"
                                                     required
-                                                    className="block w-full pl-14 pr-5 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
+                                                    className="block w-full pl-12 sm:pl-14 pr-4 sm:pr-5 py-2.5 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-2xl sm:rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
                                                     value={startTime}
                                                     onChange={e => setStartTime(e.target.value)}
                                                 />
                                             </div>
                                         </div>
 
-                                        <div className="space-y-2.5">
+                                        <div className="space-y-1.5 sm:space-y-2.5">
                                             <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
                                                 Horário de Término <span className="text-orange-600">*</span>
                                             </label>
                                             <div className="relative group/field">
-                                                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                                <div className="absolute inset-y-0 left-0 pl-4 sm:pl-5 flex items-center pointer-events-none">
                                                     <Clock className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
                                                 </div>
                                                 <input
                                                     type="time"
                                                     required
-                                                    className="block w-full pl-14 pr-5 py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
+                                                    className="block w-full pl-12 sm:pl-14 pr-4 sm:pr-5 py-2.5 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-2xl sm:rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
                                                     value={endTime}
                                                     onChange={e => setEndTime(e.target.value)}
                                                 />
@@ -620,7 +620,7 @@ export function RoomBookingV2() {
 
                                             if (!hasAllFields) {
                                                 return (
-                                                    <div className="flex items-start gap-3 p-3 sm:p-4 bg-gray-50 rounded-3xl border border-gray-100 mt-2">
+                                                    <div className="flex items-start gap-3 p-3 sm:p-4 bg-gray-50 rounded-2xl sm:rounded-3xl border border-gray-100 mt-2">
                                                         <Info className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
                                                         <p className="text-[10px] text-gray-500 font-bold leading-relaxed">
                                                             Verifique a disponibilidade antes de confirmar sua reserva.
@@ -631,7 +631,7 @@ export function RoomBookingV2() {
 
                                             if (validationMsg) {
                                                 return (
-                                                    <div className="flex items-start gap-3 p-3 sm:p-4 bg-rose-50 rounded-3xl border border-rose-100 mt-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                                                    <div className="flex items-start gap-3 p-3 sm:p-4 bg-rose-50 rounded-2xl sm:rounded-3xl border border-rose-100 mt-2 animate-in fade-in slide-in-from-top-1 duration-300">
                                                         <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
                                                         <p className="text-[10px] text-rose-700 font-bold leading-relaxed">
                                                             {validationMsg}
@@ -641,7 +641,7 @@ export function RoomBookingV2() {
                                             }
 
                                             return (
-                                                <div className="flex items-start gap-3 p-3 sm:p-4 bg-emerald-50 rounded-3xl border border-emerald-100 mt-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                                                <div className="flex items-start gap-3 p-3 sm:p-4 bg-emerald-50 rounded-2xl sm:rounded-3xl border border-emerald-100 mt-2 animate-in fade-in slide-in-from-top-1 duration-300">
                                                     <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
                                                     <p className="text-[10px] text-emerald-700 font-bold leading-relaxed">
                                                         Horário disponível para reserva!
