@@ -511,9 +511,9 @@ export function RoomBookingV2() {
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" onClick={handleCloseModal}></div>
 
-                    <div className="relative bg-white rounded-[2rem] shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto overflow-x-hidden transform transition-all animate-in zoom-in-95 duration-300">
-                        {/* Header: Dark Style (Mirroring Admin with additional top spacing) */}
-                        <div className="bg-[#1e293b] p-6 pt-10 sm:px-10 sm:py-7 flex justify-between items-center border-b border-gray-800 sticky top-0 z-10 transition-all">
+                    <div className="relative bg-white rounded-[2rem] shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto sm:overflow-visible overflow-x-hidden transform transition-all animate-in zoom-in-95 duration-300">
+                        {/* Header: Dark Style (Mirroring Admin with additional top spacing for mobile) */}
+                        <div className="bg-[#1e293b] p-5 pt-8 sm:px-10 sm:py-7 flex justify-between items-center border-b border-gray-800 sticky top-0 z-10 transition-all">
                             <div className="flex items-center gap-4">
                                 <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner group/icon overflow-hidden relative">
                                     <div className="absolute inset-0 bg-amber-500/10 opacity-0 group-hover/icon:opacity-100 transition-opacity duration-500" />
@@ -536,10 +536,10 @@ export function RoomBookingV2() {
                             </button>
                         </div>
 
-                        <div className="p-6 sm:p-10">
-                            <div className="space-y-8">
+                        <div className="p-5 sm:p-10">
+                            <div className="space-y-6 sm:space-y-8">
                                 {/* Section: Data */}
-                                <div className="space-y-2.5 max-w-[90%] mx-auto">
+                                <div className="space-y-2.5 max-w-[95%] sm:max-w-[90%] mx-auto">
                                     <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
                                         Data do Agendamento <span className="text-orange-600">*</span>
                                     </label>
@@ -551,13 +551,13 @@ export function RoomBookingV2() {
                                             type="date"
                                             required
                                             min={format(new Date(), 'yyyy-MM-dd')}
-                                            className="block w-full pl-14 pr-5 py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
+                                            className="block w-full pl-14 pr-5 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
                                             value={selectedDate}
                                             onChange={e => setSelectedDate(e.target.value)}
                                         />
                                     </div>
                                     {!isDayAvailable() && (
-                                        <div className="flex items-start gap-3 p-4 bg-red-50 rounded-3xl border border-red-100 mt-2">
+                                        <div className="flex items-start gap-3 p-3 sm:p-4 bg-red-50 rounded-3xl border border-red-100 mt-2">
                                             <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
                                             <p className="text-[10px] text-red-700 font-bold leading-relaxed">
                                                 Esta sala não está disponível para agendamentos neste dia da semana.
@@ -567,7 +567,7 @@ export function RoomBookingV2() {
                                 </div>
 
                                 {/* Section: Horários */}
-                                <div className="space-y-6 max-w-[90%] mx-auto">
+                                <div className="space-y-5 sm:space-y-6 max-w-[95%] sm:max-w-[90%] mx-auto">
                                     <div className="space-y-2.5">
                                         <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
                                             Horário de Início <span className="text-orange-600">*</span>
@@ -579,7 +579,7 @@ export function RoomBookingV2() {
                                             <input
                                                 type="time"
                                                 required
-                                                className="block w-full pl-14 pr-5 py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
+                                                className="block w-full pl-14 pr-5 py-3 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm"
                                                 value={startTime}
                                                 onChange={e => setStartTime(e.target.value)}
                                             />
@@ -604,7 +604,7 @@ export function RoomBookingV2() {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-3xl border border-gray-100 mt-2">
+                                    <div className="flex items-start gap-3 p-3 sm:p-4 bg-gray-50 rounded-3xl border border-gray-100 mt-2">
                                         <Info className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
                                         <p className="text-[10px] text-gray-500 font-bold leading-relaxed">
                                             A reserva será confirmada apenas se o horário estiver livre. Funcionamento: {selectedRoom.min_time?.substring(0, 5)} às {selectedRoom.max_time?.substring(0, 5)}.
