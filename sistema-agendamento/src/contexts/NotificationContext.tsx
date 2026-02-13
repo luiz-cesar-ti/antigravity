@@ -65,7 +65,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         // Note: 'filter' in postgres_changes is limited to simple equality on columns.
         // We can filter by unit if the column exists.
         // 2. Realtime Subscription
-        console.log('Setting up realtime subscription for Admin:', adminUnit);
+
 
         const subscription = supabase
             .channel('notifications_channel')
@@ -78,7 +78,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     filter: adminUnit ? `unit=eq.${adminUnit}` : "recipient_role=eq.admin"
                 },
                 (payload) => {
-                    console.log('Notification Realtime Event:', payload);
+
 
                     if (payload.eventType === 'INSERT') {
                         const newNotif = payload.new as Notification;
@@ -108,8 +108,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     }
                 }
             )
-            .subscribe((status) => {
-                console.log('Notification Subscription Status:', status);
+            .subscribe(() => {
+
             });
 
         return () => {
@@ -151,7 +151,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             if (error) {
                 console.error('Error marking ALL notifications as read (RPC):', error);
             } else {
-                console.log('Successfully marked all notifications as read via RPC');
+
             }
         } catch (err) {
             console.error('Exception marking ALL notifications as read:', err);

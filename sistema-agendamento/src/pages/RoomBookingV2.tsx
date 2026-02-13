@@ -233,7 +233,7 @@ export function RoomBookingV2() {
             }
 
             if (data) {
-                console.log('Settings loaded:', data); // Debug log
+
                 setSettings(data);
             }
         };

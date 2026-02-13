@@ -195,7 +195,7 @@ export function Step3RoomConfirmation({ data, updateData, onPrev }: Step3Props) 
                         text: 'Segue em anexo o Termo de Responsabilidade e Uso de Sala.'
                     });
                 } catch {
-                    console.log('User cancelled share or share failed, falling back to download');
+
                 }
             } else {
                 const url = URL.createObjectURL(pdfBlob);

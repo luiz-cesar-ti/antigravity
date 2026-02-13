@@ -49,7 +49,7 @@ export function useAvailableEquipment(unit: string, date: string, startTime: str
 
             } catch (err: any) {
                 if (err.name === 'AbortError') {
-                    console.log('Availability check aborted');
+
                     return;
                 }
 

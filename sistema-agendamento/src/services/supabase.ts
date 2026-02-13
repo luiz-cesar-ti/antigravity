@@ -10,7 +10,7 @@ if (!supabaseUrl || !supabaseKey) {
 // Custom fetch to inject admin session token into headers
 const customFetch = (input: RequestInfo | URL, init?: RequestInit) => {
     // Debug logging
-    // console.log('CustomFetch called', { inputType: input instanceof Request ? 'Request' : 'string' });
+
 
     // 1. Safe access to admin token
     let adminToken = '';
@@ -29,6 +29,7 @@ const customFetch = (input: RequestInfo | URL, init?: RequestInit) => {
     if (input instanceof Request) {
         input.headers.forEach((value, key) => {
             headers.set(key, value);
+
         });
     }
 
@@ -37,6 +38,7 @@ const customFetch = (input: RequestInfo | URL, init?: RequestInit) => {
         const initHeaders = new Headers(init.headers);
         initHeaders.forEach((value, key) => {
             headers.set(key, value);
+
         });
     }
 
@@ -58,7 +60,7 @@ const customFetch = (input: RequestInfo | URL, init?: RequestInit) => {
     }
 
     // Debug final headers
-    // console.log('Final Headers:', Object.fromEntries(headers.entries()));
+
 
     // 7. Execute fetch
     // Note: When passing 'headers' in options, it overrides input's headers.

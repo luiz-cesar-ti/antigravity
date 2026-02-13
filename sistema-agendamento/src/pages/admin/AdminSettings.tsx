@@ -95,7 +95,7 @@ export function AdminSettings() {
                 setSettings(data);
             } else if (error && error.code === 'PGRST116') {
                 // No settings found row, use defaults
-                console.log('Using default settings');
+
             }
             setLoading(false);
         };
