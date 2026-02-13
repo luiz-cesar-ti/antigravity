@@ -339,7 +339,7 @@ export function AdminBookings() {
         return (
             <div className="flex gap-1">
                 <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-green-100 text-green-700 border border-green-200">
-                    Ativo
+                    AGENDADO
                 </span>
                 {recurringBadge}
             </div>

@@ -18,7 +18,7 @@ export const BookingsSection: React.FC = () => {
                         <h3 className="text-lg md:text-xl font-black text-gray-900 mb-4">Status do Card de Agendamento</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                             <div className="p-4 rounded-xl bg-green-50 border border-green-100">
-                                <span className="text-[10px] md:text-sm font-black text-green-700 bg-green-100 px-2 py-1 rounded mb-2 inline-block">ATIVO</span>
+                                <span className="text-[10px] md:text-sm font-black text-green-700 bg-green-100 px-2 py-1 rounded mb-2 inline-block">AGENDADO</span>
                                 <p className="text-xs md:text-sm text-green-800 leading-tight">Reserva válida e futura. Equipamento reservado.</p>
                             </div>
                             <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
