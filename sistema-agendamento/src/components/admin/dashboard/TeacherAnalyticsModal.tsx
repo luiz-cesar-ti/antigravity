@@ -50,6 +50,43 @@ interface TeacherAnalyticsModalProps {
     bookings: Booking[];
 }
 
+// --- Helper Functions ---
+
+const formatStatus = (status: string) => {
+    switch (status) {
+        case 'active': return 'AGENDADO';
+        case 'encerrado':
+        case 'completed': return 'CONCLUÍDO';
+        case 'cancelled':
+        case 'cancelled_by_user': return 'CANCELADO';
+        default: return status.toUpperCase();
+    }
+};
+
+const getStatusColorClass = (status: string) => {
+    switch (status) {
+        case 'active':
+            return "bg-emerald-100 text-emerald-700 border border-emerald-200";
+        case 'encerrado':
+        case 'completed':
+            return "bg-blue-100 text-blue-700 border border-blue-200";
+        default:
+            return "bg-gray-100 text-gray-700 border border-gray-200";
+    }
+};
+
+const getMobileStatusColorClass = (status: string) => {
+    switch (status) {
+        case 'active':
+            return "bg-emerald-50 text-emerald-700";
+        case 'encerrado':
+        case 'completed':
+            return "bg-blue-50 text-blue-700";
+        default:
+            return "bg-gray-50 text-gray-700";
+    }
+};
+
 // --- Sub-components ---
 
 const PeriodFilter = ({
@@ -150,6 +187,9 @@ const DesktopAnalytics: React.FC<TeacherAnalyticsModalProps> = ({
     bookings,
     onClose
 }) => {
+    // Filter active bookings (exclude cancelled)
+    const activeBookings = bookings.filter(b => b.status !== 'cancelled' && b.status !== 'cancelled_by_user');
+
     return (
         <div className="bg-white w-full max-w-5xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
             {/* Header */}
@@ -201,7 +241,7 @@ const DesktopAnalytics: React.FC<TeacherAnalyticsModalProps> = ({
                                 <Trophy className="h-24 w-24 text-blue-900" />
                             </div>
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total de Reservas</p>
-                            <p className="text-5xl font-black text-slate-900">{bookings.length}</p>
+                            <p className="text-5xl font-black text-slate-900">{activeBookings.length}</p>
                         </div>
 
                         {/* Top Equipments */}
@@ -257,7 +297,7 @@ const DesktopAnalytics: React.FC<TeacherAnalyticsModalProps> = ({
                         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col h-[300px]">
                             <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Histórico Recente</h4>
                             <div className="flex-1 overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
-                                {bookings.map((booking, idx) => (
+                                {activeBookings.map((booking, idx) => (
                                     <div key={idx} className="p-4 bg-gray-50/50 rounded-xl flex items-center justify-between border border-transparent hover:border-blue-100 hover:bg-blue-50/30 transition-all group">
                                         <div className="flex items-center gap-4">
                                             <div className="bg-white p-2 rounded-lg border border-gray-100 shadow-sm group-hover:scale-105 transition-transform">
@@ -281,11 +321,9 @@ const DesktopAnalytics: React.FC<TeacherAnalyticsModalProps> = ({
 
                                         <span className={clsx(
                                             "text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm",
-                                            booking.status === 'completed' || booking.status === 'encerrado'
-                                                ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
-                                                : "bg-blue-100 text-blue-700 border border-blue-200"
+                                            getStatusColorClass(booking.status)
                                         )}>
-                                            {booking.status === 'encerrado' ? 'CONCLUÍDO' : booking.status}
+                                            {formatStatus(booking.status)}
                                         </span>
                                     </div>
                                 ))}
@@ -327,6 +365,9 @@ const MobileAnalytics: React.FC<TeacherAnalyticsModalProps> = ({
     bookings,
     onClose
 }) => {
+    // Filter active bookings (exclude cancelled)
+    const activeBookings = bookings.filter(b => b.status !== 'cancelled' && b.status !== 'cancelled_by_user');
+
     return (
         <div className="bg-gray-50 w-full h-full sm:h-auto sm:max-h-[85vh] sm:rounded-3xl shadow-none sm:shadow-2xl overflow-hidden flex flex-col">
             {/* Header Mobile */}
@@ -410,7 +451,7 @@ const MobileAnalytics: React.FC<TeacherAnalyticsModalProps> = ({
                 <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
                     <div>
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total de Reservas</p>
-                        <p className="text-4xl font-black text-slate-900">{bookings.length}</p>
+                        <p className="text-4xl font-black text-slate-900">{activeBookings.length}</p>
                     </div>
                     <div className="bg-amber-50 p-3 rounded-2xl">
                         <Trophy className="h-6 w-6 text-amber-600" />
@@ -462,7 +503,7 @@ const MobileAnalytics: React.FC<TeacherAnalyticsModalProps> = ({
                 <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
                     <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Últimos Agendamentos</h4>
                     <div className="space-y-3">
-                        {bookings.slice(0, 5).map((booking, idx) => (
+                        {activeBookings.slice(0, 5).map((booking, idx) => (
                             <div key={idx} className="flex items-start gap-3 pb-3 border-b border-gray-50 last:border-0 last:pb-0">
                                 <div className="bg-blue-50 p-2 rounded-lg shrink-0 mt-0.5">
                                     <Calendar className="h-3 w-3 text-blue-600" />
@@ -472,11 +513,9 @@ const MobileAnalytics: React.FC<TeacherAnalyticsModalProps> = ({
                                         <p className="text-xs font-bold text-slate-900 truncate pr-2">{booking.equipment?.name}</p>
                                         <span className={clsx(
                                             "text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter whitespace-nowrap",
-                                            booking.status === 'completed' || booking.status === 'encerrado'
-                                                ? "bg-green-50 text-green-700"
-                                                : "bg-blue-50 text-blue-700"
+                                            getMobileStatusColorClass(booking.status)
                                         )}>
-                                            {booking.status === 'encerrado' ? 'OK' : booking.status}
+                                            {formatStatus(booking.status)}
                                         </span>
                                     </div>
                                     <p className="text-[10px] text-gray-400 font-medium mt-0.5">
