@@ -6,29 +6,17 @@ import { useAuth } from '../../contexts/AuthContext';
 import { clsx } from 'clsx';
 import { TeacherAnalyticsModal } from '../../components/admin/dashboard/TeacherAnalyticsModal';
 import {
-    LayoutDashboard,
     Calendar,
     Users,
-    Settings,
-    LogOut,
-    ChevronLeft,
-    ChevronRight,
     Search,
     Filter,
     Download,
-    Plus,
-    MoreVertical,
-    CheckCircle2,
-    XCircle,
-    AlertCircle,
-    Clock,
     MapPin,
     ChevronDown,
     ChevronUp,
     Trophy,
     TrendingUp,
     Monitor,
-    Menu, // Adicionado para o botão do menu mobile
     Building
 } from 'lucide-react';
 
@@ -36,8 +24,6 @@ import {
     ResponsiveContainer,
     AreaChart,
     Area,
-    BarChart,
-    Bar,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -45,7 +31,6 @@ import {
     PieChart,
     Pie,
     Cell,
-    Legend
 } from 'recharts';
 
 import type { Admin } from '../../types';

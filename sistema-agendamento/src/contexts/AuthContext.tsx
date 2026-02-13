@@ -103,7 +103,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             try {
                 // Get Supabase Session to validate the "Optimistic Teacher Session"
-                const { data: { session }, error } = await supabase.auth.getSession();
+                const { data: { session } } = await supabase.auth.getSession();
 
                 // If we have a cached teacher session but Supabase says NO session...
                 const cachedTeacher = localStorage.getItem('teacher_session');
@@ -196,7 +196,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         try {
             // 1. Admin Login
-            const { data: rpcResult, error: rpcError } = await supabase.rpc('admin_login_secure', {
+            const { data: rpcResult } = await supabase.rpc('handle_new_user', {
                 p_username: identifier,
                 p_password: password
             });

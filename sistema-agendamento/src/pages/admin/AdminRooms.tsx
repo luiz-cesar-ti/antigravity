@@ -547,70 +547,73 @@ export function AdminRooms() {
                     <div className="flex flex-col lg:flex-row gap-8">
                         {/* Form */}
                         <div className="w-full lg:w-1/3">
-                            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 sticky top-24">
-                                <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
-                                    <div className="p-2 bg-primary-100 rounded-lg">
-                                        <Plus className="w-5 h-5 text-primary-600" />
-                                    </div>
-                                    Nova Sala
-                                </h2>
-
-                                <form onSubmit={handleSaveRoom} className="space-y-5">
+                            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 overflow-hidden border-0 sticky top-24">
+                                <div className="bg-slate-900 p-6 flex items-center justify-between">
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Nome da Sala</label>
+                                        <h2 className="text-xl font-bold text-white tracking-tight">Nova Sala</h2>
+                                        <p className="text-slate-400 text-xs mt-1">Cadastre um novo ambiente</p>
+                                    </div>
+                                    <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
+                                        <Plus className="w-6 h-6 text-amber-400" />
+                                    </div>
+                                </div>
+
+                                <form onSubmit={handleSaveRoom} className="p-6 space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Nome da Sala</label>
                                         <input
                                             type="text"
                                             required
                                             value={roomForm.name}
                                             onChange={e => setRoomForm({ ...roomForm, name: e.target.value })}
-                                            className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2.5 transition-all"
+                                            className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-400/50 focus:bg-white focus:border-amber-400 transition-all placeholder:text-slate-400"
                                             placeholder="Ex: Laboratório de Informática 1"
                                         />
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Descrição / Equipamentos</label>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Descrição / Equipamentos</label>
                                         <textarea
                                             value={roomForm.description}
                                             onChange={e => setRoomForm({ ...roomForm, description: e.target.value })}
-                                            className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2.5 transition-all"
+                                            className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-400/50 focus:bg-white focus:border-amber-400 transition-all placeholder:text-slate-400 resize-none h-24"
                                             rows={3}
-                                            placeholder="Ex: Projetor HDMI, Ar condicionado, 30 computadores..."
+                                            placeholder="Ex: Projetor HDMI, Ar condicionado..."
                                         />
-                                        <p className="mt-1 text-xs text-gray-500">Detalhes visíveis para o professor.</p>
+                                        <p className="text-[10px] text-slate-500 ml-1 font-bold">Detalhes visíveis para o professor.</p>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Abre às</label>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Abre às</label>
                                             <div className="relative">
                                                 <input
                                                     type="time"
                                                     required
                                                     value={roomForm.min_time}
                                                     onChange={e => setRoomForm({ ...roomForm, min_time: e.target.value })}
-                                                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 pl-8 py-2.5"
+                                                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-400/50 focus:bg-white focus:border-amber-400 transition-all cursor-pointer"
                                                 />
-                                                <Clock className="w-4 h-4 text-gray-400 absolute left-2.5 top-3" />
+                                                <Clock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
                                             </div>
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Fecha às</label>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Fecha às</label>
                                             <div className="relative">
                                                 <input
                                                     type="time"
                                                     required
                                                     value={roomForm.max_time}
                                                     onChange={e => setRoomForm({ ...roomForm, max_time: e.target.value })}
-                                                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 pl-8 py-2.5"
+                                                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-400/50 focus:bg-white focus:border-amber-400 transition-all cursor-pointer"
                                                 />
-                                                <Clock className="w-4 h-4 text-gray-400 absolute left-2.5 top-3" />
+                                                <Clock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Dias de Funcionamento</label>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Dias de Funcionamento</label>
                                         <div className="flex flex-wrap gap-2">
                                             {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, idx) => {
                                                 const isSelected = roomForm.available_days.includes(idx);
@@ -626,9 +629,9 @@ export function AdminRooms() {
                                                                 setRoomForm({ ...roomForm, available_days: [...current, idx].sort() });
                                                             }
                                                         }}
-                                                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isSelected
-                                                            ? 'bg-primary-600 text-white shadow-md transform scale-105'
-                                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                        className={`px-3 py-2 rounded-xl text-xs font-black transition-all duration-200 active:scale-95 border-2 ${isSelected
+                                                            ? 'bg-slate-800 text-amber-400 border-slate-800 shadow-lg shadow-slate-200 scale-105'
+                                                            : 'bg-white text-red-300 border-red-100 hover:border-red-200 hover:text-red-400'
                                                             }`}
                                                     >
                                                         {day}
@@ -641,9 +644,21 @@ export function AdminRooms() {
                                     <button
                                         type="submit"
                                         disabled={isCreating}
-                                        className="w-full flex justify-center py-3 px-4 border border-amber-400/20 rounded-lg shadow-md text-sm font-black uppercase tracking-widest text-white bg-gradient-to-br from-amber-400 to-orange-600 hover:from-amber-500 hover:to-orange-700 shadow-amber-500/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-70 transition-all mt-4"
+                                        className="w-full py-4 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-orange-200 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4 group border-2 border-transparent"
                                     >
-                                        {isCreating ? 'Salvando...' : 'Cadastrar Sala'}
+                                        {isCreating ? (
+                                            <>
+                                                <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                <span className="animate-pulse">Criando...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="p-1 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                                                    <Plus className="w-3 h-3" />
+                                                </div>
+                                                Cadastrar Sala
+                                            </>
+                                        )}
                                     </button>
                                 </form>
                             </div>
