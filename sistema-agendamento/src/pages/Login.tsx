@@ -466,14 +466,14 @@ export function Login() {
 
                         {/* Input 1: Identification */}
                         <div className="space-y-1.5 w-full">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                            <label className="text-xs font-bold text-blue-950 uppercase tracking-widest mb-2 block">
                                 Identificação
                             </label>
                             <div className="relative">
                                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                 <input
                                     type="text"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-4 pl-12 pr-4 text-slate-900 font-semibold placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-sans"
+                                    className="w-full bg-white border border-slate-300 rounded-xl py-3.5 pl-12 pr-4 text-slate-900 font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-500/20 focus:border-blue-600 transition-all text-sm"
                                     placeholder="Usuário TOTVS ou E-mail"
                                     value={identifier}
                                     onChange={(e) => setIdentifier(e.target.value)}
@@ -492,8 +492,8 @@ export function Login() {
 
                         {/* Input 2: Password */}
                         <div className="space-y-1.5 w-full">
-                            <div className="flex justify-between items-center ml-1">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                            <div className="flex justify-between items-center">
+                                <label className="text-xs font-bold text-blue-950 uppercase tracking-widest block">
                                     Senha
                                 </label>
                                 <Link to="/forgot-password" className="text-[10px] font-bold text-amber-600 hover:underline uppercase tracking-widest">
@@ -504,7 +504,7 @@ export function Login() {
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                 <input
                                     type={showPassword ? "text" : "password"}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-4 pl-12 pr-12 text-slate-900 font-semibold placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-sans"
+                                    className="w-full bg-white border border-slate-300 rounded-xl py-3.5 pl-12 pr-12 text-slate-900 font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all text-sm"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
