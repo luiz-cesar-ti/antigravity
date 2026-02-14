@@ -252,13 +252,14 @@ export function Register() {
                         <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
                             <div className="flex gap-2 items-center mb-2">
                                 <Info className="h-4 w-4 text-blue-600 shrink-0" />
-                                <p className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Requisitos da Senha</p>
+                                <p className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Requisitos de Senha Segura</p>
                             </div>
-                            <div className="grid grid-cols-2 gap-1.5 text-[11px] text-blue-700 font-medium">
+                            <div className="grid grid-cols-2 gap-x-10 gap-y-1.5 text-[11px] text-blue-700 font-medium">
                                 <span>• 8+ caracteres</span>
-                                <span>• Maiúscula</span>
-                                <span>• Minúscula</span>
-                                <span>• Número + Símbolo</span>
+                                <span>• Letra Maiúscula</span>
+                                <span>• Letra Minúscula</span>
+                                <span>• Número</span>
+                                <span className="col-span-2">• Caracteres especiais (ex: @ # $ % &)</span>
                             </div>
                         </div>
 
@@ -599,11 +600,11 @@ export function Register() {
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-1 h-1 rounded-full bg-blue-700 shrink-0" />
-                                    <span>Maiúscula</span>
+                                    <span>Letra Maiúscula</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-1 h-1 rounded-full bg-blue-700 shrink-0" />
-                                    <span>Minúscula</span>
+                                    <span>Letra Minúscula</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-1 h-1 rounded-full bg-blue-700 shrink-0" />
