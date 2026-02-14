@@ -559,7 +559,7 @@ export function Login() {
                             </p>
                             <Link
                                 to="/register"
-                                className="block w-full py-3 bg-slate-900 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg active:scale-[0.98] transition-all uppercase tracking-wider text-center"
+                                className="inline-block w-auto px-10 py-3 bg-slate-900 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg active:scale-[0.98] transition-all uppercase tracking-wider"
                             >
                                 Cadastre-se
                             </Link>
