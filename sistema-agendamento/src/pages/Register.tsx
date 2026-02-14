@@ -592,11 +592,27 @@ export function Register() {
                                 <Info className="h-5 w-5 text-blue-600 shrink-0" />
                                 <p className="text-xs font-bold text-blue-900 uppercase tracking-wider">Requisitos de Senha Segura</p>
                             </div>
-                            <div className="grid grid-cols-4 gap-3 text-xs text-blue-700 font-medium">
-                                <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-blue-400"></div>8+ caracteres</span>
-                                <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-blue-400"></div>Letra Maiúscula</span>
-                                <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-blue-400"></div>Letra Minúscula</span>
-                                <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-blue-400"></div>Número + Símbolo</span>
+                            <div className="grid grid-cols-2 gap-x-1 gap-y-1.5 text-xs text-blue-700 font-medium w-full">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-1 h-1 rounded-full bg-blue-700 shrink-0" />
+                                    <span>8+ caracteres</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-1 h-1 rounded-full bg-blue-700 shrink-0" />
+                                    <span>Maiúscula</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-1 h-1 rounded-full bg-blue-700 shrink-0" />
+                                    <span>Minúscula</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-1 h-1 rounded-full bg-blue-700 shrink-0" />
+                                    <span>Número</span>
+                                </div>
+                                <div className="col-span-2 flex items-center gap-1.5">
+                                    <div className="w-1 h-1 rounded-full bg-blue-700 shrink-0" />
+                                    <span>Caracteres especiais (ex: @ # $ % &)</span>
+                                </div>
                             </div>
                         </div>
 
