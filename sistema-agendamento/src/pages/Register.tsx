@@ -139,8 +139,8 @@ export function Register() {
     };
 
     // Shared input class
-    const inputClass = "w-full bg-slate-50 border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 text-slate-900 font-semibold placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm";
-    const labelClass = "text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block";
+    const inputClass = "w-full bg-slate-50 border border-slate-400 rounded-xl py-3.5 pl-12 pr-4 text-slate-900 font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm";
+    const labelClass = "text-xs font-bold text-slate-700 uppercase tracking-widest mb-1.5 block";
 
     return (
         <div className="min-h-screen w-full flex bg-white font-sans text-slate-900 overflow-hidden relative">
@@ -314,7 +314,7 @@ export function Register() {
                         {/* Units Selection */}
                         <div>
                             <label className={labelClass}>Unidades onde trabalha *</label>
-                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 max-h-40 overflow-y-auto">
+                            <div className="bg-slate-50 border border-slate-400 rounded-xl p-3 max-h-40 overflow-y-auto">
                                 <div className="space-y-1.5">
                                     {SCHOOL_UNITS.map((unit) => (
                                         <div
@@ -341,7 +341,7 @@ export function Register() {
                         </div>
 
                         {/* Terms */}
-                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                        <div className="bg-slate-50 border border-slate-400 rounded-xl p-4">
                             <div className="flex items-start gap-3">
                                 <input
                                     id="terms-mobile"
@@ -671,7 +671,7 @@ export function Register() {
                                 <Building2 className="inline w-3.5 h-3.5 mr-1" />
                                 Unidades do Objetivo (Selecione TODAS onde trabalha) *
                             </label>
-                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 max-h-48 overflow-y-auto">
+                            <div className="bg-slate-50 border border-slate-400 rounded-xl p-3 max-h-48 overflow-y-auto">
                                 <div className="grid grid-cols-2 gap-2">
                                     {SCHOOL_UNITS.map((unit) => (
                                         <div
@@ -698,7 +698,7 @@ export function Register() {
                         </div>
 
                         {/* Terms Section */}
-                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
+                        <div className="bg-slate-50 border border-slate-400 rounded-xl p-5">
                             <h3 className="text-xs font-bold text-slate-900 mb-3 flex items-center gap-2 uppercase tracking-wider">
                                 <FileText className="h-4 w-4 text-amber-600" />
                                 Termos de Uso e Privacidade
