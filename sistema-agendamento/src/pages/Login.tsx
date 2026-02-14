@@ -554,12 +554,12 @@ export function Login() {
 
                         {/* Secondary Action - Outlined Button (Matches Image) */}
                         <div className="text-center space-y-3 w-full">
-                            <p className="text-slate-400 text-xs font-medium">
+                            <p className="text-blue-950 text-sm font-bold">
                                 Ainda não tem acesso?
                             </p>
                             <Link
                                 to="/register"
-                                className="block w-full py-4 border border-slate-200 bg-white text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-50 active:bg-slate-100 transition-colors uppercase tracking-wider text-center"
+                                className="block w-full py-3 bg-slate-900 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg active:scale-[0.98] transition-all uppercase tracking-wider text-center"
                             >
                                 Cadastre-se
                             </Link>
