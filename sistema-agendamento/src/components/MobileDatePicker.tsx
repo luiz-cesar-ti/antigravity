@@ -33,20 +33,11 @@ export function MobileDatePicker({ value, onChange, name, min, className, requir
     const [selectedDate, setSelectedDate] = useState<Date | null>(value ? parseISO(value) : null);
 
     // Initial ref as undefined to match strict types
+    // Initial ref as undefined to match strict types
     const inputRef = useRef<HTMLInputElement>(null);
-    const [inputType, setInputType] = useState('text');
-    const [isFocused, setIsFocused] = useState(false);
 
     const useCustomPicker = isAndroidMobile();
     const isIos = isIPhone();
-
-    useEffect(() => {
-        if (value || isFocused) {
-            setInputType('date');
-        } else {
-            setInputType('text');
-        }
-    }, [value, isFocused]);
 
     useEffect(() => {
         if (value) {
@@ -116,23 +107,35 @@ export function MobileDatePicker({ value, onChange, name, min, className, requir
     const minDate = min ? parseISO(min) : null;
 
     // Check strict native fallback
-    // Check strict native fallback
     if (!useCustomPicker) {
         if (isIos) {
+            // Extract layout classes to align placeholder
+            // This regex captures pl-, pr-, py-, text-, font- classes including responsive prefixes
+            const layoutClasses = className?.match(/\b(pl|pr|py|px|text|font|sm:pl|sm:pr|sm:text|sm:font)-[^\s]+/g)?.join(' ') || '';
+
             return (
-                <input
-                    ref={inputRef}
-                    type={inputType}
-                    name={name}
-                    value={value}
-                    onChange={onChange}
-                    min={min}
-                    required={required}
-                    className={className}
-                    placeholder={placeholder || "dd/mm/aaaa"}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                />
+                <div className="relative w-full">
+                    <input
+                        ref={inputRef}
+                        type="date"
+                        name={name}
+                        value={value}
+                        onChange={onChange}
+                        min={min}
+                        required={required}
+                        className={clsx(className, !value && 'text-transparent')}
+                    />
+                    {!value && (
+                        <div
+                            className={clsx(
+                                "absolute inset-0 flex items-center pointer-events-none text-gray-400",
+                                layoutClasses
+                            )}
+                        >
+                            {placeholder || "dd/mm/aaaa"}
+                        </div>
+                    )}
+                </div>
             );
         }
 

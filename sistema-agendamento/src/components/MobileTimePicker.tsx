@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { clsx } from 'clsx';
 import './MobileTimePicker.css';
 
 interface MobileTimePickerProps {
@@ -100,19 +101,9 @@ export function MobileTimePicker({ value, onChange, name, className, placeholder
     const [hourIndex, setHourIndex] = useState(0);
     const [minuteIndex, setMinuteIndex] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
-    const [inputType, setInputType] = useState('text');
-    const [isFocused, setIsFocused] = useState(false);
 
     const useCustomPicker = isAndroidMobile();
     const isIos = isIPhone();
-
-    useEffect(() => {
-        if (value || isFocused) {
-            setInputType('time');
-        } else {
-            setInputType('text');
-        }
-    }, [value, isFocused]);
 
     const parseValue = useCallback((val: string) => {
         if (!val) return { h: 0, m: 0 };
@@ -167,18 +158,30 @@ export function MobileTimePicker({ value, onChange, name, className, placeholder
 
     if (!useCustomPicker) {
         if (isIos) {
+            // Extract layout classes to align placeholder
+            const layoutClasses = className?.match(/\b(pl|pr|py|px|text|font|sm:pl|sm:pr|sm:text|sm:font)-[^\s]+/g)?.join(' ') || '';
+
             return (
-                <input
-                    ref={inputRef}
-                    type={inputType}
-                    name={name}
-                    value={value}
-                    onChange={onChange}
-                    className={className}
-                    placeholder={placeholder || "hh/mm"}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                />
+                <div className="relative w-full">
+                    <input
+                        ref={inputRef}
+                        type="time"
+                        name={name}
+                        value={value}
+                        onChange={onChange}
+                        className={clsx(className, !value && 'text-transparent')}
+                    />
+                    {!value && (
+                        <div
+                            className={clsx(
+                                "absolute inset-0 flex items-center pointer-events-none text-gray-400",
+                                layoutClasses
+                            )}
+                        >
+                            {placeholder || "hh/mm"}
+                        </div>
+                    )}
+                </div>
             );
         }
 
