@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, parseISO, startOfWeek, endOfWeek, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { clsx } from 'clsx';
 import './MobileDatePicker.css';
 
 interface MobileDatePickerProps {
@@ -16,6 +15,8 @@ interface MobileDatePickerProps {
 }
 
 function isAndroidMobile(): boolean {
+    if (typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent.toLowerCase();
     return /android/i.test(ua) && /mobile/i.test(ua);
 }
 
