@@ -108,7 +108,18 @@ export function MobileTimePicker({ value, onChange, name, className }: MobileTim
 
     const handleOpen = useCallback(() => {
         if (!useCustomPicker) return;
-        const { h, m } = parseValue(value);
+
+        let h, m;
+        if (value) {
+            const parsed = parseValue(value);
+            h = parsed.h;
+            m = parsed.m;
+        } else {
+            const now = new Date();
+            h = now.getHours();
+            m = now.getMinutes();
+        }
+
         setHourIndex(h);
         setMinuteIndex(m);
         setIsOpen(true);
