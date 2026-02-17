@@ -7,12 +7,18 @@ interface MobileTimePickerProps {
     onChange: (e: any) => void;
     name: string;
     className?: string;
+    placeholder?: string;
 }
 
 function isAndroidMobile(): boolean {
     if (typeof navigator === 'undefined') return false;
     const ua = navigator.userAgent.toLowerCase();
     return /android/i.test(ua) && /mobile/i.test(ua);
+}
+
+function isIPhone(): boolean {
+    if (typeof navigator === 'undefined') return false;
+    return /iPhone|iPod/.test(navigator.userAgent);
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
@@ -89,13 +95,24 @@ function ScrollWheel({
     );
 }
 
-export function MobileTimePicker({ value, onChange, name, className }: MobileTimePickerProps) {
+export function MobileTimePicker({ value, onChange, name, className, placeholder }: MobileTimePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [hourIndex, setHourIndex] = useState(0);
     const [minuteIndex, setMinuteIndex] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
+    const [inputType, setInputType] = useState('text');
+    const [isFocused, setIsFocused] = useState(false);
 
     const useCustomPicker = isAndroidMobile();
+    const isIos = isIPhone();
+
+    useEffect(() => {
+        if (value || isFocused) {
+            setInputType('time');
+        } else {
+            setInputType('text');
+        }
+    }, [value, isFocused]);
 
     const parseValue = useCallback((val: string) => {
         if (!val) return { h: 0, m: 0 };
@@ -149,6 +166,22 @@ export function MobileTimePicker({ value, onChange, name, className }: MobileTim
     const displayValue = value || '';
 
     if (!useCustomPicker) {
+        if (isIos) {
+            return (
+                <input
+                    ref={inputRef}
+                    type={inputType}
+                    name={name}
+                    value={value}
+                    onChange={onChange}
+                    className={className}
+                    placeholder={placeholder || "hh/mm"}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                />
+            );
+        }
+
         return (
             <input
                 ref={inputRef}

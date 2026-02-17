@@ -321,6 +321,7 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
                                 onChange={handleInputChange}
                                 min={format(new Date(), 'yyyy-MM-dd')}
                                 className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3"
+                                placeholder="dd/mm/aaaa"
                             />
                         </div>
                     </div>
@@ -339,6 +340,7 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
                                 value={data.startTime}
                                 onChange={handleInputChange}
                                 className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3"
+                                placeholder="hh/mm"
                             />
                         </div>
                     </div>
@@ -353,6 +355,7 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
                                 value={data.endTime}
                                 onChange={handleInputChange}
                                 className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3"
+                                placeholder="hh/mm"
                             />
                         </div>
                     </div>

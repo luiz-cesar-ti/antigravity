@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, parseISO, startOfWeek, endOfWeek, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { clsx } from 'clsx';
 import './MobileDatePicker.css';
 
 interface MobileDatePickerProps {
@@ -12,6 +13,7 @@ interface MobileDatePickerProps {
     min?: string;
     className?: string;
     required?: boolean;
+    placeholder?: string;
 }
 
 function isAndroidMobile(): boolean {
@@ -20,15 +22,31 @@ function isAndroidMobile(): boolean {
     return /android/i.test(ua) && /mobile/i.test(ua);
 }
 
-export function MobileDatePicker({ value, onChange, name, min, className, required }: MobileDatePickerProps) {
+function isIPhone(): boolean {
+    if (typeof navigator === 'undefined') return false;
+    return /iPhone|iPod/.test(navigator.userAgent);
+}
+
+export function MobileDatePicker({ value, onChange, name, min, className, required, placeholder }: MobileDatePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [viewDate, setViewDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(value ? parseISO(value) : null);
 
     // Initial ref as undefined to match strict types
     const inputRef = useRef<HTMLInputElement>(null);
+    const [inputType, setInputType] = useState('text');
+    const [isFocused, setIsFocused] = useState(false);
 
     const useCustomPicker = isAndroidMobile();
+    const isIos = isIPhone();
+
+    useEffect(() => {
+        if (value || isFocused) {
+            setInputType('date');
+        } else {
+            setInputType('text');
+        }
+    }, [value, isFocused]);
 
     useEffect(() => {
         if (value) {
@@ -98,7 +116,26 @@ export function MobileDatePicker({ value, onChange, name, min, className, requir
     const minDate = min ? parseISO(min) : null;
 
     // Check strict native fallback
+    // Check strict native fallback
     if (!useCustomPicker) {
+        if (isIos) {
+            return (
+                <input
+                    ref={inputRef}
+                    type={inputType}
+                    name={name}
+                    value={value}
+                    onChange={onChange}
+                    min={min}
+                    required={required}
+                    className={className}
+                    placeholder={placeholder || "dd/mm/aaaa"}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                />
+            );
+        }
+
         return (
             <input
                 ref={inputRef}

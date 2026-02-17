@@ -566,6 +566,7 @@ export function RoomBookingV2() {
                                                 className="block w-full pl-12 sm:pl-14 pr-4 sm:pr-5 py-2.5 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-xl sm:rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm appearance-none [&::-webkit-calendar-picker-indicator]:hidden sm:[&::-webkit-calendar-picker-indicator]:block"
                                                 value={selectedDate}
                                                 onChange={(e: any) => setSelectedDate(e.target.value)}
+                                                placeholder="dd/mm/aaaa"
                                             />
                                         </div>
                                         {!isDayAvailable() && (
@@ -593,6 +594,7 @@ export function RoomBookingV2() {
                                                     className="block w-full pl-12 sm:pl-14 pr-4 sm:pr-5 py-2.5 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-xl sm:rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm appearance-none [&::-webkit-calendar-picker-indicator]:hidden sm:[&::-webkit-calendar-picker-indicator]:block"
                                                     value={startTime}
                                                     onChange={(e: any) => setStartTime(e.target.value)}
+                                                    placeholder="hh/mm"
                                                 />
                                             </div>
                                         </div>
@@ -610,6 +612,7 @@ export function RoomBookingV2() {
                                                     className="block w-full pl-12 sm:pl-14 pr-4 sm:pr-5 py-2.5 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-xl sm:rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm appearance-none [&::-webkit-calendar-picker-indicator]:hidden sm:[&::-webkit-calendar-picker-indicator]:block"
                                                     value={endTime}
                                                     onChange={(e: any) => setEndTime(e.target.value)}
+                                                    placeholder="hh/mm"
                                                 />
                                             </div>
                                         </div>
