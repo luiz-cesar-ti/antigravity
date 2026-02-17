@@ -1,6 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { clsx } from 'clsx';
 import './MobileTimePicker.css';
 
 interface MobileTimePickerProps {
@@ -8,18 +6,12 @@ interface MobileTimePickerProps {
     onChange: (e: any) => void;
     name: string;
     className?: string;
-    placeholder?: string;
 }
 
 function isAndroidMobile(): boolean {
     if (typeof navigator === 'undefined') return false;
     const ua = navigator.userAgent.toLowerCase();
     return /android/i.test(ua) && /mobile/i.test(ua);
-}
-
-function isIPhone(): boolean {
-    if (typeof navigator === 'undefined') return false;
-    return /iPhone|iPod/.test(navigator.userAgent);
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
@@ -96,14 +88,13 @@ function ScrollWheel({
     );
 }
 
-export function MobileTimePicker({ value, onChange, name, className, placeholder }: MobileTimePickerProps) {
+export function MobileTimePicker({ value, onChange, name, className }: MobileTimePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [hourIndex, setHourIndex] = useState(0);
     const [minuteIndex, setMinuteIndex] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const useCustomPicker = isAndroidMobile();
-    const isIos = isIPhone();
 
     const parseValue = useCallback((val: string) => {
         if (!val) return { h: 0, m: 0 };
@@ -157,34 +148,6 @@ export function MobileTimePicker({ value, onChange, name, className, placeholder
     const displayValue = value || '';
 
     if (!useCustomPicker) {
-        if (isIos) {
-            // Extract layout classes to align placeholder
-            const layoutClasses = className?.match(/\b(pl|pr|py|px|text|font|sm:pl|sm:pr|sm:text|sm:font)-[^\s]+/g)?.join(' ') || '';
-
-            return (
-                <div className="relative w-full">
-                    <input
-                        ref={inputRef}
-                        type="time"
-                        name={name}
-                        value={value}
-                        onChange={onChange}
-                        className={clsx(className, !value && 'text-transparent')}
-                    />
-                    {!value && (
-                        <div
-                            className={clsx(
-                                "absolute inset-0 flex items-center pointer-events-none text-gray-400",
-                                layoutClasses
-                            )}
-                        >
-                            {placeholder || "hh/mm"}
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
         return (
             <input
                 ref={inputRef}
