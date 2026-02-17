@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Building, User, Calendar, Clock, AlertCircle, Repeat } from 'lucide-react';
 import { MobileTimePicker } from '../MobileTimePicker';
+import { MobileDatePicker } from '../MobileDatePicker';
 import { clsx } from 'clsx';
 import type { RoomBookingData } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -265,8 +266,7 @@ export function Step1RoomBasicInfo({ data, updateData, onNext }: Step1Props) {
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Calendar className="h-5 w-5 text-gray-400" />
                             </div>
-                            <input
-                                type="date"
+                            <MobileDatePicker
                                 name="date"
                                 value={data.date}
                                 onChange={handleInputChange}

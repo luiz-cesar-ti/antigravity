@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import type { Room, User, Settings } from '../types';
 import { Clock, ChevronRight, AlertCircle, MapPin, Trash2, Info, X, CheckCircle, Calendar, Building2, DoorOpen, Check } from 'lucide-react';
 import { MobileTimePicker } from '../components/MobileTimePicker';
+import { MobileDatePicker } from '../components/MobileDatePicker';
 import { format, parseISO, getDay, differenceInHours } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { clsx } from 'clsx';
@@ -558,13 +559,13 @@ export function RoomBookingV2() {
                                             <div className="absolute inset-y-0 left-0 pl-4 sm:pl-5 flex items-center pointer-events-none">
                                                 <Calendar className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
                                             </div>
-                                            <input
-                                                type="date"
+                                            <MobileDatePicker
+                                                name="selectedDate"
                                                 required
                                                 min={format(new Date(), 'yyyy-MM-dd')}
                                                 className="block w-full pl-12 sm:pl-14 pr-4 sm:pr-5 py-2.5 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-xl sm:rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm appearance-none [&::-webkit-calendar-picker-indicator]:hidden sm:[&::-webkit-calendar-picker-indicator]:block"
                                                 value={selectedDate}
-                                                onChange={e => setSelectedDate(e.target.value)}
+                                                onChange={(e: any) => setSelectedDate(e.target.value)}
                                             />
                                         </div>
                                         {!isDayAvailable() && (
