@@ -204,8 +204,8 @@
         /* Taller for list view */
         max-height: 800px;
         min-height: 400px;
-        /* v27: Soft Gray Background */
-        background-color: #F8FAFC;
+        /* v27/v28: Soft Gray Background */
+        background-color: #F1F5F9;
         border-top-left-radius: 20px;
         border-top-right-radius: 20px;
         border-bottom-left-radius: 0;
@@ -219,7 +219,7 @@
     }
 
     .mrs-header {
-        background-color: #F8FAFC;
+        background-color: #F1F5F9;
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         z-index: 20;
         padding-bottom: 12px;

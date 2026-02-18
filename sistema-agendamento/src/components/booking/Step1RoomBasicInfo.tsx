@@ -181,22 +181,14 @@ export function Step1RoomBasicInfo({ data, updateData, onNext }: Step1Props) {
                 <div className="col-span-1 md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700">Unidade Objetivo *</label>
                     <div className="mt-1 relative rounded-md shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Building className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <select
-                            name="unit"
+                        <MobileRoomSelector
                             value={data.unit}
-                            onChange={handleInputChange}
-                            className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3"
-                        >
-                            <option value="">Selecione uma unidade...</option>
-                            {availableUnits
+                            onChange={(val) => updateData({ unit: val })}
+                            options={availableUnits
                                 .filter((unit: string) => !data.isRecurring || authorizedRecurringUnits.includes(unit))
-                                .map((unit: string) => (
-                                    <option key={unit} value={unit}>{unit}</option>
-                                ))}
-                        </select>
+                                .map((unit: string) => ({ id: unit, name: unit, unit: unit }))}
+                            placeholder="Selecione uma unidade..."
+                        />
                     </div>
                 </div>
 

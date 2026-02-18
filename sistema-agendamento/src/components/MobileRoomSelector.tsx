@@ -116,7 +116,7 @@ export function MobileRoomSelector({
                                     placeholder="Buscar sala ou turma..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    autoFocus // Focus search when opened
+                                // v28: Removed autoFocus to prevent keyboard on open
                                 />
                             </div>
                         </div>
