@@ -133,7 +133,10 @@
 .mrs-badge {
     display: inline-flex;
     align-items: center;
-    padding: 2px 8px;
+    justify-content: center;
+    /* v29: Center text inside fixed width */
+    padding: 2px 4px;
+    /* Reduced horizontal padding */
     border-radius: 6px;
     font-size: 11px;
     font-weight: 600;
@@ -141,6 +144,9 @@
     letter-spacing: 0.025em;
     margin-right: 8px;
     border: 1px solid transparent;
+    min-width: 65px;
+    /* v29: Fixed width for alignment */
+    text-align: center;
 }
 
 .mrs-badge-morning {
