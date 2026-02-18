@@ -98,7 +98,6 @@ export function MobileRoomSelector({
                     <div className="mrs-container">
                         {/* Header */}
                         <div className="mrs-header">
-                            <div className="mrs-drag-handle" />
                             <div className="flex items-center justify-between w-full mb-3">
                                 <h3 className="text-lg font-bold text-gray-900">Selecione o Local</h3>
                                 <button onClick={handleClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-600">
@@ -122,16 +121,14 @@ export function MobileRoomSelector({
                             </div>
                         </div>
 
-                        {/* List */}
+                        {/* List - Standard Card List (v27) */}
                         <div className="mrs-list">
                             {filteredOptions.length > 0 ? (
-                                filteredOptions.map((option, index) => (
+                                filteredOptions.map((option) => (
                                     <div
                                         key={option.id}
                                         className={clsx(
                                             "mrs-card-item",
-                                            // Alternating colors based on index
-                                            index % 2 === 0 ? "mrs-card-blue" : "mrs-card-gray",
                                             selectedOption?.id === option.id && "selected"
                                         )}
                                         onClick={() => handleSelect(option.name)}
@@ -140,10 +137,8 @@ export function MobileRoomSelector({
                                             <div className="mrs-card-header">
                                                 <span className="mrs-card-title">{option.name}</span>
                                                 <div className="flex items-center gap-2">
-                                                    {selectedOption?.id === option.id ? (
+                                                    {selectedOption?.id === option.id && (
                                                         <Check className="h-5 w-5 text-primary-600 flex-shrink-0" />
-                                                    ) : (
-                                                        <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
                                                     )}
                                                 </div>
                                             </div>
