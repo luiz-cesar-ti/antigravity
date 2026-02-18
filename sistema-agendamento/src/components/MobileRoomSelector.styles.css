@@ -1,0 +1,296 @@
+.mrs-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    display: flex;
+    justify-content: flex-end;
+    flex-direction: column;
+    animation: fadeIn 0.2s ease-out;
+    backdrop-filter: blur(2px);
+}
+
+.mrs-container {
+    background-color: white;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mrs-header {
+    padding: 12px 16px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: white;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    flex-shrink: 0;
+}
+
+.mrs-drag-handle {
+    width: 40px;
+    height: 4px;
+    background-color: #e5e7eb;
+    border-radius: 2px;
+    margin: 0 auto 12px;
+}
+
+.mrs-list {
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mrs-card-item {
+    padding: 0;
+    border-bottom: none;
+    /* No lines */
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 4px solid transparent;
+    margin-bottom: 12px;
+    /* Separation between cards */
+    border-radius: 12px;
+    /* Rounded corners */
+    overflow: hidden;
+    /* For border-radius */
+}
+
+/* Card Colors */
+.mrs-card-blue {
+    background-color: #eff6ff;
+    /* blue-50 */
+}
+
+.mrs-card-gray {
+    background-color: #f8fafc;
+    /* slate-50 */
+}
+
+.mrs-card-item:active {
+    filter: brightness(0.98);
+    /* Subtle feedback */
+}
+
+/* Selected State Override */
+.mrs-card-item.selected {
+    background-color: #e0f2fe;
+    /* sky-100 - Distinct from blue card */
+    border-left-color: #0284c7;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Header Container */
+.mrs-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 4px 20px;
+    /* Force 20px Left Padding */
+    background-color: transparent;
+    border-bottom: none;
+}
+
+.mrs-card-item.selected .mrs-card-header {
+    background-color: transparent;
+    color: #1e3a8a;
+}
+
+.mrs-card-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.025em;
+    margin-right: 8px;
+}
+
+/* Content Container */
+.mrs-card-content {
+    padding: 4px 20px 20px 20px;
+    /* Balanced 20px all around bottom */
+}
+
+.mrs-card-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mrs-detail-row {
+    font-size: 14px;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+}
+
+.mrs-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    margin-right: 8px;
+    border: 1px solid transparent;
+}
+
+.mrs-badge-morning {
+    background-color: #dbeafe;
+    /* blue-100 */
+    color: #1e40af;
+    /* blue-800 */
+    border-color: #bfdbfe;
+    /* blue-200 */
+}
+
+.mrs-badge-afternoon {
+    background-color: #ffedd5;
+    /* orange-100 */
+    color: #9a3412;
+    /* orange-800 */
+    border-color: #fed7aa;
+    /* orange-200 */
+}
+
+.mrs-value {
+    color: #374151;
+    /* gray-700 */
+    font-weight: 400;
+}
+
+.mrs-value strong {
+    font-weight: 600;
+    color: #111827;
+    /* gray-900 */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* Desktop adaptations */
+/* Desktop adaptations (Premium Modal v12) */
+@media (min-width: 640px) {
+    .mrs-overlay {
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(8px);
+        /* Blur */
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .mrs-container {
+        width: 100%;
+        max-width: 750px;
+        /* Wide Premium Presence */
+        border-radius: 16px;
+        /* Outer Window Rounding */
+        max-height: 85vh;
+
+        /* Premium Shadow & Definition */
+        box-shadow:
+            0 20px 25px -5px rgba(0, 0, 0, 0.1),
+            0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e2e8f0;
+        /* Subtle Border */
+        overflow: hidden;
+        /* Clip everything inside */
+        overflow-x: hidden;
+        /* Force NO horizontal scroll */
+    }
+
+    .mrs-header {
+        border-radius: 0;
+        /* Square Header inside Rounded Window */
+    }
+
+    /* Desktop Card Style: Asymmetrical & Spaced */
+    /* Desktop Card Style: Asymmetrical & Spaced */
+    .mrs-card-item {
+        margin-bottom: 12px !important;
+        /* Increased gap for better separation */
+        background-color: white !important;
+        /* Force White Background (No Zebra) */
+        position: relative;
+        /* Anchor for pseudo-element fix */
+
+        /* Round ONLY left side */
+        border-top-left-radius: 8px !important;
+        border-bottom-left-radius: 8px !important;
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+
+        transition: transform 0.2s ease, background-color 0.2s ease, border-left-color 0.2s ease;
+    }
+
+    /* Hover effect for interactive feedback */
+    .mrs-card-item:not(.selected):hover {
+        transform: translateX(8px);
+        background-color: #f0fdf4 !important;
+        /* green-50 */
+        border-left-color: #86efac !important;
+        /* green-300 */
+        cursor: pointer;
+    }
+
+    /* FIX: Invisible hit area to prevent jitter when moving */
+    .mrs-card-item:not(.selected):hover::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -20px;
+        /* Cover the gap created by movement */
+        width: 28px;
+        /* Width of gap + overlap */
+        height: 100%;
+        z-index: -1;
+    }
+
+    /* Override first/last child specific rounding from mobile/shared */
+    .mrs-card-item:first-child,
+    .mrs-card-item:last-child {
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-top-left-radius: 8px !important;
+        border-bottom-left-radius: 8px !important;
+    }
+
+    /* Strong Highlight for Selected Item (Overrides Zebra) */
+    .mrs-card-item.selected {
+        background-color: #dbeafe !important;
+        /* blue-100 - Distinct from batch colors */
+        border-left-color: #2563eb !important;
+        /* blue-600 */
+        transform: translateX(4px);
+        /* Subtle push effect */
+    }
+
+    .mrs-drag-handle {
+        display: none;
+    }
+}

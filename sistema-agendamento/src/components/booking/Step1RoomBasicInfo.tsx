@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Building, User, Calendar, Clock, AlertCircle, Repeat } from 'lucide-react';
 import { MobileTimePicker } from '../MobileTimePicker';
 import { MobileDatePicker } from '../MobileDatePicker';
+import { MobileRoomSelector } from '../MobileRoomSelector';
 import { clsx } from 'clsx';
 import type { RoomBookingData } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Building, User, MapPin, Calendar, Clock, AlertCircle, Repeat } from 'lucide-react';
 import { MobileTimePicker } from '../MobileTimePicker';
 import { MobileDatePicker } from '../MobileDatePicker';
+import { MobileRoomSelector } from '../MobileRoomSelector';
 import { clsx } from 'clsx';
 import type { BookingData } from '../../pages/BookingWizard';
 import { useAuth } from '../../contexts/AuthContext';
@@ -254,31 +255,14 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <MapPin className="h-5 w-5 text-gray-400" />
                         </div>
-                        <select
-                            name="local"
-                            disabled={!data.unit}
+                        <MobileRoomSelector
                             value={data.local}
-                            onChange={(e) => updateData({ local: e.target.value })}
+                            onChange={(value) => updateData({ local: value })}
+                            options={classrooms}
+                            disabled={!data.unit}
+                            placeholder={data.unit ? 'Selecione o local...' : 'Selecione a unidade primeiro'}
                             className={`focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-3 ${!data.unit ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                        >
-                            <option value="">{data.unit ? 'Selecione o local...' : 'Selecione a unidade primeiro'}</option>
-                            {classrooms.map((classroom) => {
-                                // Format label with class info if available
-                                const parts = [];
-                                if (classroom.class_morning) parts.push(`M: ${classroom.class_morning}`);
-                                if (classroom.class_afternoon) parts.push(`T: ${classroom.class_afternoon}`);
-
-                                const label = parts.length > 0
-                                    ? `${classroom.name} (${parts.join(' / ')})`
-                                    : classroom.name;
-
-                                return (
-                                    <option key={classroom.id} value={classroom.name}>
-                                        {label}
-                                    </option>
-                                );
-                            })}
-                        </select>
+                        />
                     </div>
                 </div>
 
