@@ -327,7 +327,8 @@
 
     .mrs-container {
         width: 100%;
-        max-width: 750px;
+        max-width: 500px;
+        /* v33: Compact Width */
         /* Wide Premium Presence */
         border-radius: 16px;
         /* Outer Window Rounding */
@@ -343,6 +344,8 @@
         /* Clip everything inside */
         overflow-x: hidden;
         /* Force NO horizontal scroll */
+        display: flex;
+        flex-direction: column;
     }
 
     .mrs-header {
@@ -350,68 +353,136 @@
         /* Square Header inside Rounded Window */
     }
 
-    /* Desktop Card Style: Asymmetrical & Spaced */
-    /* Desktop Card Style: Asymmetrical & Spaced */
-    .mrs-card-item {
-        margin-bottom: 12px !important;
-        /* Increased gap for better separation */
-        background-color: white !important;
-        /* Force White Background (No Zebra) */
-        position: relative;
-        /* Anchor for pseudo-element fix */
-
-        /* Round ONLY left side */
-        border-top-left-radius: 8px !important;
-        border-bottom-left-radius: 8px !important;
-        border-top-right-radius: 0 !important;
-        border-bottom-right-radius: 0 !important;
-
-        transition: transform 0.2s ease, background-color 0.2s ease, border-left-color 0.2s ease;
+    /* List Container (v31 Polish - Scroll Fix v32) */
+    .mrs-list {
+        padding: 24px;
+        /* Frame the cards */
+        background-color: #F8FAFC;
+        /* Darker Background */
+        scrollbar-width: none;
+        /* Hide scrollbar Firefox */
+        -ms-overflow-style: none;
+        /* Hide scrollbar IE */
+        gap: 8px;
+        /* Slightly tighter gap for compact view */
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        /* v32: Enable Scroll */
+        flex: 1;
+        /* Take remaining height */
     }
 
-    /* Hover effect for interactive feedback */
+    .mrs-list::-webkit-scrollbar {
+        display: none;
+        /* Hide scrollbar Chrome/Safari */
+    }
+
+    /* Desktop Card Style: Compact & Clean (v33-v35) */
+    .mrs-card-item {
+        margin-bottom: 0 !important;
+        /* Gap handles spacing */
+        background-color: white !important;
+        position: relative;
+        width: 100%;
+
+        /* Full Rounding (Match Mobile) */
+        border-radius: 12px !important;
+
+        /* Clean Look: No Shadow, Subtle Border (v33) */
+        box-shadow: none !important;
+        border: 1px solid #e2e8f0;
+
+        transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+            background-color 0.2s ease,
+            border-color 0.2s ease;
+
+        backface-visibility: hidden;
+        /* v31: Fix Jitter */
+
+        /* v32/v35: Size, Flex & Vertical Center Fixes */
+        flex-shrink: 0;
+        /* Don't squash! */
+        min-height: auto;
+        /* v34: Let content dictate height + padding */
+
+        /* v35: Uniform Padding handled by Container */
+        padding: 16px !important;
+
+        /* v34/v35: Stack vertically & Align Left */
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    /* v35: Internal Wrapper (Flex-1) -> Convert to Flex Column for Perfect Centering */
+    .mrs-card-item>div {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        width: 100%;
+        gap: 4px;
+        /* Space between Header and Content */
+    }
+
+    /* v35: Reset Internal Paddings for Desktop (Handled by Container) */
+    .mrs-card-header {
+        padding: 0 !important;
+    }
+
+    .mrs-card-content {
+        padding: 0 !important;
+    }
+
+    /* Hover effect: Blue Highlight + Zoom */
     .mrs-card-item:not(.selected):hover {
-        transform: translateX(8px);
-        background-color: #f0fdf4 !important;
-        /* green-50 */
-        border-left-color: #86efac !important;
-        /* green-300 */
+        transform: scale(1.02);
+        /* v30: Small Zoom */
+        background-color: #EFF6FF !important;
+        /* Blue-50 */
+        border-color: #93C5FD !important;
+        /* Blue-300 */
         cursor: pointer;
+        z-index: 10;
+        /* Bring to front on hover */
     }
 
     /* FIX: Invisible hit area to prevent jitter when moving */
     .mrs-card-item:not(.selected):hover::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: -20px;
-        /* Cover the gap created by movement */
-        width: 28px;
-        /* Width of gap + overlap */
-        height: 100%;
+        top: -6px;
+        /* Bridge the gap */
+        bottom: -6px;
+        left: 0;
+        right: 0;
         z-index: -1;
     }
 
     /* Override first/last child specific rounding from mobile/shared */
     .mrs-card-item:first-child,
     .mrs-card-item:last-child {
-        border-top-right-radius: 0 !important;
-        border-bottom-right-radius: 0 !important;
-        border-top-left-radius: 8px !important;
-        border-bottom-left-radius: 8px !important;
+        border-radius: 12px !important;
     }
 
-    /* Strong Highlight for Selected Item (Overrides Zebra) */
+    /* Strong Highlight for Selected Item: Green (v30) */
     .mrs-card-item.selected {
-        background-color: #dbeafe !important;
-        /* blue-100 - Distinct from batch colors */
-        border-left-color: #2563eb !important;
-        /* blue-600 */
-        transform: translateX(4px);
-        /* Subtle push effect */
+        background-color: #F0FDF4 !important;
+        /* Green-50 */
+        border-color: #16A34A !important;
+        /* Green-600 */
+        transform: scale(1.02);
+        /* Keep Zoom */
+        font-weight: 600;
+        color: #14532d;
+        /* Green-900 */
+        z-index: 5;
     }
+}
 
-    .mrs-drag-handle {
-        display: none;
-    }
+/* Drag Handle (Mobile Only) */
+.mrs-drag-handle {
+    display: none;
 }
