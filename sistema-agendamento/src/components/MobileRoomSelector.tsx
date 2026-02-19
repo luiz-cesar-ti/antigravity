@@ -136,11 +136,9 @@ export function MobileRoomSelector({
                                         <div className="flex-1">
                                             <div className="mrs-card-header">
                                                 <span className="mrs-card-title">{option.name}</span>
-                                                <div className="flex items-center gap-2">
-                                                    {selectedOption?.id === option.id && (
-                                                        <Check className="h-5 w-5 text-primary-600 flex-shrink-0" />
-                                                    )}
-                                                </div>
+                                                {selectedOption?.id === option.id && (
+                                                    <Check className="h-5 w-5 text-primary-600 flex-shrink-0" />
+                                                )}
                                             </div>
 
                                             {(option.class_morning || option.class_afternoon) && (

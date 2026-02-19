@@ -286,22 +286,46 @@
     }
 
     /* Content styling */
+    /* v46: Clean Centered Header */
+    /* v46: Clean Centered Header -> v47: Left Aligned */
+    /* v46: Clean Centered Header -> v47: Left Aligned */
+    /* v46: Clean Centered Header -> v47: Left Aligned */
+    /* v46: Clean Centered Header -> v47: Left Aligned */
+    /* v46: Clean Centered Header -> v47: Left Aligned */
+    /* v46: Clean Centered Header -> v47: Left Aligned */
     .mrs-card-header {
         padding: 16px;
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-start;
+        /* v47: Align Left */
         align-items: center;
+        position: relative;
+        /* For absolute check icon */
         border-bottom: 1px solid transparent;
     }
 
-    .mrs-card-title {
-        font-size: 17px;
-        font-weight: 700;
-        color: #1F2937;
+    /* Absolute Check Icon */
+    .mrs-card-header .text-primary-600 {
+        position: absolute;
+        right: 16px;
     }
 
+    .mrs-card-title {
+        font-size: 20px;
+        /* v48: 20px */
+        font-weight: 700;
+        color: #1F2937;
+        /* v48: Gray-800 */
+        text-align: left;
+        /* v47: Align Left */
+        display: block;
+        width: 100%;
+        line-height: 1.2;
+    }
+
+    /* v46: Standard Content Padding */
     .mrs-card-content {
-        padding: 0 16px 16px 16px;
+        padding: 0 16px 20px 16px;
         display: block;
     }
 
