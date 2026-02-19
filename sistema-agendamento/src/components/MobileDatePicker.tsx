@@ -97,19 +97,28 @@ export function MobileDatePicker({ value, onChange, name, min, className, requir
 
     const minDate = min ? parseISO(min) : null;
 
+    const isIOS = isAndroidMobile() ? false : (typeof navigator !== 'undefined' && /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase()));
+
     // Check strict native fallback
     if (!useCustomPicker) {
         return (
-            <input
-                ref={inputRef}
-                type="date"
-                name={name}
-                value={value}
-                onChange={onChange}
-                min={min}
-                required={required}
-                className={className}
-            />
+            <div className="relative w-full">
+                <input
+                    ref={inputRef}
+                    type="date"
+                    name={name}
+                    value={value}
+                    onChange={onChange}
+                    min={min}
+                    required={required}
+                    className={className}
+                />
+                {isIOS && (
+                    <div className="text-[10px] text-gray-400 font-medium px-1 mt-0.5 uppercase tracking-wider text-center">
+                        dd/mm/aaaa
+                    </div>
+                )}
+            </div>
         );
     }
 

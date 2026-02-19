@@ -211,7 +211,7 @@ export function Step2RoomSelection({ data, updateData, onNext, onPrev }: Step2Pr
                                 </div>
 
                                 <h3 className={clsx(
-                                    "font-bold text-lg mb-1",
+                                    "font-bold text-[20px] mb-1",
                                     isSelected ? "text-primary-900" : "text-gray-900"
                                 )}>
                                     {room.name}

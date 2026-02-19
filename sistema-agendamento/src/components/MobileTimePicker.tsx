@@ -148,16 +148,25 @@ export function MobileTimePicker({ value, onChange, name, className }: MobileTim
 
     const displayValue = value || '';
 
+    const isIOS = isAndroidMobile() ? false : (typeof navigator !== 'undefined' && /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase()));
+
     if (!useCustomPicker) {
         return (
-            <input
-                ref={inputRef}
-                type="time"
-                name={name}
-                value={value}
-                onChange={onChange}
-                className={className}
-            />
+            <div className="relative w-full">
+                <input
+                    ref={inputRef}
+                    type="time"
+                    name={name}
+                    value={value}
+                    onChange={onChange}
+                    className={className}
+                />
+                {isIOS && (
+                    <div className="text-[10px] text-gray-400 font-medium px-1 mt-0.5 uppercase tracking-wider text-center">
+                        hh:mm
+                    </div>
+                )}
+            </div>
         );
     }
 
