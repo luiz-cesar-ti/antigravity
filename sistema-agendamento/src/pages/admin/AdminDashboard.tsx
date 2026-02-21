@@ -512,9 +512,6 @@ export function AdminDashboard() {
                     queryStartDate = subDays(today, 365).toISOString().split('T')[0];
                 }
 
-                // RPC 1: Bookings (Secure)
-                // Note: get_admin_bookings handles unit filtering internally based on session token + params
-                // But for Super Admin logic in FE, we pass targetUnit.
                 let unitFilter: string | null = null;
                 if (isSuperAdmin) {
                     if (targetUnit) unitFilter = targetUnit;
@@ -522,12 +519,22 @@ export function AdminDashboard() {
                     unitFilter = adminUser.unit;
                 }
 
-                // RPC 2: Users (Secure) - Returns all teachers
-                // We'll filter/count client side if needed. 
-                // RPC get_admin_users usually filters by role='teacher' inside.
+                // RPC 1: Summary Stats
+                const summaryQuery = supabase.rpc('get_dashboard_summary_stats', {
+                    p_unit: unitFilter,
+                    p_start_date: queryStartDate || null,
+                    p_end_date: queryEndDate || null
+                });
 
-                // RPC 3: Equipment (Direct Select)
-                // Buscar lista completa para cálculo e tooltip
+                // RPC 2: Chart Data
+                const chartQuery = supabase.rpc('get_dashboard_chart_data', {
+                    p_unit: unitFilter,
+                    p_start_date: queryStartDate || null,
+                    p_end_date: queryEndDate || null,
+                    p_donut_shift: donutShift
+                });
+
+                // RPC 3: Equipment (Direct Select) para Tooltip
                 let equipmentQuery = supabase
                     .from('equipment')
                     .select('name, total_quantity, unit');
@@ -536,181 +543,47 @@ export function AdminDashboard() {
                     equipmentQuery = equipmentQuery.eq('unit', unitFilter);
                 }
 
-                const [bookingsRes, usersRes, equipmentRes] = await Promise.all([
-                    supabase.rpc('get_admin_bookings', {
-                        p_unit: unitFilter,
-                        p_start_date: queryStartDate || null,
-                        p_end_date: queryEndDate || null,
-                        p_is_recurring: null // All types
-                    }),
-                    supabase.rpc('get_admin_users'),
+                const [summaryRes, chartRes, equipmentRes] = await Promise.all([
+                    summaryQuery,
+                    chartQuery,
                     equipmentQuery
                 ]);
 
-                if (bookingsRes.error) throw bookingsRes.error;
-                if (usersRes.error) throw usersRes.error;
+                if (summaryRes.error) throw summaryRes.error;
+                if (chartRes.error) throw chartRes.error;
                 if (equipmentRes.error) throw equipmentRes.error;
 
-
-                const teachers = usersRes.data || [];
                 const equipmentList = equipmentRes.data || [];
-                const totalEquipmentTypes = equipmentList.length;
 
                 // Armazenar detalhamento ordenado por quantidade
                 setInventoryItems(equipmentList.map((item: any) => ({
                     name: item.name,
                     quantity: item.total_quantity || 0
-                })).sort((a, b) => b.quantity - a.quantity));
+                })).sort((a: any, b: any) => b.quantity - a.quantity));
 
-                // Derive Stats from the secure data
-                // bookings array already filtered by date/unit from RPC
-                const rawBookings = bookingsRes.data || [];
-
-                // Pre-process bookings for cleaner logic
-                const processedBookings = rawBookings.map((b: any) => ({
-                    ...b,
-                    _status: b.status?.toLowerCase(),
-                    _isSoftDeleted: !!b.deleted_at // Force boolean
-                }));
-
-                // Deduplicate Bookings for Counts (Group by display_id)
-                const uniqueBookingsMap = new Map();
-                processedBookings.forEach((b: any) => {
-                    // For recurring bookings (or multi-item), display_id is shared.
-                    // We want to count distinct Slots (Date + Time) as separate bookings,
-                    // but group multiple items in the SAME slot as 1 booking.
-                    const key = b.display_id
-                        ? `term_${b.display_id}_${b.booking_date}_${b.start_time}`
-                        : b.id;
-
-                    if (!uniqueBookingsMap.has(key)) {
-                        uniqueBookingsMap.set(key, b);
-                    }
-                });
-                const uniqueAllBookings = Array.from(uniqueBookingsMap.values());
-
-                // Filter Unique Bookings (for usage charts)
-                const uniqueValidBookings = uniqueAllBookings.filter((b: any) =>
-                    !b._isSoftDeleted &&
-                    b._status !== 'cancelled_by_user' &&
-                    b._status !== 'cancelled' &&
-                    b._status !== 'excluido'
-                );
-
-                // Filter for usage charts (Only valid, non-deleted items)
-                const validBookings = processedBookings.filter((b: any) =>
-                    !b._isSoftDeleted &&
-                    b._status !== 'cancelled_by_user' &&
-                    b._status !== 'cancelled' &&
-                    b._status !== 'excluido'
-                );
-
-                // 1. Bookings by Day (AreaChart - Smoother)
-                const daysMap: Record<string, number> = {};
-                uniqueValidBookings.forEach((b: any) => {
-                    const dateStr = b.booking_date;
-                    daysMap[dateStr] = (daysMap[dateStr] || 0) + 1;
-                });
-
-                const bookingsByDay = Object.keys(daysMap)
-                    .sort()
-                    .map(date => ({
-                        date: format(parseISO(date), 'dd/MM'),
-                        agendamentos: daysMap[date]
-                    }));
-
-                // 2. Popular Equipment (Pie/Donut)
-                const filteredForDonut = validBookings.filter((b: any) => {
-                    if (donutShift === 'all') return true;
-                    if (!b.start_time) return false;
-                    const hour = parseInt(b.start_time.split(':')[0]);
-                    if (donutShift === 'morning') return hour >= 7 && hour < 13;
-                    if (donutShift === 'afternoon') return hour >= 13 && hour <= 18;
-                    return true;
-                });
-
-                const equipmentMap: Record<string, number> = {};
-                filteredForDonut.forEach((b: any) => {
-                    const name = b.equipment?.name || 'Desconhecido';
-                    equipmentMap[name] = (equipmentMap[name] || 0) + 1;
-                });
-                const totalPopularVal = Object.values(equipmentMap).reduce((a, b) => a + b, 0);
-                const popularEquipment = Object.keys(equipmentMap)
-                    .map(key => {
-                        const val = equipmentMap[key];
-                        return {
-                            name: key,
-                            value: val,
-                            percent: totalPopularVal > 0 ? Math.round((val / totalPopularVal) * 100) : 0
-                        };
-                    })
-                    .sort((a, b) => b.value - a.value)
-                    .slice(0, 5);
-
-                // 3. Top Teachers (New Ranking)
-                const teacherMap: Record<string, { id: string, name: string, count: number }> = {};
-                uniqueValidBookings.forEach((b: any) => {
-                    const userId = b.user_id;
-                    const name = (b as any).users?.full_name || 'Desconhecido';
-                    if (userId) {
-                        if (!teacherMap[userId]) {
-                            teacherMap[userId] = { id: userId, name, count: 0 };
-                        }
-                        teacherMap[userId].count += 1;
-                    }
-                });
-                const topTeachers = Object.values(teacherMap)
-                    .sort((a, b) => b.count - a.count)
-                    .slice(0, 5);
-
-                // 4. Booking Status (Pie)
-                const statusCounts = { active: 0, completed: 0, recurring: 0, excluded: 0 };
-
-                // Recalculate based on uniqueAllBookings to catch everything
-                uniqueAllBookings.forEach((b: any) => {
-                    if (b._status === 'deleted_by_admin') return;
-
-                    if (b._isSoftDeleted || b._status === 'cancelled_by_user' || b._status === 'cancelled' || b._status === 'excluido') {
-                        statusCounts.excluded++;
-                    } else if (b._status === 'encerrado' || b._status === 'concluido') {
-                        statusCounts.completed++;
-                    } else if (b._status === 'active' || b._status === 'confirmed' || b._status === 'confirmado') {
-                        if (b.is_recurring) statusCounts.recurring++;
-                        else statusCounts.active++;
-                    } else {
-                        // pending or others count as active for dashboard summary mostly, but let's separate if needed
-                        statusCounts.active++;
-                    }
-                });
-
-                const bookingStatus = [
-                    { name: 'Ativo', value: statusCounts.active, color: '#16a34a' },
-                    { name: 'Concluído', value: statusCounts.completed, color: '#2563eb' },
-                    { name: 'Recorrente', value: statusCounts.recurring, color: '#ca8a04' },
-                    { name: 'Cancelado', value: statusCounts.excluded, color: '#ef4444' }
-                ].filter(i => i.value > 0);
+                const summary = summaryRes.data as any;
+                const charts = chartRes.data as any;
 
                 // Update Chart Data
                 setChartData(prev => ({
-                    bookingsByDay,
-                    popularEquipment,
-                    topTeachers,
-                    bookingStatus,
-                    topClassrooms: prev.topClassrooms?.slice(0, 3) || [] // Keep existing and force limit to 3 needed for consistency
+                    bookingsByDay: charts.bookingsByDay || [],
+                    popularEquipment: charts.popularEquipment || [],
+                    topTeachers: charts.topTeachers || [],
+                    bookingStatus: charts.bookingStatus || [],
+                    topClassrooms: prev.topClassrooms?.slice(0, 3) || [] // Keep existing and force limit
                 }));
 
                 // Update Stats
                 setStats({
-                    activeBookings: statusCounts.active + statusCounts.recurring,
-                    completedBookings: statusCounts.completed,
-                    totalEquipment: totalEquipmentTypes,
-                    totalTeachers: unitFilter
-                        ? teachers.filter((t: any) => t.units && Array.isArray(t.units) && t.units.includes(unitFilter)).length
-                        : teachers.length,
+                    activeBookings: summary.activeBookings || 0,
+                    completedBookings: summary.completedBookings || 0,
+                    totalEquipment: summary.totalEquipment || 0,
+                    totalTeachers: summary.totalTeachers || 0,
                 });
 
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error fetching stats:', error);
+                alert("ERRO NO DASHBOARD (RPC): " + (error.message || JSON.stringify(error)));
             } finally {
                 setLoading(false);
             }
@@ -746,36 +619,15 @@ export function AdminDashboard() {
                     unitFilter = adminUser.unit;
                 }
 
-                const { data, error } = await supabase.rpc('get_admin_bookings', {
+                const { data, error } = await supabase.rpc('get_dashboard_classroom_stats', {
                     p_unit: unitFilter,
                     p_start_date: startDate || null,
-                    p_end_date: endDate || null,
-                    p_is_recurring: null
+                    p_end_date: endDate || null
                 });
 
                 if (error) throw error;
 
-                const rawBookings = data || [];
-
-                // Filter valid bookings
-                const validClassroomBookings = rawBookings.filter((b: any) =>
-                    b.local &&
-                    !b.deleted_at &&
-                    !['cancelled_by_user', 'cancelled', 'excluido', 'deleted_by_admin'].includes(b.status?.toLowerCase())
-                );
-
-                // Group by Classroom
-                const classroomMap: Record<string, number> = {};
-                validClassroomBookings.forEach((b: any) => {
-                    if (b.local) {
-                        classroomMap[b.local] = (classroomMap[b.local] || 0) + 1;
-                    }
-                });
-
-                const allClassroomsData = Object.entries(classroomMap)
-                    .map(([name, count]) => ({ name, count }))
-                    .sort((a, b) => b.count - a.count);
-
+                const allClassroomsData = data || [];
                 const top3Classrooms = allClassroomsData.slice(0, 3);
 
                 setAllClassrooms(allClassroomsData);
