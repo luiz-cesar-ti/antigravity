@@ -583,7 +583,10 @@ export function AdminDashboard() {
 
             } catch (error: any) {
                 console.error('Error fetching stats:', error);
-                alert("ERRO NO DASHBOARD (RPC): " + (error.message || JSON.stringify(error)));
+                const msg = error?.message || '';
+                if (msg.includes('Acesso negado')) {
+                    alert('Sua sessão expirou. Por favor, clique em "Sair do Sistema" no menu lateral e faça login novamente.');
+                }
             } finally {
                 setLoading(false);
             }
