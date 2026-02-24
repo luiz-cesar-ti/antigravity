@@ -105,7 +105,12 @@ export function AdminBookings() {
             setBookings(fetchedBookings);
         } else if (error) {
             console.error('Error fetching admin bookings:', error);
-            alert(`Erro Crítico ao buscar agendamentos: ${error.message}\nCódigo: ${error.code || 'N/A'}\nPor favor, envie este erro ao suporte.`);
+            const msg = error?.message || '';
+            if (msg.includes('Acesso negado') || msg.includes('JWT') || msg.includes('expired')) {
+                alert('Sua sessão expirou. Por favor, clique em "Sair do Sistema" no menu lateral e faça login novamente.');
+            } else {
+                alert(`Erro ao buscar agendamentos: ${error.message}\nPor favor, envie este erro ao suporte.`);
+            }
         }
         setLoading(false);
     };
