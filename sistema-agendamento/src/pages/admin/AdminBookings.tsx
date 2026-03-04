@@ -694,51 +694,64 @@ export function AdminBookings() {
                                                                     </p>
                                                                 </div>
                                                             )}
-                                                            <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-50/80">
+                                                            <div className="grid grid-cols-2 lg:grid-cols-5 md:grid-cols-3 gap-3 md:gap-5 lg:gap-6 mt-3 sm:mt-4 py-3 px-4 sm:py-4 sm:px-6 bg-gradient-to-br from-blue-900 to-blue-950 rounded-2xl border border-blue-800 shadow-xl ring-1 ring-inset ring-white/10">
                                                                 {/* PROFESSOR */}
-                                                                <div className="flex flex-col gap-1">
-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Professor</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
-                                                                            <Users className="h-3 w-3 text-gray-400" />
-                                                                        </div>
-                                                                        <span className="text-xs font-bold text-gray-600 truncate">{(first as any).users?.full_name}</span>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
+                                                                        <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
+                                                                    </div>
+                                                                    <div className="flex flex-col min-w-0 justify-center">
+                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Professor</span>
+                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">{(first as any).users?.full_name}</span>
                                                                     </div>
                                                                 </div>
 
                                                                 {/* ESPECIFICAÇÃO */}
-                                                                <div className="flex flex-col gap-1">
-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Especificação</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
-                                                                            <Monitor className="h-3 w-3 text-gray-400" />
-                                                                        </div>
-                                                                        <span className="text-xs font-bold text-gray-700 truncate">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
+                                                                        <Monitor className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
+                                                                    </div>
+                                                                    <div className="flex flex-col min-w-0 justify-center">
+                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Especificação</span>
+                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
                                                                             {first.equipment?.brand ? `${first.equipment.brand} ${first.equipment.model || ''}` : 'Não especificado'}
                                                                         </span>
                                                                     </div>
                                                                 </div>
 
                                                                 {/* SALA/LOCAL */}
-                                                                <div className="flex flex-col gap-1">
-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Sala/Local</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
-                                                                            <MapPin className="h-3 w-3 text-gray-400" />
-                                                                        </div>
-                                                                        <span className="text-xs font-bold text-gray-600 truncate">{first.local}</span>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
+                                                                        <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
+                                                                    </div>
+                                                                    <div className="flex flex-col min-w-0 justify-center">
+                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Sala/Local</span>
+                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">{first.local}</span>
                                                                     </div>
                                                                 </div>
 
-                                                                {/* AGENDADO PARA */}
-                                                                <div className="flex flex-col gap-1">
-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Agendado Para</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
-                                                                            <Clock className="h-3 w-3 text-gray-400" />
-                                                                        </div>
-                                                                        <span className="text-xs font-bold text-gray-600">
-                                                                            {format(parseISO(first.booking_date), "dd/MM/yy")} • {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
+                                                                {/* DATA */}
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
+                                                                        <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
+                                                                    </div>
+                                                                    <div className="flex flex-col min-w-0 justify-center">
+                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Data</span>
+                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
+                                                                            {format(parseISO(first.booking_date), "dd/MM/yy")}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* HORÁRIO */}
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
+                                                                        <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
+                                                                    </div>
+                                                                    <div className="flex flex-col min-w-0 justify-center">
+                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Horário</span>
+                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
+                                                                            {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
                                                                         </span>
                                                                     </div>
                                                                 </div>
@@ -826,48 +839,64 @@ export function AdminBookings() {
                                                                     </p>
                                                                 </div>
                                                             )}
-                                                            <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-50/80">
+                                                            <div className="grid grid-cols-2 lg:grid-cols-5 md:grid-cols-3 gap-3 md:gap-5 lg:gap-6 mt-3 sm:mt-4 py-3 px-4 sm:py-4 sm:px-6 bg-gradient-to-br from-blue-900 to-blue-950 rounded-2xl border border-blue-800 shadow-xl ring-1 ring-inset ring-white/10">
                                                                 {/* PROFESSOR */}
-                                                                <div className="flex flex-col gap-1">
-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Professor</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
-                                                                            <Users className="h-3 w-3 text-gray-400" />
-                                                                        </div>
-                                                                        <span className="text-xs font-bold text-gray-600 truncate">{(first as any).users?.full_name}</span>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
+                                                                        <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
+                                                                    </div>
+                                                                    <div className="flex flex-col min-w-0 justify-center">
+                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Professor</span>
+                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">{(first as any).users?.full_name}</span>
                                                                     </div>
                                                                 </div>
 
                                                                 {/* ESPECIFICAÇÃO */}
-                                                                <div className="flex flex-col gap-1">
-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Especificação</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="text-xs font-bold text-indigo-600 truncate">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
+                                                                        <Monitor className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
+                                                                    </div>
+                                                                    <div className="flex flex-col min-w-0 justify-center">
+                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Especificação</span>
+                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
                                                                             Múltiplos Itens
                                                                         </span>
                                                                     </div>
                                                                 </div>
 
                                                                 {/* SALA/LOCAL */}
-                                                                <div className="flex flex-col gap-1">
-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Sala/Local</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
-                                                                            <MapPin className="h-3 w-3 text-gray-400" />
-                                                                        </div>
-                                                                        <span className="text-xs font-bold text-gray-600 truncate">{first.local}</span>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
+                                                                        <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
+                                                                    </div>
+                                                                    <div className="flex flex-col min-w-0 justify-center">
+                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Sala/Local</span>
+                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">{first.local}</span>
                                                                     </div>
                                                                 </div>
 
-                                                                {/* AGENDADO PARA */}
-                                                                <div className="flex flex-col gap-1">
-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Agendado Para</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
-                                                                            <Clock className="h-3 w-3 text-gray-400" />
-                                                                        </div>
-                                                                        <span className="text-xs font-bold text-gray-600">
-                                                                            {format(parseISO(first.booking_date), "dd/MM/yy")} • {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
+                                                                {/* DATA */}
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
+                                                                        <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
+                                                                    </div>
+                                                                    <div className="flex flex-col min-w-0 justify-center">
+                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Data</span>
+                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
+                                                                            {format(parseISO(first.booking_date), "dd/MM/yy")}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* HORÁRIO */}
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
+                                                                        <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
+                                                                    </div>
+                                                                    <div className="flex flex-col min-w-0 justify-center">
+                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Horário</span>
+                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
+                                                                            {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
                                                                         </span>
                                                                     </div>
                                                                 </div>
