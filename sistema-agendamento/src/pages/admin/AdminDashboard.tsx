@@ -564,12 +564,19 @@ export function AdminDashboard() {
                 const summary = summaryRes.data as any;
                 const charts = chartRes.data as any;
 
+                // Calculate percentages for bookingStatus
+                const totalStatus = (charts.bookingStatus || []).reduce((acc: number, curr: any) => acc + (curr.value || 0), 0);
+                const bookingStatusWithPercent = (charts.bookingStatus || []).map((item: any) => ({
+                    ...item,
+                    percent: totalStatus > 0 ? Math.round((item.value / totalStatus) * 100) : 0
+                }));
+
                 // Update Chart Data
                 setChartData(prev => ({
                     bookingsByDay: charts.bookingsByDay || [],
                     popularEquipment: charts.popularEquipment || [],
                     topTeachers: charts.topTeachers || [],
-                    bookingStatus: charts.bookingStatus || [],
+                    bookingStatus: bookingStatusWithPercent,
                     topClassrooms: prev.topClassrooms?.slice(0, 3) || [] // Keep existing and force limit
                 }));
 
@@ -1087,7 +1094,7 @@ export function AdminDashboard() {
                                 </Pie>
                                 <Tooltip
                                     contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
-                                    formatter={(value: any, _: any, props: any) => [`${value} (${props.payload.percent}%)`, 'Quantidade']}
+                                    formatter={(value: any) => [`${value}`, 'Quantidade']}
                                 />
                             </PieChart>
                         </ResponsiveContainer>
