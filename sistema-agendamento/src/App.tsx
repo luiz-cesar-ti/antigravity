@@ -38,6 +38,7 @@ const AdminNotifications = lazy(() => import('./pages/admin/AdminNotifications')
 const AdminManageAdmins = lazy(() => import('./pages/admin/AdminManageAdmins').then(module => ({ default: module.AdminManageAdmins })));
 const AdminLogs = lazy(() => import('./pages/admin/AdminLogs').then(module => ({ default: module.AdminLogs })));
 const AdminClassrooms = lazy(() => import('./pages/admin/AdminClassrooms').then(module => ({ default: module.AdminClassrooms })));
+const AdminAutomation = lazy(() => import('./pages/admin/AdminAutomation').then(module => ({ default: module.AdminAutomation })));
 
 function App() {
   return (
@@ -71,6 +72,7 @@ function App() {
                   <Route path="notifications" element={<AdminNotifications />} />
                   <Route path="manage-admins" element={<AdminManageAdmins />} />
                   <Route path="logs" element={<AdminLogs />} />
+                  <Route path="automation" element={<AdminAutomation />} />
                 </Route>
               </Route>
 

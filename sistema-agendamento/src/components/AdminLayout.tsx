@@ -17,7 +17,8 @@ import {
     MapPin,
     ShieldAlert,
     ChevronRight,
-    Shield
+    Shield,
+    Zap
 } from 'lucide-react';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import { NotificationBell } from './NotificationBell';
@@ -48,6 +49,7 @@ export function AdminLayout() {
         { path: '/admin/users', icon: Users, label: 'Usuários', always: true },
         { path: '/admin/loans', icon: ClipboardCheck, label: 'Empréstimos', hideSuperAdmin: true },
         { path: '/admin/schedule', icon: Clock, label: 'Horário de Aulas', hideSuperAdmin: true },
+        { path: '/admin/automation', icon: Zap, label: 'Automação', hideSuperAdmin: true, unitRestriction: 'Objetivo São Vicente' },
         { path: '/admin/manual', icon: BookOpen, label: 'Manual do Admin', hideSuperAdmin: true },
     ];
 
@@ -57,6 +59,7 @@ export function AdminLayout() {
     ];
 
     const shouldShowItem = (item: typeof navItems[0]) => {
+        if (item.unitRestriction && adminUser?.unit !== item.unitRestriction) return false;
         if (item.always) return true;
         if (item.hideSuperAdmin && adminUser?.role === 'super_admin') return false;
         return true;
