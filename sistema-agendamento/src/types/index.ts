@@ -140,6 +140,7 @@ export interface EquipmentLoan {
     term_hash?: string;
     term_id?: string;
     term_version?: string;
+    observations?: string | null;
 }
 
 export type UserRole = 'teacher' | 'admin' | 'super_admin';

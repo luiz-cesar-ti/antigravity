@@ -110,7 +110,8 @@ export function AdminLoans() {
         end_time: '',
         equipment_id: '',
         quantity: 1,
-        asset_numbers: [''] // Multiple asset numbers
+        asset_numbers: [''], // Multiple asset numbers
+        observations: '' // New optional field
     });
 
     const fetchLoans = async () => {
@@ -245,7 +246,8 @@ export function AdminLoans() {
                 p_equipment_id: formData.equipment_id,
                 p_quantity: formData.quantity,
                 p_asset_number: formData.asset_numbers.join(', '),
-                p_unit: adminUser.unit
+                p_unit: adminUser.unit,
+                p_observations: formData.observations || null
             });
 
             if (loanError) throw loanError;
@@ -267,6 +269,7 @@ export function AdminLoans() {
                 asset_number: formData.asset_numbers.join(', '),
                 unit: adminUser.unit,
                 equipment: selectedEq,
+                observations: formData.observations || null,
 
                 created_at: new Date().toISOString(),
                 // @ts-ignore
@@ -287,7 +290,8 @@ export function AdminLoans() {
                 end_time: format(new Date(), 'HH:mm'),
                 equipment_id: '',
                 quantity: 1,
-                asset_numbers: ['']
+                asset_numbers: [''],
+                observations: ''
             });
 
             // Open Preview Modal com dados completos
@@ -369,7 +373,16 @@ export function AdminLoans() {
                         <tr><td style="padding: 0.5px 0;"><strong>Nº Patrimônio:</strong></td><td>${escapeHtml(loan.asset_number)}</td></tr>
                         <tr><td style="padding: 0.5px 0;"><strong>Local de Uso:</strong></td><td>${escapeHtml(loan.location)}</td></tr>
                         <tr><td style="padding: 0.5px 0;"><strong>Início:</strong></td><td>${format(parseISO(loan.start_at), "dd/MM/yyyy 'às' HH:mm")}</td></tr>
-                        <tr><td style="padding: 0.5px 0;"><strong>Previsão de Término:</strong></td><td>${format(parseISO(loan.end_at), "dd/MM/yyyy 'às' HH:mm")}</td></tr>
+                        <tr style="border-bottom: 1px dashed #ccc;">
+                            <td style="padding: 0.5px 0; padding-bottom: 12px;"><strong>Previsão de Término:</strong></td>
+                            <td style="padding-bottom: 12px;">${format(parseISO(loan.end_at), "dd/MM/yyyy 'às' HH:mm")}</td>
+                        </tr>
+                        ${loan.observations ? `
+                        <tr>
+                            <td style="padding-top: 20px; vertical-align: top;"><strong>Observações:</strong></td>
+                            <td style="padding-top: 20px; vertical-align: top;">${escapeHtml(loan.observations)}</td>
+                        </tr>
+                        ` : ''}
                     </table>
                 </div>
 
@@ -675,6 +688,18 @@ export function AdminLoans() {
                                     Atenção: Informe pelo menos {formData.quantity} patrimônios.
                                 </p>
                             )}
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Observações do Empréstimo (Opcional)</label>
+                            <textarea
+                                name="observations"
+                                value={formData.observations}
+                                onChange={(e: any) => handleInputChange(e)}
+                                rows={2}
+                                className="block w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent focus:border-primary-100 focus:bg-white rounded-2xl text-sm font-medium transition-all outline-none resize-none"
+                                placeholder="Detalhes adicionais sobre o equipamento, devolução, etc..."
+                            />
                         </div>
 
 
