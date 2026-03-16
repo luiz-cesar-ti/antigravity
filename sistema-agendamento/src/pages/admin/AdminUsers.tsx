@@ -323,6 +323,15 @@ export function AdminUsers() {
                                                             LGPD OK
                                                         </span>
                                                     )}
+                                                    {teacher.email_confirmed_at ? (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-green-50 text-green-600 border border-green-100" title={`Email confirmado em: ${format(parseISO(teacher.email_confirmed_at), 'dd/MM/yyyy HH:mm')}`}>
+                                                            <Check className="w-3 h-3 mr-1" /> E-mail confirmado
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-50 text-amber-600 border border-amber-100" title="O professor ainda não clicou no link de confirmação enviado por email.">
+                                                            Pendente (Aguardando Confirmação)
+                                                        </span>
+                                                    )}
                                                 </div>
 
                                                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-500">

@@ -13,6 +13,7 @@ export interface User {
     terms_accepted_at?: string;
     terms_version?: string;
     created_at: string;
+    email_confirmed_at?: string;
 }
 
 export interface Admin {
