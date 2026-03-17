@@ -222,35 +222,78 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
             // PWA Push Notification (OneSignal API) for Admin Users
             try {
                 const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
-                if (appId) {
+                const apiKey = import.meta.env.VITE_ONESIGNAL_REST_API_KEY;
+                if (appId && apiKey) {
                     const firstName = data.full_name.split(' ')[0];
                     const lastName = data.full_name.split(' ').slice(-1)[0];
                     const professorName = `${firstName} ${lastName}`;
+                    const bookingDate = data.isRecurring ? null : data.date;
                     const dateFormatted = data.isRecurring 
                         ? `toda ${['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}`
                         : data.date.split('-').reverse().join('/');
                     const equipmentNames = data.equipments.map(eq => eq.name).join(', ');
                     const timeRange = `${data.startTime} - ${data.endTime}`;
+
+                    const headers = {
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'Authorization': `Basic ${apiKey}`
+                    };
                     
+                    // ── 1. IMMEDIATE: "Novo Agendamento" ──
                     const heading = `📋 Novo Agendamento`;
                     const message = `Prof. ${professorName} agendou ${equipmentNames} em ${data.local} para ${dateFormatted} (${timeRange}).`;
                     
                     fetch('https://onesignal.com/api/v1/notifications', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json; charset=utf-8',
-                            'Authorization': `Basic ${import.meta.env.VITE_ONESIGNAL_REST_API_KEY || ''}`
-                        },
+                        headers,
                         body: JSON.stringify({
                             app_id: appId,
                             included_segments: ["Total Subscriptions", "Subscribed Users"], 
                             headings: { "en": heading, "pt": heading },
                             contents: { "en": message, "pt": message },
+                            priority: 10, // High priority for immediate delivery
                         })
                     }).then(async (res) => {
-                        const responseText = await res.text();
-                        console.log("OneSignal Trigger Response:", res.status, responseText);
-                    }).catch(console.error); // Fire and forget
+                        const txt = await res.text();
+                        console.log("OneSignal Immediate:", res.status, txt);
+                    }).catch(console.error);
+
+                    // ── 2. SCHEDULED: Reminder 10 min before booking ──
+                    if (bookingDate && data.startTime) {
+                        // Calculate send_after = booking_date + start_time - 10 minutes
+                        const [hours, minutes] = data.startTime.split(':').map(Number);
+                        const reminderDate = new Date(`${bookingDate}T${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:00`);
+                        reminderDate.setMinutes(reminderDate.getMinutes() - 10);
+
+                        // Only schedule if the reminder is in the future (at least 1 min from now)
+                        const now = new Date();
+                        if (reminderDate.getTime() > now.getTime() + 60000) {
+                            const sendAfter = reminderDate.toISOString(); // UTC ISO string
+
+                            const reminderHeading = `⏰ Agendamento em 10 min`;
+                            const reminderMessage = `Prof. ${professorName} vai retirar ${equipmentNames} em ${data.local} às ${data.startTime}.`;
+
+                            fetch('https://onesignal.com/api/v1/notifications', {
+                                method: 'POST',
+                                headers,
+                                body: JSON.stringify({
+                                    app_id: appId,
+                                    included_segments: ["Total Subscriptions", "Subscribed Users"],
+                                    headings: { "en": reminderHeading, "pt": reminderHeading },
+                                    contents: { "en": reminderMessage, "pt": reminderMessage },
+                                    send_after: sendAfter,
+                                    priority: 10,
+                                    // Sound settings for mobile devices
+                                    android_sound: "alarm",       // Alarm-like sound on Android
+                                    ios_sound: "alarm.caf",       // Alarm-like sound on iOS
+                                    android_channel_id: undefined, // Use default high-priority channel
+                                })
+                            }).then(async (res) => {
+                                const txt = await res.text();
+                                console.log("OneSignal Reminder Scheduled:", res.status, txt);
+                            }).catch(console.error);
+                        }
+                    }
                 }
             } catch (e) {
                 console.error("Push API Error:", e);
