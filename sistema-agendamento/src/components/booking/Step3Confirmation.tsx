@@ -238,6 +238,11 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                         'Content-Type': 'application/json; charset=utf-8',
                         'Authorization': `Basic ${apiKey}`
                     };
+
+                    // Filter: only send to admins tagged with the same unit as the booking
+                    const unitFilter = [
+                        { "field": "tag", "key": "unit", "relation": "=", "value": data.unit }
+                    ];
                     
                     // ── 1. IMMEDIATE: "Novo Agendamento" ──
                     const heading = `📋 Novo Agendamento`;
@@ -248,10 +253,10 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                         headers,
                         body: JSON.stringify({
                             app_id: appId,
-                            included_segments: ["Total Subscriptions", "Subscribed Users"], 
+                            include_filters: unitFilter,
                             headings: { "en": heading, "pt": heading },
                             contents: { "en": message, "pt": message },
-                            priority: 10, // High priority for immediate delivery
+                            priority: 10,
                         })
                     }).then(async (res) => {
                         const txt = await res.text();
@@ -268,7 +273,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                         // Only schedule if the reminder is in the future (at least 1 min from now)
                         const now = new Date();
                         if (reminderDate.getTime() > now.getTime() + 60000) {
-                            const sendAfter = reminderDate.toISOString(); // UTC ISO string
+                            const sendAfter = reminderDate.toISOString();
 
                             const reminderHeading = `⏰ Agendamento em 10 min`;
                             const reminderMessage = `Prof. ${professorName} vai retirar ${equipmentNames} em ${data.local} às ${data.startTime}.`;
@@ -278,15 +283,13 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                                 headers,
                                 body: JSON.stringify({
                                     app_id: appId,
-                                    included_segments: ["Total Subscriptions", "Subscribed Users"],
+                                    include_filters: unitFilter,
                                     headings: { "en": reminderHeading, "pt": reminderHeading },
                                     contents: { "en": reminderMessage, "pt": reminderMessage },
                                     send_after: sendAfter,
                                     priority: 10,
-                                    // Sound settings for mobile devices
-                                    android_sound: "alarm",       // Alarm-like sound on Android
-                                    ios_sound: "alarm.caf",       // Alarm-like sound on iOS
-                                    android_channel_id: undefined, // Use default high-priority channel
+                                    android_sound: "alarm",
+                                    ios_sound: "alarm.caf",
                                 })
                             }).then(async (res) => {
                                 const txt = await res.text();

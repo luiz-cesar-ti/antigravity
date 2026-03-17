@@ -48,9 +48,13 @@ export function OneSignalManager() {
                 
                 if (!mounted) return;
 
-                // Set external ID if we have a user
+                // Set external ID and unit tag if we have a user
                 if (adminUser?.id) {
                     await OneSignal.login(adminUser.id);
+                    // Tag this device with the admin's unit for targeted notifications
+                    if (adminUser.unit) {
+                        await OneSignal.User.addTag("unit", adminUser.unit);
+                    }
                 }
 
                 setIsInitialized(true);
