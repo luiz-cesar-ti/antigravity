@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import OneSignal from 'react-onesignal';
 import { useAuth } from '../../contexts/AuthContext';
 import { Bell, BellOff, BellRing, Loader2, Smartphone, CheckCircle2 } from 'lucide-react';
@@ -17,19 +17,37 @@ export function OneSignalManager() {
         return null;
     }
 
+    // Helper: check if browser permission is granted (reliable, instant)
+    const checkBrowserPermission = useCallback((): boolean => {
+        if (typeof Notification !== 'undefined') {
+            return Notification.permission === 'granted';
+        }
+        return false;
+    }, []);
+
+    // Helper: apply unit tag to current OneSignal user
+    const applyUnitTag = useCallback(async () => {
+        if (adminUser?.unit) {
+            try {
+                await OneSignal.User.addTag("unit", adminUser.unit);
+                console.log("[OneSignal] Tag applied: unit =", adminUser.unit);
+            } catch (e) {
+                console.warn("[OneSignal] Failed to apply unit tag:", e);
+            }
+        }
+    }, [adminUser?.unit]);
+
     useEffect(() => {
         let mounted = true;
 
         const initOneSignal = async () => {
             const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
             if (!appId) {
-                console.error("OneSignal App ID is missing from environment variables.");
                 if (mounted) setError("Erro de configuração do sistema (App ID ausente).");
                 return;
             }
 
             try {
-                // Check if already initialized to prevent errors on hot reload
                 // @ts-ignore
                 if (!window.OneSignal?.initialized && !isInitialized) {
                     await OneSignal.init({
@@ -45,56 +63,42 @@ export function OneSignalManager() {
                 
                 if (!mounted) return;
 
-                // Set external ID and unit tag if we have a user
                 if (adminUser?.id) {
                     await OneSignal.login(adminUser.id);
-                    // Tag this device with the admin's unit for targeted notifications
-                    if (adminUser.unit) {
-                        await OneSignal.User.addTag("unit", adminUser.unit);
-                        console.log("OneSignal: Tagged user with unit =", adminUser.unit);
-                    }
+                    await applyUnitTag();
                 }
 
                 setIsInitialized(true);
-
-                // Check current subscription status
-                const subscriptionStatus = await OneSignal.User.PushSubscription.optedIn;
-                if (mounted) setIsSubscribed(!!subscriptionStatus);
+                // Use browser native API for reliable initial check
+                if (mounted) setIsSubscribed(checkBrowserPermission());
 
             } catch (err: any) {
                 const errorMessage = err?.message || String(err);
                 
                 if (errorMessage.includes("already initialized") || errorMessage.includes("already-initialized")) {
-                    console.log("OneSignal was already initialized. Proceeding...");
                     if (mounted) {
                         setIsInitialized(true);
-                        try {
-                            // Re-apply tags even on re-init
-                            if (adminUser?.id) {
+                        setIsSubscribed(checkBrowserPermission());
+                        // Re-apply tags even on re-init
+                        if (adminUser?.id) {
+                            try {
                                 await OneSignal.login(adminUser.id);
-                                if (adminUser.unit) {
-                                    await OneSignal.User.addTag("unit", adminUser.unit);
-                                }
+                                await applyUnitTag();
+                            } catch (e) {
+                                console.warn("[OneSignal] re-init login/tag:", e);
                             }
-                            const subscriptionStatus = await OneSignal.User.PushSubscription.optedIn;
-                            setIsSubscribed(!!subscriptionStatus);
-                        } catch (e) {
-                            console.warn("OneSignal re-init tag error:", e);
                         }
                     }
                     return;
                 }
                 
-                console.error("Error initializing OneSignal:", err);
-                if (mounted) setError(`Falha ao inicializar serviço de notificações. Detalhe: ${errorMessage}`);
+                console.error("[OneSignal] Init error:", err);
+                if (mounted) setError(`Falha ao inicializar notificações. Detalhe: ${errorMessage}`);
             }
         };
 
         initOneSignal();
-
-        return () => {
-            mounted = false;
-        };
+        return () => { mounted = false; };
     }, [adminUser?.id]);
 
     const handleTogglePush = async () => {
@@ -108,7 +112,6 @@ export function OneSignalManager() {
                 // ── OPT OUT ──
                 await OneSignal.User.PushSubscription.optOut();
                 setIsSubscribed(false);
-                setIsToggling(false);
             } else {
                 // ── OPT IN ──
                 if (OneSignal.Notifications) {
@@ -116,40 +119,35 @@ export function OneSignalManager() {
                 } else {
                     await OneSignal.Slidedown.promptPush();
                 }
-                
-                // Re-apply unit tag after enabling 
-                if (adminUser?.unit) {
-                    try {
-                        await OneSignal.User.addTag("unit", adminUser.unit);
-                        console.log("OneSignal: Re-tagged user with unit =", adminUser.unit);
-                    } catch (e) {
-                        console.warn("Failed to re-tag unit:", e);
-                    }
+
+                // After granting, opt-in explicitly to ensure subscription
+                try {
+                    await OneSignal.User.PushSubscription.optIn();
+                } catch (e) {
+                    console.warn("[OneSignal] optIn() after permission:", e);
                 }
 
-                // Poll for subscription status change (more reliable than single setTimeout)
-                let attempts = 0;
-                const checkStatus = async () => {
-                    attempts++;
+                // Re-login and re-tag after enabling
+                if (adminUser?.id) {
                     try {
-                        const status = await OneSignal.User.PushSubscription.optedIn;
-                        if (status || attempts >= 5) {
-                            setIsSubscribed(!!status);
-                            setIsToggling(false);
-                        } else {
-                            setTimeout(checkStatus, 1000);
-                        }
-                    } catch {
-                        setIsToggling(false);
+                        await OneSignal.login(adminUser.id);
+                    } catch (e) {
+                        console.warn("[OneSignal] Re-login:", e);
                     }
-                };
-                setTimeout(checkStatus, 1000);
+                }
+                await applyUnitTag();
+                
+                // Use browser native permission as the source of truth
+                setIsSubscribed(checkBrowserPermission());
             }
         } catch (err: any) {
-            console.error("Error toggling push subscription:", err);
+            console.error("[OneSignal] Toggle error:", err);
             if (err?.message && !err.message.includes("cancelled")) {
-                setError("Erro ao " + (isSubscribed ? "desativar" : "ativar") + " notificações: " + err.message);
+                setError("Erro ao " + (isSubscribed ? "desativar" : "ativar") + " notificações.");
             }
+            // Even if OneSignal SDK throws, check browser permission
+            setIsSubscribed(checkBrowserPermission());
+        } finally {
             setIsToggling(false);
         }
     };
@@ -195,7 +193,6 @@ export function OneSignalManager() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="flex items-center gap-4">
                 <div className={`p-3.5 rounded-xl text-white shadow-lg transition-all duration-500 ${
                     isSubscribed 
@@ -210,7 +207,6 @@ export function OneSignalManager() {
                 </div>
             </div>
 
-            {/* Status Card */}
             <div className={`p-5 rounded-2xl border transition-all duration-500 ${
                 isSubscribed 
                     ? 'bg-emerald-50/80 border-emerald-200' 
@@ -226,14 +222,13 @@ export function OneSignalManager() {
                         </p>
                         <p className={`text-xs mt-1 leading-relaxed ${isSubscribed ? 'text-emerald-700' : 'text-amber-700'}`}>
                             {isSubscribed 
-                                ? `Você receberá alertas sonoros e banners sobre agendamentos da unidade ${adminUser?.unit || ''} quando um professor realizar um novo agendamento.` 
+                                ? `Você receberá alertas sobre agendamentos da unidade ${adminUser?.unit || ''} quando um professor realizar um novo agendamento.` 
                                 : 'Ative para receber alertas sonoros e banners direto neste dispositivo quando novos agendamentos forem criados.'}
                         </p>
                     </div>
                 </div>
             </div>
 
-            {/* Toggle Button */}
             <button
                 onClick={handleTogglePush}
                 disabled={isToggling}
