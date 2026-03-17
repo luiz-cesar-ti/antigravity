@@ -213,11 +213,49 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
             }
 
 
-            // 3. Trigger Notification (Email + In-App)
+            // 3. Trigger Notification (Email + In-App + PWA Push)
             // Fire and forget to not block the UI
             // 3. Notification (In-App)
             // Handled automatically by Database Trigger (create_booking_notification)
             // Email notification removed per user request.
+
+            // PWA Push Notification (OneSignal API) for Admin Users
+            try {
+                const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
+                if (appId) {
+                    let userName = data.full_name.split(' ')[0]; // First name
+                    
+                    fetch('https://onesignal.com/api/v1/notifications', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json; charset=utf-8',
+                            // The REST API Key shouldn't be fully exposed in frontend, 
+                            // But for testing OneSignal PWA triggers via REST without a backend, 
+                            // many apps accept this risk if the segment is public or the key is generic.
+                            // However, since we don't have the REST API Key here, we'll try to trigger via
+                            // the public endpoint if allowed by the dashboard settings (Create Push via App ID without Auth).
+                            // If it fails with 400 'app_id requires an auth key', we MUST add it to .env. 
+                            'Authorization': `Basic ${import.meta.env.VITE_ONESIGNAL_REST_API_KEY || ''}`
+                        },
+                        body: JSON.stringify({
+                            app_id: appId,
+                            // Target all users for now since only admins have the toggle 
+                            // "Total Subscriptions" or "Subscribed Users"
+                            included_segments: ["Total Subscriptions", "Subscribed Users"], 
+                            headings: { "en": "Novo Agendamento", "pt": "Novo Agendamento" },
+                            contents: { 
+                                "en": `${userName} reservou ${data.equipments.length} item(ns) para ${data.date.split('-').reverse().join('/')}.`,
+                                "pt": `${userName} reservou ${data.equipments.length} item(ns) para ${data.date.split('-').reverse().join('/')}.`
+                            },
+                        })
+                    }).then(async (res) => {
+                        const responseText = await res.text();
+                        console.log("OneSignal Trigger Response:", res.status, responseText);
+                    }).catch(console.error); // Fire and forget
+                }
+            } catch (e) {
+                console.error("Push API Error:", e);
+            }
 
             setShowSuccessModal(true);
 
