@@ -170,6 +170,7 @@ export function AdminSettings() {
                     <p className="font-medium animate-pulse">Carregando preferências...</p>
                 </div>
             ) : (
+                <>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
                     {/* LEFT COLUMN: Equipment Rules */}
@@ -280,12 +281,8 @@ export function AdminSettings() {
                         </div>
                     </div>
 
-                    {/* RIGHT COLUMN: Notifications & Password */}
+                    {/* RIGHT COLUMN: Password */}
                     <div className="space-y-6">
-                        {/* Notificações Push PWA */}
-                        <div className="bg-white rounded-2xl lg:rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-gray-100 border border-gray-100 hover:shadow-2xl hover:shadow-primary-900/5 transition-all duration-500 relative">
-                            <OneSignalManager />
-                        </div>
                         <div className="bg-white rounded-2xl lg:rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-gray-100 border border-gray-100 hover:shadow-2xl hover:shadow-primary-900/5 transition-all duration-500 group relative">
                             <div className="flex items-center gap-4 mb-8">
                                 <div className="p-3.5 bg-gradient-to-br from-fuchsia-500 to-pink-600 rounded-xl text-white shadow-lg shadow-pink-200 shadow-fuchsia-500/30 group-hover:scale-110 transition-transform duration-500">
@@ -400,6 +397,12 @@ export function AdminSettings() {
                         </div>
                     </div>
                 </div>
+
+                {/* FULL WIDTH: Push Notification Section - Last on Page */}
+                <div className="bg-white rounded-2xl lg:rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-gray-100 border border-gray-100 hover:shadow-2xl hover:shadow-primary-900/5 transition-all duration-500 group relative">
+                    <OneSignalManager />
+                </div>
+            </>
             )}
         </div>
     );

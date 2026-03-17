@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import OneSignal from 'react-onesignal';
 import { useAuth } from '../../contexts/AuthContext';
-import { Bell, BellOff, Loader2 } from 'lucide-react';
+import { Bell, BellOff, BellRing, Loader2, Smartphone, CheckCircle2 } from 'lucide-react';
 import type { Admin } from '../../types';
 
 export function OneSignalManager() {
@@ -58,13 +58,6 @@ export function OneSignalManager() {
                 // Check current subscription status
                 const subscriptionStatus = await OneSignal.User.PushSubscription.optedIn;
                 setIsSubscribed(!!subscriptionStatus);
-                
-                /*
-                // Listen for changes
-                OneSignal.User.PushSubscription.addEventListener("change", (e) => {
-                    setIsSubscribed(e.current.optedIn);
-                });
-                */
 
             } catch (err: any) {
                 const errorMessage = err?.message || String(err);
@@ -90,7 +83,6 @@ export function OneSignalManager() {
 
         return () => {
             mounted = false;
-            // Clean up listeners if necessary
         };
     }, [adminUser?.id]);
 
@@ -135,10 +127,18 @@ export function OneSignalManager() {
 
     if (error) {
         return (
-            <div className="bg-red-50 text-red-600 p-3 rounded-xl border border-red-100 flex items-center justify-between">
-                <div>
-                     <p className="text-sm font-semibold">Notificações Push</p>
-                     <p className="text-xs mt-0.5">{error}</p>
+            <div className="space-y-5">
+                <div className="flex items-center gap-4">
+                    <div className="p-3.5 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl text-white shadow-lg shadow-red-200">
+                        <BellOff className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-black text-gray-900">Notificações Push</h2>
+                        <p className="text-sm text-gray-500 font-medium">Alertas no celular</p>
+                    </div>
+                </div>
+                <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-100 text-sm font-medium">
+                    {error}
                 </div>
             </div>
         );
@@ -146,51 +146,82 @@ export function OneSignalManager() {
 
     if (!isInitialized) {
         return (
-            <div className="bg-slate-800 p-4 rounded-2xl flex items-center justify-between border border-slate-700/50">
-                <div>
-                    <h3 className="text-white font-medium text-sm flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
-                        Inicializando Notificações...
-                    </h3>
+            <div className="space-y-5">
+                <div className="flex items-center gap-4">
+                    <div className="p-3.5 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl text-white shadow-lg shadow-amber-200">
+                        <Bell className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-black text-gray-900">Notificações Push</h2>
+                        <p className="text-sm text-gray-500 font-medium">Carregando...</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3 text-gray-400 text-sm">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Inicializando serviço de notificações...
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="bg-slate-800 p-4 rounded-2xl flex flex-col gap-3 border border-slate-700/50">
-             <div className="flex items-start gap-3">
-                 <div className={`p-2.5 rounded-xl shrink-0 border ${isSubscribed ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-700/50 text-slate-400 border-slate-600'}`}>
-                     {isSubscribed ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
-                 </div>
-                 
-                 <div>
-                     <h3 className="text-white font-bold text-sm">Alertas no Celular (PWA)</h3>
-                     <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">
-                         {isSubscribed 
-                            ? "Seu dispositivo está registrado para receber notificações de novos eventos." 
-                            : "Ative para receber alertas sonoros e banners direto neste dispositivo mesmo com o app fechado."}
-                     </p>
-                 </div>
-             </div>
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center gap-4">
+                <div className={`p-3.5 rounded-xl text-white shadow-lg transition-all duration-500 ${
+                    isSubscribed 
+                        ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-200' 
+                        : 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-amber-200'
+                }`}>
+                    {isSubscribed ? <BellRing className="h-6 w-6" /> : <Bell className="h-6 w-6" />}
+                </div>
+                <div>
+                    <h2 className="text-xl font-black text-gray-900">Notificações Push</h2>
+                    <p className="text-sm text-gray-500 font-medium">Alertas no celular via PWA</p>
+                </div>
+            </div>
 
-             <button
-                 onClick={handleTogglePush}
-                 disabled={isToggling}
-                 className={`w-full py-2.5 px-4 rounded-xl text-sm font-bold flex items-center justify-center transition-all ${
-                     isSubscribed 
-                         ? 'bg-slate-700 text-white hover:bg-slate-600 border border-slate-600' 
-                         : 'bg-primary-500 text-white hover:bg-primary-600 shadow-md shadow-primary-500/20'
-                 }`}
-             >
-                 {isToggling ? (
-                     <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processando...</>
-                 ) : isSubscribed ? (
-                     'Desativar Alertas Neste Aparelho'
-                 ) : (
-                     'Ativar Notificações'
-                 )}
-             </button>
+            {/* Status Card */}
+            <div className={`p-5 rounded-2xl border transition-all duration-500 ${
+                isSubscribed 
+                    ? 'bg-emerald-50/80 border-emerald-200' 
+                    : 'bg-amber-50/80 border-amber-200'
+            }`}>
+                <div className="flex items-start gap-3">
+                    <div className={`p-2 rounded-lg mt-0.5 ${isSubscribed ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                        {isSubscribed ? <CheckCircle2 className="h-4 w-4" /> : <Smartphone className="h-4 w-4" />}
+                    </div>
+                    <div>
+                        <p className={`font-bold text-sm ${isSubscribed ? 'text-emerald-900' : 'text-amber-900'}`}>
+                            {isSubscribed ? 'Notificações ativas neste dispositivo' : 'Notificações desativadas'}
+                        </p>
+                        <p className={`text-xs mt-1 leading-relaxed ${isSubscribed ? 'text-emerald-700' : 'text-amber-700'}`}>
+                            {isSubscribed 
+                                ? 'Você receberá alertas sonoros e banners quando um professor realizar um novo agendamento, mesmo com o app fechado.' 
+                                : 'Ative para receber alertas sonoros e banners direto neste dispositivo quando novos agendamentos forem criados.'}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Toggle Button */}
+            <button
+                onClick={handleTogglePush}
+                disabled={isToggling}
+                className={`w-full py-3.5 px-6 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.97] disabled:opacity-60 ${
+                    isSubscribed 
+                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200' 
+                        : 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-200 hover:shadow-xl hover:shadow-amber-300 hover:-translate-y-0.5'
+                }`}
+            >
+                {isToggling ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</>
+                ) : isSubscribed ? (
+                    <><BellOff className="w-4 h-4" /> Desativar Alertas Neste Aparelho</>
+                ) : (
+                    <><BellRing className="w-4 h-4" /> Ativar Notificações</>
+                )}
+            </button>
         </div>
     );
 }

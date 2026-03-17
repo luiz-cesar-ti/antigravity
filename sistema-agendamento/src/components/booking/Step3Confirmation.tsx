@@ -223,30 +223,29 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
             try {
                 const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
                 if (appId) {
-                    let userName = data.full_name.split(' ')[0]; // First name
+                    const firstName = data.full_name.split(' ')[0];
+                    const lastName = data.full_name.split(' ').slice(-1)[0];
+                    const professorName = `${firstName} ${lastName}`;
+                    const dateFormatted = data.isRecurring 
+                        ? `toda ${['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}`
+                        : data.date.split('-').reverse().join('/');
+                    const equipmentNames = data.equipments.map(eq => eq.name).join(', ');
+                    const timeRange = `${data.startTime} - ${data.endTime}`;
+                    
+                    const heading = `📋 Novo Agendamento`;
+                    const message = `Prof. ${professorName} agendou ${equipmentNames} em ${data.local} para ${dateFormatted} (${timeRange}).`;
                     
                     fetch('https://onesignal.com/api/v1/notifications', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json; charset=utf-8',
-                            // The REST API Key shouldn't be fully exposed in frontend, 
-                            // But for testing OneSignal PWA triggers via REST without a backend, 
-                            // many apps accept this risk if the segment is public or the key is generic.
-                            // However, since we don't have the REST API Key here, we'll try to trigger via
-                            // the public endpoint if allowed by the dashboard settings (Create Push via App ID without Auth).
-                            // If it fails with 400 'app_id requires an auth key', we MUST add it to .env. 
                             'Authorization': `Basic ${import.meta.env.VITE_ONESIGNAL_REST_API_KEY || ''}`
                         },
                         body: JSON.stringify({
                             app_id: appId,
-                            // Target all users for now since only admins have the toggle 
-                            // "Total Subscriptions" or "Subscribed Users"
                             included_segments: ["Total Subscriptions", "Subscribed Users"], 
-                            headings: { "en": "Novo Agendamento", "pt": "Novo Agendamento" },
-                            contents: { 
-                                "en": `${userName} reservou ${data.equipments.length} item(ns) para ${data.date.split('-').reverse().join('/')}.`,
-                                "pt": `${userName} reservou ${data.equipments.length} item(ns) para ${data.date.split('-').reverse().join('/')}.`
-                            },
+                            headings: { "en": heading, "pt": heading },
+                            contents: { "en": message, "pt": message },
                         })
                     }).then(async (res) => {
                         const responseText = await res.text();
