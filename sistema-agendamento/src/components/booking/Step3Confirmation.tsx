@@ -238,16 +238,19 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                         'Content-Type': 'application/json; charset=utf-8',
                         'Authorization': `Basic ${apiKey}`
                     };
+
+                    // Filter: only send to admins tagged with the same unit as the booking
+                    const unitFilter = [
+                        { "field": "tag", "key": "unit", "relation": "=", "value": data.unit }
+                    ];
                     
                     // ── 1. IMMEDIATE: "Novo Agendamento" ──
                     const heading = `📋 Novo Agendamento`;
                     const message = `Prof. ${professorName} agendou ${equipmentNames} em ${data.local} para ${dateFormatted} (${timeRange}).`;
                     
-                    // Use included_segments for reliable delivery
-                    // Unit filtering via tags will be enabled once tags are confirmed syncing
                     const targetPayload = {
                         app_id: appId,
-                        included_segments: ["Total Subscriptions"],
+                        filters: unitFilter,
                         headings: { "en": heading, "pt": heading },
                         contents: { "en": message, "pt": message },
                         priority: 10,
@@ -279,7 +282,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
 
                             const reminderPayload = {
                                 app_id: appId,
-                                included_segments: ["Total Subscriptions"],
+                                filters: unitFilter,
                                 headings: { "en": reminderHeading, "pt": reminderHeading },
                                 contents: { "en": reminderMessage, "pt": reminderMessage },
                                 send_after: sendAfter,

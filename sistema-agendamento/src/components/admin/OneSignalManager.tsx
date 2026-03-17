@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import OneSignal from 'react-onesignal';
 import { useAuth } from '../../contexts/AuthContext';
 import { Bell, BellOff, BellRing, Loader2, Smartphone, CheckCircle2 } from 'lucide-react';
@@ -11,18 +11,23 @@ export function OneSignalManager() {
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [isToggling, setIsToggling] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const initAttemptedRef = useRef(false);
 
     // Only run for admin users
     if (role !== 'admin' && role !== 'super_admin') {
         return null;
     }
 
-    // Helper: check if browser permission is granted (reliable, instant)
-    const checkBrowserPermission = useCallback((): boolean => {
-        if (typeof Notification !== 'undefined') {
-            return Notification.permission === 'granted';
+    // Helper: check OneSignal subscription status (the REAL source of truth)
+    const checkSubscriptionStatus = useCallback(async (): Promise<boolean> => {
+        try {
+            const optedIn = await OneSignal.User.PushSubscription.optedIn;
+            console.log("[OneSignal] optedIn status:", optedIn);
+            return !!optedIn;
+        } catch (e) {
+            console.warn("[OneSignal] Could not check subscription:", e);
+            return false;
         }
-        return false;
     }, []);
 
     // Helper: apply unit tag to current OneSignal user
@@ -41,6 +46,9 @@ export function OneSignalManager() {
         let mounted = true;
 
         const initOneSignal = async () => {
+            if (initAttemptedRef.current) return;
+            initAttemptedRef.current = true;
+
             const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
             if (!appId) {
                 if (mounted) setError("Erro de configuração do sistema (App ID ausente).");
@@ -49,7 +57,7 @@ export function OneSignalManager() {
 
             try {
                 // @ts-ignore
-                if (!window.OneSignal?.initialized && !isInitialized) {
+                if (!window.OneSignal?.initialized) {
                     await OneSignal.init({
                         appId: appId,
                         allowLocalhostAsSecureOrigin: true,
@@ -69,8 +77,10 @@ export function OneSignalManager() {
                 }
 
                 setIsInitialized(true);
-                // Use browser native API for reliable initial check
-                if (mounted) setIsSubscribed(checkBrowserPermission());
+
+                // Use OneSignal optedIn as source of truth (NOT Notification.permission)
+                const status = await checkSubscriptionStatus();
+                if (mounted) setIsSubscribed(status);
 
             } catch (err: any) {
                 const errorMessage = err?.message || String(err);
@@ -78,8 +88,6 @@ export function OneSignalManager() {
                 if (errorMessage.includes("already initialized") || errorMessage.includes("already-initialized")) {
                     if (mounted) {
                         setIsInitialized(true);
-                        setIsSubscribed(checkBrowserPermission());
-                        // Re-apply tags even on re-init
                         if (adminUser?.id) {
                             try {
                                 await OneSignal.login(adminUser.id);
@@ -88,6 +96,8 @@ export function OneSignalManager() {
                                 console.warn("[OneSignal] re-init login/tag:", e);
                             }
                         }
+                        const status = await checkSubscriptionStatus();
+                        setIsSubscribed(status);
                     }
                     return;
                 }
@@ -109,44 +119,47 @@ export function OneSignalManager() {
 
         try {
             if (isSubscribed) {
-                // ── OPT OUT ──
+                // ── DESATIVAR ──
                 await OneSignal.User.PushSubscription.optOut();
+                // Optimistic: set to false immediately (optOut succeeded)
                 setIsSubscribed(false);
+                console.log("[OneSignal] User opted OUT");
             } else {
-                // ── OPT IN ──
+                // ── ATIVAR ──
+                // Request browser permission first
                 if (OneSignal.Notifications) {
                     await OneSignal.Notifications.requestPermission();
                 } else {
                     await OneSignal.Slidedown.promptPush();
                 }
 
-                // After granting, opt-in explicitly to ensure subscription
+                // Explicitly opt-in to OneSignal subscription
                 try {
                     await OneSignal.User.PushSubscription.optIn();
+                    console.log("[OneSignal] User opted IN");
                 } catch (e) {
-                    console.warn("[OneSignal] optIn() after permission:", e);
+                    console.warn("[OneSignal] optIn() call:", e);
                 }
 
-                // Re-login and re-tag after enabling
+                // Re-login and tag
                 if (adminUser?.id) {
-                    try {
-                        await OneSignal.login(adminUser.id);
-                    } catch (e) {
-                        console.warn("[OneSignal] Re-login:", e);
-                    }
+                    try { await OneSignal.login(adminUser.id); } catch (e) { /* ignore */ }
                 }
                 await applyUnitTag();
                 
-                // Use browser native permission as the source of truth
-                setIsSubscribed(checkBrowserPermission());
+                // Check actual status after a small delay to let SDK sync
+                await new Promise(resolve => setTimeout(resolve, 500));
+                const actualStatus = await checkSubscriptionStatus();
+                setIsSubscribed(actualStatus);
             }
         } catch (err: any) {
             console.error("[OneSignal] Toggle error:", err);
             if (err?.message && !err.message.includes("cancelled")) {
                 setError("Erro ao " + (isSubscribed ? "desativar" : "ativar") + " notificações.");
             }
-            // Even if OneSignal SDK throws, check browser permission
-            setIsSubscribed(checkBrowserPermission());
+            // On error, recheck actual status
+            const actualStatus = await checkSubscriptionStatus();
+            setIsSubscribed(actualStatus);
         } finally {
             setIsToggling(false);
         }
