@@ -253,7 +253,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                         headers,
                         body: JSON.stringify({
                             app_id: appId,
-                            include_filters: unitFilter,
+                            filters: unitFilter,
                             headings: { "en": heading, "pt": heading },
                             contents: { "en": message, "pt": message },
                             priority: 10,
@@ -283,7 +283,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                                 headers,
                                 body: JSON.stringify({
                                     app_id: appId,
-                                    include_filters: unitFilter,
+                                    filters: unitFilter,
                                     headings: { "en": reminderHeading, "pt": reminderHeading },
                                     contents: { "en": reminderMessage, "pt": reminderMessage },
                                     send_after: sendAfter,

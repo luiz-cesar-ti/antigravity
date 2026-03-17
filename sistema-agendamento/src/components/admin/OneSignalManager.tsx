@@ -30,16 +30,13 @@ export function OneSignalManager() {
 
             try {
                 // Check if already initialized to prevent errors on hot reload
-                // @ts-ignore - The types provided by react-onesignal might not match the runtime exactly
+                // @ts-ignore
                 if (!window.OneSignal?.initialized && !isInitialized) {
                     await OneSignal.init({
                         appId: appId,
-                        allowLocalhostAsSecureOrigin: true, // Useful for testing
-                        // @ts-ignore - Suppress type error for incomplete notifyButton object
-                        notifyButton: {
-                            enable: false, // We will use a custom button instead of their floating bell
-                        },
-                        // In some Next/Vite setups on Vercel, explicitly defining the service worker path helps
+                        allowLocalhostAsSecureOrigin: true,
+                        // @ts-ignore
+                        notifyButton: { enable: false },
                         path: "/",
                         serviceWorkerParam: { scope: "/" },
                         serviceWorkerPath: "OneSignalSDKWorker.js"
@@ -54,6 +51,7 @@ export function OneSignalManager() {
                     // Tag this device with the admin's unit for targeted notifications
                     if (adminUser.unit) {
                         await OneSignal.User.addTag("unit", adminUser.unit);
+                        console.log("OneSignal: Tagged user with unit =", adminUser.unit);
                     }
                 }
 
@@ -61,19 +59,28 @@ export function OneSignalManager() {
 
                 // Check current subscription status
                 const subscriptionStatus = await OneSignal.User.PushSubscription.optedIn;
-                setIsSubscribed(!!subscriptionStatus);
+                if (mounted) setIsSubscribed(!!subscriptionStatus);
 
             } catch (err: any) {
                 const errorMessage = err?.message || String(err);
                 
-                // If it's already initialized (happens in React Strict Mode / Hot Reload), we can just proceed
                 if (errorMessage.includes("already initialized") || errorMessage.includes("already-initialized")) {
                     console.log("OneSignal was already initialized. Proceeding...");
                     if (mounted) {
                         setIsInitialized(true);
-                        // Still check status
-                        const subscriptionStatus = await OneSignal.User.PushSubscription.optedIn;
-                        setIsSubscribed(!!subscriptionStatus);
+                        try {
+                            // Re-apply tags even on re-init
+                            if (adminUser?.id) {
+                                await OneSignal.login(adminUser.id);
+                                if (adminUser.unit) {
+                                    await OneSignal.User.addTag("unit", adminUser.unit);
+                                }
+                            }
+                            const subscriptionStatus = await OneSignal.User.PushSubscription.optedIn;
+                            setIsSubscribed(!!subscriptionStatus);
+                        } catch (e) {
+                            console.warn("OneSignal re-init tag error:", e);
+                        }
                     }
                     return;
                 }
@@ -98,35 +105,53 @@ export function OneSignalManager() {
 
         try {
             if (isSubscribed) {
-                // Opt out
+                // ── OPT OUT ──
                 await OneSignal.User.PushSubscription.optOut();
                 setIsSubscribed(false);
+                setIsToggling(false);
             } else {
-                // In v16, Notifications API is the recommended way to prompt
+                // ── OPT IN ──
                 if (OneSignal.Notifications) {
                     await OneSignal.Notifications.requestPermission();
                 } else {
-                    // Fallback just in case
                     await OneSignal.Slidedown.promptPush();
                 }
                 
-                // We need to re-check status because prompting is async and user might denied
-                setTimeout(async () => {
-                     const status = await OneSignal.User.PushSubscription.optedIn;
-                     setIsSubscribed(!!status);
-                     setIsToggling(false); // Only stop loading after the check
-                }, 1500);
-                return; // Early return to avoid setting isToggling(false) twice
+                // Re-apply unit tag after enabling 
+                if (adminUser?.unit) {
+                    try {
+                        await OneSignal.User.addTag("unit", adminUser.unit);
+                        console.log("OneSignal: Re-tagged user with unit =", adminUser.unit);
+                    } catch (e) {
+                        console.warn("Failed to re-tag unit:", e);
+                    }
+                }
+
+                // Poll for subscription status change (more reliable than single setTimeout)
+                let attempts = 0;
+                const checkStatus = async () => {
+                    attempts++;
+                    try {
+                        const status = await OneSignal.User.PushSubscription.optedIn;
+                        if (status || attempts >= 5) {
+                            setIsSubscribed(!!status);
+                            setIsToggling(false);
+                        } else {
+                            setTimeout(checkStatus, 1000);
+                        }
+                    } catch {
+                        setIsToggling(false);
+                    }
+                };
+                setTimeout(checkStatus, 1000);
             }
         } catch (err: any) {
             console.error("Error toggling push subscription:", err);
-            // Don't show critical UI error for simple cancellation of prompt
             if (err?.message && !err.message.includes("cancelled")) {
                 setError("Erro ao " + (isSubscribed ? "desativar" : "ativar") + " notificações: " + err.message);
             }
-        } 
-        
-        setIsToggling(false);
+            setIsToggling(false);
+        }
     };
 
     if (error) {
@@ -201,7 +226,7 @@ export function OneSignalManager() {
                         </p>
                         <p className={`text-xs mt-1 leading-relaxed ${isSubscribed ? 'text-emerald-700' : 'text-amber-700'}`}>
                             {isSubscribed 
-                                ? 'Você receberá alertas sonoros e banners quando um professor realizar um novo agendamento, mesmo com o app fechado.' 
+                                ? `Você receberá alertas sonoros e banners sobre agendamentos da unidade ${adminUser?.unit || ''} quando um professor realizar um novo agendamento.` 
                                 : 'Ative para receber alertas sonoros e banners direto neste dispositivo quando novos agendamentos forem criados.'}
                         </p>
                     </div>
