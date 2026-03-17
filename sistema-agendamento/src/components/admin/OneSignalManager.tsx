@@ -39,6 +39,10 @@ export function OneSignalManager() {
                         notifyButton: {
                             enable: false, // We will use a custom button instead of their floating bell
                         },
+                        // In some Next/Vite setups on Vercel, explicitly defining the service worker path helps
+                        path: "/",
+                        serviceWorkerParam: { scope: "/" },
+                        serviceWorkerPath: "OneSignalSDKWorker.js"
                     });
                 }
                 
