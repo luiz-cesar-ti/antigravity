@@ -168,29 +168,30 @@ export function AdminLayout() {
                             </div>
                         )}
 
-                        {/* Settings - Only for non super_admin */}
-                        {adminUser?.role !== 'super_admin' && (
-                            <div className="mt-4 pt-4 border-t border-slate-700/50">
-                                <Link
-                                    to="/admin/settings"
-                                    onClick={() => setIsSidebarOpen(false)}
-                                    className={`
-                                        flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
-                                        ${isActive('/admin/settings')
-                                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                                            : 'text-slate-300 hover:bg-slate-800/70 hover:text-white border border-transparent'
-                                        }
-                                    `}
-                                >
-                                    <Settings className={`w-5 h-5 shrink-0 transition-colors ${isActive('/admin/settings') ? 'text-amber-400' : 'text-slate-400 group-hover:text-amber-400'}`} />
-                                    <span className="font-medium text-sm">Configurações</span>
-                                    {isActive('/admin/settings') && (
-                                        <ChevronRight className="w-4 h-4 ml-auto text-amber-400" />
-                                    )}
-                                </Link>
-                            </div>
-                        )}
                     </nav>
+
+                    {/* Settings - Only for non super_admin */}
+                    {adminUser?.role !== 'super_admin' && (
+                        <div className="mt-4 pt-4 border-t border-slate-700/50">
+                            <Link
+                                to="/admin/settings"
+                                onClick={() => setIsSidebarOpen(false)}
+                                className={`
+                                    flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
+                                    ${isActive('/admin/settings')
+                                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                        : 'text-slate-300 hover:bg-slate-800/70 hover:text-white border border-transparent'
+                                    }
+                                `}
+                            >
+                                <Settings className={`w-5 h-5 shrink-0 transition-colors ${isActive('/admin/settings') ? 'text-amber-400' : 'text-slate-400 group-hover:text-amber-400'}`} />
+                                <span className="font-medium text-sm">Configurações</span>
+                                {isActive('/admin/settings') && (
+                                    <ChevronRight className="w-4 h-4 ml-auto text-amber-400" />
+                                )}
+                            </Link>
+                        </div>
+                    )}
 
                     {/* Logout Button */}
                     <div className="p-4 border-t border-slate-700/50">

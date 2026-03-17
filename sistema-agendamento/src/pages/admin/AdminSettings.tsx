@@ -3,6 +3,7 @@ import { supabase } from '../../services/supabase';
 import type { Settings, Admin } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { Save, Clock, KeyRound, AlertCircle, CheckCircle, Eye, EyeOff, Settings as SettingsIcon, Shield, Zap } from 'lucide-react';
+import { OneSignalManager } from '../../components/admin/OneSignalManager';
 
 export function AdminSettings() {
     const { user } = useAuth();
@@ -279,8 +280,12 @@ export function AdminSettings() {
                         </div>
                     </div>
 
-                    {/* RIGHT COLUMN: Password */}
-                    <div>
+                    {/* RIGHT COLUMN: Notifications & Password */}
+                    <div className="space-y-6">
+                        {/* Notificações Push PWA */}
+                        <div className="bg-white rounded-2xl lg:rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-gray-100 border border-gray-100 hover:shadow-2xl hover:shadow-primary-900/5 transition-all duration-500 relative">
+                            <OneSignalManager />
+                        </div>
                         <div className="bg-white rounded-2xl lg:rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-gray-100 border border-gray-100 hover:shadow-2xl hover:shadow-primary-900/5 transition-all duration-500 group relative">
                             <div className="flex items-center gap-4 mb-8">
                                 <div className="p-3.5 bg-gradient-to-br from-fuchsia-500 to-pink-600 rounded-xl text-white shadow-lg shadow-pink-200 shadow-fuchsia-500/30 group-hover:scale-110 transition-transform duration-500">

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, X, ChevronDown, Check, ChevronRight } from 'lucide-react';
+import { Search, X, ChevronDown, Check } from 'lucide-react';
 import { clsx } from 'clsx';
 import './MobileRoomSelector.styles.css';
 
