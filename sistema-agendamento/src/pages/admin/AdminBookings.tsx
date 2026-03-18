@@ -14,6 +14,7 @@ import { TermDocument } from '../../components/TermDocument';
 import html2pdf from 'html2pdf.js';
 import { UNIT_LEGAL_NAMES } from '../../utils/constants';
 import { SCHOOL_UNITS } from '../../utils/constants';
+import { cancelScheduledNotifications } from '../../utils/onesignalUtils';
 
 import { useSearchParams } from 'react-router-dom';
 
@@ -133,6 +134,9 @@ export function AdminBookings() {
         });
 
         if (!error) {
+            // Cancel any scheduled OneSignal reminders for these bookings
+            cancelScheduledNotifications(deleteModal.bookingIds).catch(console.error);
+            
             setDeleteModal({ isOpen: false, bookingIds: [] });
             fetchBookings();
         } else {

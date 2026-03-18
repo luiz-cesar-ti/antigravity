@@ -28,6 +28,7 @@ import { clsx } from 'clsx';
 import html2pdf from 'html2pdf.js';
 import { generateHash } from '../../utils/hash';
 import { UNIT_LEGAL_NAMES } from '../../utils/constants';
+import { storeScheduledNotificationId } from '../../utils/onesignalUtils';
 
 interface Step3Props {
     data: BookingData;
@@ -300,6 +301,14 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                             }).then(async (res) => {
                                 const txt = await res.text();
                                 console.log("[Push] Reminder response:", res.status, txt);
+                                // Save the notification ID so we can cancel it if booking is deleted
+                                try {
+                                    const result = JSON.parse(txt);
+                                    if (result.id) {
+                                        const bookingKey = displayId || `${bookingDate}_${data.startTime}`;
+                                        storeScheduledNotificationId(bookingKey, result.id);
+                                    }
+                                } catch (e) { /* ignore parse error */ }
                             }).catch(console.error);
                         }
                     }

@@ -12,6 +12,7 @@ import { TermDocument } from '../components/TermDocument';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
 import { UNIT_LEGAL_NAMES } from '../utils/constants';
+import { cancelScheduledNotification } from '../utils/onesignalUtils';
 
 export function TeacherBookings() {
     const { user } = useAuth();
@@ -259,6 +260,10 @@ export function TeacherBookings() {
             .match(matchCondition);
 
         if (!error) {
+            // Cancel any scheduled OneSignal reminder for this booking
+            const bookingKey = deleteModal.displayId || deleteModal.bookingId || '';
+            cancelScheduledNotification(bookingKey).catch(console.error);
+            
             setDeleteModal({ isOpen: false, bookingId: null, displayId: null, bookingDate: null });
             fetchBookings();
         } else {
