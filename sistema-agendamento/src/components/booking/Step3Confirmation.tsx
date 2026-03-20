@@ -279,7 +279,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                             const sendAfter = reminderDate.toISOString();
 
                             const reminderHeading = `⏰ Agendamento em 10 min`;
-                            const reminderMessage = `Prof. ${professorName} vai retirar ${equipmentNames} em ${data.local} às ${data.startTime}.`;
+                            const reminderMessage = `Faltam 10 minutos para iniciar o agendamento do professor ${professorName}.`;
 
                             const reminderPayload = {
                                 app_id: appId,

@@ -19,12 +19,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (adminSession) {
                 const admin = JSON.parse(adminSession);
                 if (admin?.username) {
-                    return {
-                        user: admin as Admin,
-                        role: (admin.role as UserRole) || 'admin',
-                        isAuthenticated: true,
-                        isLoading: false,
-                    };
+                    if (!admin.unit) {
+                        console.warn('Auth: Sessão de admin muito antiga ou sem unidade identificada. Refazendo login por segurança...');
+                        localStorage.removeItem('admin_session');
+                        // Continues to return default unauthenticated state below
+                    } else {
+                        return {
+                            user: admin as Admin,
+                            role: (admin.role as UserRole) || 'admin',
+                            isAuthenticated: true,
+                            isLoading: false,
+                        };
+                    }
                 }
             }
         } catch (e) {
