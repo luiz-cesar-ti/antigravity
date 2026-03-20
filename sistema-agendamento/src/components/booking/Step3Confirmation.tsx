@@ -28,7 +28,6 @@ import { clsx } from 'clsx';
 import html2pdf from 'html2pdf.js';
 import { generateHash } from '../../utils/hash';
 import { UNIT_LEGAL_NAMES } from '../../utils/constants';
-import { storeScheduledNotificationId } from '../../utils/onesignalUtils';
 
 interface Step3Props {
     data: BookingData;
@@ -305,8 +304,8 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                                 try {
                                     const result = JSON.parse(txt);
                                     if (result.id) {
-                                        const bookingKey = displayId || `${bookingDate}_${data.startTime}`;
-                                        storeScheduledNotificationId(bookingKey, result.id);
+                                        await supabase.from('bookings').update({ onesignal_id: result.id }).eq('display_id', displayId);
+                                        console.log("[Push] Saved scheduled onesignal_id to database");
                                     }
                                 } catch (e) { /* ignore parse error */ }
                             }).catch(console.error);
