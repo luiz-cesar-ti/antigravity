@@ -13,10 +13,11 @@ export function AdminRooms() {
     const [activeTab, setActiveTab] = useState<'rooms' | 'bookings'>('bookings');
     const [rooms, setRooms] = useState<Room[]>([]);
     const [bookings, setBookings] = useState<RoomBooking[]>([]);
+    const [recurringBookings, setRecurringBookings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [deleteModal, setDeleteModal] = useState<{
         isOpen: boolean;
-        type: 'booking' | 'room' | null;
+        type: 'booking' | 'room' | 'template' | null;
         id: string | null;
         roomName?: string;
     }>({
@@ -139,6 +140,26 @@ export function AdminRooms() {
 
                 if (bookingsData) {
                     setBookings(bookingsData as any);
+                }
+
+                // Fetch Recurring Bookings for this unit
+                let recQuery = supabase
+                    .from('recurring_bookings')
+                    .select(`
+                        id, day_of_week, start_time, end_time, unit, local, is_active, room_id,
+                        room:rooms(name, unit),
+                        user:users!recurring_bookings_user_id_fkey(full_name, email)
+                    `)
+                    .eq('is_active', true)
+                    .not('room_id', 'is', null);
+
+                if (!isSuperAdmin && unit) {
+                    recQuery = recQuery.eq('unit', unit);
+                }
+
+                const { data: recData, error: recError } = await recQuery;
+                if (!recError && recData) {
+                    setRecurringBookings(recData);
                 }
             }
 
@@ -378,6 +399,23 @@ export function AdminRooms() {
         } catch (error: any) {
             console.error('Erro ao cancelar agendamento:', error);
             alert(`Erro ao cancelar agendamento: ${error.message}`);
+        }
+    };
+
+    const handleDeleteTemplate = async () => {
+        if (!deleteModal.id) return;
+        try {
+            const { error } = await supabase.from('recurring_bookings').update({ is_active: false }).eq('id', deleteModal.id);
+            if (error) throw error;
+            
+            setDeleteModal({ isOpen: false, type: null, id: null });
+            setSuccessModal({
+                isOpen: true,
+                message: 'Regra fixa cancelada com sucesso!'
+            });
+            fetchData();
+        } catch (err: any) {
+            alert('Erro ao cancelar regra fixa: ' + err.message);
         }
     };
 
@@ -985,8 +1023,87 @@ export function AdminRooms() {
                                 <p>Carregando agendamentos...</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {(() => {
+                            <div className="space-y-8">
+                                {/* RECURRING BOOKINGS SECTION (HIGHLIGHTED) */}
+                                {recurringBookings.length > 0 && (
+                                    <div className="mb-8">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-lg shadow-sm">
+                                                <Calendar className="w-5 h-5" />
+                                            </div>
+                                            <h3 className="text-xl font-black text-gray-900">Modelos Fixos Ativos <span className="text-sm font-semibold text-amber-600 ml-2">(Agendamentos Recorrentes)</span></h3>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                            {recurringBookings.map(rec => {
+                                                const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+                                                const dayName = days[rec.day_of_week];
+
+                                                return (
+                                                    <div key={rec.id} className="group bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-md border border-amber-200 hover:shadow-xl relative overflow-hidden flex flex-col transition-all">
+                                                        <div className="p-4 text-white flex justify-between items-start bg-gradient-to-br from-amber-500 to-orange-600 shadow-sm">
+                                                            <div>
+                                                                <div className="flex items-center gap-1 opacity-90 text-[10px] uppercase tracking-wider font-semibold mb-1">
+                                                                    <MapPin className="w-3 h-3" /> Unidade {rec.unit}
+                                                                </div>
+                                                                <h3 className="font-bold text-lg leading-tight text-white mb-0.5" title={rec.room?.name || rec.local}>
+                                                                    {rec.room?.name || rec.local}
+                                                                </h3>
+                                                            </div>
+                                                            <div className="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-white/20 shadow-sm bg-amber-700/40 text-white">
+                                                                SALA FIXA
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="p-5 flex flex-col flex-1 bg-white/60 backdrop-blur-sm">
+                                                            <div className="flex items-center gap-4 mb-5">
+                                                                <div className="flex flex-col items-center justify-center bg-white border border-amber-100 rounded-lg p-2 min-w-[3.5rem] shadow-sm">
+                                                                    <span className="text-xs font-black text-amber-600 uppercase">TODA</span>
+                                                                    <span className="text-sm font-black text-gray-800">{dayName.split('-')[0]}</span>
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <p className="text-sm font-semibold text-gray-900 capitalize text-left">
+                                                                        Professor
+                                                                    </p>
+                                                                    <div className="flex items-center gap-1 text-sm text-gray-600 mt-0.5">
+                                                                         <span className="font-black text-gray-800 line-clamp-1" title={rec.user?.full_name}>{rec.user?.full_name || 'Desconhecido'}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1.5 text-xs text-amber-700 font-bold mt-1 bg-amber-100/50 inline-flex px-2 py-0.5 rounded-md">
+                                                                        <Clock className="w-3 h-3" />
+                                                                        <span>{rec.start_time?.substring(0, 5)} - {rec.end_time?.substring(0, 5)}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div className="mt-auto pt-4 border-t border-amber-200/50 flex items-center justify-end">
+                                                                <button
+                                                                    onClick={() => setDeleteModal({
+                                                                        isOpen: true,
+                                                                        type: 'template',
+                                                                        id: rec.id,
+                                                                        roomName: rec.room?.name || rec.local
+                                                                    })}
+                                                                    className="px-4 py-2 bg-red-50 text-red-600 font-bold text-xs uppercase tracking-wider border border-red-100 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                                                                >
+                                                                    Cancelar Regra
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-lg shadow-sm">
+                                            <Calendar className="w-5 h-5" />
+                                        </div>
+                                        <h3 className="text-xl font-black text-gray-900">Agendamentos Comuns</h3>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                        {(() => {
                                     // 1. FILTERING
                                     const filtered = bookings.filter(booking => {
                                         const start = parseISO(booking.start_ts.endsWith('Z') ? booking.start_ts : booking.start_ts + 'Z');
@@ -1070,7 +1187,7 @@ export function AdminRooms() {
 
                                         // Determinar cor do header e label do badge
                                         const getHeaderClass = () => {
-                                            if (isCancelledByTeacher) return 'bg-gradient-to-br from-amber-500 to-orange-600';
+                                            if (isCancelledByTeacher) return 'bg-gradient-to-br from-red-600 to-red-800 shadow-md';
                                             if (!isConfirmed) return 'bg-gradient-to-br from-red-500 to-rose-600';
                                             if (isPast) return 'bg-gradient-to-br from-indigo-500 to-blue-600';
                                             return 'bg-gradient-to-br from-emerald-500 to-teal-600';
@@ -1084,15 +1201,14 @@ export function AdminRooms() {
                                         };
 
                                         const getBadgeClass = () => {
-                                            if (isCancelledByTeacher) return 'bg-amber-700/40 text-white';
+                                            if (isCancelledByTeacher) return 'bg-red-900/60 text-white border-white/50 shadow-sm font-bold tracking-widest';
                                             if (!isConfirmed) return 'bg-black/20 text-white';
                                             if (isPast) return 'bg-indigo-700/40 text-white';
                                             return 'bg-emerald-700/40 text-white';
                                         };
 
-
                                         return (
-                                            <div key={(booking as any).booking_id} className={`group bg-white rounded-xl shadow-md border hover:shadow-xl relative overflow-hidden flex flex-col ${isPast || isCancelled ? 'opacity-75 grayscale-[0.3]' : 'border-gray-200 hover:border-primary-200'}`}>
+                                            <div key={(booking as any).booking_id} className={`group bg-white rounded-xl shadow-md border hover:shadow-xl relative overflow-hidden flex flex-col ${isPast || isCancelled ? 'opacity-90' : 'border-gray-200 hover:border-primary-200'}`}>
 
                                                 {/* Colored Header */}
                                                 <div className={`p-4 text-white flex justify-between items-start ${getHeaderClass()}`}>
@@ -1160,6 +1276,8 @@ export function AdminRooms() {
                                         );
                                     })
                                 })()}
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -1192,7 +1310,7 @@ export function AdminRooms() {
                             </div>
 
                             <h3 className="text-2xl font-black text-gray-900 mb-2 leading-tight">
-                                {deleteModal.type === 'room' ? 'Excluir Sala Permanentemente?' : 'Cancelar Agendamento?'}
+                                {deleteModal.type === 'room' ? 'Excluir Sala Permanentemente?' : deleteModal.type === 'template' ? 'Cancelar Regra Fixa?' : 'Cancelar Agendamento?'}
                             </h3>
 
                             <div className="text-gray-500 text-sm leading-relaxed mb-8 space-y-4">
@@ -1208,6 +1326,11 @@ export function AdminRooms() {
                                             </p>
                                         </div>
                                     </>
+                                ) : deleteModal.type === 'template' ? (
+                                    <p>
+                                        Você está prestes a cancelar a regra fixa referente à <span className="font-bold text-gray-800">{deleteModal.roomName}</span>.
+                                        Esta ação removerá o agendamento padrão permanentemente e a sala ficará livre de forma definitiva para esses horários.
+                                    </p>
                                 ) : (
                                     <p>
                                         Você está prestes a cancelar a reserva da sala <span className="font-bold text-gray-800">{deleteModal.roomName}</span>.
@@ -1221,10 +1344,10 @@ export function AdminRooms() {
                                     onClick={() => setDeleteModal({ isOpen: false, type: null, id: null })}
                                     className="flex-1 px-6 py-4 bg-gray-50 text-gray-600 font-bold rounded-2xl hover:bg-gray-100 transition-all active:scale-95 text-[10px] uppercase tracking-widest"
                                 >
-                                    {deleteModal.type === 'room' ? 'Manter Sala' : 'Manter Reserva'}
+                                    {deleteModal.type === 'room' ? 'Manter Sala' : deleteModal.type === 'template' ? 'Manter Regra' : 'Manter Reserva'}
                                 </button>
                                 <button
-                                    onClick={deleteModal.type === 'room' ? confirmDeleteRoom : handleDeleteBooking}
+                                    onClick={deleteModal.type === 'room' ? confirmDeleteRoom : deleteModal.type === 'template' ? handleDeleteTemplate : handleDeleteBooking}
                                     className="flex-1 px-6 py-4 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 shadow-lg shadow-red-200 transition-all active:scale-95 text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"
                                 >
                                     <Trash2 className="w-4 h-4" />

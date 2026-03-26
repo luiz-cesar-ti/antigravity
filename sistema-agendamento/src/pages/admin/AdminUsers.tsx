@@ -23,7 +23,9 @@ export function AdminUsers() {
         job_title: '',
         units: [] as string[],
         recurring_booking_enabled: false,
-        recurring_booking_units: [] as string[]
+        recurring_booking_units: [] as string[],
+        recurring_room_booking_enabled: false,
+        recurring_room_booking_units: [] as string[]
     });
     const [saving, setSaving] = useState(false);
     const [resendingEmail, setResendingEmail] = useState(false);
@@ -99,7 +101,9 @@ export function AdminUsers() {
             job_title: user.job_title || '',
             units: user.units || [],
             recurring_booking_enabled: user.recurring_booking_enabled || false,
-            recurring_booking_units: user.recurring_booking_units || []
+            recurring_booking_units: user.recurring_booking_units || [],
+            recurring_room_booking_enabled: user.recurring_room_booking_enabled || false,
+            recurring_room_booking_units: user.recurring_room_booking_units || []
         });
     };
 
@@ -127,6 +131,8 @@ export function AdminUsers() {
                 units: formData.units,
                 recurring_booking_enabled: formData.recurring_booking_enabled,
                 recurring_booking_units: formData.recurring_booking_units,
+                recurring_room_booking_enabled: formData.recurring_room_booking_enabled,
+                recurring_room_booking_units: formData.recurring_room_booking_units,
                 active: editingUser.active // Maintain current active status
             }
         });
@@ -583,6 +589,91 @@ export function AdminUsers() {
                                     </div>
                                 ) : (
                                     <p className="text-xs text-indigo-400 mt-2 text-center bg-white/50 py-2 rounded-lg border border-indigo-100/30">
+                                        Nenhuma unidade selecionada.
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* REC ROOM BOOKINGS */}
+                            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-100/50">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-1.5 bg-white rounded-lg shadow-sm text-amber-600">
+                                            <Repeat className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-amber-900">Agendamento Recorrente de Salas</p>
+                                            <p className="text-[10px] text-amber-600/80 font-bold uppercase tracking-tight">Autorização Especial</p>
+                                        </div>
+                                    </div>
+
+                                    {(user as Admin)?.unit && (
+                                        <button
+                                            onClick={() => {
+                                                const adminUnit = (user as Admin).unit!;
+                                                setFormData(prev => {
+                                                    const units = prev.recurring_room_booking_units || [];
+                                                    const newUnits = units.includes(adminUnit)
+                                                        ? units.filter(u => u !== adminUnit)
+                                                        : [...units, adminUnit];
+                                                    return { 
+                                                        ...prev, 
+                                                        recurring_room_booking_units: newUnits,
+                                                        recurring_room_booking_enabled: newUnits.length > 0
+                                                    };
+                                                });
+                                            }}
+                                            className={clsx(
+                                                "relative inline-flex h-6 w-11 items-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2",
+                                                formData.recurring_room_booking_units?.includes((user as Admin).unit!) ? "bg-amber-600" : "bg-gray-200"
+                                            )}
+                                        >
+                                            <span className={clsx("inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform", formData.recurring_room_booking_units?.includes((user as Admin).unit!) ? "translate-x-6" : "translate-x-1")} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                {formData.units.length > 0 ? (
+                                    <div className="mt-3 space-y-2">
+                                        {formData.units.map(unit => {
+                                            const isAuthorized = formData.recurring_room_booking_units?.includes(unit);
+                                            const isCurrentAdminUnit = (user as Admin)?.unit === unit;
+                                            const canToggle = !(user as Admin)?.unit || isCurrentAdminUnit;
+
+                                            return (
+                                                <div key={unit} className={clsx(
+                                                    "flex items-center justify-between px-3 py-2 rounded-lg border transition-all",
+                                                    isAuthorized ? "bg-white border-amber-100 shadow-sm" : "bg-white/40 border-transparent hover:bg-white/60"
+                                                )}>
+                                                    <span className={clsx("text-xs font-medium", isAuthorized ? "text-amber-900" : "text-gray-500")}>{unit}</span>
+                                                    <button
+                                                        disabled={!canToggle}
+                                                        onClick={() => {
+                                                            setFormData(prev => {
+                                                                const newUnits = prev.recurring_room_booking_units?.includes(unit)
+                                                                    ? (prev.recurring_room_booking_units || []).filter(u => u !== unit)
+                                                                    : [...(prev.recurring_room_booking_units || []), unit];
+                                                                return {
+                                                                    ...prev,
+                                                                    recurring_room_booking_units: newUnits,
+                                                                    recurring_room_booking_enabled: newUnits.length > 0
+                                                                };
+                                                            });
+                                                        }}
+                                                        className={clsx(
+                                                            "relative inline-flex h-4 w-8 items-center rounded-full transition-colors",
+                                                            isAuthorized ? "bg-amber-500" : "bg-gray-200",
+                                                            !canToggle && "opacity-50 cursor-not-allowed"
+                                                        )}
+                                                    >
+                                                        <span className={clsx("inline-block h-2.5 w-2.5 transform rounded-full bg-white transition-transform", isAuthorized ? "translate-x-4" : "translate-x-1")} />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-amber-400 mt-2 text-center bg-white/50 py-2 rounded-lg border border-amber-100/30">
                                         Nenhuma unidade selecionada.
                                     </p>
                                 )}

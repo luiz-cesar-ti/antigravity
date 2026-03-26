@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Room, User, Settings } from '../types';
-import { Clock, ChevronRight, AlertCircle, MapPin, Trash2, Info, X, CheckCircle, Calendar, Building2, DoorOpen, Check } from 'lucide-react';
+import { Clock, ChevronRight, AlertCircle, MapPin, Trash2, Info, X, CheckCircle, Calendar, Building2, DoorOpen, Check, Repeat } from 'lucide-react';
 import { MobileTimePicker } from '../components/MobileTimePicker';
 import { MobileDatePicker } from '../components/MobileDatePicker';
 import { format, parseISO, getDay, differenceInHours } from 'date-fns';
@@ -25,7 +25,10 @@ export function RoomBookingV2() {
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
     const [occupiedSlots, setOccupiedSlots] = useState<any[]>([]);
+    const [isRecurring, setIsRecurring] = useState(false);
+    const [dayOfWeek, setDayOfWeek] = useState<number>(getDay(new Date()));
     const [myBookings, setMyBookings] = useState<any[]>([]);
+    const [myRecurringBookings, setMyRecurringBookings] = useState<any[]>([]);
     const [bookingLoading, setBookingLoading] = useState(false);
 
     // Settings for room advance time validation
@@ -67,28 +70,36 @@ export function RoomBookingV2() {
         if (!deleteConfirmation.bookingId) return;
 
         try {
-            if (deleteConfirmation.isPast) {
+            if (deleteConfirmation.bookingId.startsWith('rec_')) {
+                // Delete recurring booking template
+                const realId = deleteConfirmation.bookingId.replace('rec_', '');
+                const { error } = await supabase
+                    .from('recurring_bookings')
+                    .update({ is_active: false })
+                    .eq('id', realId);
+                if (error) throw error;
+
+                triggerFeedback('success', 'Agendamento Fixo cancelado com sucesso. A sala está liberada eternamente.', 'Cancelamento Confirmado');
+            } else if (deleteConfirmation.isPast) {
                 // Agendamento PASSADO: Soft delete (remove do histórico do professor)
                 const { error } = await supabase
                     .from('room_bookings')
                     .update({ deleted_at: new Date().toISOString() })
                     .eq('id', deleteConfirmation.bookingId);
                 if (error) throw error;
+
+                triggerFeedback('success', 'Agendamento removido do seu histórico.', 'Agendamento Excluído');
             } else {
                 // Agendamento ATIVO/FUTURO: Alterar status para "cancelled_by_teacher"
-                // Isso libera o horário para novos agendamentos E mostra como cancelado para o admin
                 const { error } = await supabase
                     .from('room_bookings')
                     .update({ status: 'cancelled_by_teacher' })
                     .eq('id', deleteConfirmation.bookingId);
                 if (error) throw error;
+
+                triggerFeedback('success', 'Reserva cancelada com sucesso. O horário foi liberado.', 'Cancelamento Confirmado');
             }
 
-            triggerFeedback(
-                'success',
-                deleteConfirmation.isPast ? 'Agendamento removido do seu histórico.' : 'Reserva cancelada com sucesso. O horário foi liberado.',
-                deleteConfirmation.isPast ? 'Agendamento Excluído' : 'Cancelamento Confirmado'
-            );
             fetchMyBookings();
             setDeleteConfirmation({ isOpen: false, bookingId: null, isPast: false });
         } catch (err) {
@@ -158,6 +169,7 @@ export function RoomBookingV2() {
     const fetchMyBookings = async () => {
         if (!user) return;
         try {
+            // Fetch normal bookings
             const { data, error } = await supabase
                 .from('room_bookings')
                 .select(`
@@ -171,36 +183,44 @@ export function RoomBookingV2() {
                 .is('deleted_at', null) // Filtra agendamentos excluídos pelo admin
                 .neq('status', 'cancelled_by_teacher'); // Filtra agendamentos cancelados pelo professor
 
-            if (error) {
-                console.error('Error fetching my bookings:', error);
+            // Fetch recurring bookings
+            const { data: recData, error: recError } = await supabase
+                .from('recurring_bookings')
+                .select(`
+                    *,
+                    room:rooms (
+                        name,
+                        unit
+                    )
+                `)
+                .eq('user_id', user.id)
+                .eq('is_active', true)
+                .not('room_id', 'is', null);
+
+            if (error || recError) {
+                console.error('Error fetching bookings:', error || recError);
                 return;
             }
 
             if (data) {
                 const now = new Date();
-                // Sorting: Future (Agendado) first, then Past (Encerrado)
-                // Within Future: Ascending date (nearest first)
-                // Within Past: Descending date (most recent past first)
                 const sorted = data.sort((a, b) => {
                     const dateA = new Date(a.end_ts);
                     const dateB = new Date(b.end_ts);
                     const isPastA = dateA < now;
                     const isPastB = dateB < now;
 
-                    if (isPastA !== isPastB) {
-                        return isPastA ? 1 : -1; // Future before Past
-                    }
-
-                    if (!isPastA) {
-                        // Both Future: Ascending
-                        return new Date(a.start_ts).getTime() - new Date(b.start_ts).getTime();
-                    } else {
-                        // Both Past: Descending
-                        return new Date(b.start_ts).getTime() - new Date(a.start_ts).getTime();
-                    }
+                    if (isPastA !== isPastB) return isPastA ? 1 : -1;
+                    if (!isPastA) return new Date(a.start_ts).getTime() - new Date(b.start_ts).getTime();
+                    return new Date(b.start_ts).getTime() - new Date(a.start_ts).getTime();
                 });
                 setMyBookings(sorted);
             }
+
+            if (recData) {
+                setMyRecurringBookings(recData);
+            }
+
         } catch (err) {
             console.error('Unexpected error fetching my bookings:', err);
         }
@@ -210,12 +230,12 @@ export function RoomBookingV2() {
         fetchMyBookings();
     }, [user]);
 
-    // 2. Fetch Occupancy when Room/Date changes
+    // 2. Fetch Occupancy when Room/Date/isRecurring/dayOfWeek changes
     useEffect(() => {
-        if (selectedRoom && selectedDate) {
+        if (selectedRoom) {
             fetchOccupancy();
         }
-    }, [selectedRoom, selectedDate]);
+    }, [selectedRoom, selectedDate, isRecurring, dayOfWeek]);
 
     // Fetch Settings for room advance time validation
     useEffect(() => {
@@ -243,27 +263,76 @@ export function RoomBookingV2() {
     }, [selectedRoom]);
 
     const fetchOccupancy = async () => {
-        // Parse date components to ensure local timezone interpretation
-        const [year, month, day] = selectedDate.split('-').map(Number);
+        // Para verificar ocupação, precisamos saber qual a data base e qual o dia da semana.
+        // Se for recorrente, validamos contra o dayOfWeek selecionado (mas projetamos numa data qualquer para comparar horas)
+        
+        let targetYear: number, targetMonth: number, targetDay: number;
+        let targetDayOfWeek: number;
 
-        // Start of day in local time -> convert to UTC ISO
-        const startOfDay = new Date(year, month - 1, day, 0, 0, 0);
-        const endOfDay = new Date(year, month - 1, day, 23, 59, 59);
+        if (isRecurring) {
+            // Use today's date, but change the day of the week to match
+            const now = new Date();
+            const currentDayOfWk = getDay(now);
+            const diff = dayOfWeek - currentDayOfWk;
+            const targetDate = new Date(now);
+            targetDate.setDate(now.getDate() + diff);
+            
+            targetYear = targetDate.getFullYear();
+            targetMonth = targetDate.getMonth() + 1; // 1-indexed for string split parity
+            targetDay = targetDate.getDate();
+            targetDayOfWeek = dayOfWeek;
+        } else {
+            const parts = selectedDate.split('-').map(Number);
+            targetYear = parts[0];
+            targetMonth = parts[1];
+            targetDay = parts[2];
+            const startOfDay = new Date(targetYear, targetMonth - 1, targetDay, 0, 0, 0);
+            targetDayOfWeek = getDay(startOfDay);
+        }
+
+        const startOfDay = new Date(targetYear, targetMonth - 1, targetDay, 0, 0, 0);
+        const endOfDay = new Date(targetYear, targetMonth - 1, targetDay, 23, 59, 59);
 
         const startIso = startOfDay.toISOString();
         const endIso = endOfDay.toISOString();
 
-        // Buscar apenas agendamentos ATIVOS (confirmed) e NÃO EXCLUÍDOS
-        const { data } = await supabase
-            .from('room_bookings')
-            .select('start_ts, end_ts')
-            .eq('room_id', selectedRoom?.id)
-            .eq('status', 'confirmed')
-            .is('deleted_at', null) // Ignorar agendamentos excluídos
-            .gte('end_ts', startIso)
-            .lte('start_ts', endIso);
+        // 1. Agendamentos Normais (apenas válido se for agendamento único, 
+        // ou se quisermos bater de frente com TODOS do futuro - para MVP, vamos checar o mes/dia especifico)
+        let combinedSlots: any[] = [];
+        
+        if (!isRecurring) {
+            const { data: normalBookings } = await supabase
+                .from('room_bookings')
+                .select('start_ts, end_ts')
+                .eq('room_id', selectedRoom?.id)
+                .eq('status', 'confirmed')
+                .is('deleted_at', null)
+                .gte('end_ts', startIso)
+                .lte('start_ts', endIso);
+                
+            combinedSlots = normalBookings || [];
+        }
 
-        if (data) setOccupiedSlots(data);
+        // 2. Agendamentos Recorrentes que caem neste dia da semana
+        const { data: recurring } = await supabase
+            .from('recurring_bookings')
+            .select('start_time, end_time')
+            .eq('room_id', selectedRoom?.id)
+            .eq('day_of_week', targetDayOfWeek)
+            .eq('is_active', true);
+
+        if (recurring) {
+            const recurringSlots = recurring.map(rec => {
+                const [sH, sM] = (rec.start_time || '00:00').split(':').map(Number);
+                const [eH, eM] = (rec.end_time || '00:00').split(':').map(Number);
+                const recStart = new Date(targetYear, targetMonth - 1, targetDay, sH, sM, 0).toISOString();
+                const recEnd = new Date(targetYear, targetMonth - 1, targetDay, eH, eM, 0).toISOString();
+                return { start_ts: recStart, end_ts: recEnd };
+            });
+            combinedSlots = [...combinedSlots, ...recurringSlots];
+        }
+
+        setOccupiedSlots(combinedSlots);
     };
 
     const handleRoomClick = (room: Room) => {
@@ -272,6 +341,8 @@ export function RoomBookingV2() {
         setStartTime('');
         setEndTime('');
         setOccupiedSlots([]);
+        setIsRecurring(false);
+        setDayOfWeek(getDay(new Date()));
     };
 
     const handleCloseModal = () => {
@@ -281,40 +352,61 @@ export function RoomBookingV2() {
     const handleBook = async () => {
         if (!selectedRoom || !startTime || !endTime || !user) return;
 
-        // Create Date objects in local timezone to ensure correct UTC conversion
-        // We must parse explicitly to avoid browser inconsistencies
-        const [year, month, day] = selectedDate.split('-').map(Number);
-        const [startHour, startMinute] = startTime.split(':').map(Number);
-        const [endHour, endMinute] = endTime.split(':').map(Number);
-
-        const startDate = new Date(year, month - 1, day, startHour, startMinute, 0);
-        const endDate = new Date(year, month - 1, day, endHour, endMinute, 0);
-
-        // Convert to ISO string (UTC) for Supabase
-        // consistently handling the timezone offset 
-        const formattedStart = startDate.toISOString();
-        const formattedEnd = endDate.toISOString();
-
         setBookingLoading(true);
         try {
-            const { error } = await supabase.from('room_bookings').insert({
-                room_id: selectedRoom.id,
-                user_id: user.id,
-                start_ts: formattedStart,
-                end_ts: formattedEnd,
-                status: 'confirmed'
-            });
+            if (isRecurring) {
+                // 1. Insert into Recurring Bookings
+                const { error: recError } = await supabase
+                    .from('recurring_bookings')
+                    .insert({
+                        user_id: user.id,
+                        unit: selectedRoom.unit,
+                        local: selectedRoom.name,
+                        room_id: selectedRoom.id,
+                        day_of_week: dayOfWeek,
+                        start_time: startTime,
+                        end_time: endTime,
+                        equipments: [],
+                        is_active: true
+                    });
 
-            if (error) {
-                if (error.code === '23P01') {
-                    triggerFeedback('error', 'Horário indisponível! Alguém acabou de reservar.');
-                } else {
-                    throw error;
-                }
-            } else {
-                triggerFeedback('success', 'Reserva realizada com sucesso! Confira em "Meus Agendamentos".', 'Agendamento Confirmado');
+                if (recError) throw recError;
+
+                triggerFeedback('success', 'Agendamento Recorrente ativado com sucesso!', 'Recorrência Confirmada');
                 handleCloseModal();
                 fetchMyBookings();
+
+            } else {
+                // Normal Booking
+                const [year, month, day] = selectedDate.split('-').map(Number);
+                const [startHour, startMinute] = startTime.split(':').map(Number);
+                const [endHour, endMinute] = endTime.split(':').map(Number);
+
+                const startDate = new Date(year, month - 1, day, startHour, startMinute, 0);
+                const endDate = new Date(year, month - 1, day, endHour, endMinute, 0);
+
+                const formattedStart = startDate.toISOString();
+                const formattedEnd = endDate.toISOString();
+
+                const { error } = await supabase.from('room_bookings').insert({
+                    room_id: selectedRoom.id,
+                    user_id: user.id,
+                    start_ts: formattedStart,
+                    end_ts: formattedEnd,
+                    status: 'confirmed'
+                });
+
+                if (error) {
+                    if (error.code === '23P01') {
+                        triggerFeedback('error', 'Horário indisponível! Alguém acabou de reservar.');
+                    } else {
+                        throw error;
+                    }
+                } else {
+                    triggerFeedback('success', 'Reserva realizada com sucesso! Confira em "Meus Agendamentos".', 'Agendamento Confirmado');
+                    handleCloseModal();
+                    fetchMyBookings();
+                }
             }
         } catch (err: any) {
             console.error(err);
@@ -337,10 +429,27 @@ export function RoomBookingV2() {
             return `O horário deve estar entre ${roomMin} e ${roomMax}.`;
         }
 
-        // Parse date and time components separately to ensure local timezone
-        const [year, month, day] = selectedDate.split('-').map(Number);
-        const [startHour, startMinute] = startTime.split(':').map(Number);
-        const [endHour, endMinute] = endTime.split(':').map(Number);
+        let year = 0, month = 0, day = 0;
+        let startHour = 0, startMinute = 0, endHour = 0, endMinute = 0;
+
+        if (isRecurring) {
+            // Validate based on an arbitrary reference point, just to check overlap
+            const now = new Date();
+            const diff = dayOfWeek - getDay(now);
+            const targetDate = new Date(now);
+            targetDate.setDate(now.getDate() + diff);
+            year = targetDate.getFullYear();
+            month = targetDate.getMonth() + 1;
+            day = targetDate.getDate();
+        } else {
+            const dateParts = selectedDate.split('-').map(Number);
+            year = dateParts[0]; month = dateParts[1]; day = dateParts[2];
+        }
+
+        const sParts = startTime.split(':').map(Number);
+        startHour = sParts[0]; startMinute = sParts[1];
+        const eParts = endTime.split(':').map(Number);
+        endHour = eParts[0]; endMinute = eParts[1];
 
         // Create Date objects in local timezone
         const newStart = new Date(year, month - 1, day, startHour, startMinute, 0);
@@ -359,21 +468,20 @@ export function RoomBookingV2() {
         // Past time check - now both dates are in local timezone
         const now = new Date();
 
-        // If advance time is disabled, we allow "same minute" bookings
-        if (!settings?.room_min_advance_time_enabled) {
-            now.setSeconds(0, 0);
-        }
+        if (!isRecurring) {
+            // If advance time is disabled, we allow "same minute" bookings
+            if (!settings?.room_min_advance_time_enabled) {
+                now.setSeconds(0, 0);
+            }
 
-        if (newStart < now) return "Não é possível realizar agendamentos para horários que já passaram.";
+            if (newStart < now) return "Não é possível realizar agendamentos para horários que já passaram.";
 
-        // Minimum advance time check for rooms
+            if (settings?.room_min_advance_time_enabled) {
+                const hoursDiff = differenceInHours(newStart, now);
 
-
-        if (settings?.room_min_advance_time_enabled) {
-            const hoursDiff = differenceInHours(newStart, now);
-
-            if (hoursDiff < settings.room_min_advance_time_hours) {
-                return `É necessário agendar salas com no mínimo ${settings.room_min_advance_time_hours} horas de antecedência.`;
+                if (hoursDiff < settings.room_min_advance_time_hours) {
+                    return `É necessário agendar salas com no mínimo ${settings.room_min_advance_time_hours} horas de antecedência.`;
+                }
             }
         }
 
@@ -382,13 +490,12 @@ export function RoomBookingV2() {
 
     const isDayAvailable = () => {
         if (!selectedRoom) return true;
-        const dateObj = parseISO(selectedDate);
-        const dayOfWeek = getDay(dateObj); // 0=Sun, 1=Mon...
+        const dayOfWk = isRecurring ? dayOfWeek : getDay(parseISO(selectedDate));
 
         // If available_days is defined, check it. Default is Mon-Fri if missing/empty in typical logic, 
         // but here we rely on the DB.
         if (selectedRoom.available_days && selectedRoom.available_days.length > 0) {
-            return selectedRoom.available_days.includes(dayOfWeek);
+            return selectedRoom.available_days.includes(dayOfWk);
         }
         return true;
     };
@@ -550,33 +657,94 @@ export function RoomBookingV2() {
 
                             <div className="p-5 sm:p-10">
                                 <div className="space-y-4 sm:space-y-8">
-                                    {/* Section: Data */}
-                                    <div className="space-y-1.5 sm:space-y-2.5 max-w-[85%] sm:max-w-[90%] mx-auto">
-                                        <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
-                                            Data do Agendamento <span className="text-orange-600">*</span>
-                                        </label>
-                                        <div className="relative group/field">
-                                            <div className="absolute inset-y-0 left-0 pl-4 sm:pl-5 flex items-center pointer-events-none">
-                                                <Calendar className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
-                                            </div>
-                                            <MobileDatePicker
-                                                name="selectedDate"
-                                                required
-                                                min={format(new Date(), 'yyyy-MM-dd')}
-                                                className="block w-full pl-12 sm:pl-14 pr-4 sm:pr-5 py-2.5 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-xl sm:rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm appearance-none [&::-webkit-calendar-picker-indicator]:hidden sm:[&::-webkit-calendar-picker-indicator]:block"
-                                                value={selectedDate}
-                                                onChange={(e: any) => setSelectedDate(e.target.value)}
-                                            />
+                                    {/* Section: Tipo de Agendamento */}
+                                    {!!(teacherUser?.recurring_room_booking_enabled && teacherUser?.recurring_room_booking_units?.includes(selectedRoom.unit)) && (
+                                        <div className="flex bg-gray-100 p-1 rounded-2xl max-w-[85%] sm:max-w-[90%] mx-auto mb-6">
+                                            <button
+                                                onClick={() => setIsRecurring(false)}
+                                                className={clsx(
+                                                    "flex-1 py-2.5 text-xs font-bold rounded-xl transition-all",
+                                                    !isRecurring ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                                                )}
+                                            >
+                                                Agendamento Único
+                                            </button>
+                                            <button
+                                                onClick={() => setIsRecurring(true)}
+                                                className={clsx(
+                                                    "flex-1 py-2.5 text-xs font-bold rounded-xl transition-all",
+                                                    isRecurring ? "bg-amber-100 text-amber-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                                                )}
+                                            >
+                                                Recorrente
+                                            </button>
                                         </div>
-                                        {!isDayAvailable() && (
-                                            <div className="flex items-start gap-3 p-3 sm:p-4 bg-red-50 rounded-xl sm:rounded-3xl border border-red-100 mt-2">
-                                                <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
-                                                <p className="text-[10px] text-red-700 font-bold leading-relaxed">
-                                                    Esta sala não está disponível para agendamentos neste dia da semana.
-                                                </p>
+                                    )}
+
+                                    {/* Section: Data ou Dia da Semana */}
+                                    {isRecurring ? (
+                                        <div className="space-y-1.5 sm:space-y-2.5 max-w-[85%] sm:max-w-[90%] mx-auto">
+                                            <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
+                                                Dia da Semana <span className="text-orange-600">*</span>
+                                            </label>
+                                            <div className="relative group/field">
+                                                <div className="absolute inset-y-0 left-0 pl-4 sm:pl-5 flex items-center pointer-events-none">
+                                                    <Calendar className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
+                                                </div>
+                                                <select
+                                                    className="block w-full pl-12 sm:pl-14 pr-4 sm:pr-5 py-2.5 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-xl sm:rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm appearance-none"
+                                                    value={dayOfWeek}
+                                                    onChange={(e: any) => setDayOfWeek(Number(e.target.value))}
+                                                >
+                                                    <option value={1}>Segunda-feira</option>
+                                                    <option value={2}>Terça-feira</option>
+                                                    <option value={3}>Quarta-feira</option>
+                                                    <option value={4}>Quinta-feira</option>
+                                                    <option value={5}>Sexta-feira</option>
+                                                    <option value={6}>Sábado</option>
+                                                    <option value={0}>Domingo</option>
+                                                </select>
+                                                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                                    <ChevronRight className="h-4 w-4 text-gray-400 rotate-90" />
+                                                </div>
                                             </div>
-                                        )}
-                                    </div>
+                                            {!isDayAvailable() && (
+                                                <div className="flex items-start gap-3 p-3 sm:p-4 bg-red-50 rounded-xl sm:rounded-3xl border border-red-100 mt-2">
+                                                    <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                                                    <p className="text-[10px] text-red-700 font-bold leading-relaxed">
+                                                        Esta sala não está disponível para agendamentos neste dia da semana.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-1.5 sm:space-y-2.5 max-w-[85%] sm:max-w-[90%] mx-auto">
+                                            <label className="text-[11px] font-black text-gray-700 uppercase tracking-[0.1em] ml-1">
+                                                Data do Agendamento <span className="text-orange-600">*</span>
+                                            </label>
+                                            <div className="relative group/field">
+                                                <div className="absolute inset-y-0 left-0 pl-4 sm:pl-5 flex items-center pointer-events-none">
+                                                    <Calendar className="h-5 w-5 text-gray-400 group-focus-within/field:text-orange-500 transition-colors" />
+                                                </div>
+                                                <MobileDatePicker
+                                                    name="selectedDate"
+                                                    required
+                                                    min={format(new Date(), 'yyyy-MM-dd')}
+                                                    className="block w-full pl-12 sm:pl-14 pr-4 sm:pr-5 py-2.5 sm:py-4 bg-gray-50/50 border-2 border-gray-100 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/5 rounded-xl sm:rounded-3xl text-sm font-bold text-gray-900 transition-all outline-none shadow-sm appearance-none [&::-webkit-calendar-picker-indicator]:hidden sm:[&::-webkit-calendar-picker-indicator]:block"
+                                                    value={selectedDate}
+                                                    onChange={(e: any) => setSelectedDate(e.target.value)}
+                                                />
+                                            </div>
+                                            {!isDayAvailable() && (
+                                                <div className="flex items-start gap-3 p-3 sm:p-4 bg-red-50 rounded-xl sm:rounded-3xl border border-red-100 mt-2">
+                                                    <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                                                    <p className="text-[10px] text-red-700 font-bold leading-relaxed">
+                                                        Esta sala não está disponível para agendamentos neste dia da semana.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* Section: Horários */}
                                     <div className="space-y-4 sm:space-y-6 max-w-[85%] sm:max-w-[90%] mx-auto">
@@ -679,6 +847,76 @@ export function RoomBookingV2() {
                     </div>
                 </div>
             )}
+            {/* RECURRING BOOKINGS SECTION */}
+            {myRecurringBookings.length > 0 && (
+                <div className="animate-fadeIn pt-10 border-t border-gray-300">
+                    <h2 className="text-xl font-black text-[#1e293b] mb-8 flex items-center gap-3">
+                        <span className="bg-[#1e293b] p-2.5 rounded-xl shadow-lg border border-white/10 flex items-center justify-center">
+                            <Repeat className="w-5 h-5 text-amber-400" />
+                        </span>
+                        Meus Agendamentos Fixos
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {myRecurringBookings.map((rec) => {
+                            const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+                            const dayName = days[rec.day_of_week];
+
+                            return (
+                                <div key={rec.id} className="group bg-white rounded-xl shadow-md border hover:shadow-xl relative overflow-hidden flex flex-col border-gray-300 hover:border-amber-200">
+                                    <div className="p-4 flex justify-between items-start bg-gradient-to-br from-amber-500 to-orange-600">
+                                        <div>
+                                            <div className="flex items-center gap-1 opacity-90 text-[10px] uppercase tracking-wider font-semibold mb-1 text-white/90">
+                                                <MapPin className="w-3 h-3" /> Unidade {rec.room?.unit}
+                                            </div>
+                                            <h3 className="font-bold text-lg leading-tight text-white mb-0.5 shadow-sm" title={rec.room?.name}>
+                                                {rec.room?.name}
+                                            </h3>
+                                        </div>
+                                        <div className="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-white/20 shadow-sm bg-amber-700/40 text-white">
+                                            FIXO
+                                        </div>
+                                    </div>
+
+                                    <div className="p-5 flex flex-col flex-1 bg-white">
+                                        <div className="flex items-center gap-4 mb-5">
+                                            <div className="flex flex-col items-center justify-center bg-slate-50 border border-gray-200 rounded-lg p-3 min-w-[3.5rem]">
+                                                <Repeat className="w-6 h-6 text-amber-500 mb-1" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-semibold text-gray-900 capitalize text-left">
+                                                    Toda {dayName}
+                                                </p>
+                                                <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-1">
+                                                    <Clock className="w-3.5 h-3.5 text-amber-500" />
+                                                    <span>
+                                                        {rec.start_time?.substring(0, 5)} - {rec.end_time?.substring(0, 5)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={() => {
+                                                setDeleteConfirmation({
+                                                    isOpen: true,
+                                                    bookingId: 'rec_' + rec.id, // Prefix to indicate template deletion
+                                                    isPast: false
+                                                });
+                                            }}
+                                            className="mt-auto w-full py-2.5 text-xs font-bold text-red-600 border border-red-100 bg-red-50 rounded-xl hover:bg-red-100 hover:border-red-200 transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            CANCELAR REGRA FIXA
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
             {/* MY BOOKINGS SECTION */}
             <div className="animate-fadeIn pt-10 border-t border-gray-300">
                 <h2 className="text-xl font-black text-[#1e293b] mb-8 flex items-center gap-3">
@@ -791,12 +1029,16 @@ export function RoomBookingV2() {
                             <Trash2 className="h-8 w-8 text-red-500" />
                         </div>
                         <h3 className="text-xl font-black text-gray-900 text-center mb-2">
-                            {deleteConfirmation.isPast ? 'Excluir do Histórico?' : 'Cancelar Reserva?'}
+                            {deleteConfirmation.bookingId?.startsWith('rec_')
+                                ? 'Cancelar Fixo?'
+                                : deleteConfirmation.isPast ? 'Excluir do Histórico?' : 'Cancelar Reserva?'}
                         </h3>
                         <p className="text-sm text-gray-600 text-center mb-8 font-medium leading-relaxed">
-                            {deleteConfirmation.isPast
-                                ? 'Isso removerá este registro do seu histórico. Esta ação não pode ser desfeita.'
-                                : 'Tem certeza que deseja cancelar esta reserva? O horário ficará disponível para outros professores.'}
+                            {deleteConfirmation.bookingId?.startsWith('rec_')
+                                ? 'Tem certeza que deseja cancelar esta regra fixa? A sala ficará livre eternamente para os próximos meses.'
+                                : deleteConfirmation.isPast
+                                    ? 'Isso removerá este registro do seu histórico. Esta ação não pode ser desfeita.'
+                                    : 'Tem certeza que deseja cancelar esta reserva? O horário ficará disponível para outros professores.'}
                         </p>
                         <div className="flex flex-col gap-3">
                             <button
