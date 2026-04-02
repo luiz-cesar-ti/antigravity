@@ -75,20 +75,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         roleRef.current = state.role;
     }, [state.user, state.role]);
 
-    const fetchUserProfile = async (userId: string) => {
+    const fetchUserProfile = async (userId: string, retries = 3) => {
         try {
-            const { data: profile, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', userId)
-                .single();
+            for (let i = 0; i < retries; i++) {
+                const { data: profile, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', userId)
+                    .single();
 
-            if (error) return null;
-            if (profile && profile.active === false) {
-                await supabase.auth.signOut();
-                return 'disabled';
+                if (!error && profile) {
+                    if (profile.active === false) {
+                        await supabase.auth.signOut();
+                        return 'disabled';
+                    }
+                    return profile as User;
+                }
+
+                // Wait 500ms before retrying in case the row is still being created
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
-            return profile as User;
+            return null;
         } catch (err) {
             return null;
         }
