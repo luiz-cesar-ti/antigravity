@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Monitor, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug, Repeat } from 'lucide-react';
 import type { BookingData } from '../../pages/BookingWizard';
 import { useAvailableEquipment } from '../../hooks/useAvailableEquipment';
@@ -9,9 +9,11 @@ interface Step2Props {
     updateData: (data: Partial<BookingData>) => void;
     onNext: () => void;
     onPrev: () => void;
+    cartInfo?: { currentIndex: number; totalItems: number };
+    cart?: BookingData[];
 }
 
-export function Step2Equipment({ data, updateData, onNext, onPrev }: Step2Props) {
+export function Step2Equipment({ data, updateData, onNext, onPrev, cartInfo, cart = [] }: Step2Props) {
     // For recurring bookings, we need a representative date to check availability
     const getRepresentativeDate = () => {
         if (!data.isRecurring) return data.date;
@@ -37,6 +39,34 @@ export function Step2Equipment({ data, updateData, onNext, onPrev }: Step2Props)
         data.endTime
     );
 
+    const doBookingsOverlap = (b1: BookingData, b2: BookingData) => {
+        if (b1.unit !== b2.unit) return false;
+        
+        const isSameDate = b1.isRecurring === b2.isRecurring && 
+            (b1.isRecurring ? b1.dayOfWeek === b2.dayOfWeek : b1.date === b2.date);
+        
+        if (!isSameDate) return false;
+
+        return b1.startTime < b2.endTime && b1.endTime > b2.startTime;
+    };
+
+    const netEquipments = equipments.map(eq => {
+        let usedInOtherCarts = 0;
+        
+        cart.forEach((c, idx) => {
+            if (cartInfo && idx === cartInfo.currentIndex) return;
+            if (doBookingsOverlap(data, c)) {
+                const reserved = c.equipments.find(e => e.id === eq.id)?.quantity || 0;
+                usedInOtherCarts += reserved;
+            }
+        });
+
+        return {
+            ...eq,
+            available_quantity: Math.max(0, eq.available_quantity - usedInOtherCarts)
+        };
+    });
+
     const [selectedQuantities, setSelectedQuantities] = useState<Record<string, number>>(() => {
         // Initialize from existing data if returning to step
         const initial: Record<string, number> = {};
@@ -45,6 +75,22 @@ export function Step2Equipment({ data, updateData, onNext, onPrev }: Step2Props)
         });
         return initial;
     });
+
+    // Simple hack to trigger useEffect when netEquipments changes their available_quantities
+    // without triggering deep dependency cyclic issues
+    const stringifyNetEquipments = JSON.stringify(netEquipments.map(e => e.available_quantity));
+
+    useEffect(() => {
+        const initial: Record<string, number> = {};
+        data.equipments.forEach(eq => {
+            // Guarantee we don't exceed current net availability when re-rendering
+            const netEq = netEquipments.find(e => e.id === eq.id);
+            const netAvail = netEq ? netEq.available_quantity : eq.quantity; 
+            initial[eq.id] = Math.min(eq.quantity, netAvail);
+        });
+        setSelectedQuantities(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [cartInfo?.currentIndex, stringifyNetEquipments]);
 
     const [validationError, setValidationError] = useState('');
 
@@ -61,7 +107,7 @@ export function Step2Equipment({ data, updateData, onNext, onPrev }: Step2Props)
 
     const handleNext = () => {
         // Convert selection map to array for booking data
-        const selectedEquipmentList = equipments
+        const selectedEquipmentList = netEquipments
             .filter(eq => selectedQuantities[eq.id] > 0)
             .map(eq => ({
                 id: eq.id,
@@ -116,19 +162,28 @@ export function Step2Equipment({ data, updateData, onNext, onPrev }: Step2Props)
 
     return (
         <div className="space-y-6">
-            <div className="border-b border-gray-200 pb-4">
-                <h2 className="text-xl font-semibold text-gray-800">Equipamentos Disponíveis</h2>
-                <p className="text-sm text-gray-600 flex items-center gap-2">
+            <div className="border border-primary-200 bg-primary-50 rounded-2xl p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-xl font-black text-primary-900 tracking-tight">Equipamentos da Sala</h2>
+                    {cartInfo && cartInfo.totalItems > 1 && (
+                        <span className="bg-primary-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-sm">
+                            Sala {cartInfo.currentIndex + 1} de {cartInfo.totalItems}
+                        </span>
+                    )}
+                </div>
+                
+                <h3 className="text-lg font-bold text-gray-800 mb-1">Local: <span className="text-primary-700">{data.local}</span></h3>
+                <p className="text-sm font-medium text-primary-700 flex items-center gap-2">
                     {data.isRecurring ? (
                         <>
-                            <Repeat className="h-3 w-3 text-primary-600" />
-                            <strong>Toda {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}</strong>
+                            <Repeat className="h-4 w-4" />
+                            <span>Toda {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}</span>
                         </>
                     ) : (
-                        <strong>{data.date.split('-').reverse().join('/')}</strong>
+                        <span>{data.date ? data.date.split('-').reverse().join('/') : ''}</span>
                     )}
-                    <span> das </span>
-                    <strong>{data.startTime}</strong> às <strong>{data.endTime}</strong>
+                    <span className="opacity-50">|</span>
+                    <span>{data.startTime} às {data.endTime}</span>
                 </p>
             </div>
 
@@ -145,13 +200,13 @@ export function Step2Equipment({ data, updateData, onNext, onPrev }: Step2Props)
                 </div>
             )}
 
-            {equipments.length === 0 ? (
+            {netEquipments.length === 0 ? (
                 <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">
                     <p className="text-gray-500">Nenhum equipamento cadastrado nesta unidade.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {equipments.map((eq) => {
+                    {netEquipments.map((eq) => {
                         const isFullyBooked = eq.available_quantity === 0;
                         const currentQty = selectedQuantities[eq.id] || 0;
 
@@ -240,7 +295,7 @@ export function Step2Equipment({ data, updateData, onNext, onPrev }: Step2Props)
                     onClick={handleNext}
                     className="inline-flex items-center px-6 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                 >
-                    Próximo
+                    {cartInfo && cartInfo.currentIndex < cartInfo.totalItems - 1 ? 'Salvar e Próxima Sala' : 'Avançar para Revisão'}
                     <ArrowRight className="h-4 w-4 ml-2" />
                 </button>
             </div>

@@ -30,6 +30,15 @@ export function BookingWizard() {
     const { user } = useAuth();
     const teacherUser = user as import('../types').User | null;
     const [currentStep, setCurrentStep] = useState(1);
+
+    // --- State for the Booking Queue (Cart) ---
+    // The "cart" stores individual, complete bookings (drafts).
+    const [cart, setCart] = useState<BookingData[]>([]);
+    
+    // During Step 2 and Step 3, we iterate through the cart.
+    const [currentCartIndex, setCurrentCartIndex] = useState(0);
+
+    // Global / Default data used for Step 1
     const [bookingData, setBookingData] = useState<BookingData>({
         unit: '',
         totvs_number: teacherUser?.totvs_number || '',
@@ -47,13 +56,19 @@ export function BookingWizard() {
     // Scroll to top when step changes
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, [currentStep]);
+    }, [currentStep, currentCartIndex]);
 
     const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 3));
     const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
-    const updateData = (data: Partial<BookingData>) => {
-        setBookingData(prev => ({ ...prev, ...data }));
+    const updateData = (data: Partial<BookingData>, targetIndex: number | null = null) => {
+        if (targetIndex !== null) {
+            // Update a specific item in the cart (Step 2 & 3)
+            setCart(prev => prev.map((item, i) => i === targetIndex ? { ...item, ...data } : item));
+        } else {
+            // Update the form draft (Step 1)
+            setBookingData(prev => ({ ...prev, ...data }));
+        }
     };
 
     const steps = [
@@ -161,23 +176,46 @@ export function BookingWizard() {
                 {currentStep === 1 && (
                     <Step1BasicInfo
                         data={bookingData}
-                        updateData={updateData}
-                        onNext={nextStep}
+                        updateData={(d) => updateData(d, null)}
+                        onNext={() => {
+                            if (cart.length === 0) {
+                                // Se não adicionou nada no carrinho, adiciona o atual para não quebrar fluxo único
+                                setCart([{ ...bookingData }]);
+                            }
+                            nextStep();
+                        }}
+                        cart={cart}
+                        onAddToCart={(item: BookingData) => setCart(prev => [...prev, item])}
+                        onRemoveFromCart={(index: number) => setCart(prev => prev.filter((_, i) => i !== index))}
                     />
                 )}
-                {currentStep === 2 && (
+                {currentStep === 2 && cart.length > 0 && (
                     <Step2Equipment
-                        data={bookingData}
-                        updateData={updateData}
-                        onNext={nextStep}
-                        onPrev={prevStep}
+                        data={cart[currentCartIndex]}
+                        updateData={(d) => updateData(d, currentCartIndex)}
+                        onNext={() => {
+                            if (currentCartIndex < cart.length - 1) {
+                                setCurrentCartIndex(prev => prev + 1);
+                            } else {
+                                nextStep();
+                            }
+                        }}
+                        onPrev={() => {
+                            if (currentCartIndex > 0) {
+                                setCurrentCartIndex(prev => prev - 1);
+                            } else {
+                                prevStep();
+                            }
+                        }}
+                        cartInfo={{ currentIndex: currentCartIndex, totalItems: cart.length }}
+                        cart={cart}
                     />
                 )}
-                {currentStep === 3 && (
+                {currentStep === 3 && cart.length > 0 && (
                     <Step3Confirmation
-                        data={bookingData}
-                        updateData={updateData}
-                        onPrev={prevStep}
+                        cart={cart}
+                        updateCartItem={(index: number, data: Partial<BookingData>) => updateData(data, index)}
+                        onPrev={() => prevStep()}
                     />
                 )}
             </motion.div>

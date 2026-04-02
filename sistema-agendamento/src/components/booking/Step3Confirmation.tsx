@@ -30,12 +30,12 @@ import { generateHash } from '../../utils/hash';
 import { UNIT_LEGAL_NAMES } from '../../utils/constants';
 
 interface Step3Props {
-    data: BookingData;
-    updateData: (data: Partial<BookingData>) => void;
+    cart: BookingData[];
+    updateCartItem: (index: number, data: Partial<BookingData>) => void;
     onPrev: () => void;
 }
 
-export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
+export function Step3Confirmation({ cart, updateCartItem, onPrev }: Step3Props) {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [modalOpen, setModalOpen] = useState(false);
@@ -44,42 +44,62 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
     const [error, setError] = useState('');
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
-    // Pre-generate ID for the preview and fetch latest term metadata
-    useEffect(() => {
-        if (!data.displayId) {
-            updateData({
-                displayId: Math.floor(100000 + Math.random() * 900000).toString()
-            });
-        }
+    const data = cart[0] || {} as BookingData;
 
-        // Fetch LATEST term metadata from DB for the preview
-        const fetchTermMetadata = async () => {
-            const { data: latestTerm } = await supabase
+    useEffect(() => {
+        const setupCart = async () => {
+            const { data: bookingTerm } = await supabase
                 .from('legal_terms')
                 .select('content, version_tag')
-                .eq('type', data.isRecurring ? 'recurring' : 'booking')
+                .eq('type', 'booking')
                 .order('created_at', { ascending: false })
-                .limit(1)
-                .single();
+                .limit(1).single();
 
-            if (latestTerm) {
-                updateData({
-                    version_tag: latestTerm.version_tag,
-                    term_document: {
-                        ...data.term_document,
-                        content: latestTerm.content,
-                        version_tag: latestTerm.version_tag
-                    }
-                });
-            }
+            const { data: recurringTerm } = await supabase
+                .from('legal_terms')
+                .select('content, version_tag')
+                .eq('type', 'recurring')
+                .order('created_at', { ascending: false })
+                .limit(1).single();
+
+            cart.forEach((item, index) => {
+                const isRec = item.isRecurring;
+                const termToUse = isRec ? recurringTerm : bookingTerm;
+                
+                const updates: Partial<BookingData> = {};
+                if (!item.displayId) {
+                    updates.displayId = Math.floor(100000 + Math.random() * 900000).toString();
+                }
+                
+                if (termToUse && (!item.term_document || item.term_document.version_tag !== termToUse.version_tag)) {
+                    updates.version_tag = termToUse.version_tag;
+                    updates.term_document = {
+                        ...item.term_document,
+                        content: termToUse.content,
+                        version_tag: termToUse.version_tag
+                    };
+                }
+                
+                if (Object.keys(updates).length > 0) {
+                    updateCartItem(index, updates);
+                }
+            });
         };
+        setupCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-        fetchTermMetadata();
-    }, [data.isRecurring]);
+    const globalTermAccepted = cart.every(item => item.termAccepted === true);
+
+    const handleToggleAllTerms = (accepted: boolean) => {
+        cart.forEach((_, index) => {
+            updateCartItem(index, { termAccepted: accepted });
+        });
+    };
 
     const handleConfirm = async () => {
-        if (!data.termAccepted) {
-            setError('Você precisa aceitar os termos para confirmar o agendamento.');
+        if (!globalTermAccepted) {
+            setError('Você precisa aceitar os termos para confirmar todos os agendamentos.');
             return;
         }
 
@@ -87,234 +107,218 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
         setError('');
 
         try {
-            const displayId = data.displayId || Math.floor(100000 + Math.random() * 900000).toString();
+            // Loop for each cart item
+            for (const item of cart) {
+                const displayId = item.displayId || Math.floor(100000 + Math.random() * 900000).toString();
 
-            // 1. Fetch current legal term for hashing (Determines type based on recurrence)
-            const { data: latestTerm } = await supabase
-                .from('legal_terms')
-                .select('content, version_tag')
-                .eq('type', data.isRecurring ? 'recurring' : 'booking') // Dynamic type
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .single();
-
-            const termFingerprint = latestTerm ? await generateHash(latestTerm.content) : null;
-            const versionTag = latestTerm?.version_tag || 'v1.0';
-
-            const termDocument = {
-                userName: data.full_name,
-                userTotvs: data.totvs_number,
-                jobTitle: data.job_title || (user as any)?.job_title || 'Colaborador(a)', // Uses Wizard data first
-                legalName: UNIT_LEGAL_NAMES[data.unit] || 'SOCIEDADE INSTRUTIVA JOAQUIM NABUCO LTDA.', // Snapshot Legal Entity
-                unit: data.unit,
-                local: data.local,
-                date: data.isRecurring ? `Toda ${['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}` : data.date,
-                startTime: data.startTime,
-                endTime: data.endTime,
-                equipments: data.equipments,
-                timestamp: new Date().toISOString(),
-                userAgent: navigator.userAgent,
-                displayId,
-                isRecurring: data.isRecurring,
-                dayOfWeek: data.dayOfWeek,
-                term_fingerprint: termFingerprint,
-                version_tag: versionTag,
-                content: latestTerm?.content
-            };
-
-            if (data.isRecurring) {
-                // 1. Insert into Recurring Bookings Table
-                const { data: recurring, error: recError } = await supabase
-                    .from('recurring_bookings')
-                    .insert({
-                        user_id: user?.id,
-                        unit: data.unit,
-                        local: data.local,
-                        day_of_week: data.dayOfWeek,
-                        start_time: data.startTime,
-                        end_time: data.endTime,
-                        equipments: data.equipments,
-                        is_active: true,
-                        last_generated_month: new Date().toISOString().substring(0, 7) + '-01'
-                    })
-                    .select()
+                const { data: latestTerm } = await supabase
+                    .from('legal_terms')
+                    .select('content, version_tag')
+                    .eq('type', item.isRecurring ? 'recurring' : 'booking')
+                    .order('created_at', { ascending: false })
+                    .limit(1)
                     .single();
 
-                if (recError) throw recError;
+                const termFingerprint = latestTerm ? await generateHash(latestTerm.content) : null;
+                const versionTag = latestTerm?.version_tag || 'v1.0';
 
-                // 3. Generate bookings for the rest of the current month
-                const today = new Date();
-                const year = today.getFullYear();
-                const month = today.getMonth();
-                const lastDay = new Date(year, month + 1, 0).getDate();
-                const bookingsToInsert: any[] = [];
+                const termDocument = {
+                    userName: item.full_name,
+                    userTotvs: item.totvs_number,
+                    jobTitle: item.job_title || (user as any)?.job_title || 'Colaborador(a)',
+                    legalName: UNIT_LEGAL_NAMES[item.unit] || 'SOCIEDADE INSTRUTIVA JOAQUIM NABUCO LTDA.',
+                    unit: item.unit,
+                    local: item.local,
+                    date: item.isRecurring ? `Toda ${['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][item.dayOfWeek ?? 0]}` : item.date,
+                    startTime: item.startTime,
+                    endTime: item.endTime,
+                    equipments: item.equipments,
+                    timestamp: new Date().toISOString(),
+                    userAgent: navigator.userAgent,
+                    displayId,
+                    isRecurring: item.isRecurring,
+                    dayOfWeek: item.dayOfWeek,
+                    term_fingerprint: termFingerprint,
+                    version_tag: versionTag,
+                    content: latestTerm?.content
+                };
 
-                for (let day = today.getDate(); day <= lastDay; day++) {
-                    const date = new Date(year, month, day);
-                    if (date.getDay() === data.dayOfWeek) {
-                        const dateStr = date.toISOString().split('T')[0];
+                if (item.isRecurring) {
+                    const { data: recurring, error: recError } = await supabase
+                        .from('recurring_bookings')
+                        .insert({
+                            user_id: user?.id,
+                            unit: item.unit,
+                            local: item.local,
+                            day_of_week: item.dayOfWeek,
+                            start_time: item.startTime,
+                            end_time: item.endTime,
+                            equipments: item.equipments,
+                            is_active: true,
+                            last_generated_month: new Date().toISOString().substring(0, 7) + '-01'
+                        })
+                        .select()
+                        .single();
 
-                        data.equipments.forEach(eq => {
-                            bookingsToInsert.push({
-                                user_id: user?.id,
-                                unit: data.unit,
-                                local: data.local,
-                                booking_date: dateStr,
-                                start_time: data.startTime,
-                                end_time: data.endTime,
-                                equipment_id: eq.id,
-                                quantity: eq.quantity,
-                                observations: data.observations,
-                                status: 'active',
-                                term_signed: true,
-                                term_document: { ...termDocument, date: dateStr },
-                                display_id: displayId,
-                                is_recurring: true,
-                                recurring_id: recurring.id,
-                                term_hash: termFingerprint,
-                                term_version: versionTag
+                    if (recError) throw recError;
+
+                    const today = new Date();
+                    const year = today.getFullYear();
+                    const month = today.getMonth();
+                    const lastDay = new Date(year, month + 1, 0).getDate();
+                    const bookingsToInsert: any[] = [];
+
+                    for (let day = today.getDate(); day <= lastDay; day++) {
+                        const date = new Date(year, month, day);
+                        if (date.getDay() === item.dayOfWeek) {
+                            const dateStr = date.toISOString().split('T')[0];
+
+                            item.equipments.forEach(eq => {
+                                bookingsToInsert.push({
+                                    user_id: user?.id,
+                                    unit: item.unit,
+                                    local: item.local,
+                                    booking_date: dateStr,
+                                    start_time: item.startTime,
+                                    end_time: item.endTime,
+                                    equipment_id: eq.id,
+                                    quantity: eq.quantity,
+                                    observations: item.observations,
+                                    status: 'active',
+                                    term_signed: true,
+                                    term_document: { ...termDocument, date: dateStr },
+                                    display_id: displayId,
+                                    is_recurring: true,
+                                    recurring_id: recurring.id,
+                                    term_hash: termFingerprint,
+                                    term_version: versionTag
+                                });
                             });
-                        });
+                        }
                     }
-                }
 
-                if (bookingsToInsert.length > 0) {
-                    const { error: batchError } = await supabase
+                    if (bookingsToInsert.length > 0) {
+                        const { error: batchError } = await supabase
+                            .from('bookings')
+                            .insert(bookingsToInsert);
+
+                        if (batchError) throw batchError;
+                    }
+                } else {
+                    const bookingsToInsert = item.equipments.map(eq => ({
+                        user_id: user?.id,
+                        unit: item.unit,
+                        local: item.local,
+                        booking_date: item.date,
+                        start_time: item.startTime,
+                        end_time: item.endTime,
+                        equipment_id: eq.id,
+                        quantity: eq.quantity,
+                        observations: item.observations,
+                        status: 'active',
+                        term_signed: true,
+                        term_document: termDocument,
+                        display_id: displayId,
+                        term_hash: termFingerprint,
+                        term_version: versionTag
+                    }));
+
+                    const { error: insertError } = await supabase
                         .from('bookings')
                         .insert(bookingsToInsert);
 
-                    if (batchError) throw batchError;
+                    if (insertError) throw insertError;
                 }
-            } else {
-                // Normal insertion
-                const bookingsToInsert = data.equipments.map(eq => ({
-                    user_id: user?.id,
-                    unit: data.unit,
-                    local: data.local,
-                    booking_date: data.date,
-                    start_time: data.startTime,
-                    end_time: data.endTime,
-                    equipment_id: eq.id,
-                    quantity: eq.quantity,
-                    observations: data.observations,
-                    status: 'active',
-                    term_signed: true,
-                    term_document: termDocument,
-                    display_id: displayId,
-                    term_hash: termFingerprint,
-                    term_version: versionTag
-                }));
-
-                const { error: insertError } = await supabase
-                    .from('bookings')
-                    .insert(bookingsToInsert);
-
-                if (insertError) throw insertError;
-            }
 
 
-            // 3. Trigger Notification (Email + In-App + PWA Push)
-            // Fire and forget to not block the UI
-            // 3. Notification (In-App)
-            // Handled automatically by Database Trigger (create_booking_notification)
-            // Email notification removed per user request.
+                // 3. PWA Push Notification (OneSignal API) for Admin Users
+                try {
+                    const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
+                    const apiKey = import.meta.env.VITE_ONESIGNAL_REST_API_KEY;
+                    if (appId && apiKey) {
+                        const firstName = item.full_name.split(' ')[0];
+                        const lastName = item.full_name.split(' ').slice(-1)[0];
+                        const professorName = `${firstName} ${lastName}`;
+                        const bookingDate = item.isRecurring ? null : item.date;
+                        const dateFormatted = item.isRecurring 
+                            ? `toda ${['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][item.dayOfWeek ?? 0]}`
+                            : item.date.split('-').reverse().join('/');
+                        const equipmentNames = item.equipments.map(eq => eq.name).join(', ');
+                        const timeRange = `${item.startTime} - ${item.endTime}`;
 
-            // PWA Push Notification (OneSignal API) for Admin Users
-            try {
-                const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
-                const apiKey = import.meta.env.VITE_ONESIGNAL_REST_API_KEY;
-                if (appId && apiKey) {
-                    const firstName = data.full_name.split(' ')[0];
-                    const lastName = data.full_name.split(' ').slice(-1)[0];
-                    const professorName = `${firstName} ${lastName}`;
-                    const bookingDate = data.isRecurring ? null : data.date;
-                    const dateFormatted = data.isRecurring 
-                        ? `toda ${['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}`
-                        : data.date.split('-').reverse().join('/');
-                    const equipmentNames = data.equipments.map(eq => eq.name).join(', ');
-                    const timeRange = `${data.startTime} - ${data.endTime}`;
+                        const headers = {
+                            'Content-Type': 'application/json; charset=utf-8',
+                            'Authorization': `Basic ${apiKey}`
+                        };
 
-                    const headers = {
-                        'Content-Type': 'application/json; charset=utf-8',
-                        'Authorization': `Basic ${apiKey}`
-                    };
+                        const unitFilter = [
+                            { "field": "tag", "key": "unit", "relation": "=", "value": item.unit }
+                        ];
+                        
+                        const heading = `📋 Novo Agendamento`;
+                        const message = `Prof. ${professorName} agendou ${equipmentNames} em ${item.local} para ${dateFormatted} (${timeRange}).`;
+                        
+                        const targetPayload = {
+                            app_id: appId,
+                            filters: unitFilter,
+                            headings: { "en": heading, "pt": heading },
+                            contents: { "en": message, "pt": message },
+                            priority: 10,
+                        };
 
-                    // Filter: only send to admins tagged with the same unit as the booking
-                    const unitFilter = [
-                        { "field": "tag", "key": "unit", "relation": "=", "value": data.unit }
-                    ];
-                    
-                    // ── 1. IMMEDIATE: "Novo Agendamento" ──
-                    const heading = `📋 Novo Agendamento`;
-                    const message = `Prof. ${professorName} agendou ${equipmentNames} em ${data.local} para ${dateFormatted} (${timeRange}).`;
-                    
-                    const targetPayload = {
-                        app_id: appId,
-                        filters: unitFilter,
-                        headings: { "en": heading, "pt": heading },
-                        contents: { "en": message, "pt": message },
-                        priority: 10,
-                    };
+                        console.log("[Push] Sending immediate notification:", JSON.stringify(targetPayload));
 
-                    console.log("[Push] Sending immediate notification:", JSON.stringify(targetPayload));
+                        fetch('https://onesignal.com/api/v1/notifications', {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify(targetPayload)
+                        }).then(async (res) => {
+                            const txt = await res.text();
+                            console.log("[Push] Immediate response:", res.status, txt);
+                        }).catch(console.error);
 
-                    fetch('https://onesignal.com/api/v1/notifications', {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify(targetPayload)
-                    }).then(async (res) => {
-                        const txt = await res.text();
-                        console.log("[Push] Immediate response:", res.status, txt);
-                    }).catch(console.error);
+                        if (bookingDate && item.startTime) {
+                            const [hours, minutes] = item.startTime.split(':').map(Number);
+                            const reminderDate = new Date(`${bookingDate}T${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:00`);
+                            reminderDate.setMinutes(reminderDate.getMinutes() - 10);
 
-                    // ── 2. SCHEDULED: Reminder 10 min before booking ──
-                    if (bookingDate && data.startTime) {
-                        const [hours, minutes] = data.startTime.split(':').map(Number);
-                        const reminderDate = new Date(`${bookingDate}T${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:00`);
-                        reminderDate.setMinutes(reminderDate.getMinutes() - 10);
+                            const now = new Date();
+                            if (reminderDate.getTime() > now.getTime() + 60000) {
+                                const sendAfter = reminderDate.toISOString();
+                                const reminderHeading = `⏰ Agendamento em 10 min`;
+                                const reminderMessage = `Faltam 10 minutos para iniciar o agendamento de ${equipmentNames} na Sala ${item.local}.`;
 
-                        const now = new Date();
-                        if (reminderDate.getTime() > now.getTime() + 60000) {
-                            const sendAfter = reminderDate.toISOString();
+                                const reminderPayload = {
+                                    app_id: appId,
+                                    filters: unitFilter,
+                                    headings: { "en": reminderHeading, "pt": reminderHeading },
+                                    contents: { "en": reminderMessage, "pt": reminderMessage },
+                                    send_after: sendAfter,
+                                    priority: 10,
+                                    android_sound: "alarm",
+                                    ios_sound: "alarm.caf",
+                                };
 
-                            const reminderHeading = `⏰ Agendamento em 10 min`;
-                            const reminderMessage = `Faltam 10 minutos para iniciar o agendamento do professor ${professorName}.`;
-
-                            const reminderPayload = {
-                                app_id: appId,
-                                filters: unitFilter,
-                                headings: { "en": reminderHeading, "pt": reminderHeading },
-                                contents: { "en": reminderMessage, "pt": reminderMessage },
-                                send_after: sendAfter,
-                                priority: 10,
-                                android_sound: "alarm",
-                                ios_sound: "alarm.caf",
-                            };
-
-                            console.log("[Push] Scheduling reminder for:", sendAfter, JSON.stringify(reminderPayload));
-
-                            fetch('https://onesignal.com/api/v1/notifications', {
-                                method: 'POST',
-                                headers,
-                                body: JSON.stringify(reminderPayload)
-                            }).then(async (res) => {
-                                const txt = await res.text();
-                                console.log("[Push] Reminder response:", res.status, txt);
-                                // Save the notification ID so we can cancel it if booking is deleted
-                                try {
-                                    const result = JSON.parse(txt);
-                                    if (result.id) {
-                                        await supabase.from('bookings').update({ onesignal_id: result.id }).eq('display_id', displayId);
-                                        console.log("[Push] Saved scheduled onesignal_id to database");
-                                    }
-                                } catch (e) { /* ignore parse error */ }
-                            }).catch(console.error);
+                                fetch('https://onesignal.com/api/v1/notifications', {
+                                    method: 'POST',
+                                    headers,
+                                    body: JSON.stringify(reminderPayload)
+                                }).then(async (res) => {
+                                    const txt = await res.text();
+                                    try {
+                                        const result = JSON.parse(txt);
+                                        if (result.id) {
+                                            await supabase.from('bookings').update({ onesignal_id: result.id }).eq('display_id', displayId);
+                                        }
+                                    } catch (e) { /* ignore */ }
+                                }).catch(console.error);
+                            }
                         }
                     }
+                } catch (e) {
+                    console.error("Push API Error:", e);
                 }
-            } catch (e) {
-                console.error("Push API Error:", e);
-            }
+            } // Fechar o FOR LOOP aqui!
 
             setShowSuccessModal(true);
 
@@ -326,7 +330,7 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
         }
     };
 
-    const handlePdfAction = async (action: 'download' | 'share') => {
+    const handlePdfAction = (action: 'download' | 'share') => {
         const element = document.getElementById('term-doc-inner');
         if (!element) return;
 
@@ -336,61 +340,53 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
         const fileName = `TERMO_${safeTotvs}_${new Date().toISOString().split('T')[0]}.pdf`;
 
         const opt = {
-            margin: 0,
+            margin: [5, 0, 5, 0] as [number, number, number, number],
             filename: fileName,
-            image: { type: 'jpeg' as const, quality: 1.0 },
+            image: { type: 'jpeg' as const, quality: 0.98 },
             html2canvas: {
-                scale: 2,
-                dpi: 192,
-                letterRendering: true,
+                scale: 1.5,
                 useCORS: true,
-                onclone: (clonedDoc: any) => {
-                    const el = clonedDoc.getElementById('term-doc-inner');
-                    if (el) {
-                        el.style.width = '210mm';
-                        el.style.maxWidth = 'none';
-                        el.style.margin = '0';
-                    }
-                    // Normalize DPI for mobile devices
-                    if (clonedDoc.defaultView) {
-                        clonedDoc.defaultView.devicePixelRatio = 1;
-                    }
-                }
+                windowWidth: 800,
             },
+            pagebreak: { mode: ['css', 'legacy'] },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
         };
 
-        try {
-            const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
-
-            if (action === 'share' && navigator.share) {
-                const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-                try {
-                    await navigator.share({
+        html2pdf()
+            .set(opt)
+            .from(element)
+            .outputPdf('blob')
+            .then((pdfBlob: Blob) => {
+                if (action === 'share' && navigator.share) {
+                    const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+                    navigator.share({
                         files: [file],
                         title: 'Termo de Responsabilidade',
                         text: 'Segue em anexo o Termo de Responsabilidade e Uso de Equipamento.'
-                    });
-                } catch {
-
+                    }).catch(() => {});
+                } else {
+                    const url = URL.createObjectURL(pdfBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    // Retain URL cleanup for safety
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
                 }
-            } else {
-                const url = URL.createObjectURL(pdfBlob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }
-
-        } catch (e) {
-            console.error('PDF Error:', e);
-            alert('Erro ao gerar PDF. Tente novamente.');
-        } finally {
-            setIsGeneratingPdf(false);
-        }
+            })
+            .catch((e: Error | any) => {
+                console.error('PDF Worker Issue:', e);
+                alert("ERRO DETALHADO DO PDF:\n" + (e.stack || e.message || JSON.stringify(e)));
+            })
+            .finally(() => {
+                setIsGeneratingPdf(false);
+                // Hard cleanup for html2pdf injected overlays
+                setTimeout(() => {
+                    document.querySelectorAll('.html2canvas-container, .html2pdf__container').forEach(el => el.remove());
+                }, 500);
+            });
     };
 
     const getEquipmentIcon = (name: string = '') => {
@@ -432,23 +428,25 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                         </p>
 
                         <div className="space-y-3 mb-8 text-center flex flex-col items-center">
-                            <div className="inline-flex items-center gap-2 p-3 bg-gray-50 rounded-2xl border border-gray-100 min-w-[200px] justify-center">
-                                {data.isRecurring ? (
-                                    <>
-                                        <Repeat className="h-4 w-4 text-primary-600" />
-                                        <span className="text-sm font-bold text-gray-700">
-                                            Fixo: {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}s • {data.startTime} - {data.endTime}
-                                        </span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Calendar className="h-4 w-4 text-primary-600" />
-                                        <span className="text-sm font-bold text-gray-700">
-                                            {data.date.split('-').reverse().join('/')} • {data.startTime} - {data.endTime}
-                                        </span>
-                                    </>
-                                )}
-                            </div>
+                            {cart.map((c, idx) => (
+                                <div key={idx} className="inline-flex items-center gap-2 p-3 bg-gray-50 rounded-2xl border border-gray-100 min-w-[200px] justify-center mb-1 w-full text-left">
+                                    {c.isRecurring ? (
+                                        <>
+                                            <Repeat className="h-4 w-4 text-primary-600 shrink-0" />
+                                            <span className="text-xs font-bold text-gray-700">
+                                                <span className="text-primary-600">{c.local}</span>: Fixo {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][c.dayOfWeek ?? 0]} • {c.startTime}-{c.endTime}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Calendar className="h-4 w-4 text-primary-600 shrink-0" />
+                                            <span className="text-xs font-bold text-gray-700">
+                                                <span className="text-primary-600">{c.local}</span>: {c.date ? c.date.split('-').reverse().join('/') : ''} • {c.startTime}-{c.endTime}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                            ))}
                         </div>
 
                         <button
@@ -512,14 +510,24 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                 </div>
 
                 <div className="bg-gray-50/50 p-4 sm:p-8 overflow-y-auto flex-1 flex justify-center min-h-0">
-                    <div className="term-doc-preview mx-auto">
-                        <TermDocument
-                            data={{
-                                ...data,
-                                term_hash: data.term_document?.term_fingerprint || data.term_hash,
-                                version_tag: data.term_document?.version_tag || data.version_tag || 'v2.0'
-                            }}
-                        />
+                    <div id="term-doc-inner" style={{ margin: '0 auto', width: '100%', maxWidth: '56rem' }}>
+                        {cart.map((c, idx) => (
+                            <div key={idx} style={{ 
+                                pageBreakInside: 'avoid', 
+                                breakInside: 'avoid',
+                                pageBreakBefore: idx > 0 ? 'always' : 'auto',
+                                breakBefore: idx > 0 ? 'page' : 'auto',
+                                paddingTop: idx > 0 ? '5mm' : '0' 
+                            }}>
+                                <TermDocument
+                                    data={{
+                                        ...c,
+                                        term_hash: c.term_document?.term_fingerprint || c.term_hash,
+                                        version_tag: c.term_document?.version_tag || c.version_tag || 'v2.0'
+                                    }}
+                                />
+                            </div>
+                        ))}
                     </div>
                 </div>
 
@@ -539,90 +547,99 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
 
     return (
         <div className="space-y-6">
-            <h2 className="text-xl font-bold text-gray-900">Confirme seu Agendamento</h2>
+            <h2 className="text-xl font-bold text-gray-900">Confirme seus Agendamentos</h2>
 
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                        <div>
-                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Professor Responsável</h3>
-                            <div className="flex items-center gap-3 text-left">
-                                <div className="h-10 w-10 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
-                                    <Users className="h-5 w-5 text-primary-600" />
-                                </div>
+            <div className="space-y-4">
+                {cart.map((item, idx) => (
+                    <div key={idx} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative">
+                        {cart.length > 1 && (
+                            <div className="absolute top-4 right-4 bg-primary-100 text-primary-800 text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                                Sala {idx + 1} de {cart.length}
+                            </div>
+                        )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-4">
                                 <div>
-                                    <p className="font-bold text-gray-900 leading-none">{data.full_name}</p>
-                                    <p className="text-xs text-gray-500 mt-1">TOTVS: {data.totvs_number}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data da Reserva</h3>
-                            <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
-                                    {data.isRecurring ? <Repeat className="h-5 w-5 text-primary-600" /> : <Calendar className="h-5 w-5 text-primary-600" />}
-                                </div>
-                                <p className="font-bold text-gray-900">
-                                    {data.isRecurring
-                                        ? `Toda ${['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][data.dayOfWeek ?? 0]}`
-                                        : (data.date ? data.date.split('-').reverse().join('/') : 'Data não informada')
-                                    }
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        <div>
-                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Local e Unidade</h3>
-                            <div className="flex items-center gap-3 text-left">
-                                <div className="h-10 w-10 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
-                                    <MapPin className="h-5 w-5 text-primary-600" />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-gray-900 leading-none">{data.local}</p>
-                                    <p className="text-xs text-gray-500 mt-1">Unidade: {data.unit}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Horário</h3>
-                            <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
-                                    <Clock className="h-5 w-5 text-primary-600" />
-                                </div>
-                                <p className="font-bold text-gray-900">{data.startTime} às {data.endTime}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-gray-100">
-                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center">
-                        <Monitor className="h-3 w-3 mr-2" />
-                        Equipamentos Selecionados
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {data.equipments.map(eq => (
-                            <div key={eq.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 group">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center justify-center p-2 bg-white rounded-lg border border-gray-100 shadow-sm">
-                                        {getEquipmentIcon(eq.name)}
-                                    </div>
-                                    <div className="text-left">
-                                        <p className="text-sm font-bold text-gray-900">{eq.name}</p>
-                                        <p className="text-[10px] font-bold text-primary-600 uppercase mt-0.5">{eq.brand} {eq.model}</p>
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Professor Responsável</h3>
+                                    <div className="flex items-center gap-3 text-left">
+                                        <div className="h-10 w-10 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
+                                            <Users className="h-5 w-5 text-primary-600" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-gray-900 leading-none">{item.full_name}</p>
+                                            <p className="text-xs text-gray-500 mt-1">TOTVS: {item.totvs_number}</p>
+                                        </div>
                                     </div>
                                 </div>
-                                <span className="bg-white px-2.5 py-1 rounded-lg text-xs font-black text-gray-500 shadow-sm border border-gray-100">
-                                    ×{eq.quantity}
-                                </span>
+
+                                <div>
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data da Reserva</h3>
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
+                                            {item.isRecurring ? <Repeat className="h-5 w-5 text-primary-600" /> : <Calendar className="h-5 w-5 text-primary-600" />}
+                                        </div>
+                                        <p className="font-bold text-gray-900">
+                                            {item.isRecurring
+                                                ? `Toda ${['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][item.dayOfWeek ?? 0]}`
+                                                : (item.date ? item.date.split('-').reverse().join('/') : 'Data não informada')
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
-                        ))}
+
+                            <div className="space-y-4">
+                                <div>
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Local e Unidade</h3>
+                                    <div className="flex items-center gap-3 text-left">
+                                        <div className="h-10 w-10 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
+                                            <MapPin className="h-5 w-5 text-primary-600" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-gray-900 leading-none">{item.local}</p>
+                                            <p className="text-xs text-gray-500 mt-1">Unidade: {item.unit}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Horário</h3>
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
+                                            <Clock className="h-5 w-5 text-primary-600" />
+                                        </div>
+                                        <p className="font-bold text-gray-900">{item.startTime} às {item.endTime}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 pt-6 border-t border-gray-100">
+                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center">
+                                <Monitor className="h-3 w-3 mr-2" />
+                                Equipamentos Selecionados
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {item.equipments.map(eq => (
+                                    <div key={eq.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex items-center justify-center p-2 bg-white rounded-lg border border-gray-100 shadow-sm">
+                                                {getEquipmentIcon(eq.name)}
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="text-sm font-bold text-gray-900">{eq.name}</p>
+                                                <p className="text-[10px] font-bold text-primary-600 uppercase mt-0.5">{eq.brand} {eq.model}</p>
+                                            </div>
+                                        </div>
+                                        <span className="bg-white px-2.5 py-1 rounded-lg text-xs font-black text-gray-500 shadow-sm border border-gray-100">
+                                            ×{eq.quantity}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
-                </div>
+                ))}
             </div>
 
             <div className="space-y-2">
@@ -632,13 +649,17 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                     className="w-full bg-white border border-gray-200 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
                     placeholder="Adicione observações importantes para a equipe técnica..."
                     value={data.observations || ''}
-                    onChange={(e) => updateData({ observations: e.target.value })}
+                    onChange={(e) => {
+                        cart.forEach((_, idx) => {
+                            updateCartItem(idx, { observations: e.target.value });
+                        });
+                    }}
                 />
             </div>
 
             <div className={clsx(
                 "p-5 rounded-2xl transition-all border",
-                data.termAccepted ? "bg-green-50 border-green-200" : "bg-primary-50 border-primary-100"
+                globalTermAccepted ? "bg-green-50 border-green-200" : "bg-primary-50 border-primary-100"
             )}>
                 <div className="flex items-start text-left">
                     <div className="flex items-center h-6">
@@ -647,23 +668,23 @@ export function Step3Confirmation({ data, updateData, onPrev }: Step3Props) {
                             name="term"
                             type="checkbox"
                             required
-                            checked={data.termAccepted}
-                            onChange={(e) => updateData({ termAccepted: e.target.checked })}
+                            checked={globalTermAccepted}
+                            onChange={(e) => handleToggleAllTerms(e.target.checked)}
                             className="h-5 w-5 text-primary-600 border-gray-300 rounded-lg focus:ring-primary-500 transition-all cursor-pointer"
                         />
                     </div>
                     <div className="ml-4 text-sm">
                         <label htmlFor="term" className="font-bold text-gray-900 cursor-pointer">
-                            Aceito os Termos de Responsabilidade
+                            Aceito os Termos de Responsabilidade para {cart.length > 1 ? `as ${cart.length} salas` : 'a sala selecionada'}
                         </label>
                         <p className="text-gray-500 mt-1 leading-relaxed">
-                            Confirmo que as informações estão corretas e assumo a responsabilidade pelo uso do material.
+                            Confirmo que as informações estão corretas e assumo a responsabilidade pelo uso do material em cada ambiente.
                             <button
                                 type="button"
                                 className="text-primary-600 hover:text-primary-700 font-bold ml-1.5 underline decoration-2 underline-offset-2"
                                 onClick={() => setModalOpen(true)}
                             >
-                                Visualizar Termo Completo
+                                Visualizar {cart.length > 1 ? 'Termos Completos' : 'Termo Completo'}
                             </button>
                         </p>
                     </div>

@@ -23,9 +23,12 @@ interface Step1Props {
     data: BookingData;
     updateData: (data: Partial<BookingData>) => void;
     onNext: () => void;
+    cart?: BookingData[];
+    onAddToCart?: (item: BookingData) => void;
+    onRemoveFromCart?: (index: number) => void;
 }
 
-export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
+export function Step1BasicInfo({ data, updateData, onNext, cart = [], onAddToCart, onRemoveFromCart }: Step1Props) {
     const { user } = useAuth();
     const { settings } = useSettings(data.unit);
     const [error, setError] = useState('');
@@ -344,13 +347,79 @@ export function Step1BasicInfo({ data, updateData, onNext }: Step1Props) {
 
             </div>
 
-            <div className="flex justify-end pt-4">
-                <button
-                    onClick={handleNext}
-                    className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
-                >
-                    Próximo
-                </button>
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-gray-100 mt-6">
+                {/* Cart Summary */}
+                {cart && cart.length > 0 ? (
+                    <div className="flex flex-col gap-2 w-full sm:w-auto">
+                        <h4 className="text-xs font-black uppercase text-gray-400 tracking-wider">Fila de Agendamento ({cart.length})</h4>
+                        <div className="flex flex-wrap gap-2">
+                            {cart.map((item, idx) => (
+                                <div key={idx} className="bg-primary-50 text-primary-700 text-xs py-1.5 px-3 rounded-lg border border-primary-100 flex items-center gap-2">
+                                    <span className="font-semibold">{item.local}</span>
+                                    <span className="opacity-75">{item.isRecurring ? item.dayOfWeek : (item.date ? item.date.split('-').reverse().join('/') : '')} ({item.startTime})</span>
+                                    {onRemoveFromCart && (
+                                        <button onClick={() => onRemoveFromCart(idx)} className="hover:text-red-500 transition-colors ml-1" title="Remover">
+                                            <span className="font-bold">×</span>
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="w-full sm:w-auto"></div> // empty placeholder
+                )}
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (validateStep()) {
+                                if (onAddToCart) {
+                                    onAddToCart({ ...data });
+                                    // Reset specific fields for the next room
+                                    updateData({
+                                        local: '',
+                                        date: '',
+                                        dayOfWeek: undefined,
+                                        startTime: '',
+                                        endTime: ''
+                                    });
+                                }
+                            }
+                        }}
+                        className="inline-flex justify-center py-2.5 px-4 border border-primary-200 shadow-sm text-sm font-semibold rounded-xl text-primary-700 bg-primary-50 hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all"
+                    >
+                        <span className="hidden sm:inline">Adicionar à Fila</span>
+                        <span className="sm:hidden">+ Fila</span>
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            // Automatically add the current form to the cart if they filled it and forgot to click "+ Fila"
+                            if (cart.length === 0) {
+                                if (validateStep()) {
+                                    if (onAddToCart) onAddToCart({ ...data });
+                                    onNext();
+                                }
+                            } else {
+                                if (data.local && data.startTime && data.endTime) {
+                                    if (validateStep()) {
+                                        if (onAddToCart) onAddToCart({ ...data });
+                                        onNext();
+                                    }
+                                } else {
+                                    // Empty form (they already added manually), just proceed
+                                    onNext();
+                                }
+                            }
+                        }}
+                        className="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-md text-sm font-bold rounded-xl text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all flex-1 sm:flex-none"
+                    >
+                        Avançar
+                    </button>
+                </div>
             </div>
         </div>
     );
