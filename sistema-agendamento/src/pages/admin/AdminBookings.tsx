@@ -7,7 +7,7 @@ import { format, parseISO } from 'date-fns';
 import {
     Search, Calendar, Users, MapPin, FileText, Trash2, AlertCircle,
     Monitor, Clock, Filter, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug, Repeat, ChevronDown, History,
-    Download, X, Share2, Building, NotebookText, Layers
+    Download, X, Share2, Building
 } from 'lucide-react';
 import { TermDocument } from '../../components/TermDocument';
 // @ts-ignore
@@ -21,8 +21,7 @@ import { useSearchParams } from 'react-router-dom';
 export function AdminBookings() {
     const { user, role } = useAuth();
     const [bookings, setBookings] = useState<Booking[]>([]);
-    const [templates, setTemplates] = useState<any[]>([]);
-    const [activeTab, setActiveTab] = useState<'bookings' | 'templates'>('bookings');
+
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState('all');
     const [searchParams] = useSearchParams();
@@ -120,63 +119,12 @@ export function AdminBookings() {
 
     const { refreshSignal } = useNotifications();
 
-    const fetchTemplates = async () => {
-        if (!user) return;
-        setLoading(true);
-
-        try {
-            let query = supabase
-                .from('recurring_bookings')
-                .select(`
-                    *,
-                    room:rooms(name, unit),
-                    users!recurring_bookings_user_id_fkey(full_name, email)
-                `)
-                .eq('is_active', true)
-                .not('room_id', 'is', null);
-
-            // Apply Unit Filter
-            if (role === 'admin' || role === 'super_admin') {
-                if (isSuperAdmin) {
-                    if (targetUnit) query = query.eq('unit', targetUnit);
-                } else {
-                    const unit = (user as Admin).unit;
-                    if (unit && unit !== 'Matriz') query = query.eq('unit', unit);
-                }
-            }
-
-            const { data, error } = await query;
-            if (error) throw error;
-            if (data) setTemplates(data);
-        } catch (err) {
-            console.error('Error fetching templates:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        if (activeTab === 'bookings') {
-            fetchBookings();
-        } else {
-            fetchTemplates();
-        }
-    }, [user?.id, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit, refreshSignal, activeTab]);
+        fetchBookings();
+    }, [user?.id, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit, refreshSignal]);
 
     const handleDeleteBooking = async () => {
         if (deleteModal.bookingIds.length === 0) return;
-
-        if (deleteModal.isTemplate) {
-            try {
-                const { error } = await supabase.from('recurring_bookings').update({ is_active: false }).eq('id', deleteModal.bookingIds[0]);
-                if (error) throw error;
-                setDeleteModal({ isOpen: false, bookingIds: [] });
-                fetchTemplates();
-            } catch (err: any) {
-                alert('Erro ao cancelar regra fixa: ' + err.message);
-            }
-            return;
-        }
 
         const session = localStorage.getItem('admin_session');
         const token = session ? JSON.parse(session).session_token : '';
@@ -495,35 +443,10 @@ export function AdminBookings() {
                     <h1 className="text-2xl font-black text-gray-900">Gerenciar Agendamentos <span className="text-primary-600 text-xs font-bold">(v2.2)</span></h1>
                     <p className="text-sm text-gray-500 mt-1">Acompanhe e gerencie todas as reservas da unidade.</p>
                 </div>
-
-                {/* TAB SWITCHER */}
-                <div className="flex items-center gap-2 p-1 bg-gray-100 rounded-2xl w-full lg:w-auto overflow-x-auto shadow-inner border border-gray-200/60">
-                    <button
-                        onClick={() => setActiveTab('bookings')}
-                        className={`flex items-center justify-center gap-2.5 px-6 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap outline-none flex-1 lg:flex-none ${activeTab === 'bookings'
-                            ? 'bg-white text-primary-700 shadow-sm border border-gray-200/40 ring-1 ring-primary-500/10'
-                            : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
-                            }`}
-                    >
-                        <NotebookText className={`w-4 h-4 ${activeTab === 'bookings' ? 'text-primary-500' : 'text-gray-400'}`} />
-                        Histórico / Fila
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('templates')}
-                        className={`flex items-center justify-center gap-2.5 px-6 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap outline-none flex-1 lg:flex-none ${activeTab === 'templates'
-                            ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/20 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
-                            }`}
-                    >
-                        <Layers className={`w-4 h-4 ${activeTab === 'templates' ? 'text-white/90' : 'text-gray-400'}`} />
-                        Modelos Fixos (Salas)
-                    </button>
-                </div>
             </div>
 
-            {/* ONLY RENDER FILTERS IF 'bookings' TAB */}
-            {activeTab === 'bookings' && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
+            {/* ONLY RENDER FILTERS */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
                     {/* Search and Filter toggle (kept on left or full width depending on your choice, previously they were align right next to title) */}
                     <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
                         <div className="relative w-full sm:w-80">
@@ -552,10 +475,9 @@ export function AdminBookings() {
                         </button>
                     </div>
                 </div>
-            )}
 
             {/* Filter Bar */}
-            {showFilters && activeTab === 'bookings' && (
+            {showFilters && (
                 <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                         <div className="space-y-2">
@@ -663,86 +585,7 @@ export function AdminBookings() {
                 </div>
             ) : (
                 <div className="bg-transparent space-y-4">
-                    {/* BOOKINGS LIST OR TEMPLATES LIST */}
-                    {activeTab === 'templates' ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {templates.length === 0 ? (
-                                <div className="col-span-full py-20 text-center">
-                                    <Layers className="h-16 w-16 text-gray-200 mx-auto mb-4" />
-                                    <p className="text-lg font-bold text-gray-900">Nenhum Modelo Fixo</p>
-                                    <p className="text-sm text-gray-500 mt-1">Nenhum professor possui uma reserva fixa de sala nesta unidade.</p>
-                                </div>
-                            ) : (
-                                templates.map((rec) => {
-                                    const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-                                    const dayName = days[rec.day_of_week];
-
-                                    return (
-                                        <div key={rec.id} className="group bg-white rounded-xl shadow-md border hover:shadow-xl relative overflow-hidden flex flex-col border-gray-300 hover:border-amber-200 transition-all">
-                                            <div className="p-4 flex justify-between items-start bg-gradient-to-br from-amber-500 to-orange-600">
-                                                <div>
-                                                    <div className="flex items-center gap-1 opacity-90 text-[10px] uppercase tracking-wider font-semibold mb-1 text-white/90">
-                                                        <MapPin className="w-3 h-3" /> Unidade {rec.unit}
-                                                    </div>
-                                                    <h3 className="font-bold text-lg leading-tight text-white mb-0.5 shadow-sm" title={rec.room?.name || rec.local}>
-                                                        {rec.room?.name || rec.local}
-                                                    </h3>
-                                                </div>
-                                                <div className="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-white/20 shadow-sm bg-amber-700/40 text-white">
-                                                    SALA FIXA
-                                                </div>
-                                            </div>
-
-                                            <div className="p-5 flex flex-col flex-1 bg-white">
-                                                <div className="flex items-center gap-3 mb-4 border-b border-gray-50 pb-4">
-                                                    <div className="h-10 w-10 bg-green-50 rounded-full flex items-center justify-center shrink-0 border border-green-100">
-                                                        <Users className="h-5 w-5 text-green-600" />
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Professor</p>
-                                                        <p className="text-sm font-black text-gray-900 truncate">
-                                                            {rec.users?.full_name || 'Desconhecido'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-4 mb-5">
-                                                    <div className="flex flex-col items-center justify-center bg-slate-50 border border-gray-200 rounded-lg p-3 min-w-[3.5rem] shadow-inner">
-                                                        <Repeat className="w-6 h-6 text-amber-500 mb-1" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <p className="text-sm font-black text-gray-900 capitalize text-left">
-                                                            Toda {dayName}
-                                                        </p>
-                                                        <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-1 font-medium bg-amber-50 self-start px-2 py-1 inline-flex rounded-lg border border-amber-100">
-                                                            <Clock className="w-3.5 h-3.5 text-amber-500" />
-                                                            <span>
-                                                                {rec.start_time?.substring(0, 5)} - {rec.end_time?.substring(0, 5)}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="mt-auto pt-4 border-t border-amber-200/50 flex items-center justify-end">
-                                                    <button
-                                                        onClick={() => setDeleteModal({
-                                                            isOpen: true,
-                                                            bookingIds: [rec.id],
-                                                            isTemplate: true,
-                                                            templateName: rec.room?.name || rec.local
-                                                        })}
-                                                        className="px-4 py-2 bg-white text-red-600 font-bold text-xs uppercase tracking-wider border border-red-100 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95 hover:border-red-500"
-                                                    >
-                                                        Cancelar Regra
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            )}
-                        </div>
-                    ) : (
+                    {/* BOOKINGS LIST */}
                     <ul className="space-y-4">
                         {filteredBookings.length === 0 ? (
                             <li className="px-6 py-24 text-center">
@@ -1208,7 +1051,6 @@ export function AdminBookings() {
                             })()
                         )}
                     </ul>
-                    )}
                 </div >
             )}
 
