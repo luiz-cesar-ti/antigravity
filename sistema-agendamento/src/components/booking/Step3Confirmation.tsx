@@ -509,10 +509,10 @@ export function Step3Confirmation({ cart, updateCartItem, onPrev }: Step3Props) 
                     </div>
                 </div>
 
-                <div className="bg-gray-50/50 p-4 sm:p-8 overflow-y-auto overflow-x-hidden flex-1 flex justify-center min-h-0 w-full">
-                    {/* Visual wrapper that scales only on mobile to improve readability without affecting PDF engine */}
-                    <div className="w-full flex justify-center max-sm:[zoom:0.6]">
-                        <div id="term-doc-inner" style={{ margin: '0 auto', width: '100%', maxWidth: '56rem' }}>
+                <div className="bg-gray-50/50 p-2 sm:p-8 overflow-auto flex-1 min-h-0 w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
+                    {/* The wrapper allows native scrolling while zoom scales it to fit reasonably on mobile screens */}
+                    <div className="mx-auto w-full max-sm:[zoom:0.50]">
+                        <div id="term-doc-inner" style={{ margin: '0 auto', width: '100%', maxWidth: '56rem', minWidth: '800px' }}>
                             {cart.map((c, idx) => (
                                 <div key={idx} style={{ 
                                     pageBreakInside: 'avoid', 
