@@ -509,25 +509,28 @@ export function Step3Confirmation({ cart, updateCartItem, onPrev }: Step3Props) 
                     </div>
                 </div>
 
-                <div className="bg-gray-50/50 p-4 sm:p-8 overflow-y-auto flex-1 flex justify-center min-h-0">
-                    <div id="term-doc-inner" style={{ margin: '0 auto', width: '100%', maxWidth: '56rem' }}>
-                        {cart.map((c, idx) => (
-                            <div key={idx} style={{ 
-                                pageBreakInside: 'avoid', 
-                                breakInside: 'avoid',
-                                pageBreakBefore: idx > 0 ? 'always' : 'auto',
-                                breakBefore: idx > 0 ? 'page' : 'auto',
-                                paddingTop: idx > 0 ? '5mm' : '0' 
-                            }}>
-                                <TermDocument
-                                    data={{
-                                        ...c,
-                                        term_hash: c.term_document?.term_fingerprint || c.term_hash,
-                                        version_tag: c.term_document?.version_tag || c.version_tag || 'v2.0'
-                                    }}
-                                />
-                            </div>
-                        ))}
+                <div className="bg-gray-50/50 p-4 sm:p-8 overflow-y-auto overflow-x-hidden flex-1 flex justify-center min-h-0 w-full">
+                    {/* Visual wrapper that scales only on mobile to improve readability without affecting PDF engine */}
+                    <div className="w-full flex justify-center max-sm:[zoom:0.6]">
+                        <div id="term-doc-inner" style={{ margin: '0 auto', width: '100%', maxWidth: '56rem' }}>
+                            {cart.map((c, idx) => (
+                                <div key={idx} style={{ 
+                                    pageBreakInside: 'avoid', 
+                                    breakInside: 'avoid',
+                                    pageBreakBefore: idx > 0 ? 'always' : 'auto',
+                                    breakBefore: idx > 0 ? 'page' : 'auto',
+                                    paddingTop: idx > 0 ? '5mm' : '0' 
+                                }}>
+                                    <TermDocument
+                                        data={{
+                                            ...c,
+                                            term_hash: c.term_document?.term_fingerprint || c.term_hash,
+                                            version_tag: c.term_document?.version_tag || c.version_tag || 'v2.0'
+                                        }}
+                                    />
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
 

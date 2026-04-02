@@ -378,11 +378,9 @@ export function Step1BasicInfo({ data, updateData, onNext, cart = [], onAddToCar
                             if (validateStep()) {
                                 if (onAddToCart) {
                                     onAddToCart({ ...data });
-                                    // Reset specific fields for the next room
+                                    // Reset specific fields for the next room (Keep date)
                                     updateData({
                                         local: '',
-                                        date: '',
-                                        dayOfWeek: undefined,
                                         startTime: '',
                                         endTime: ''
                                     });
