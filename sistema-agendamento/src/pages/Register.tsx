@@ -766,9 +766,9 @@ export function Register() {
             <SuccessModal
                 isOpen={showSuccessModal}
                 onClose={handleCloseSuccess}
-                title="Cadastro Realizado!"
-                message={`Sua conta foi criada com sucesso, ${formData.full_name.split(' ').slice(0, 2).join(' ')}! Você já pode acessar a plataforma pelo seu login e senha.`}
-                type="document"
+                title="Confirme seu E-mail"
+                message={`Sua conta foi criada com sucesso, ${formData.full_name.split(' ').slice(0, 2).join(' ')}! Enviamos um link de confirmação para ${formData.email}. Por favor, verifique sua caixa de entrada (e spam) antes de tentar o login.`}
+                type="email"
             />
 
             {/* Term Modal */}
