@@ -4,6 +4,7 @@ import { ptBR } from 'date-fns/locale';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { clsx } from 'clsx';
+import * as XLSX from 'xlsx';
 import { TeacherAnalyticsModal } from '../../components/admin/dashboard/TeacherAnalyticsModal';
 import {
     Calendar,
@@ -91,6 +92,7 @@ export function AdminDashboard() {
     const [teacherSearchQuery, setTeacherSearchQuery] = useState('');
     const [teacherSearchResults, setTeacherSearchResults] = useState<any[]>([]);
     const [isSearchingTeachers, setIsSearchingTeachers] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
 
     // Classroom Analytics States
     const [expandedClassroom, setExpandedClassroom] = useState<string | null>(null);
@@ -159,6 +161,123 @@ export function AdminDashboard() {
             alert('Erro ao carregar dados do professor.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleExportGeneral = async () => {
+        setIsExporting(true);
+        try {
+            let unitFilter: string | null = null;
+            if (isSuperAdmin && targetUnit !== 'Matriz') {
+                unitFilter = targetUnit;
+            } else if (!isSuperAdmin && adminUser.unit && adminUser.unit !== 'Matriz') {
+                unitFilter = adminUser.unit;
+            }
+
+            // 1. Buscar Professores (para nova aba e correção de TOTVS)
+            const { data: teachers, error: tError } = await supabase.rpc('get_admin_users');
+            if (tError) throw tError;
+
+            // Filtrar professores pela unidade se necessário
+            const filteredTeachers = (teachers || []).filter((u: any) => {
+                if (!unitFilter) return true;
+                return u.units?.includes(unitFilter);
+            });
+
+            // Criar um mapa de ID -> TOTVS para garantir o preenchimento na aba de agendamentos
+            const totvsMap: Record<string, string> = {};
+            filteredTeachers.forEach((t: any) => {
+                totvsMap[t.id] = t.totvs_number || '';
+            });
+
+            // 2. Buscar Agendamentos
+            const { data: bookings, error: bError } = await supabase.rpc('get_admin_bookings', {
+                p_unit: unitFilter,
+                p_start_date: null,
+                p_end_date: null,
+                p_is_recurring: null,
+                p_user_id: null
+            });
+
+            if (bError) throw bError;
+
+            // 3. Buscar Empréstimos
+            let loansQuery = supabase
+                .from('equipment_loans')
+                .select('*, equipment (*)')
+                .order('created_at', { ascending: false });
+
+            if (unitFilter) {
+                loansQuery = loansQuery.eq('unit', unitFilter);
+            }
+
+            const { data: loans, error: lError } = await loansQuery;
+            if (lError) throw lError;
+
+            // 4. Formatar Registro de Professores (Nova Aba)
+            const teachersFormatted = filteredTeachers.map((t: any) => ({
+                'Nome do Professor': t.full_name || '',
+                'Número TOTVS': t.totvs_number || '',
+                'E-mail': t.email || '',
+                'Data de Cadastro': t.created_at ? format(parseISO(t.created_at), 'dd/MM/yyyy HH:mm') : '',
+                'Unidades': (t.units || []).join(', ')
+            }));
+
+            // 5. Formatar Agendamentos para Excel (Filtrado e Traduzido)
+            // Filtro: Apenas "active" e "encerrado"
+            const bookingsFormatted = (bookings || [])
+                .filter((b: any) => ['active', 'encerrado'].includes(b.status))
+                .map((b: any) => ({
+                    'Data do Agendamento': format(parseISO(b.booking_date), 'dd/MM/yyyy'),
+                    'Horário Início': b.start_time || '',
+                    'Horário Término': b.end_time || '',
+                    'Unidade': b.unit || '',
+                    'Local/Sala': b.local || b.room_name || '',
+                    'Professor': b.users?.full_name || b.full_name || '',
+                    'TOTVS': totvsMap[b.user_id] || b.users?.totvs_number || '',
+                    'Equipamento': b.equipment?.name || 'Apenas Sala',
+                    'Modelo': b.equipment?.model || '',
+                    'Quantidade': b.quantity || (b.equipment_id ? 1 : 0),
+                    'Status': b.status === 'active' ? 'Agendado' : 'Concluído',
+                    'Recorrente': b.is_recurring ? 'Sim' : 'Não',
+                    'ID': b.display_id || b.id || ''
+                }));
+
+            // 6. Formatar Empréstimos para Excel
+            const loansFormatted = (loans || []).map((l: any) => ({
+                'Data Registro': format(parseISO(l.created_at), 'dd/MM/yyyy HH:mm'),
+                'Professor/Solicitante': l.user_full_name || '',
+                'Cargo': l.user_role || '',
+                'Equipamento': l.equipment?.name || '',
+                'Modelo': l.equipment?.model || '',
+                'Quantidade': l.quantity || 1,
+                'Nº Patrimônio': l.asset_number || '',
+                'Local de Uso': l.location || '',
+                'Início': format(parseISO(l.start_at), 'dd/MM/yyyy HH:mm'),
+                'Previsão Término': format(parseISO(l.end_at), 'dd/MM/yyyy HH:mm'),
+                'Status': l.status === 'active' ? 'Em Aberto' : 'Devolvido',
+                'Observações': l.observations || ''
+            }));
+
+            // 7. Gerar XLSX com as 3 abas
+            const wb = XLSX.utils.book_new();
+            
+            const wsTeachers = XLSX.utils.json_to_sheet(teachersFormatted);
+            XLSX.utils.book_append_sheet(wb, wsTeachers, "Registro de Professores");
+
+            const wsBookings = XLSX.utils.json_to_sheet(bookingsFormatted);
+            XLSX.utils.book_append_sheet(wb, wsBookings, "Agendamentos Professores");
+
+            const wsLoans = XLSX.utils.json_to_sheet(loansFormatted);
+            XLSX.utils.book_append_sheet(wb, wsLoans, "Registros de Empréstimos");
+
+            XLSX.writeFile(wb, `RELATORIO_GERAL_OBJETIVO_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
+
+        } catch (error: any) {
+            console.error('Export error:', error);
+            alert('Erro ao exportar dados: ' + error.message);
+        } finally {
+            setIsExporting(false);
         }
     };
 
@@ -351,6 +470,10 @@ export function AdminDashboard() {
         link.click();
         URL.revokeObjectURL(url);
     };
+
+    // NOVO: Export ALL unit data (Teachers, Bookings, Loans)
+
+
 
     // Filter and sort classroom bookings
     const getFilteredAndSortedBookings = () => {
@@ -680,6 +803,22 @@ export function AdminDashboard() {
                 </div>
 
                 <div className="flex flex-col lg:flex-row items-stretch lg:items-end gap-3 w-full lg:w-auto">
+                    <button
+                        onClick={handleExportGeneral}
+                        disabled={isExporting}
+                        className={clsx(
+                            "flex items-center justify-center gap-2 px-6 py-3 text-white font-black text-sm rounded-2xl shadow-xl transition-all active:scale-95",
+                            isExporting ? "bg-gray-400 cursor-wait" : "bg-teal-600 hover:bg-teal-700 shadow-teal-200"
+                        )}
+                    >
+                        {isExporting ? (
+                            <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                        ) : (
+                            <Download className="h-4 w-4" />
+                        )}
+                        {isExporting ? 'Exportando...' : 'Exportar Geral (Excel)'}
+                    </button>
+
                     {/* Unit Selector for Super Admin */}
                     {isSuperAdmin && (
                         <div className="relative group">

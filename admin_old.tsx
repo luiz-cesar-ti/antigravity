@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
@@ -7,7 +7,7 @@ import { format, parseISO } from 'date-fns';
 import {
     Search, Calendar, Users, MapPin, FileText, Trash2, AlertCircle,
     Monitor, Clock, Filter, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug, Repeat, ChevronDown, History,
-    Download, X, Share2, Building
+    Download, X, Share2, Building, NotebookText, Layers
 } from 'lucide-react';
 import { TermDocument } from '../../components/TermDocument';
 // @ts-ignore
@@ -21,7 +21,8 @@ import { useSearchParams } from 'react-router-dom';
 export function AdminBookings() {
     const { user, role } = useAuth();
     const [bookings, setBookings] = useState<Booking[]>([]);
-
+    const [templates, setTemplates] = useState<any[]>([]);
+    const [activeTab, setActiveTab] = useState<'bookings' | 'templates'>('bookings');
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState('all');
     const [searchParams] = useSearchParams();
@@ -109,7 +110,7 @@ export function AdminBookings() {
             console.error('Error fetching admin bookings:', error);
             const msg = error?.message || '';
             if (msg.includes('Acesso negado') || msg.includes('JWT') || msg.includes('expired')) {
-                alert('Sua sessão expirou. Por favor, clique em "Sair do Sistema" no menu lateral e faça login novamente.');
+                alert('Sua sess├úo expirou. Por favor, clique em "Sair do Sistema" no menu lateral e fa├ºa login novamente.');
             } else {
                 alert(`Erro ao buscar agendamentos: ${error.message}\nPor favor, envie este erro ao suporte.`);
             }
@@ -119,12 +120,63 @@ export function AdminBookings() {
 
     const { refreshSignal } = useNotifications();
 
+    const fetchTemplates = async () => {
+        if (!user) return;
+        setLoading(true);
+
+        try {
+            let query = supabase
+                .from('recurring_bookings')
+                .select(`
+                    *,
+                    room:rooms(name, unit),
+                    users!recurring_bookings_user_id_fkey(full_name, email)
+                `)
+                .eq('is_active', true)
+                .not('room_id', 'is', null);
+
+            // Apply Unit Filter
+            if (role === 'admin' || role === 'super_admin') {
+                if (isSuperAdmin) {
+                    if (targetUnit) query = query.eq('unit', targetUnit);
+                } else {
+                    const unit = (user as Admin).unit;
+                    if (unit && unit !== 'Matriz') query = query.eq('unit', unit);
+                }
+            }
+
+            const { data, error } = await query;
+            if (error) throw error;
+            if (data) setTemplates(data);
+        } catch (err) {
+            console.error('Error fetching templates:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        fetchBookings();
-    }, [user?.id, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit, refreshSignal]);
+        if (activeTab === 'bookings') {
+            fetchBookings();
+        } else {
+            fetchTemplates();
+        }
+    }, [user?.id, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit, refreshSignal, activeTab]);
 
     const handleDeleteBooking = async () => {
         if (deleteModal.bookingIds.length === 0) return;
+
+        if (deleteModal.isTemplate) {
+            try {
+                const { error } = await supabase.from('recurring_bookings').update({ is_active: false }).eq('id', deleteModal.bookingIds[0]);
+                if (error) throw error;
+                setDeleteModal({ isOpen: false, bookingIds: [] });
+                fetchTemplates();
+            } catch (err: any) {
+                alert('Erro ao cancelar regra fixa: ' + err.message);
+            }
+            return;
+        }
 
         const session = localStorage.getItem('admin_session');
         const token = session ? JSON.parse(session).session_token : '';
@@ -151,7 +203,7 @@ export function AdminBookings() {
 
     const handleOpenTermModal = (booking: any) => {
         if (!booking.term_document) {
-            alert('Termo não disponível para este agendamento.');
+            alert('Termo n├úo dispon├¡vel para este agendamento.');
             return;
         }
         setPdfData(booking);
@@ -164,19 +216,9 @@ export function AdminBookings() {
 
         setIsGeneratingPdf(true);
 
-        const rawName = pdfData.term_document?.userName || pdfData.full_name || 'usuario';
+        const rawName = pdfData.term_document?.userName || 'usuario';
         const cleanName = rawName.normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, '_').toUpperCase();
         const fileName = `TERMO_${cleanName}_${new Date().toISOString().split('T')[0]}.pdf`;
-
-        // CRIAR UM CLONE DESCONECTADO (MATA O TRAVAMENTO DO BACKDROP-BLUR DO TAILWIND)
-        const printWrap = document.createElement('div');
-        printWrap.innerHTML = element.outerHTML;
-        const clonedInner = printWrap.querySelector('#term-doc-inner') as HTMLElement;
-        if (clonedInner) {
-            clonedInner.style.margin = '0';
-            clonedInner.style.width = '210mm';
-            clonedInner.style.maxWidth = 'none';
-        }
 
         const opt = {
             margin: 0,
@@ -187,8 +229,13 @@ export function AdminBookings() {
                 dpi: 192,
                 letterRendering: true,
                 useCORS: true,
-                logging: false, // desliga o logging para acelerar
                 onclone: (clonedDoc: any) => {
+                    const el = clonedDoc.getElementById('term-doc-inner');
+                    if (el) {
+                        el.style.width = '210mm';
+                        el.style.maxWidth = 'none';
+                        el.style.margin = '0';
+                    }
                     if (clonedDoc.defaultView) {
                         clonedDoc.defaultView.devicePixelRatio = 1;
                     }
@@ -198,8 +245,7 @@ export function AdminBookings() {
         };
 
         try {
-            // A magica acontece aqui: passando o clonedInner ele gera imediatamente sem atravessar a DOM complexa! 
-            const pdfBlob = await html2pdf().set(opt).from(clonedInner || printWrap).output('blob');
+            const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
 
             if (action === 'share' && navigator.share) {
                 const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
@@ -207,7 +253,7 @@ export function AdminBookings() {
                     files: [file],
                     title: 'Termo de Responsabilidade',
                     text: `Segue anexo o termo de responsabilidade de ${rawName}.`
-                }).catch(() => {});
+                });
             } else {
                 const url = URL.createObjectURL(pdfBlob);
                 const a = document.createElement('a');
@@ -223,14 +269,12 @@ export function AdminBookings() {
             alert('Erro ao processar o arquivo.');
         } finally {
             setIsGeneratingPdf(false);
-            // Previne detritos do pdf que podem sobrepor ou congelar a UI na memória
-            document.querySelectorAll('.html2canvas-container, .html2pdf__container').forEach(el => el.remove());
         }
     };
 
     const TermModal = () => (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 md:p-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" onClick={() => !isGeneratingPdf && setModalOpen(false)}></div>
+            <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity" onClick={() => setModalOpen(false)}></div>
             <div className="relative z-50 flex flex-col w-full max-w-5xl h-full max-h-screen sm:max-h-[85vh] bg-white sm:rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all">
                 <div className="bg-white px-6 py-5 flex justify-between items-center border-b border-gray-100 shrink-0">
                     <div className="flex items-center gap-3">
@@ -309,7 +353,7 @@ export function AdminBookings() {
             return (
                 <div className="flex gap-1">
                     <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-gray-100 text-gray-700 border border-gray-300">
-                        Excluído pelo Admin
+                        Exclu├¡do pelo Admin
                     </span>
                     {recurringBadge}
                 </div>
@@ -322,7 +366,7 @@ export function AdminBookings() {
             return (
                 <div className="flex gap-1">
                     <span className="px-2 py-0.5 inline-flex text-[8px] items-center leading-3 font-bold uppercase tracking-wider rounded-full bg-red-100 text-red-700 border border-red-200">
-                        Excluído pelo Professor
+                        Exclu├¡do pelo Professor
                     </span>
                     {recurringBadge}
                 </div>
@@ -346,7 +390,7 @@ export function AdminBookings() {
             return (
                 <div className="flex gap-1">
                     <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-blue-100 text-blue-700 border border-blue-200">
-                        Concluído
+                        Conclu├¡do
                     </span>
                     {recurringBadge}
                 </div>
@@ -420,7 +464,7 @@ export function AdminBookings() {
                             <Building className="h-5 w-5 text-indigo-600" />
                         </div>
                         <div>
-                            <h2 className="text-sm font-black text-gray-900 uppercase tracking-wide">Visão Global</h2>
+                            <h2 className="text-sm font-black text-gray-900 uppercase tracking-wide">Vis├úo Global</h2>
                             <p className="text-xs text-gray-500 font-bold">Selecione uma unidade para gerenciar</p>
                         </div>
                     </div>
@@ -442,7 +486,7 @@ export function AdminBookings() {
                     <AlertCircle className="h-5 w-5 text-amber-600" />
                 </div>
                 <p className="text-xs sm:text-sm font-bold text-amber-800 leading-relaxed">
-                    Aviso: Os termos gerados em cada agendamento só devem ter o download realizado em caso de necessidade.
+                    Aviso: Os termos gerados em cada agendamento s├│ devem ter o download realizado em caso de necessidade.
                 </p>
             </div>
 
@@ -451,10 +495,35 @@ export function AdminBookings() {
                     <h1 className="text-2xl font-black text-gray-900">Gerenciar Agendamentos <span className="text-primary-600 text-xs font-bold">(v2.2)</span></h1>
                     <p className="text-sm text-gray-500 mt-1">Acompanhe e gerencie todas as reservas da unidade.</p>
                 </div>
+
+                {/* TAB SWITCHER */}
+                <div className="flex items-center gap-2 p-1 bg-gray-100 rounded-2xl w-full lg:w-auto overflow-x-auto shadow-inner border border-gray-200/60">
+                    <button
+                        onClick={() => setActiveTab('bookings')}
+                        className={`flex items-center justify-center gap-2.5 px-6 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap outline-none flex-1 lg:flex-none ${activeTab === 'bookings'
+                            ? 'bg-white text-primary-700 shadow-sm border border-gray-200/40 ring-1 ring-primary-500/10'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                            }`}
+                    >
+                        <NotebookText className={`w-4 h-4 ${activeTab === 'bookings' ? 'text-primary-500' : 'text-gray-400'}`} />
+                        Hist├│rico / Fila
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('templates')}
+                        className={`flex items-center justify-center gap-2.5 px-6 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap outline-none flex-1 lg:flex-none ${activeTab === 'templates'
+                            ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/20 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                            }`}
+                    >
+                        <Layers className={`w-4 h-4 ${activeTab === 'templates' ? 'text-white/90' : 'text-gray-400'}`} />
+                        Modelos Fixos (Salas)
+                    </button>
+                </div>
             </div>
 
-            {/* ONLY RENDER FILTERS */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
+            {/* ONLY RENDER FILTERS IF 'bookings' TAB */}
+            {activeTab === 'bookings' && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
                     {/* Search and Filter toggle (kept on left or full width depending on your choice, previously they were align right next to title) */}
                     <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
                         <div className="relative w-full sm:w-80">
@@ -483,13 +552,14 @@ export function AdminBookings() {
                         </button>
                     </div>
                 </div>
+            )}
 
             {/* Filter Bar */}
-            {showFilters && (
+            {showFilters && activeTab === 'bookings' && (
                 <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data Início</label>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data In├¡cio</label>
                             <div className="relative">
                                 <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                 <input
@@ -515,7 +585,7 @@ export function AdminBookings() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Período</label>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Per├¡odo</label>
                             <div className="relative">
                                 <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                 <select
@@ -523,8 +593,8 @@ export function AdminBookings() {
                                     onChange={(e) => setPeriodFilter(e.target.value as any)}
                                     className="w-full bg-gray-50 border-none rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer outline-none"
                                 >
-                                    <option value="all">Todos Períodos</option>
-                                    <option value="morning">Manhã (07h-12h)</option>
+                                    <option value="all">Todos Per├¡odos</option>
+                                    <option value="morning">Manh├ú (07h-12h)</option>
                                     <option value="afternoon">Tarde (12h-18h)</option>
                                     <option value="night">Noite (18h-24h)</option>
                                 </select>
@@ -543,8 +613,8 @@ export function AdminBookings() {
                                 >
                                     <option value="all">Todos Status</option>
                                     <option value="active">Agendados (Ativos)</option>
-                                    <option value="closed">Concluídos</option>
-                                    <option value="cancelled">Cancelados/Excluídos</option>
+                                    <option value="closed">Conclu├¡dos</option>
+                                    <option value="cancelled">Cancelados/Exclu├¡dos</option>
                                 </select>
                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                             </div>
@@ -593,7 +663,86 @@ export function AdminBookings() {
                 </div>
             ) : (
                 <div className="bg-transparent space-y-4">
-                    {/* BOOKINGS LIST */}
+                    {/* BOOKINGS LIST OR TEMPLATES LIST */}
+                    {activeTab === 'templates' ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {templates.length === 0 ? (
+                                <div className="col-span-full py-20 text-center">
+                                    <Layers className="h-16 w-16 text-gray-200 mx-auto mb-4" />
+                                    <p className="text-lg font-bold text-gray-900">Nenhum Modelo Fixo</p>
+                                    <p className="text-sm text-gray-500 mt-1">Nenhum professor possui uma reserva fixa de sala nesta unidade.</p>
+                                </div>
+                            ) : (
+                                templates.map((rec) => {
+                                    const days = ['Domingo', 'Segunda-feira', 'Ter├ºa-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'S├íbado'];
+                                    const dayName = days[rec.day_of_week];
+
+                                    return (
+                                        <div key={rec.id} className="group bg-white rounded-xl shadow-md border hover:shadow-xl relative overflow-hidden flex flex-col border-gray-300 hover:border-amber-200 transition-all">
+                                            <div className="p-4 flex justify-between items-start bg-gradient-to-br from-amber-500 to-orange-600">
+                                                <div>
+                                                    <div className="flex items-center gap-1 opacity-90 text-[10px] uppercase tracking-wider font-semibold mb-1 text-white/90">
+                                                        <MapPin className="w-3 h-3" /> Unidade {rec.unit}
+                                                    </div>
+                                                    <h3 className="font-bold text-lg leading-tight text-white mb-0.5 shadow-sm" title={rec.room?.name || rec.local}>
+                                                        {rec.room?.name || rec.local}
+                                                    </h3>
+                                                </div>
+                                                <div className="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-white/20 shadow-sm bg-amber-700/40 text-white">
+                                                    SALA FIXA
+                                                </div>
+                                            </div>
+
+                                            <div className="p-5 flex flex-col flex-1 bg-white">
+                                                <div className="flex items-center gap-3 mb-4 border-b border-gray-50 pb-4">
+                                                    <div className="h-10 w-10 bg-green-50 rounded-full flex items-center justify-center shrink-0 border border-green-100">
+                                                        <Users className="h-5 w-5 text-green-600" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Professor</p>
+                                                        <p className="text-sm font-black text-gray-900 truncate">
+                                                            {rec.users?.full_name || 'Desconhecido'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-4 mb-5">
+                                                    <div className="flex flex-col items-center justify-center bg-slate-50 border border-gray-200 rounded-lg p-3 min-w-[3.5rem] shadow-inner">
+                                                        <Repeat className="w-6 h-6 text-amber-500 mb-1" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="text-sm font-black text-gray-900 capitalize text-left">
+                                                            Toda {dayName}
+                                                        </p>
+                                                        <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-1 font-medium bg-amber-50 self-start px-2 py-1 inline-flex rounded-lg border border-amber-100">
+                                                            <Clock className="w-3.5 h-3.5 text-amber-500" />
+                                                            <span>
+                                                                {rec.start_time?.substring(0, 5)} - {rec.end_time?.substring(0, 5)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-auto pt-4 border-t border-amber-200/50 flex items-center justify-end">
+                                                    <button
+                                                        onClick={() => setDeleteModal({
+                                                            isOpen: true,
+                                                            bookingIds: [rec.id],
+                                                            isTemplate: true,
+                                                            templateName: rec.room?.name || rec.local
+                                                        })}
+                                                        className="px-4 py-2 bg-white text-red-600 font-bold text-xs uppercase tracking-wider border border-red-100 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95 hover:border-red-500"
+                                                    >
+                                                        Cancelar Regra
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    ) : (
                     <ul className="space-y-4">
                         {filteredBookings.length === 0 ? (
                             <li className="px-6 py-24 text-center">
@@ -653,7 +802,7 @@ export function AdminBookings() {
 
                                                                             {first.display_id && (
                                                                                 <>
-                                                                                    <span className="text-gray-300">•</span>
+                                                                                    <span className="text-gray-300">ÔÇó</span>
                                                                                     <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
                                                                                     {first.term_hash && (
                                                                                         <>
@@ -705,7 +854,7 @@ export function AdminBookings() {
                                                             {/* BOTTOM ROW: Info Grid */}
                                                             {first.observations && (
                                                                 <div className="mt-3 mb-4 p-2.5 bg-amber-50/50 rounded-2xl border border-amber-100/50">
-                                                                    <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest block mb-1">Observações</span>
+                                                                    <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest block mb-1">Observa├º├Áes</span>
                                                                     <p className="text-xs font-bold text-gray-600 leading-snug">
                                                                         {first.observations}
                                                                     </p>
@@ -723,15 +872,15 @@ export function AdminBookings() {
                                                                     </div>
                                                                 </div>
 
-                                                                {/* ESPECIFICAÇÃO */}
+                                                                {/* ESPECIFICA├ç├âO */}
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
                                                                         <Monitor className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
                                                                     </div>
                                                                     <div className="flex flex-col min-w-0 justify-center">
-                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Especificação</span>
+                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Especifica├º├úo</span>
                                                                         <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
-                                                                            {first.equipment?.brand ? `${first.equipment.brand} ${first.equipment.model || ''}` : 'Não especificado'}
+                                                                            {first.equipment?.brand ? `${first.equipment.brand} ${first.equipment.model || ''}` : 'N├úo especificado'}
                                                                         </span>
                                                                     </div>
                                                                 </div>
@@ -760,13 +909,13 @@ export function AdminBookings() {
                                                                     </div>
                                                                 </div>
 
-                                                                {/* HORÁRIO */}
+                                                                {/* HOR├üRIO */}
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
                                                                         <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
                                                                     </div>
                                                                     <div className="flex flex-col min-w-0 justify-center">
-                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Horário</span>
+                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Hor├írio</span>
                                                                         <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
                                                                             {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
                                                                         </span>
@@ -796,7 +945,7 @@ export function AdminBookings() {
 
                                                                             {first.display_id && (
                                                                                 <>
-                                                                                    <span className="text-gray-300">•</span>
+                                                                                    <span className="text-gray-300">ÔÇó</span>
                                                                                     <span className="text-indigo-600 font-black italic">ID TERMO #{first.display_id}</span>
                                                                                     {first.term_hash && (
                                                                                         <>
@@ -850,7 +999,7 @@ export function AdminBookings() {
                                                             {/* BOTTOM ROW: Info Grid */}
                                                             {first.observations && (
                                                                 <div className="mt-3 mb-4 p-2.5 bg-amber-50/50 rounded-2xl border border-amber-100/50">
-                                                                    <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest block mb-1">Observações</span>
+                                                                    <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest block mb-1">Observa├º├Áes</span>
                                                                     <p className="text-xs font-bold text-gray-600 leading-snug">
                                                                         {first.observations}
                                                                     </p>
@@ -868,15 +1017,15 @@ export function AdminBookings() {
                                                                     </div>
                                                                 </div>
 
-                                                                {/* ESPECIFICAÇÃO */}
+                                                                {/* ESPECIFICA├ç├âO */}
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
                                                                         <Monitor className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
                                                                     </div>
                                                                     <div className="flex flex-col min-w-0 justify-center">
-                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Especificação</span>
+                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Especifica├º├úo</span>
                                                                         <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
-                                                                            Múltiplos Itens
+                                                                            M├║ltiplos Itens
                                                                         </span>
                                                                     </div>
                                                                 </div>
@@ -905,13 +1054,13 @@ export function AdminBookings() {
                                                                     </div>
                                                                 </div>
 
-                                                                {/* HORÁRIO */}
+                                                                {/* HOR├üRIO */}
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
                                                                         <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
                                                                     </div>
                                                                     <div className="flex flex-col min-w-0 justify-center">
-                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Horário</span>
+                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Hor├írio</span>
                                                                         <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
                                                                             {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
                                                                         </span>
@@ -980,7 +1129,7 @@ export function AdminBookings() {
 
                                                     {first.observations && (
                                                         <div className="mb-1 p-2.5 bg-amber-50/50 rounded-2xl border border-amber-100/50">
-                                                            <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest block mb-1">Observações</span>
+                                                            <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest block mb-1">Observa├º├Áes</span>
                                                             <p className="text-xs font-bold text-gray-600 leading-snug">
                                                                 {first.observations}
                                                             </p>
@@ -1019,13 +1168,13 @@ export function AdminBookings() {
                                                             </div>
                                                         </div>
 
-                                                        {/* Especificação */}
+                                                        {/* Especifica├º├úo */}
                                                         <div>
-                                                            <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Especificação</p>
+                                                            <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Especifica├º├úo</p>
                                                             <div className="flex items-center gap-1.5">
                                                                 <Monitor className="h-3 w-3 text-gray-300" />
                                                                 <span className="text-xs font-bold text-indigo-600 truncate">
-                                                                    {isMulti ? 'Múltiplos Itens' : `${first.equipment?.brand || ''} ${first.equipment?.model || ''}`.trim() || 'Padrão'}
+                                                                    {isMulti ? 'M├║ltiplos Itens' : `${first.equipment?.brand || ''} ${first.equipment?.model || ''}`.trim() || 'Padr├úo'}
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -1046,7 +1195,7 @@ export function AdminBookings() {
                                                             <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Agendado Para</p>
                                                             <div className="w-full text-right sm:text-left">
                                                                 <span className="text-xs font-bold text-gray-600">
-                                                                    {format(parseISO(first.booking_date), "dd/MM/yy")} • {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
+                                                                    {format(parseISO(first.booking_date), "dd/MM/yy")} ÔÇó {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -1059,6 +1208,7 @@ export function AdminBookings() {
                             })()
                         )}
                     </ul>
+                    )}
                 </div >
             )}
 
@@ -1071,13 +1221,13 @@ export function AdminBookings() {
                             <Trash2 className="h-8 w-8 text-red-500" />
                         </div>
                         <h3 className="text-xl font-black text-gray-900 text-center mb-2">
-                            {deleteModal.isTemplate ? 'Cancelar Regra Fixa?' : 'Confirmar Exclusão?'}
+                            {deleteModal.isTemplate ? 'Cancelar Regra Fixa?' : 'Confirmar Exclus├úo?'}
                         </h3>
                         <p className="text-sm text-gray-500 text-center mb-8 font-medium leading-relaxed">
                             {deleteModal.isTemplate ? (
-                                <>A sala <span className="font-bold text-gray-800">{deleteModal.templateName}</span> ficará livre eternamente para esse horário. Esta ação não pode ser desfeita e removerá a reserva fixa de imediato.</>
+                                <>A sala <span className="font-bold text-gray-800">{deleteModal.templateName}</span> ficar├í livre eternamente para esse hor├írio. Esta a├º├úo n├úo pode ser desfeita e remover├í a reserva fixa de imediato.</>
                             ) : (
-                                <>Esta ação não pode ser desfeita. O agendamento será permanentemente removido.</>
+                                <>Esta a├º├úo n├úo pode ser desfeita. O agendamento ser├í permanentemente removido.</>
                             )}
                         </p>
                         <div className="flex flex-col gap-3">

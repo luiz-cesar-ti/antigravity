@@ -454,6 +454,35 @@ export function AdminLoans() {
         }
     };
 
+    const exportLoansCSV = () => {
+        if (loans.length === 0) {
+            alert('Não há dados para exportar.');
+            return;
+        }
+
+        const headers = ['Professor', 'Equipamento', 'Quantidade', 'Patrimônio', 'Local', 'Início', 'Término', 'Status', 'Observações'];
+        const rows = loans.map((l: any) => [
+            l.user_full_name || '',
+            l.equipment?.name || '',
+            l.quantity || 1,
+            l.asset_number || '',
+            l.location || '',
+            l.start_at ? format(parseISO(l.start_at), 'dd/MM/yyyy HH:mm') : '',
+            l.end_at ? format(parseISO(l.end_at), 'dd/MM/yyyy HH:mm') : '',
+            l.status === 'active' ? 'Em Aberto' : 'Devolvido',
+            (l.observations || '').replace(/\n/g, ' ')
+        ]);
+
+        const csvContent = [headers, ...rows].map(row => row.join(';')).join('\n');
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `emprestimos_${adminUser?.unit?.replace(/\s+/g, '_') || 'geral'}_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
     const filteredLoans = loans.filter(l =>
         l.user_full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         l.asset_number.toLowerCase().includes(searchTerm.toLowerCase())
@@ -469,6 +498,16 @@ export function AdminLoans() {
                         <ClipboardCheck className="h-4 w-4 text-amber-600 mr-2" />
                         <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">Gestão de Equipe & Terceiros</span>
                     </div>
+                </div>
+
+                <div className="flex w-full md:w-auto">
+                    <button
+                        onClick={exportLoansCSV}
+                        className="flex items-center justify-center gap-2 px-4 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm rounded-2xl shadow-sm hover:shadow transition-all w-full md:w-auto"
+                    >
+                        <Download className="h-4 w-4" />
+                        Exportar Empréstimos
+                    </button>
                 </div>
             </div>
 

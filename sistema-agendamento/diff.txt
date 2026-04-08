@@ -1,0 +1,965 @@
+﻿commit e5a7b593f5dc1e4989a7e9555d22dbfbce353acd
+Author: luiz-cesar-ti <luiz.cesar1995@gmail.com>
+Date:   Thu Apr 2 15:03:16 2026 -0300
+
+    feat: implement AdminBookings page with filtering, deletion, and PDF term generation capabilities
+
+diff --git a/sistema-agendamento/src/pages/admin/AdminBookings.tsx b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+index 61553cc..bbff5fe 100644
+--- a/sistema-agendamento/src/pages/admin/AdminBookings.tsx
++++ b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+@@ -7,7 +7,7 @@ import { format, parseISO } from 'date-fns';
+ import {
+     Search, Calendar, Users, MapPin, FileText, Trash2, AlertCircle,
+     Monitor, Clock, Filter, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug, Repeat, ChevronDown, History,
+-    Download, X, Share2, Building, NotebookText, Layers
++    Download, X, Share2, Building
+ } from 'lucide-react';
+ import { TermDocument } from '../../components/TermDocument';
+ // @ts-ignore
+@@ -21,8 +21,7 @@ import { useSearchParams } from 'react-router-dom';
+ export function AdminBookings() {
+     const { user, role } = useAuth();
+     const [bookings, setBookings] = useState<Booking[]>([]);
+-    const [templates, setTemplates] = useState<any[]>([]);
+-    const [activeTab, setActiveTab] = useState<'bookings' | 'templates'>('bookings');
++
+     const [loading, setLoading] = useState(true);
+     const [statusFilter, setStatusFilter] = useState('all');
+     const [searchParams] = useSearchParams();
+@@ -120,64 +119,13 @@ export function AdminBookings() {
+ 
+     const { refreshSignal } = useNotifications();
+ 
+-    const fetchTemplates = async () => {
+-        if (!user) return;
+-        setLoading(true);
+-
+-        try {
+-            let query = supabase
+-                .from('recurring_bookings')
+-                .select(`
+-                    *,
+-                    room:rooms(name, unit),
+-                    users!recurring_bookings_user_id_fkey(full_name, email)
+-                `)
+-                .eq('is_active', true)
+-                .not('room_id', 'is', null);
+-
+-            // Apply Unit Filter
+-            if (role === 'admin' || role === 'super_admin') {
+-                if (isSuperAdmin) {
+-                    if (targetUnit) query = query.eq('unit', targetUnit);
+-                } else {
+-                    const unit = (user as Admin).unit;
+-                    if (unit && unit !== 'Matriz') query = query.eq('unit', unit);
+-                }
+-            }
+-
+-            const { data, error } = await query;
+-            if (error) throw error;
+-            if (data) setTemplates(data);
+-        } catch (err) {
+-            console.error('Error fetching templates:', err);
+-        } finally {
+-            setLoading(false);
+-        }
+-    };
+-
+     useEffect(() => {
+-        if (activeTab === 'bookings') {
+-            fetchBookings();
+-        } else {
+-            fetchTemplates();
+-        }
+-    }, [user?.id, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit, refreshSignal, activeTab]);
++        fetchBookings();
++    }, [user?.id, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit, refreshSignal]);
+ 
+     const handleDeleteBooking = async () => {
+         if (deleteModal.bookingIds.length === 0) return;
+ 
+-        if (deleteModal.isTemplate) {
+-            try {
+-                const { error } = await supabase.from('recurring_bookings').update({ is_active: false }).eq('id', deleteModal.bookingIds[0]);
+-                if (error) throw error;
+-                setDeleteModal({ isOpen: false, bookingIds: [] });
+-                fetchTemplates();
+-            } catch (err: any) {
+-                alert('Erro ao cancelar regra fixa: ' + err.message);
+-            }
+-            return;
+-        }
+-
+         const session = localStorage.getItem('admin_session');
+         const token = session ? JSON.parse(session).session_token : '';
+ 
+@@ -495,35 +443,10 @@ export function AdminBookings() {
+                     <h1 className="text-2xl font-black text-gray-900">Gerenciar Agendamentos <span className="text-primary-600 text-xs font-bold">(v2.2)</span></h1>
+                     <p className="text-sm text-gray-500 mt-1">Acompanhe e gerencie todas as reservas da unidade.</p>
+                 </div>
+-
+-                {/* TAB SWITCHER */}
+-                <div className="flex items-center gap-2 p-1 bg-gray-100 rounded-2xl w-full lg:w-auto overflow-x-auto shadow-inner border border-gray-200/60">
+-                    <button
+-                        onClick={() => setActiveTab('bookings')}
+-                        className={`flex items-center justify-center gap-2.5 px-6 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap outline-none flex-1 lg:flex-none ${activeTab === 'bookings'
+-                            ? 'bg-white text-primary-700 shadow-sm border border-gray-200/40 ring-1 ring-primary-500/10'
+-                            : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+-                            }`}
+-                    >
+-                        <NotebookText className={`w-4 h-4 ${activeTab === 'bookings' ? 'text-primary-500' : 'text-gray-400'}`} />
+-                        Hist├│rico / Fila
+-                    </button>
+-                    <button
+-                        onClick={() => setActiveTab('templates')}
+-                        className={`flex items-center justify-center gap-2.5 px-6 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap outline-none flex-1 lg:flex-none ${activeTab === 'templates'
+-                            ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/20 shadow-sm'
+-                            : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+-                            }`}
+-                    >
+-                        <Layers className={`w-4 h-4 ${activeTab === 'templates' ? 'text-white/90' : 'text-gray-400'}`} />
+-                        Modelos Fixos (Salas)
+-                    </button>
+-                </div>
+             </div>
+ 
+-            {/* ONLY RENDER FILTERS IF 'bookings' TAB */}
+-            {activeTab === 'bookings' && (
+-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
++            {/* ONLY RENDER FILTERS */}
++            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
+                     {/* Search and Filter toggle (kept on left or full width depending on your choice, previously they were align right next to title) */}
+                     <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                         <div className="relative w-full sm:w-80">
+@@ -552,10 +475,9 @@ export function AdminBookings() {
+                         </button>
+                     </div>
+                 </div>
+-            )}
+ 
+             {/* Filter Bar */}
+-            {showFilters && activeTab === 'bookings' && (
++            {showFilters && (
+                 <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                         <div className="space-y-2">
+@@ -663,86 +585,7 @@ export function AdminBookings() {
+                 </div>
+             ) : (
+                 <div className="bg-transparent space-y-4">
+-                    {/* BOOKINGS LIST OR TEMPLATES LIST */}
+-                    {activeTab === 'templates' ? (
+-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+-                            {templates.length === 0 ? (
+-                                <div className="col-span-full py-20 text-center">
+-                                    <Layers className="h-16 w-16 text-gray-200 mx-auto mb-4" />
+-                                    <p className="text-lg font-bold text-gray-900">Nenhum Modelo Fixo</p>
+-                                    <p className="text-sm text-gray-500 mt-1">Nenhum professor possui uma reserva fixa de sala nesta unidade.</p>
+-                                </div>
+-                            ) : (
+-                                templates.map((rec) => {
+-                                    const days = ['Domingo', 'Segunda-feira', 'Ter├ºa-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'S├íbado'];
+-                                    const dayName = days[rec.day_of_week];
+-
+-                                    return (
+-                                        <div key={rec.id} className="group bg-white rounded-xl shadow-md border hover:shadow-xl relative overflow-hidden flex flex-col border-gray-300 hover:border-amber-200 transition-all">
+-                                            <div className="p-4 flex justify-between items-start bg-gradient-to-br from-amber-500 to-orange-600">
+-                                                <div>
+-                                                    <div className="flex items-center gap-1 opacity-90 text-[10px] uppercase tracking-wider font-semibold mb-1 text-white/90">
+-                                                        <MapPin className="w-3 h-3" /> Unidade {rec.unit}
+-                                                    </div>
+-                                                    <h3 className="font-bold text-lg leading-tight text-white mb-0.5 shadow-sm" title={rec.room?.name || rec.local}>
+-                                                        {rec.room?.name || rec.local}
+-                                                    </h3>
+-                                                </div>
+-                                                <div className="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-white/20 shadow-sm bg-amber-700/40 text-white">
+-                                                    SALA FIXA
+-                                                </div>
+-                                            </div>
+-
+-                                            <div className="p-5 flex flex-col flex-1 bg-white">
+-                                                <div className="flex items-center gap-3 mb-4 border-b border-gray-50 pb-4">
+-                                                    <div className="h-10 w-10 bg-green-50 rounded-full flex items-center justify-center shrink-0 border border-green-100">
+-                                                        <Users className="h-5 w-5 text-green-600" />
+-                                                    </div>
+-                                                    <div className="min-w-0">
+-                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Professor</p>
+-                                                        <p className="text-sm font-black text-gray-900 truncate">
+-                                                            {rec.users?.full_name || 'Desconhecido'}
+-                                                        </p>
+-                                                    </div>
+-                                                </div>
+-
+-                                                <div className="flex items-center gap-4 mb-5">
+-                                                    <div className="flex flex-col items-center justify-center bg-slate-50 border border-gray-200 rounded-lg p-3 min-w-[3.5rem] shadow-inner">
+-                                                        <Repeat className="w-6 h-6 text-amber-500 mb-1" />
+-                                                    </div>
+-                                                    <div className="flex-1">
+-                                                        <p className="text-sm font-black text-gray-900 capitalize text-left">
+-                                                            Toda {dayName}
+-                                                        </p>
+-                                                        <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-1 font-medium bg-amber-50 self-start px-2 py-1 inline-flex rounded-lg border border-amber-100">
+-                                                            <Clock className="w-3.5 h-3.5 text-amber-500" />
+-                                                            <span>
+-                                                                {rec.start_time?.substring(0, 5)} - {rec.end_time?.substring(0, 5)}
+-                                                            </span>
+-                                                        </div>
+-                                                    </div>
+-                                                </div>
+-
+-                                                <div className="mt-auto pt-4 border-t border-amber-200/50 flex items-center justify-end">
+-                                                    <button
+-                                                        onClick={() => setDeleteModal({
+-                                                            isOpen: true,
+-                                                            bookingIds: [rec.id],
+-                                                            isTemplate: true,
+-                                                            templateName: rec.room?.name || rec.local
+-                                                        })}
+-                                                        className="px-4 py-2 bg-white text-red-600 font-bold text-xs uppercase tracking-wider border border-red-100 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95 hover:border-red-500"
+-                                                    >
+-                                                        Cancelar Regra
+-                                                    </button>
+-                                                </div>
+-                                            </div>
+-                                        </div>
+-                                    );
+-                                })
+-                            )}
+-                        </div>
+-                    ) : (
++                    {/* BOOKINGS LIST */}
+                     <ul className="space-y-4">
+                         {filteredBookings.length === 0 ? (
+                             <li className="px-6 py-24 text-center">
+@@ -1208,7 +1051,6 @@ export function AdminBookings() {
+                             })()
+                         )}
+                     </ul>
+-                    )}
+                 </div >
+             )}
+ 
+
+commit 7cb048b161a146068d5491cf43cf5e27b166d7b4
+Author: luiz-cesar-ti <luiz.cesar1995@gmail.com>
+Date:   Thu Mar 26 19:11:23 2026 -0300
+
+    feat: Agendamentos recorrentes de salas e UI Gestao de Salas
+
+diff --git a/sistema-agendamento/src/pages/admin/AdminBookings.tsx b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+index a9df02c..61553cc 100644
+--- a/sistema-agendamento/src/pages/admin/AdminBookings.tsx
++++ b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+@@ -7,7 +7,7 @@ import { format, parseISO } from 'date-fns';
+ import {
+     Search, Calendar, Users, MapPin, FileText, Trash2, AlertCircle,
+     Monitor, Clock, Filter, Laptop, Projector, Speaker, Camera, Mic, Smartphone, Tv, Plug, Repeat, ChevronDown, History,
+-    Download, X, Share2, Building
++    Download, X, Share2, Building, NotebookText, Layers
+ } from 'lucide-react';
+ import { TermDocument } from '../../components/TermDocument';
+ // @ts-ignore
+@@ -21,6 +21,8 @@ import { useSearchParams } from 'react-router-dom';
+ export function AdminBookings() {
+     const { user, role } = useAuth();
+     const [bookings, setBookings] = useState<Booking[]>([]);
++    const [templates, setTemplates] = useState<any[]>([]);
++    const [activeTab, setActiveTab] = useState<'bookings' | 'templates'>('bookings');
+     const [loading, setLoading] = useState(true);
+     const [statusFilter, setStatusFilter] = useState('all');
+     const [searchParams] = useSearchParams();
+@@ -51,7 +53,7 @@ export function AdminBookings() {
+     const [recurringFilter, setRecurringFilter] = useState<'recurring' | 'normal' | 'all'>('all');
+     const [showFilters, setShowFilters] = useState(false);
+ 
+-    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bookingIds: string[] }>({
++    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bookingIds: string[]; isTemplate?: boolean; templateName?: string }>({
+         isOpen: false,
+         bookingIds: []
+     });
+@@ -118,13 +120,64 @@ export function AdminBookings() {
+ 
+     const { refreshSignal } = useNotifications();
+ 
++    const fetchTemplates = async () => {
++        if (!user) return;
++        setLoading(true);
++
++        try {
++            let query = supabase
++                .from('recurring_bookings')
++                .select(`
++                    *,
++                    room:rooms(name, unit),
++                    users!recurring_bookings_user_id_fkey(full_name, email)
++                `)
++                .eq('is_active', true)
++                .not('room_id', 'is', null);
++
++            // Apply Unit Filter
++            if (role === 'admin' || role === 'super_admin') {
++                if (isSuperAdmin) {
++                    if (targetUnit) query = query.eq('unit', targetUnit);
++                } else {
++                    const unit = (user as Admin).unit;
++                    if (unit && unit !== 'Matriz') query = query.eq('unit', unit);
++                }
++            }
++
++            const { data, error } = await query;
++            if (error) throw error;
++            if (data) setTemplates(data);
++        } catch (err) {
++            console.error('Error fetching templates:', err);
++        } finally {
++            setLoading(false);
++        }
++    };
++
+     useEffect(() => {
+-        fetchBookings();
+-    }, [user?.id, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit, refreshSignal]);
++        if (activeTab === 'bookings') {
++            fetchBookings();
++        } else {
++            fetchTemplates();
++        }
++    }, [user?.id, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit, refreshSignal, activeTab]);
+ 
+     const handleDeleteBooking = async () => {
+         if (deleteModal.bookingIds.length === 0) return;
+ 
++        if (deleteModal.isTemplate) {
++            try {
++                const { error } = await supabase.from('recurring_bookings').update({ is_active: false }).eq('id', deleteModal.bookingIds[0]);
++                if (error) throw error;
++                setDeleteModal({ isOpen: false, bookingIds: [] });
++                fetchTemplates();
++            } catch (err: any) {
++                alert('Erro ao cancelar regra fixa: ' + err.message);
++            }
++            return;
++        }
++
+         const session = localStorage.getItem('admin_session');
+         const token = session ? JSON.parse(session).session_token : '';
+ 
+@@ -440,39 +493,69 @@ export function AdminBookings() {
+             <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
+                 <div>
+                     <h1 className="text-2xl font-black text-gray-900">Gerenciar Agendamentos <span className="text-primary-600 text-xs font-bold">(v2.2)</span></h1>
+-                    <p className="text-sm text-gray-500 mt-1">Acompanhe e gerencie todas as reservas de equipamentos (Sincroniza├º├úo Ativa).</p>
++                    <p className="text-sm text-gray-500 mt-1">Acompanhe e gerencie todas as reservas da unidade.</p>
+                 </div>
+ 
+-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+-                    <div className="relative w-full sm:w-80">
+-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+-                        <input
+-                            type="text"
+-                            placeholder="Buscar professor, item ou local..."
+-                            className="w-full bg-white border border-gray-100 rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 shadow-sm outline-none transition-all"
+-                            value={searchTerm}
+-                            onChange={(e) => setSearchTerm(e.target.value)}
+-                        />
+-                    </div>
+-
++                {/* TAB SWITCHER */}
++                <div className="flex items-center gap-2 p-1 bg-gray-100 rounded-2xl w-full lg:w-auto overflow-x-auto shadow-inner border border-gray-200/60">
+                     <button
+-                        onClick={() => setShowFilters(!showFilters)}
+-                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all border w-full sm:w-auto justify-center ${showFilters
+-                            ? 'bg-primary-600 text-white border-primary-600 shadow-xl shadow-primary-200'
+-                            : 'bg-white text-gray-600 border-gray-100 hover:border-primary-200 shadow-sm'
++                        onClick={() => setActiveTab('bookings')}
++                        className={`flex items-center justify-center gap-2.5 px-6 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap outline-none flex-1 lg:flex-none ${activeTab === 'bookings'
++                            ? 'bg-white text-primary-700 shadow-sm border border-gray-200/40 ring-1 ring-primary-500/10'
++                            : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                             }`}
+                     >
+-                        <Filter className="h-4 w-4" />
+-                        Filtros
+-                        {(startDate || endDate || periodFilter !== 'all' || statusFilter !== 'all' || recurringFilter !== 'all') && (
+-                            <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+-                        )}
++                        <NotebookText className={`w-4 h-4 ${activeTab === 'bookings' ? 'text-primary-500' : 'text-gray-400'}`} />
++                        Hist├│rico / Fila
++                    </button>
++                    <button
++                        onClick={() => setActiveTab('templates')}
++                        className={`flex items-center justify-center gap-2.5 px-6 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap outline-none flex-1 lg:flex-none ${activeTab === 'templates'
++                            ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/20 shadow-sm'
++                            : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
++                            }`}
++                    >
++                        <Layers className={`w-4 h-4 ${activeTab === 'templates' ? 'text-white/90' : 'text-gray-400'}`} />
++                        Modelos Fixos (Salas)
+                     </button>
+                 </div>
+             </div>
+ 
++            {/* ONLY RENDER FILTERS IF 'bookings' TAB */}
++            {activeTab === 'bookings' && (
++                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
++                    {/* Search and Filter toggle (kept on left or full width depending on your choice, previously they were align right next to title) */}
++                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
++                        <div className="relative w-full sm:w-80">
++                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
++                            <input
++                                type="text"
++                                placeholder="Buscar professor, item ou local..."
++                                className="w-full bg-white border border-gray-100 rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 shadow-sm outline-none transition-all"
++                                value={searchTerm}
++                                onChange={(e) => setSearchTerm(e.target.value)}
++                            />
++                        </div>
++
++                        <button
++                            onClick={() => setShowFilters(!showFilters)}
++                            className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all border w-full sm:w-auto justify-center ${showFilters
++                                ? 'bg-primary-600 text-white border-primary-600 shadow-xl shadow-primary-200'
++                                : 'bg-white text-gray-600 border-gray-100 hover:border-primary-200 shadow-sm'
++                                }`}
++                        >
++                            <Filter className="h-4 w-4" />
++                            Filtros
++                            {(startDate || endDate || periodFilter !== 'all' || statusFilter !== 'all' || recurringFilter !== 'all') && (
++                                <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
++                            )}
++                        </button>
++                    </div>
++                </div>
++            )}
++
+             {/* Filter Bar */}
+-            {showFilters && (
++            {showFilters && activeTab === 'bookings' && (
+                 <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                         <div className="space-y-2">
+@@ -576,11 +659,90 @@ export function AdminBookings() {
+             {loading ? (
+                 <div className="flex flex-col items-center justify-center py-20">
+                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
+-                    <p className="mt-4 text-gray-500 font-bold uppercase tracking-widest text-[10px]">Sincronizando agendamentos...</p>
++                    <p className="mt-4 text-gray-500 font-bold uppercase tracking-widest text-[10px]">Sincronizando dados...</p>
+                 </div>
+             ) : (
+                 <div className="bg-transparent space-y-4">
+-                    {/* EQUIPMENT LIST */}
++                    {/* BOOKINGS LIST OR TEMPLATES LIST */}
++                    {activeTab === 'templates' ? (
++                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
++                            {templates.length === 0 ? (
++                                <div className="col-span-full py-20 text-center">
++                                    <Layers className="h-16 w-16 text-gray-200 mx-auto mb-4" />
++                                    <p className="text-lg font-bold text-gray-900">Nenhum Modelo Fixo</p>
++                                    <p className="text-sm text-gray-500 mt-1">Nenhum professor possui uma reserva fixa de sala nesta unidade.</p>
++                                </div>
++                            ) : (
++                                templates.map((rec) => {
++                                    const days = ['Domingo', 'Segunda-feira', 'Ter├ºa-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'S├íbado'];
++                                    const dayName = days[rec.day_of_week];
++
++                                    return (
++                                        <div key={rec.id} className="group bg-white rounded-xl shadow-md border hover:shadow-xl relative overflow-hidden flex flex-col border-gray-300 hover:border-amber-200 transition-all">
++                                            <div className="p-4 flex justify-between items-start bg-gradient-to-br from-amber-500 to-orange-600">
++                                                <div>
++                                                    <div className="flex items-center gap-1 opacity-90 text-[10px] uppercase tracking-wider font-semibold mb-1 text-white/90">
++                                                        <MapPin className="w-3 h-3" /> Unidade {rec.unit}
++                                                    </div>
++                                                    <h3 className="font-bold text-lg leading-tight text-white mb-0.5 shadow-sm" title={rec.room?.name || rec.local}>
++                                                        {rec.room?.name || rec.local}
++                                                    </h3>
++                                                </div>
++                                                <div className="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-white/20 shadow-sm bg-amber-700/40 text-white">
++                                                    SALA FIXA
++                                                </div>
++                                            </div>
++
++                                            <div className="p-5 flex flex-col flex-1 bg-white">
++                                                <div className="flex items-center gap-3 mb-4 border-b border-gray-50 pb-4">
++                                                    <div className="h-10 w-10 bg-green-50 rounded-full flex items-center justify-center shrink-0 border border-green-100">
++                                                        <Users className="h-5 w-5 text-green-600" />
++                                                    </div>
++                                                    <div className="min-w-0">
++                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Professor</p>
++                                                        <p className="text-sm font-black text-gray-900 truncate">
++                                                            {rec.users?.full_name || 'Desconhecido'}
++                                                        </p>
++                                                    </div>
++                                                </div>
++
++                                                <div className="flex items-center gap-4 mb-5">
++                                                    <div className="flex flex-col items-center justify-center bg-slate-50 border border-gray-200 rounded-lg p-3 min-w-[3.5rem] shadow-inner">
++                                                        <Repeat className="w-6 h-6 text-amber-500 mb-1" />
++                                                    </div>
++                                                    <div className="flex-1">
++                                                        <p className="text-sm font-black text-gray-900 capitalize text-left">
++                                                            Toda {dayName}
++                                                        </p>
++                                                        <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-1 font-medium bg-amber-50 self-start px-2 py-1 inline-flex rounded-lg border border-amber-100">
++                                                            <Clock className="w-3.5 h-3.5 text-amber-500" />
++                                                            <span>
++                                                                {rec.start_time?.substring(0, 5)} - {rec.end_time?.substring(0, 5)}
++                                                            </span>
++                                                        </div>
++                                                    </div>
++                                                </div>
++
++                                                <div className="mt-auto pt-4 border-t border-amber-200/50 flex items-center justify-end">
++                                                    <button
++                                                        onClick={() => setDeleteModal({
++                                                            isOpen: true,
++                                                            bookingIds: [rec.id],
++                                                            isTemplate: true,
++                                                            templateName: rec.room?.name || rec.local
++                                                        })}
++                                                        className="px-4 py-2 bg-white text-red-600 font-bold text-xs uppercase tracking-wider border border-red-100 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95 hover:border-red-500"
++                                                    >
++                                                        Cancelar Regra
++                                                    </button>
++                                                </div>
++                                            </div>
++                                        </div>
++                                    );
++                                })
++                            )}
++                        </div>
++                    ) : (
+                     <ul className="space-y-4">
+                         {filteredBookings.length === 0 ? (
+                             <li className="px-6 py-24 text-center">
+@@ -1046,33 +1208,41 @@ export function AdminBookings() {
+                             })()
+                         )}
+                     </ul>
++                    )}
+                 </div >
+             )}
+ 
+             {/* DELETE MODAL */}
+             {deleteModal.isOpen && (
+-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
++                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                     <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onClick={() => setDeleteModal({ isOpen: false, bookingIds: [] })} />
+                     <div className="relative bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200">
+                         <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                             <Trash2 className="h-8 w-8 text-red-500" />
+                         </div>
+-                        <h3 className="text-xl font-black text-gray-900 text-center mb-2">Confirmar Exclus├úo?</h3>
++                        <h3 className="text-xl font-black text-gray-900 text-center mb-2">
++                            {deleteModal.isTemplate ? 'Cancelar Regra Fixa?' : 'Confirmar Exclus├úo?'}
++                        </h3>
+                         <p className="text-sm text-gray-500 text-center mb-8 font-medium leading-relaxed">
+-                            Esta a├º├úo n├úo pode ser desfeita. O agendamento ser├í permanentemente removido.
++                            {deleteModal.isTemplate ? (
++                                <>A sala <span className="font-bold text-gray-800">{deleteModal.templateName}</span> ficar├í livre eternamente para esse hor├írio. Esta a├º├úo n├úo pode ser desfeita e remover├í a reserva fixa de imediato.</>
++                            ) : (
++                                <>Esta a├º├úo n├úo pode ser desfeita. O agendamento ser├í permanentemente removido.</>
++                            )}
+                         </p>
+                         <div className="flex flex-col gap-3">
+                             <button
+                                 onClick={handleDeleteBooking}
+-                                className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 active:scale-95 transition-all text-sm uppercase tracking-wide"
++                                className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 active:scale-95 transition-all text-sm uppercase tracking-wide flex justify-center items-center gap-2"
+                             >
+-                                Sim, Excluir
++                                <Trash2 className="w-4 h-4" />
++                                {deleteModal.isTemplate ? 'Cancelar Regra' : 'Sim, Excluir'}
+                             </button>
+                             <button
+                                 onClick={() => setDeleteModal({ isOpen: false, bookingIds: [] })}
+                                 className="w-full py-3.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold rounded-xl active:scale-95 transition-all text-sm uppercase tracking-wide"
+                             >
+-                                Cancelar
++                                {deleteModal.isTemplate ? 'Manter Regra' : 'Cancelar'}
+                             </button>
+                         </div>
+                     </div>
+
+commit 65a45c8ba3f32be1ecb442f987e8acb07898f917
+Author: luiz-cesar-ti <luiz.cesar1995@gmail.com>
+Date:   Wed Mar 18 10:08:59 2026 -0300
+
+    feat: cancel scheduled reminders when bookings are deleted + unit-based filtering
+
+diff --git a/sistema-agendamento/src/pages/admin/AdminBookings.tsx b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+index ec1a88e..a9df02c 100644
+--- a/sistema-agendamento/src/pages/admin/AdminBookings.tsx
++++ b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+@@ -14,6 +14,7 @@ import { TermDocument } from '../../components/TermDocument';
+ import html2pdf from 'html2pdf.js';
+ import { UNIT_LEGAL_NAMES } from '../../utils/constants';
+ import { SCHOOL_UNITS } from '../../utils/constants';
++import { cancelScheduledNotifications } from '../../utils/onesignalUtils';
+ 
+ import { useSearchParams } from 'react-router-dom';
+ 
+@@ -133,6 +134,9 @@ export function AdminBookings() {
+         });
+ 
+         if (!error) {
++            // Cancel any scheduled OneSignal reminders for these bookings
++            cancelScheduledNotifications(deleteModal.bookingIds).catch(console.error);
++            
+             setDeleteModal({ isOpen: false, bookingIds: [] });
+             fetchBookings();
+         } else {
+
+commit 9773b1b0383318799722170d7b44b5d6e2aab68e
+Author: luiz-cesar-ti <luiz.cesar1995@gmail.com>
+Date:   Wed Mar 4 20:39:33 2026 -0300
+
+    feat: add AdminBookings page for administrators to manage, filter, delete, and generate PDF terms for bookings.
+
+diff --git a/sistema-agendamento/src/pages/admin/AdminBookings.tsx b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+index c019443..ec1a88e 100644
+--- a/sistema-agendamento/src/pages/admin/AdminBookings.tsx
++++ b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+@@ -694,51 +694,64 @@ export function AdminBookings() {
+                                                                     </p>
+                                                                 </div>
+                                                             )}
+-                                                            <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-50/80">
++                                                            <div className="grid grid-cols-2 lg:grid-cols-5 md:grid-cols-3 gap-3 md:gap-5 lg:gap-6 mt-3 sm:mt-4 py-3 px-4 sm:py-4 sm:px-6 bg-gradient-to-br from-blue-900 to-blue-950 rounded-2xl border border-blue-800 shadow-xl ring-1 ring-inset ring-white/10">
+                                                                 {/* PROFESSOR */}
+-                                                                <div className="flex flex-col gap-1">
+-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Professor</span>
+-                                                                    <div className="flex items-center gap-2">
+-                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
+-                                                                            <Users className="h-3 w-3 text-gray-400" />
+-                                                                        </div>
+-                                                                        <span className="text-xs font-bold text-gray-600 truncate">{(first as any).users?.full_name}</span>
++                                                                <div className="flex items-center gap-3">
++                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
++                                                                        <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
++                                                                    </div>
++                                                                    <div className="flex flex-col min-w-0 justify-center">
++                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Professor</span>
++                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">{(first as any).users?.full_name}</span>
+                                                                     </div>
+                                                                 </div>
+ 
+                                                                 {/* ESPECIFICA├ç├âO */}
+-                                                                <div className="flex flex-col gap-1">
+-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Especifica├º├úo</span>
+-                                                                    <div className="flex items-center gap-2">
+-                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
+-                                                                            <Monitor className="h-3 w-3 text-gray-400" />
+-                                                                        </div>
+-                                                                        <span className="text-xs font-bold text-gray-700 truncate">
++                                                                <div className="flex items-center gap-3">
++                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
++                                                                        <Monitor className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
++                                                                    </div>
++                                                                    <div className="flex flex-col min-w-0 justify-center">
++                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Especifica├º├úo</span>
++                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
+                                                                             {first.equipment?.brand ? `${first.equipment.brand} ${first.equipment.model || ''}` : 'N├úo especificado'}
+                                                                         </span>
+                                                                     </div>
+                                                                 </div>
+ 
+                                                                 {/* SALA/LOCAL */}
+-                                                                <div className="flex flex-col gap-1">
+-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Sala/Local</span>
+-                                                                    <div className="flex items-center gap-2">
+-                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
+-                                                                            <MapPin className="h-3 w-3 text-gray-400" />
+-                                                                        </div>
+-                                                                        <span className="text-xs font-bold text-gray-600 truncate">{first.local}</span>
++                                                                <div className="flex items-center gap-3">
++                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
++                                                                        <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
++                                                                    </div>
++                                                                    <div className="flex flex-col min-w-0 justify-center">
++                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Sala/Local</span>
++                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">{first.local}</span>
+                                                                     </div>
+                                                                 </div>
+ 
+-                                                                {/* AGENDADO PARA */}
+-                                                                <div className="flex flex-col gap-1">
+-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Agendado Para</span>
+-                                                                    <div className="flex items-center gap-2">
+-                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
+-                                                                            <Clock className="h-3 w-3 text-gray-400" />
+-                                                                        </div>
+-                                                                        <span className="text-xs font-bold text-gray-600">
+-                                                                            {format(parseISO(first.booking_date), "dd/MM/yy")} ÔÇó {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
++                                                                {/* DATA */}
++                                                                <div className="flex items-center gap-3">
++                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
++                                                                        <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
++                                                                    </div>
++                                                                    <div className="flex flex-col min-w-0 justify-center">
++                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Data</span>
++                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
++                                                                            {format(parseISO(first.booking_date), "dd/MM/yy")}
++                                                                        </span>
++                                                                    </div>
++                                                                </div>
++
++                                                                {/* HOR├üRIO */}
++                                                                <div className="flex items-center gap-3">
++                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
++                                                                        <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
++                                                                    </div>
++                                                                    <div className="flex flex-col min-w-0 justify-center">
++                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Hor├írio</span>
++                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
++                                                                            {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
+                                                                         </span>
+                                                                     </div>
+                                                                 </div>
+@@ -826,48 +839,64 @@ export function AdminBookings() {
+                                                                     </p>
+                                                                 </div>
+                                                             )}
+-                                                            <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-50/80">
++                                                            <div className="grid grid-cols-2 lg:grid-cols-5 md:grid-cols-3 gap-3 md:gap-5 lg:gap-6 mt-3 sm:mt-4 py-3 px-4 sm:py-4 sm:px-6 bg-gradient-to-br from-blue-900 to-blue-950 rounded-2xl border border-blue-800 shadow-xl ring-1 ring-inset ring-white/10">
+                                                                 {/* PROFESSOR */}
+-                                                                <div className="flex flex-col gap-1">
+-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Professor</span>
+-                                                                    <div className="flex items-center gap-2">
+-                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
+-                                                                            <Users className="h-3 w-3 text-gray-400" />
+-                                                                        </div>
+-                                                                        <span className="text-xs font-bold text-gray-600 truncate">{(first as any).users?.full_name}</span>
++                                                                <div className="flex items-center gap-3">
++                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
++                                                                        <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
++                                                                    </div>
++                                                                    <div className="flex flex-col min-w-0 justify-center">
++                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Professor</span>
++                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">{(first as any).users?.full_name}</span>
+                                                                     </div>
+                                                                 </div>
+ 
+                                                                 {/* ESPECIFICA├ç├âO */}
+-                                                                <div className="flex flex-col gap-1">
+-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Especifica├º├úo</span>
+-                                                                    <div className="flex items-center gap-2">
+-                                                                        <span className="text-xs font-bold text-indigo-600 truncate">
++                                                                <div className="flex items-center gap-3">
++                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
++                                                                        <Monitor className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
++                                                                    </div>
++                                                                    <div className="flex flex-col min-w-0 justify-center">
++                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Especifica├º├úo</span>
++                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
+                                                                             M├║ltiplos Itens
+                                                                         </span>
+                                                                     </div>
+                                                                 </div>
+ 
+                                                                 {/* SALA/LOCAL */}
+-                                                                <div className="flex flex-col gap-1">
+-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Sala/Local</span>
+-                                                                    <div className="flex items-center gap-2">
+-                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
+-                                                                            <MapPin className="h-3 w-3 text-gray-400" />
+-                                                                        </div>
+-                                                                        <span className="text-xs font-bold text-gray-600 truncate">{first.local}</span>
++                                                                <div className="flex items-center gap-3">
++                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
++                                                                        <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
++                                                                    </div>
++                                                                    <div className="flex flex-col min-w-0 justify-center">
++                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Sala/Local</span>
++                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">{first.local}</span>
+                                                                     </div>
+                                                                 </div>
+ 
+-                                                                {/* AGENDADO PARA */}
+-                                                                <div className="flex flex-col gap-1">
+-                                                                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.05em]">Agendado Para</span>
+-                                                                    <div className="flex items-center gap-2">
+-                                                                        <div className="p-1 rounded-full bg-gray-50 border border-gray-100">
+-                                                                            <Clock className="h-3 w-3 text-gray-400" />
+-                                                                        </div>
+-                                                                        <span className="text-xs font-bold text-gray-600">
+-                                                                            {format(parseISO(first.booking_date), "dd/MM/yy")} ÔÇó {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
++                                                                {/* DATA */}
++                                                                <div className="flex items-center gap-3">
++                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
++                                                                        <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
++                                                                    </div>
++                                                                    <div className="flex flex-col min-w-0 justify-center">
++                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Data</span>
++                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
++                                                                            {format(parseISO(first.booking_date), "dd/MM/yy")}
++                                                                        </span>
++                                                                    </div>
++                                                                </div>
++
++                                                                {/* HOR├üRIO */}
++                                                                <div className="flex items-center gap-3">
++                                                                    <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] shrink-0">
++                                                                        <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white drop-shadow-sm" />
++                                                                    </div>
++                                                                    <div className="flex flex-col min-w-0 justify-center">
++                                                                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 uppercase tracking-widest opacity-90 mb-0.5">Hor├írio</span>
++                                                                        <span className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate drop-shadow-sm">
++                                                                            {first.start_time.slice(0, 5)} - {first.end_time.slice(0, 5)}
+                                                                         </span>
+                                                                     </div>
+                                                                 </div>
+
+commit ef0e969b9db3aa0a919f05bda0077622dfdee574
+Author: luiz-cesar-ti <luiz.cesar1995@gmail.com>
+Date:   Tue Feb 24 20:50:48 2026 -0300
+
+    feat: implement AdminBookings page with booking management, filtering, and PDF term generation.
+
+diff --git a/sistema-agendamento/src/pages/admin/AdminBookings.tsx b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+index 04617f3..c019443 100644
+--- a/sistema-agendamento/src/pages/admin/AdminBookings.tsx
++++ b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+@@ -105,7 +105,12 @@ export function AdminBookings() {
+             setBookings(fetchedBookings);
+         } else if (error) {
+             console.error('Error fetching admin bookings:', error);
+-            alert(`Erro Cr├¡tico ao buscar agendamentos: ${error.message}\nC├│digo: ${error.code || 'N/A'}\nPor favor, envie este erro ao suporte.`);
++            const msg = error?.message || '';
++            if (msg.includes('Acesso negado') || msg.includes('JWT') || msg.includes('expired')) {
++                alert('Sua sess├úo expirou. Por favor, clique em "Sair do Sistema" no menu lateral e fa├ºa login novamente.');
++            } else {
++                alert(`Erro ao buscar agendamentos: ${error.message}\nPor favor, envie este erro ao suporte.`);
++            }
+         }
+         setLoading(false);
+     };
+
+commit f4a68483581f55b5b7f05210a20b613de90e210c
+Author: luiz-cesar-ti <luiz.cesar1995@gmail.com>
+Date:   Fri Feb 13 02:17:05 2026 -0300
+
+    feat: Add admin booking management page with filtering, search, and a dedicated help section.
+
+diff --git a/sistema-agendamento/src/pages/admin/AdminBookings.tsx b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+index 1b955b1..04617f3 100644
+--- a/sistema-agendamento/src/pages/admin/AdminBookings.tsx
++++ b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+@@ -339,7 +339,7 @@ export function AdminBookings() {
+         return (
+             <div className="flex gap-1">
+                 <span className="px-2 py-0.5 inline-flex text-[10px] items-center leading-4 font-bold uppercase tracking-wider rounded-full bg-green-100 text-green-700 border border-green-200">
+-                    Ativo
++                    AGENDADO
+                 </span>
+                 {recurringBadge}
+             </div>
+
+commit db88aa949e623483da42c5dba5551ce752972e77
+Author: luiz-cesar-ti <luiz.cesar1995@gmail.com>
+Date:   Tue Feb 10 01:54:36 2026 -0300
+
+    feat: Add user authentication pages and comprehensive admin panel for equipment, bookings, logs, and help sections.
+
+diff --git a/sistema-agendamento/src/pages/admin/AdminBookings.tsx b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+index f03946b..1b955b1 100644
+--- a/sistema-agendamento/src/pages/admin/AdminBookings.tsx
++++ b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+@@ -299,6 +299,7 @@ export function AdminBookings() {
+         }
+ 
+         // Cancelled by Professor (Soft Delete OR status check)
++        // @ts-ignore
+         if (booking.status === 'cancelled_by_user' || (booking.deleted_at && booking.status !== 'deleted_by_admin')) {
+             return (
+                 <div className="flex gap-1">
+
+commit 772d76001ccce73c98c05a7ee23376ee410a02ac
+Author: luiz-cesar-ti <luiz.cesar1995@gmail.com>
+Date:   Mon Feb 9 21:23:12 2026 -0300
+
+    feat: Introduce real-time notification context and implement admin booking management page with advanced filtering, search, and PDF export.
+
+diff --git a/sistema-agendamento/src/pages/admin/AdminBookings.tsx b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+index 73f5c0b..f03946b 100644
+--- a/sistema-agendamento/src/pages/admin/AdminBookings.tsx
++++ b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+@@ -1,6 +1,7 @@
+ import { useState, useEffect } from 'react';
+ import { supabase } from '../../services/supabase';
+ import { useAuth } from '../../contexts/AuthContext';
++import { useNotifications } from '../../contexts/NotificationContext';
+ import type { Booking, Admin } from '../../types';
+ import { format, parseISO } from 'date-fns';
+ import {
+@@ -109,13 +110,11 @@ export function AdminBookings() {
+         setLoading(false);
+     };
+ 
++    const { refreshSignal } = useNotifications();
++
+     useEffect(() => {
+         fetchBookings();
+-        const subscription = supabase.channel('admin_bookings_channel')
+-            .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => fetchBookings())
+-            .subscribe();
+-        return () => { subscription.unsubscribe(); };
+-    }, [user?.id, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit]);
++    }, [user?.id, startDate, endDate, statusFilter, periodFilter, recurringFilter, targetUnit, refreshSignal]);
+ 
+     const handleDeleteBooking = async () => {
+         if (deleteModal.bookingIds.length === 0) return;
+
+commit 72dce15dab21edf2e43a974cfc2400f01d6b0ad2
+Author: luiz-cesar-ti <luiz.cesar1995@gmail.com>
+Date:   Wed Feb 4 01:51:00 2026 -0300
+
+    feat: implement admin equipment loan management, user registration, and booking features.
+
+diff --git a/sistema-agendamento/src/pages/admin/AdminBookings.tsx b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+index 6da6409..73f5c0b 100644
+--- a/sistema-agendamento/src/pages/admin/AdminBookings.tsx
++++ b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+@@ -11,6 +11,7 @@ import {
+ import { TermDocument } from '../../components/TermDocument';
+ // @ts-ignore
+ import html2pdf from 'html2pdf.js';
++import { UNIT_LEGAL_NAMES } from '../../utils/constants';
+ import { SCHOOL_UNITS } from '../../utils/constants';
+ 
+ import { useSearchParams } from 'react-router-dom';
+@@ -253,6 +254,7 @@ export function AdminBookings() {
+                                 data={{
+                                     ...pdfData,
+                                     ...pdfData.term_document,
++                                    legalName: pdfData.term_document?.legalName || UNIT_LEGAL_NAMES[pdfData.term_document?.unit || pdfData.unit],
+                                     created_at: pdfData.created_at
+                                 }}
+                             />
+
+commit 32322d44bbd117aec91dc0ebb39116a3f5fec0ef
+Author: luiz-cesar-ti <luiz.cesar1995@gmail.com>
+Date:   Sat Jan 24 15:35:44 2026 -0300
+
+    feat: Implement admin bookings management page with filtering, deletion, and PDF generation, alongside a new authentication context.
+
+diff --git a/sistema-agendamento/src/pages/admin/AdminBookings.tsx b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+index d3f71bb..6da6409 100644
+--- a/sistema-agendamento/src/pages/admin/AdminBookings.tsx
++++ b/sistema-agendamento/src/pages/admin/AdminBookings.tsx
+@@ -13,12 +13,15 @@ import { TermDocument } from '../../components/TermDocument';
+ import html2pdf from 'html2pdf.js';
+ import { SCHOOL_UNITS } from '../../utils/constants';
+ 
++import { useSearchParams } from 'react-router-dom';
++
+ export function AdminBookings() {
+     const { user, role } = useAuth();
+     const [bookings, setBookings] = useState<Booking[]>([]);
+     const [loading, setLoading] = useState(true);
+     const [statusFilter, setStatusFilter] = useState('all');
+-    const [searchTerm, setSearchTerm] = useState('');
++    const [searchParams] = useSearchParams();
++    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+     const [targetUnit, setTargetUnit] = useState<string>(SCHOOL_UNITS[0]);
+     const [pdfData, setPdfData] = useState<any>(null);
+ 
