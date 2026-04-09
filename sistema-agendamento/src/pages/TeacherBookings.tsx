@@ -463,10 +463,32 @@ export function TeacherBookings() {
                             ...groupKeys.map(key => grouped[key]),
                             ...singles.map(b => [b])
                         ].sort((a, b) => {
-                            // Sort by date then start_time
-                            const dateA = a[0].booking_date + a[0].start_time;
-                            const dateB = b[0].booking_date + b[0].start_time;
-                            return dateA.localeCompare(dateB);
+                            const aFirst = a[0];
+                            const bFirst = b[0];
+
+                            // Determine effective status (active vs concluded)
+                            const now = new Date();
+                            const getIsActive = (item: Booking) => {
+                                if (item.status !== 'active') return false;
+                                const bDate = item.booking_date || '';
+                                const bTime = (item.end_time && item.end_time.length === 5) ? `${item.end_time}:00` : (item.end_time || '23:59:59');
+                                try {
+                                    const endDt = parseISO(`${bDate}T${bTime}`);
+                                    return isNaN(endDt.getTime()) || now <= endDt;
+                                } catch { return true; }
+                            };
+
+                            const aIsActive = getIsActive(aFirst);
+                            const bIsActive = getIsActive(bFirst);
+
+                            // Active bookings come first
+                            if (aIsActive && !bIsActive) return -1;
+                            if (!aIsActive && bIsActive) return 1;
+
+                            // Within the same group, sort by date descending (most recent first)
+                            const dateA = aFirst.booking_date + aFirst.start_time;
+                            const dateB = bFirst.booking_date + bFirst.start_time;
+                            return dateB.localeCompare(dateA);
                         });
 
                         const units = Array.from(new Set(renderList.map(g => g[0].unit || 'GERAL')));
